@@ -34,6 +34,7 @@ const translations = {
     typeAmelioration: "💡 Amélioration",
     typeQuestion: "❓ Question",
     typeTemoignage: "✝️ Témoignage",
+    typeReseaux: "🔗 Plan Réseaux",
     fieldTitre: "Titre",
     fieldTitrePlaceholder: "Ex : Apôtre, Pasteur, Bishop...",
     fieldEglise: "Nom de l'église",
@@ -43,6 +44,7 @@ const translations = {
     placeholderAmelioration: "Partagez votre suggestion pour améliorer SoulTrack...",
     placeholderQuestion: "Posez votre question, nous vous répondrons avec soin...",
     placeholderTemoignage: "Partagez ce que Dieu a accompli à travers SoulTrack dans votre église...",
+    placeholderReseaux: "Décrivez brièvement votre réseau d'églises et ce que vous recherchez...",
     placeholderDefault: "Écrivez votre message ici...",
     errorRequired: "Veuillez remplir tous les champs.",
     errorTemoignage: "Veuillez remplir tous les champs du témoignage.",
@@ -66,26 +68,12 @@ const translations = {
         title: "Témoignage reçu, merci !",
         text: "Votre témoignage nous touche profondément. Que Dieu soit glorifié à travers chaque vie transformée. Merci de partager ce que Dieu accomplit.",
       },
-      typeRappel: "🔗 Réseaux",
-placeholderRappel: "Décrivez brièvement votre réseau d'églises et ce que vous recherchez...",
-successRappel: {
-  icon: "🔗",
-  title: "Demande reçue !",
-  text: "Merci pour votre intérêt. Notre équipe vous contactera sous 48h pour échanger sur votre réseau d'églises.",
-},
+      reseaux: {
+        icon: "🔗",
+        title: "Demande reçue !",
+        text: "Merci pour votre intérêt. Notre équipe vous contactera sous 48h pour échanger sur votre réseau d'églises.",
+      },
     },
-    callbackTitle: "Préférez un rappel ?",
-    callbackSub: "Donnez-nous un bref aperçu de votre besoin, nous vous contactons sous 48h.",
-    callbackName: "Prénom",
-    callbackNamePlaceholder: "Jean",
-    callbackEmail: "Email",
-    callbackEmailPlaceholder: "jean@exemple.com",
-    callbackNeed: "Votre besoin en quelques mots",
-    callbackNeedPlaceholder: "Ex : Je cherche à gérer les membres de mon église de 200 personnes...",
-    callbackBtn: "Me faire rappeler",
-    callbackBtnSending: "Envoi...",
-    callbackSuccess: "Reçu ! Nous vous contactons sous 48h.",
-    callbackError: "Une erreur est survenue. Réessayez.",
     footer: "Tous droits réservés.",
   },
   en: {
@@ -112,6 +100,7 @@ successRappel: {
     typeAmelioration: "💡 Suggestion",
     typeQuestion: "❓ Question",
     typeTemoignage: "✝️ Testimony",
+    typeReseaux: "🔗 Networks Plan",
     fieldTitre: "Title",
     fieldTitrePlaceholder: "e.g. Apostle, Pastor, Bishop...",
     fieldEglise: "Church name",
@@ -121,6 +110,7 @@ successRappel: {
     placeholderAmelioration: "Share your suggestion to improve SoulTrack...",
     placeholderQuestion: "Ask your question, we will reply with care...",
     placeholderTemoignage: "Share what God has accomplished through SoulTrack in your church...",
+    placeholderReseaux: "Briefly describe your church network and what you're looking for...",
     placeholderDefault: "Write your message here...",
     errorRequired: "Please fill in all required fields.",
     errorTemoignage: "Please fill in all testimony fields.",
@@ -144,26 +134,12 @@ successRappel: {
         title: "Testimony received, thank you!",
         text: "Your testimony touches us deeply. May God be glorified through every transformed life. Thank you for sharing what God is doing.",
       },
-      typeRappel: "🔗 Networks",
-placeholderRappel: "Briefly describe your church network and what you're looking for...",
-successRappel: {
-  icon: "🔗",
-  title: "Request received!",
-  text: "Thank you for your interest. Our team will reach out within 48 hours to discuss your church network.",
-},
+      reseaux: {
+        icon: "🔗",
+        title: "Request received!",
+        text: "Thank you for your interest. Our team will reach out within 48 hours to discuss your church network.",
+      },
     },
-    callbackTitle: "Prefer a callback?",
-    callbackSub: "Give us a quick overview of your need, and we'll reach out within 48 hours.",
-    callbackName: "First name",
-    callbackNamePlaceholder: "John",
-    callbackEmail: "Email",
-    callbackEmailPlaceholder: "john@example.com",
-    callbackNeed: "Your need in a few words",
-    callbackNeedPlaceholder: "e.g. I want to manage members in my 200-person church...",
-    callbackBtn: "Request a callback",
-    callbackBtnSending: "Sending...",
-    callbackSuccess: "Got it! We'll reach out within 48 hours.",
-    callbackError: "An error occurred. Please try again.",
     footer: "All rights reserved.",
   },
 };
@@ -177,10 +153,6 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hoveredStar, setHoveredStar] = useState(0);
-  const [callback, setCallback] = useState({ nom: "", email: "", besoin: "" });
-  const [callbackSent, setCallbackSent] = useState(false);
-  const [callbackLoading, setCallbackLoading] = useState(false);
-  const [callbackError, setCallbackError] = useState("");
   const { lang, changeLang } = useLang();
   const pathname = usePathname();
 
@@ -221,27 +193,6 @@ export default function ContactPage() {
       console.error(err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleCallback = async () => {
-    if (!callback.nom || !callback.email || !callback.besoin) {
-      setCallbackError(t.callbackError);
-      return;
-    }
-    setCallbackError("");
-    setCallbackLoading(true);
-    try {
-      const { error: insertError } = await supabase
-        .from("contact")
-        .insert([{ nom: callback.nom, email: callback.email, type: "rappel", message: callback.besoin }]);
-      if (insertError) throw insertError;
-      setCallbackSent(true);
-    } catch (err) {
-      setCallbackError(t.callbackError);
-      console.error(err);
-    } finally {
-      setCallbackLoading(false);
     }
   };
 
@@ -288,7 +239,7 @@ export default function ContactPage() {
     },
   ];
 
-  const successInfo = t.successMessages[form.type] || t.successMessages.reseaux || t.successMessages.question;
+  const successInfo = t.successMessages[form.type] || t.successMessages.question;
 
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
@@ -297,77 +248,29 @@ export default function ContactPage() {
       <header
         style={{
           background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
-          borderBottom: scrolled
-            ? "0.5px solid rgba(255,255,255,0.15)"
-            : "0.5px solid transparent",
-          position: "sticky",
-          top: 0,
-          zIndex: 100,
+          borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent",
+          position: "sticky", top: 0, zIndex: 100,
           backdropFilter: scrolled ? "blur(16px)" : "none",
           transition: "background 0.3s, border-color 0.3s",
         }}
       >
-        <div
-          style={{
-            maxWidth: "1100px",
-            margin: "0 auto",
-            padding: "22px 24px",
-            height: "88px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "22px 24px", height: "88px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+
           {/* LOGO */}
-          <div
-            onClick={() => router.push("/site/HomePage")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              cursor: "pointer",
-              zIndex: 1,
-              flexShrink: 0,
-            }}
-          >
+          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
             <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
-            <span
-              style={{
-                color: "#fff",
-                fontSize: "22px",
-                fontWeight: 500,
-                fontFamily: "'Great Vibes', cursive",
-              }}
-            >
-              SoulTrack
-            </span>
+            <span style={{ color: "#fff", fontSize: "22px", fontWeight: 500, fontFamily: "'Great Vibes', cursive" }}>SoulTrack</span>
           </div>
 
           {/* NAV desktop */}
-          <nav
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "32px",
-              zIndex: 1,
-            }}
-          >
+          <nav style={{ display: "flex", alignItems: "center", gap: "32px", zIndex: 1 }}>
             {t.nav.map((item) => (
               <span
                 key={item.path}
                 onClick={() => router.push(item.path)}
-                style={{
-                  color: pathname === item.path ? "#fbbf24" : "#fff",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "color 0.2s",
-                }}
+                style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "color 0.2s" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.color =
-                    pathname === item.path ? "#fbbf24" : "#fff")
-                }
+                onMouseLeave={(e) => (e.currentTarget.style.color = pathname === item.path ? "#fbbf24" : "#fff")}
                 className="nav-hide"
               >
                 {item.label}
@@ -376,217 +279,54 @@ export default function ContactPage() {
           </nav>
 
           {/* BOUTONS desktop */}
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              alignItems: "center",
-              zIndex: 1,
-              flexShrink: 0,
-            }}
-            className="nav-hide"
-          >
-            <button
-              onClick={() => router.push("/login")}
-              style={{
-                background: "transparent",
-                color: "#fbbf24",
-                border: "0.5px solid rgba(255,255,255,0.35)",
-                padding: "7px 18px",
-                borderRadius: "8px",
-                fontSize: "14px",
-                cursor: "pointer",
-              }}
-            >
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
+            <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
               {t.login}
             </button>
-            <button
-              onClick={() => router.push("/site/pricing")}
-              style={{
-                background: "#fff",
-                color: "#333699",
-                border: "none",
-                padding: "7px 18px",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
+            <button onClick={() => router.push("/site/pricing")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
               {t.signup}
             </button>
           </div>
 
           {/* Switcher langue desktop */}
-          <div
-            style={{ display: "flex", gap: "8px", alignItems: "center" }}
-            className="nav-hide"
-          >
-            <button
-              onClick={() => changeLang("fr")}
-              title="Français"
-              style={langBtnStyle(lang === "fr")}
-            >
-              <img
-                src="https://flagcdn.com/w40/fr.png"
-                srcSet="https://flagcdn.com/w80/fr.png 2x"
-                width="32"
-                height="22"
-                alt="Français"
-                style={{ display: "block", borderRadius: "3px" }}
-              />
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }} className="nav-hide">
+            <button onClick={() => changeLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
+              <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
             </button>
-            <button
-              onClick={() => changeLang("en")}
-              title="English"
-              style={langBtnStyle(lang === "en")}
-            >
-              <img
-                src="https://flagcdn.com/w40/gb.png"
-                srcSet="https://flagcdn.com/w80/gb.png 2x"
-                width="32"
-                height="22"
-                alt="English"
-                style={{ display: "block", borderRadius: "3px" }}
-              />
+            <button onClick={() => changeLang("en")} title="English" style={langBtnStyle(lang === "en")}>
+              <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
             </button>
           </div>
 
           {/* HAMBURGER */}
-          <button
-            onClick={() => setOpenMenu(!openMenu)}
-            className="nav-show"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              display: "none",
-              flexDirection: "column",
-              gap: "5px",
-              padding: "4px",
-              zIndex: 1,
-            }}
-          >
+          <button onClick={() => setOpenMenu(!openMenu)} className="nav-show" style={{ background: "none", border: "none", cursor: "pointer", display: "none", flexDirection: "column", gap: "5px", padding: "4px", zIndex: 1 }}>
             {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                style={{
-                  display: "block",
-                  width: "22px",
-                  height: "1.5px",
-                  background: "rgba(255,255,255,0.85)",
-                  borderRadius: "2px",
-                  transition: "transform 0.2s, opacity 0.2s",
-                  transform: openMenu
-                    ? i === 0
-                      ? "rotate(45deg) translate(5px, 5px)"
-                      : i === 2
-                      ? "rotate(-45deg) translate(5px, -5px)"
-                      : "scaleX(0)"
-                    : "none",
-                  opacity: openMenu && i === 1 ? 0 : 1,
-                }}
-              />
+              <span key={i} style={{ display: "block", width: "22px", height: "1.5px", background: "rgba(255,255,255,0.85)", borderRadius: "2px", transition: "transform 0.2s, opacity 0.2s", transform: openMenu ? i === 0 ? "rotate(45deg) translate(5px, 5px)" : i === 2 ? "rotate(-45deg) translate(5px, -5px)" : "scaleX(0)" : "none", opacity: openMenu && i === 1 ? 0 : 1 }} />
             ))}
           </button>
         </div>
 
         {/* MENU MOBILE */}
         {openMenu && (
-          <div
-            style={{
-              background: "#333699",
-              borderTop: "0.5px solid rgba(255,255,255,0.15)",
-              padding: "20px 24px 28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "20px",
-            }}
-          >
+          <div style={{ background: "#333699", borderTop: "0.5px solid rgba(255,255,255,0.15)", padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: "20px" }}>
             {t.nav.map((item) => (
-              <span
-                key={item.path}
-                onClick={() => {
-                  router.push(item.path);
-                  setOpenMenu(false);
-                }}
-                style={{
-                  color: pathname === item.path ? "#fbbf24" : "#fff",
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
+              <span key={item.path} onClick={() => { router.push(item.path); setOpenMenu(false); }} style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
                 {item.label}
               </span>
             ))}
-
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button
-                onClick={() => changeLang("fr")}
-                title="Français"
-                style={langBtnStyle(lang === "fr")}
-              >
-                <img
-                  src="https://flagcdn.com/w20/fr.png"
-                  srcSet="https://flagcdn.com/w40/fr.png 2x"
-                  width="20"
-                  height="14"
-                  alt="Français"
-                  style={{ display: "block", borderRadius: "2px" }}
-                />
+              <button onClick={() => changeLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
+                <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
               </button>
-              <button
-                onClick={() => changeLang("en")}
-                title="English"
-                style={langBtnStyle(lang === "en")}
-              >
-                <img
-                  src="https://flagcdn.com/w20/gb.png"
-                  srcSet="https://flagcdn.com/w40/gb.png 2x"
-                  width="20"
-                  height="14"
-                  alt="English"
-                  style={{ display: "block", borderRadius: "2px" }}
-                />
+              <button onClick={() => changeLang("en")} title="English" style={langBtnStyle(lang === "en")}>
+                <img src="https://flagcdn.com/w20/gb.png" srcSet="https://flagcdn.com/w40/gb.png 2x" width="20" height="14" alt="English" style={{ display: "block", borderRadius: "2px" }} />
               </button>
             </div>
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                marginTop: "4px",
-              }}
-            >
-              <button
-                onClick={() => { router.push("/login"); setOpenMenu(false); }}
-                style={{
-                  background: "transparent",
-                  color: "#fff",
-                  border: "0.5px solid rgba(255,255,255,0.35)",
-                  padding: "11px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                }}
-              >
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
+              <button onClick={() => { router.push("/login"); setOpenMenu(false); }} style={{ background: "transparent", color: "#fff", border: "0.5px solid rgba(255,255,255,0.35)", padding: "11px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
                 {t.login}
               </button>
-              <button
-                onClick={() => { router.push("/site/pricing"); setOpenMenu(false); }}
-                style={{
-                  background: "#fff",
-                  color: "#333699",
-                  border: "none",
-                  padding: "11px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
+              <button onClick={() => { router.push("/site/pricing"); setOpenMenu(false); }} style={{ background: "#fff", color: "#333699", border: "none", padding: "11px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
                 {t.signup}
               </button>
             </div>
@@ -608,12 +348,9 @@ export default function ContactPage() {
       </section>
 
       {/* ───── FORMULAIRE ───── */}
-      <section style={{ padding: "20px 24px 20px", position: "relative", zIndex: 1 }}>
+      <section style={{ padding: "20px 24px 60px", position: "relative", zIndex: 1 }}>
         <div style={{ maxWidth: "600px", margin: "0 auto" }}>
-          <div style={{
-            background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.12)",
-            borderRadius: "20px", padding: "36px 32px", position: "relative", overflow: "hidden", backdropFilter: "blur(8px)",
-          }}>
+          <div style={{ background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: "36px 32px", position: "relative", overflow: "hidden", backdropFilter: "blur(8px)" }}>
             <div style={{ position: "absolute", top: 0, left: "32px", right: "32px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)" }} />
 
             {sent ? (
@@ -622,11 +359,7 @@ export default function ContactPage() {
                 <h3 style={{ color: "#fff", fontSize: "20px", fontWeight: 600, marginBottom: "12px" }}>{successInfo.title}</h3>
                 <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "14px", lineHeight: 1.8, maxWidth: "380px", margin: "0 auto" }}>{successInfo.text}</p>
                 <button
-                  onClick={() => {
-                    setSent(false);
-                    setForm({ nom: "", email: "", type: "", message: "", titre: "", nom_eglise: "", note: 0 });
-                    setHoveredStar(0);
-                  }}
+                  onClick={() => { setSent(false); setForm({ nom: "", email: "", type: "", message: "", titre: "", nom_eglise: "", note: 0 }); setHoveredStar(0); }}
                   style={{ marginTop: "28px", background: "transparent", color: "rgba(255,255,255,0.7)", border: "0.5px solid rgba(255,255,255,0.25)", padding: "8px 20px", borderRadius: "8px", fontSize: "13px", cursor: "pointer" }}
                 >
                   {t.btnSendAnother}
@@ -661,9 +394,7 @@ export default function ContactPage() {
                   <label style={labelStyle}>{t.fieldType}</label>
                   <select
                     value={form.type}
-                    onChange={(e) =>
-                      setForm({ ...form, type: e.target.value, titre: "", nom_eglise: "", note: 0 })
-                    }
+                    onChange={(e) => setForm({ ...form, type: e.target.value, titre: "", nom_eglise: "", note: 0 })}
                     style={{
                       width: "100%", background: "rgba(30,35,100,0.85)", border: "0.5px solid rgba(255,255,255,0.18)",
                       borderRadius: "10px", padding: "10px 14px", color: form.type ? "#fff" : "rgba(255,255,255,0.3)",
@@ -678,7 +409,7 @@ export default function ContactPage() {
                     <option value="amelioration" style={{ background: "#333699", color: "#fff" }}>{t.typeAmelioration}</option>
                     <option value="question" style={{ background: "#333699", color: "#fff" }}>{t.typeQuestion}</option>
                     <option value="temoignage" style={{ background: "#333699", color: "#fff" }}>{t.typeTemoignage}</option>
-                    <option value="reseaux" style={{ background: "#333699", color: "#fff" }}>{t.typeRappel}</option>
+                    <option value="reseaux" style={{ background: "#333699", color: "#fff" }}>{t.typeReseaux}</option>
                   </select>
                 </div>
 
@@ -687,46 +418,17 @@ export default function ContactPage() {
                   <>
                     <div>
                       <label style={labelStyle}>{t.fieldTitre}</label>
-                      <input
-                        type="text"
-                        placeholder={t.fieldTitrePlaceholder}
-                        value={form.titre}
-                        onChange={(e) => setForm({ ...form, titre: e.target.value })}
-                        style={inputStyle}
-                        onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
-                        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
-                      />
+                      <input type="text" placeholder={t.fieldTitrePlaceholder} value={form.titre} onChange={(e) => setForm({ ...form, titre: e.target.value })} style={inputStyle} onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")} onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")} />
                     </div>
                     <div>
                       <label style={labelStyle}>{t.fieldEglise}</label>
-                      <input
-                        type="text"
-                        placeholder={t.fieldEglisePlaceholder}
-                        value={form.nom_eglise}
-                        onChange={(e) => setForm({ ...form, nom_eglise: e.target.value })}
-                        style={inputStyle}
-                        onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
-                        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
-                      />
+                      <input type="text" placeholder={t.fieldEglisePlaceholder} value={form.nom_eglise} onChange={(e) => setForm({ ...form, nom_eglise: e.target.value })} style={inputStyle} onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")} onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")} />
                     </div>
                     <div>
                       <label style={labelStyle}>{t.fieldNote}</label>
                       <div style={{ display: "flex", gap: "8px" }}>
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <span
-                            key={star}
-                            onClick={() => setForm({ ...form, note: star })}
-                            onMouseEnter={() => setHoveredStar(star)}
-                            onMouseLeave={() => setHoveredStar(0)}
-                            style={{
-                              fontSize: "32px", cursor: "pointer", transition: "transform 0.15s",
-                              transform: (hoveredStar || form.note) >= star ? "scale(1.2)" : "scale(1)",
-                              color: (hoveredStar || form.note) >= star ? "#fbbf24" : "rgba(255,255,255,0.2)",
-                              userSelect: "none",
-                            }}
-                          >
-                            ★
-                          </span>
+                          <span key={star} onClick={() => setForm({ ...form, note: star })} onMouseEnter={() => setHoveredStar(star)} onMouseLeave={() => setHoveredStar(0)} style={{ fontSize: "32px", cursor: "pointer", transition: "transform 0.15s", transform: (hoveredStar || form.note) >= star ? "scale(1.2)" : "scale(1)", color: (hoveredStar || form.note) >= star ? "#fbbf24" : "rgba(255,255,255,0.2)", userSelect: "none" }}>★</span>
                         ))}
                       </div>
                     </div>
@@ -742,7 +444,7 @@ export default function ContactPage() {
                       form.type === "amelioration" ? t.placeholderAmelioration :
                       form.type === "question" ? t.placeholderQuestion :
                       form.type === "temoignage" ? t.placeholderTemoignage :
-                      form.type === "reseaux" ? t.placeholderRappel :                      
+                      form.type === "reseaux" ? t.placeholderReseaux :
                       t.placeholderDefault
                     }
                     rows={5}
@@ -760,21 +462,14 @@ export default function ContactPage() {
                 </div>
 
                 {error && (
-                  <p style={{ color: "#fca5a5", fontSize: "13px", textAlign: "center", margin: 0 }}>
-                    {error}
-                  </p>
+                  <p style={{ color: "#fca5a5", fontSize: "13px", textAlign: "center", margin: 0 }}>{error}</p>
                 )}
 
                 <div style={{ display: "flex", justifyContent: "center" }}>
                   <button
                     onClick={handleSubmit}
                     disabled={loading}
-                    style={{
-                      background: loading ? "rgba(255,255,255,0.5)" : "#fff",
-                      color: "#333699", border: "none",
-                      padding: "13px 36px", borderRadius: "10px", fontSize: "15px",
-                      fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", transition: "opacity 0.2s",
-                    }}
+                    style={{ background: loading ? "rgba(255,255,255,0.5)" : "#fff", color: "#333699", border: "none", padding: "13px 36px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", transition: "opacity 0.2s" }}
                     onMouseEnter={(e) => { if (!loading) e.currentTarget.style.opacity = "0.9"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
                   >
@@ -788,19 +483,10 @@ export default function ContactPage() {
       </section>
 
       {/* ───── RÉSEAUX SOCIAUX ───── */}
-      <section style={{ padding: "32px 24px 0", position: "relative", zIndex: 1 }}>
+      <section style={{ padding: "32px 24px 80px", position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "40px", flexWrap: "wrap" }}>
           {socialLinks.map((s) => (
-            <a
-              key={s.label}
-              href={s.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={s.label}
-              style={{ color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", textDecoration: "none", transition: "opacity 0.2s" }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.6")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-            >
+            <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" title={s.label} style={{ color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", textDecoration: "none", transition: "opacity 0.2s" }} onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.6")} onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
               {s.icon}
               <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", letterSpacing: "0.06em" }}>{s.label}</span>
             </a>
@@ -808,152 +494,14 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* ───── RAPPEL 48H ───── */}
-      <section style={{ padding: "48px 24px 64px", position: "relative", zIndex: 1 }}>
-        <div style={{ maxWidth: "520px", margin: "0 auto" }}>
-          <div style={{
-            background: "rgba(255,255,255,0.06)",
-            border: "0.5px solid rgba(255,255,255,0.15)",
-            borderRadius: "20px",
-            padding: "32px 28px",
-            backdropFilter: "blur(8px)",
-            position: "relative",
-            overflow: "hidden",
-          }}>
-            <div style={{ position: "absolute", top: 0, left: "28px", right: "28px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(251,191,36,0.35), transparent)" }} />
-
-            {callbackSent ? (
-              <div style={{ textAlign: "center", padding: "16px 0" }}>
-                <div style={{ fontSize: "36px", marginBottom: "12px" }}>📞</div>
-                <p style={{ color: "#fff", fontSize: "16px", fontWeight: 600, margin: "0 0 6px" }}>{t.callbackSuccess}</p>
-              </div>
-            ) : (
-              <>
-                <div style={{ marginBottom: "22px" }}>
-                  <h3 style={{ color: "#fff", fontSize: "18px", fontWeight: 600, margin: "0 0 6px" }}>
-                    {t.callbackTitle}
-                  </h3>
-                  <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "13px", margin: 0, lineHeight: 1.6 }}>
-                    {t.callbackSub}
-                  </p>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }} className="form-row">
-                    <div>
-                      <label style={labelStyle}>{t.callbackName}</label>
-                      <input
-                        type="text"
-                        placeholder={t.callbackNamePlaceholder}
-                        value={callback.nom}
-                        onChange={(e) => setCallback({ ...callback, nom: e.target.value })}
-                        style={inputStyle}
-                        onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
-                        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
-                      />
-                    </div>
-                    <div>
-                      <label style={labelStyle}>{t.callbackEmail}</label>
-                      <input
-                        type="email"
-                        placeholder={t.callbackEmailPlaceholder}
-                        value={callback.email}
-                        onChange={(e) => setCallback({ ...callback, email: e.target.value })}
-                        style={inputStyle}
-                        onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
-                        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={labelStyle}>{t.callbackNeed}</label>
-                    <textarea
-                      maxLength={200}
-                      rows={3}
-                      placeholder={t.callbackNeedPlaceholder}
-                      value={callback.besoin}
-                      onChange={(e) => setCallback({ ...callback, besoin: e.target.value })}
-                      style={{ ...inputStyle, resize: "none", fontFamily: "inherit" }}
-                      onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
-                      onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
-                    />
-                    <div style={{ textAlign: "right", fontSize: "11px", color: "rgba(255,255,255,0.35)", marginTop: "4px" }}>
-                      {callback.besoin.length}/200
-                    </div>
-                  </div>
-
-                  {callbackError && (
-                    <p style={{ color: "#fca5a5", fontSize: "13px", textAlign: "center", margin: 0 }}>{callbackError}</p>
-                  )}
-
-                  <div style={{ display: "flex", justifyContent: "center" }}>
-                    <button
-                      onClick={handleCallback}
-                      disabled={callbackLoading}
-                      style={{
-                        background: callbackLoading ? "rgba(251,191,36,0.4)" : "rgba(251,191,36,0.15)",
-                        color: "#fbbf24",
-                        border: "0.5px solid rgba(251,191,36,0.4)",
-                        padding: "11px 28px",
-                        borderRadius: "10px",
-                        fontSize: "14px",
-                        fontWeight: 600,
-                        cursor: callbackLoading ? "not-allowed" : "pointer",
-                        transition: "opacity 0.2s",
-                      }}
-                      onMouseEnter={(e) => { if (!callbackLoading) e.currentTarget.style.background = "rgba(251,191,36,0.25)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(251,191,36,0.15)"; }}
-                    >
-                      {callbackLoading ? t.callbackBtnSending : t.callbackBtn}
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
-
       {/* ───── FOOTER ───── */}
-      <footer
-        style={{
-          borderTop: "0.5px solid rgba(255,255,255,0.1)",
-          padding: "20px 24px",
-          boxSizing: "border-box",
-          width: "100%",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1100px",
-            margin: "0 auto",
-            textAlign: "center",
-            color: "rgba(255,255,255,0.35)",
-            fontSize: "14px",
-          }}
-        >
-          <div>
-            © {new Date().getFullYear()} SoulTrack. {t.footer}
-          </div>
-          <div
-            style={{
-              marginTop: "10px",
-              display: "flex",
-              justifyContent: "center",
-              gap: "16px",
-              flexWrap: "wrap",
-            }}
-          >
-            <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-              Terms
-            </span>
-            <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-              Privacy
-            </span>
-            <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-              Refund
-            </span>
+      <footer style={{ borderTop: "0.5px solid rgba(255,255,255,0.1)", padding: "20px 24px", boxSizing: "border-box", width: "100%" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "14px" }}>
+          <div>© {new Date().getFullYear()} SoulTrack. {t.footer}</div>
+          <div style={{ marginTop: "10px", display: "flex", justifyContent: "center", gap: "16px", flexWrap: "wrap" }}>
+            <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>Terms</span>
+            <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>Privacy</span>
+            <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>Refund</span>
           </div>
         </div>
       </footer>

@@ -4,9 +4,11 @@ import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import { Great_Vibes } from "next/font/google";
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
+const searchParams = useSearchParams();
 
 // ─── DICTIONNAIRE ────────────────────────────────────────────────────────────
 const translations = {
@@ -148,7 +150,9 @@ export default function ContactPage() {
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [form, setForm] = useState({ nom: "", email: "", type: "", message: "", titre: "", nom_eglise: "", note: 0 });
+  const [form, setForm] = useState({nom: "", email: "", type: searchParams.get("type") || "",
+  message: "", titre: "", nom_eglise: "", note: 0
+});
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

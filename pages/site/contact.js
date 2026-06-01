@@ -4,8 +4,8 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
-import { Great_Vibes } from "next/font/google";
 
+import { Great_Vibes } from "next/font/google";
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
 
 // ─── DICTIONNAIRE ────────────────────────────────────────────────────────────
@@ -146,20 +146,35 @@ const translations = {
 
 export default function ContactPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [form, setForm] = useState({nom: "", email: "", type: searchParams.get("type") || "",
-  message: "", titre: "", nom_eglise: "", note: 0
-});
+  const [form, setForm] = useState({
+    nom: "",
+    email: "",
+    type: "",
+    message: "",
+    titre: "",
+    nom_eglise: "",
+    note: 0,
+  });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hoveredStar, setHoveredStar] = useState(0);
-  const searchParams = useSearchParams(); 
   const { lang, changeLang } = useLang();
-  const pathname = usePathname();
 
   const t = translations[lang];
+
+  // ── Lire le paramètre ?type= après hydratation ──
+  useEffect(() => {
+    const typeParam = searchParams.get("type");
+    if (typeParam) {
+      setForm((prev) => ({ ...prev, type: typeParam }));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);

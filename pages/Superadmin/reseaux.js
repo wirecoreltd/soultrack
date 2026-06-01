@@ -61,7 +61,7 @@ function ReseauxContent() {
   }
 
   return (
-    <div style={{ background: "#333699", minHeight: "100vh" }}>
+    <div style={{ background: "#333699", minHeight: "100vh", paddingTop: "24px" }}>
       <HeaderPages />
 
       <div style={{ textAlign: "center", padding: "28px 24px 0" }}>

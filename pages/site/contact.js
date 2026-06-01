@@ -1,14 +1,12 @@
 "use client"; 
 import { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-
 import { Great_Vibes } from "next/font/google";
+
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
-const searchParams = useSearchParams();
 
 // ─── DICTIONNAIRE ────────────────────────────────────────────────────────────
 const translations = {
@@ -157,6 +155,7 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hoveredStar, setHoveredStar] = useState(0);
+  const searchParams = useSearchParams(); 
   const { lang, changeLang } = useLang();
   const pathname = usePathname();
 

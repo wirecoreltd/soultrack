@@ -172,7 +172,7 @@ export default function PricingPage() {
   }
 
   return (
-    <div style={{ background: "#333699", minHeight: "100vh" }}>
+    <div style={{ background: "#333699", minHeight: "100vh", overflowX: "hidden" }}>
 
       {/* GLOW */}
       <div style={{ position: "absolute", width: "800px", height: "800px", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 40%, transparent 65%)", top: "80px", left: "50%", transform: "translateX(-50%)", pointerEvents: "none", zIndex: 0 }} />

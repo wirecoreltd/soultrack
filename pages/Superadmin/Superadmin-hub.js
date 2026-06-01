@@ -61,21 +61,37 @@ function SuperadminHubContent() {
     </div>   
 
       {/* Cartes principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-5xl mb-6">
-        <Link href="/Superadmin/temoignages" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
-          <div className="text-4xl mb-2">💡</div>
-          <div className="text-lg font-bold text-gray-800 text-center">Témoignages</div>
-        </Link>  
-        
-        <Link href="/Superadmin/page" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
-          <div className="text-4xl mb-2">💰</div>
-          <div className="text-lg font-bold text-gray-800 text-center">Billing</div>
-        </Link> 
-        <Link href="/Superadmin/Features" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
-          <div className="text-4xl mb-2">🔧</div>
-          <div className="text-lg font-bold text-gray-800 text-center">Modules par église</div>
-        </Link>
-      </div>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-5xl mb-6">
+  <Link href="/Superadmin/temoignages" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+    <div className="text-4xl mb-2">💡</div>
+    <div className="text-lg font-bold text-gray-800 text-center">Témoignages</div>
+  </Link>
+
+  <Link href="/Superadmin/ameliorations" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+    <div className="text-4xl mb-2">🚀</div>
+    <div className="text-lg font-bold text-gray-800 text-center">Améliorations</div>
+  </Link>
+
+  <Link href="/Superadmin/reseaux" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+    <div className="text-4xl mb-2">🌐</div>
+    <div className="text-lg font-bold text-gray-800 text-center">Réseaux</div>
+  </Link>
+
+  <Link href="/Superadmin/questions" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+    <div className="text-4xl mb-2">❓</div>
+    <div className="text-lg font-bold text-gray-800 text-center">Questions</div>
+  </Link>
+
+  <Link href="/Superadmin/page" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+    <div className="text-4xl mb-2">💰</div>
+    <div className="text-lg font-bold text-gray-800 text-center">Billing</div>
+  </Link>
+
+  <Link href="/Superadmin/Features" className="flex-1 bg-white rounded-2xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-lg transition-all duration-200 cursor-pointer h-32">
+    <div className="text-4xl mb-2">🔧</div>
+    <div className="text-lg font-bold text-gray-800 text-center">Modules par église</div>
+  </Link>
+</div>
       
       <Footer />
     </div>

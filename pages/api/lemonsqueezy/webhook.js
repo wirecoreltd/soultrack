@@ -17,6 +17,8 @@ async function getRawBody(req) {
   });
 }
 
+const DUREE_MOIS = { "1m": 1, "6m": 6, "1a": 12 };
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).end();
 
@@ -44,14 +46,17 @@ export default async function handler(req, res) {
   const custom   = payload.meta?.custom_data;
   const egliseId = custom?.eglise_id;
   const planId   = custom?.plan_id;
+  const duree    = custom?.duree || "1m";
 
   if (!egliseId || !planId || attrs?.status !== "paid") {
     console.warn("Webhook: données manquantes ou statut non payé");
     return res.status(200).json({ skipped: true });
   }
 
+  const mois      = DUREE_MOIS[duree] || 1;
   const now       = new Date();
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  const periodEnd = new Date(now);
+  periodEnd.setMonth(periodEnd.getMonth() + mois);
 
   const { error } = await supabaseAdmin
     .from("subscriptions")
@@ -59,7 +64,7 @@ export default async function handler(req, res) {
       plan_id:              planId,
       statut:               "active",
       current_period_start: now.toISOString(),
-      current_period_end:   nextMonth.toISOString(),
+      current_period_end:   periodEnd.toISOString(),
       updated_at:           now.toISOString(),
       started_at:           now.toISOString(),
     })
@@ -70,6 +75,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 
-  console.log(`Subscription mise à jour : eglise=${egliseId} plan=${planId}`);
+  console.log(`Subscription mise à jour : eglise=${egliseId} plan=${planId} duree=${duree} (${mois} mois)`);
   return res.status(200).json({ success: true });
 }

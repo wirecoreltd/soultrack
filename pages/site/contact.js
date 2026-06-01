@@ -66,6 +66,13 @@ const translations = {
         title: "Témoignage reçu, merci !",
         text: "Votre témoignage nous touche profondément. Que Dieu soit glorifié à travers chaque vie transformée. Merci de partager ce que Dieu accomplit.",
       },
+      typeRappel: "🔗 Réseaux",
+placeholderRappel: "Décrivez brièvement votre réseau d'églises et ce que vous recherchez...",
+successRappel: {
+  icon: "🔗",
+  title: "Demande reçue !",
+  text: "Merci pour votre intérêt. Notre équipe vous contactera sous 48h pour échanger sur votre réseau d'églises.",
+},
     },
     callbackTitle: "Préférez un rappel ?",
     callbackSub: "Donnez-nous un bref aperçu de votre besoin, nous vous contactons sous 48h.",
@@ -137,6 +144,13 @@ const translations = {
         title: "Testimony received, thank you!",
         text: "Your testimony touches us deeply. May God be glorified through every transformed life. Thank you for sharing what God is doing.",
       },
+      typeRappel: "🔗 Networks",
+placeholderRappel: "Briefly describe your church network and what you're looking for...",
+successRappel: {
+  icon: "🔗",
+  title: "Request received!",
+  text: "Thank you for your interest. Our team will reach out within 48 hours to discuss your church network.",
+},
     },
     callbackTitle: "Prefer a callback?",
     callbackSub: "Give us a quick overview of your need, and we'll reach out within 48 hours.",
@@ -274,7 +288,7 @@ export default function ContactPage() {
     },
   ];
 
-  const successInfo = t.successMessages[form.type] || t.successMessages.question;
+  const successInfo = t.successMessages[form.type] || t.successMessages.reseaux || t.successMessages.question;
 
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
@@ -664,6 +678,7 @@ export default function ContactPage() {
                     <option value="amelioration" style={{ background: "#333699", color: "#fff" }}>{t.typeAmelioration}</option>
                     <option value="question" style={{ background: "#333699", color: "#fff" }}>{t.typeQuestion}</option>
                     <option value="temoignage" style={{ background: "#333699", color: "#fff" }}>{t.typeTemoignage}</option>
+                    <option value="reseaux" style={{ background: "#333699", color: "#fff" }}>{t.typeRappel}</option>
                   </select>
                 </div>
 
@@ -727,6 +742,7 @@ export default function ContactPage() {
                       form.type === "amelioration" ? t.placeholderAmelioration :
                       form.type === "question" ? t.placeholderQuestion :
                       form.type === "temoignage" ? t.placeholderTemoignage :
+                      form.type === "reseaux" ? t.placeholderRappel :                      
                       t.placeholderDefault
                     }
                     rows={5}

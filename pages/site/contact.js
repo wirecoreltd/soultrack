@@ -67,6 +67,18 @@ const translations = {
         text: "Votre témoignage nous touche profondément. Que Dieu soit glorifié à travers chaque vie transformée. Merci de partager ce que Dieu accomplit.",
       },
     },
+    callbackTitle: "Préférez un rappel ?",
+    callbackSub: "Donnez-nous un bref aperçu de votre besoin, nous vous contactons sous 48h.",
+    callbackName: "Prénom",
+    callbackNamePlaceholder: "Jean",
+    callbackEmail: "Email",
+    callbackEmailPlaceholder: "jean@exemple.com",
+    callbackNeed: "Votre besoin en quelques mots",
+    callbackNeedPlaceholder: "Ex : Je cherche à gérer les membres de mon église de 200 personnes...",
+    callbackBtn: "Me faire rappeler",
+    callbackBtnSending: "Envoi...",
+    callbackSuccess: "Reçu ! Nous vous contactons sous 48h.",
+    callbackError: "Une erreur est survenue. Réessayez.",
     footer: "Tous droits réservés.",
   },
   en: {
@@ -126,6 +138,18 @@ const translations = {
         text: "Your testimony touches us deeply. May God be glorified through every transformed life. Thank you for sharing what God is doing.",
       },
     },
+    callbackTitle: "Prefer a callback?",
+    callbackSub: "Give us a quick overview of your need, and we'll reach out within 48 hours.",
+    callbackName: "First name",
+    callbackNamePlaceholder: "John",
+    callbackEmail: "Email",
+    callbackEmailPlaceholder: "john@example.com",
+    callbackNeed: "Your need in a few words",
+    callbackNeedPlaceholder: "e.g. I want to manage members in my 200-person church...",
+    callbackBtn: "Request a callback",
+    callbackBtnSending: "Sending...",
+    callbackSuccess: "Got it! We'll reach out within 48 hours.",
+    callbackError: "An error occurred. Please try again.",
     footer: "All rights reserved.",
   },
 };
@@ -139,6 +163,10 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hoveredStar, setHoveredStar] = useState(0);
+  const [callback, setCallback] = useState({ nom: "", email: "", besoin: "" });
+  const [callbackSent, setCallbackSent] = useState(false);
+  const [callbackLoading, setCallbackLoading] = useState(false);
+  const [callbackError, setCallbackError] = useState("");
   const { lang, changeLang } = useLang();
   const pathname = usePathname();
 
@@ -179,6 +207,27 @@ export default function ContactPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCallback = async () => {
+    if (!callback.nom || !callback.email || !callback.besoin) {
+      setCallbackError(t.callbackError);
+      return;
+    }
+    setCallbackError("");
+    setCallbackLoading(true);
+    try {
+      const { error: insertError } = await supabase
+        .from("contact")
+        .insert([{ nom: callback.nom, email: callback.email, type: "rappel", message: callback.besoin }]);
+      if (insertError) throw insertError;
+      setCallbackSent(true);
+    } catch (err) {
+      setCallbackError(t.callbackError);
+      console.error(err);
+    } finally {
+      setCallbackLoading(false);
     }
   };
 
@@ -458,7 +507,6 @@ export default function ContactPage() {
               </span>
             ))}
 
-            {/* Switcher langue dans le menu mobile — changeLang au lieu de setLang */}
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
               <button
                 onClick={() => changeLang("fr")}
@@ -724,7 +772,7 @@ export default function ContactPage() {
       </section>
 
       {/* ───── RÉSEAUX SOCIAUX ───── */}
-      <section style={{ padding: "32px 24px 80px", position: "relative", zIndex: 1 }}>
+      <section style={{ padding: "32px 24px 0", position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "40px", flexWrap: "wrap" }}>
           {socialLinks.map((s) => (
             <a
@@ -744,51 +792,155 @@ export default function ContactPage() {
         </div>
       </section>
 
-       {/* ───── FOOTER ───── */}
-<footer
-  style={{
-    borderTop: "0.5px solid rgba(255,255,255,0.1)",
-    padding: "20px 24px",
-    boxSizing: "border-box",
-    width: "100%",
-  }}
->
-  <div
-    style={{
-      maxWidth: "1100px",
-      margin: "0 auto",
-      textAlign: "center",
-      color: "rgba(255,255,255,0.35)",
-      fontSize: "14px",
-    }}
-  >
-    {/* COPYRIGHT */}
-    <div>
-      © {new Date().getFullYear()} SoulTrack. {t.footer}
-    </div>
+      {/* ───── RAPPEL 48H ───── */}
+      <section style={{ padding: "48px 24px 64px", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: "520px", margin: "0 auto" }}>
+          <div style={{
+            background: "rgba(255,255,255,0.06)",
+            border: "0.5px solid rgba(255,255,255,0.15)",
+            borderRadius: "20px",
+            padding: "32px 28px",
+            backdropFilter: "blur(8px)",
+            position: "relative",
+            overflow: "hidden",
+          }}>
+            <div style={{ position: "absolute", top: 0, left: "28px", right: "28px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(251,191,36,0.35), transparent)" }} />
 
-    {/* LINKS PADDLE */}
-    <div
-      style={{
-        marginTop: "10px",
-        display: "flex",
-        justifyContent: "center",
-        gap: "16px",
-        flexWrap: "wrap",
-      }}
-    >
-      <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-        Terms
-      </span>
-      <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-        Privacy
-      </span>
-      <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-        Refund
-      </span>
-    </div>
-  </div>
-</footer>
+            {callbackSent ? (
+              <div style={{ textAlign: "center", padding: "16px 0" }}>
+                <div style={{ fontSize: "36px", marginBottom: "12px" }}>📞</div>
+                <p style={{ color: "#fff", fontSize: "16px", fontWeight: 600, margin: "0 0 6px" }}>{t.callbackSuccess}</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ marginBottom: "22px" }}>
+                  <h3 style={{ color: "#fff", fontSize: "18px", fontWeight: 600, margin: "0 0 6px" }}>
+                    {t.callbackTitle}
+                  </h3>
+                  <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "13px", margin: 0, lineHeight: 1.6 }}>
+                    {t.callbackSub}
+                  </p>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }} className="form-row">
+                    <div>
+                      <label style={labelStyle}>{t.callbackName}</label>
+                      <input
+                        type="text"
+                        placeholder={t.callbackNamePlaceholder}
+                        value={callback.nom}
+                        onChange={(e) => setCallback({ ...callback, nom: e.target.value })}
+                        style={inputStyle}
+                        onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
+                        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>{t.callbackEmail}</label>
+                      <input
+                        type="email"
+                        placeholder={t.callbackEmailPlaceholder}
+                        value={callback.email}
+                        onChange={(e) => setCallback({ ...callback, email: e.target.value })}
+                        style={inputStyle}
+                        onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
+                        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>{t.callbackNeed}</label>
+                    <textarea
+                      maxLength={200}
+                      rows={3}
+                      placeholder={t.callbackNeedPlaceholder}
+                      value={callback.besoin}
+                      onChange={(e) => setCallback({ ...callback, besoin: e.target.value })}
+                      style={{ ...inputStyle, resize: "none", fontFamily: "inherit" }}
+                      onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
+                      onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
+                    />
+                    <div style={{ textAlign: "right", fontSize: "11px", color: "rgba(255,255,255,0.35)", marginTop: "4px" }}>
+                      {callback.besoin.length}/200
+                    </div>
+                  </div>
+
+                  {callbackError && (
+                    <p style={{ color: "#fca5a5", fontSize: "13px", textAlign: "center", margin: 0 }}>{callbackError}</p>
+                  )}
+
+                  <div style={{ display: "flex", justifyContent: "center" }}>
+                    <button
+                      onClick={handleCallback}
+                      disabled={callbackLoading}
+                      style={{
+                        background: callbackLoading ? "rgba(251,191,36,0.4)" : "rgba(251,191,36,0.15)",
+                        color: "#fbbf24",
+                        border: "0.5px solid rgba(251,191,36,0.4)",
+                        padding: "11px 28px",
+                        borderRadius: "10px",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        cursor: callbackLoading ? "not-allowed" : "pointer",
+                        transition: "opacity 0.2s",
+                      }}
+                      onMouseEnter={(e) => { if (!callbackLoading) e.currentTarget.style.background = "rgba(251,191,36,0.25)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(251,191,36,0.15)"; }}
+                    >
+                      {callbackLoading ? t.callbackBtnSending : t.callbackBtn}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ───── FOOTER ───── */}
+      <footer
+        style={{
+          borderTop: "0.5px solid rgba(255,255,255,0.1)",
+          padding: "20px 24px",
+          boxSizing: "border-box",
+          width: "100%",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1100px",
+            margin: "0 auto",
+            textAlign: "center",
+            color: "rgba(255,255,255,0.35)",
+            fontSize: "14px",
+          }}
+        >
+          <div>
+            © {new Date().getFullYear()} SoulTrack. {t.footer}
+          </div>
+          <div
+            style={{
+              marginTop: "10px",
+              display: "flex",
+              justifyContent: "center",
+              gap: "16px",
+              flexWrap: "wrap",
+            }}
+          >
+            <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+              Terms
+            </span>
+            <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+              Privacy
+            </span>
+            <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+              Refund
+            </span>
+          </div>
+        </div>
+      </footer>
 
       <style>{`
         body { overflow-x: hidden; }

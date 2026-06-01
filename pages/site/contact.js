@@ -361,7 +361,7 @@ export default function ContactPage() {
         <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "clamp(0.9rem, 1.8vw, 1rem)", maxWidth: "560px", margin: "0 auto", lineHeight: 1.8 }}>
           {t.heroPara}
           <br />
-          <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.92em" }}>{t.heroSub}</span>
+          <span style={{ color: "#fbbf24", fontSize: "0.92em" }}>{t.heroSub}</span>
         </p>
       </section>
 

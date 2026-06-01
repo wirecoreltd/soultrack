@@ -179,7 +179,7 @@ export default function PricingPage() {
       <div style={{ position: "absolute", width: "600px", height: "600px", borderRadius: "50%", background: "radial-gradient(circle, rgba(251,191,36,0.07) 0%, rgba(255,255,255,0.02) 40%, transparent 65%)", top: "600px", left: "50%", transform: "translateX(-50%)", pointerEvents: "none", zIndex: 0 }} />
 
       {/* ───── HEADER ───── */}
-      <header style={{ background: scrolled ? "rgba(51,54,153,0.92)" : "transparent", borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent", position: "sticky", top: 0, zIndex: 100, backdropFilter: scrolled ? "blur(16px)" : "none", transition: "background 0.3s, border-color 0.3s", width: "100%" }}>
+      <header style={{ background: scrolled ? "rgba(51,54,153,0.92)" : "transparent", borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent", position: "relativey", zIndex: 100, backdropFilter: scrolled ? "blur(16px)" : "none", transition: "background 0.3s, border-color 0.3s", width: "100%" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "22px 24px", height: "88px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", boxSizing: "border-box" }}>
 
           <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>

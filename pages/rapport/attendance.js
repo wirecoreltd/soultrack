@@ -1019,7 +1019,7 @@ function Attendance() {
           </div>
         ) : reports.length === 0 ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center flex flex-col gap-3 mt-4">
-            <p className="text-white/40 text-sm">{t.aucunRapport}</p>
+            <p className="text-white text-sm">{t.aucunRapport}</p>
             <button onClick={handleAjouter}
               className="mx-auto px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
               {t.ajouterRapport}

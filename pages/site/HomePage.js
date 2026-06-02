@@ -5,11 +5,6 @@ import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
 
-const greatVibes = Great_Vibes({
-  subsets: ["latin"],
-  weight: "400",
-});
-
 const translations = {
   fr: {
     tagline:

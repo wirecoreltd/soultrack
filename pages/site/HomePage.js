@@ -6,7 +6,6 @@ import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
 
 import { Great_Vibes } from "next/font/google";
-
 const greatVibes = Great_Vibes({
   subsets: ["latin"],
   weight: "400",
@@ -364,28 +363,28 @@ export default function HomePage() {
         >
           {/* LOGO */}
           <div
-  onClick={() => router.push("/site/HomePage")}
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    cursor: "pointer",
-    zIndex: 1,
-    flexShrink: 0,
-  }}
->
-  <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
-  <span
-  className={greatVibes.className}
-  style={{
-    color: "#fff",
-    fontSize: "22px",
-    fontWeight: 500,
-  }}
->
-  SoulTrack
-</span>
-</div>
+            onClick={() => router.push("/site/HomePage")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              cursor: "pointer",
+              zIndex: 1,
+              flexShrink: 0,
+            }}
+          >
+            <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
+            <span
+              style={{
+                color: "#fff",
+                fontSize: "22px",
+                fontWeight: 500,
+                fontFamily: "'Great Vibes', cursive",
+              }}
+            >
+              SoulTrack
+            </span>
+          </div>
 
           {/* NAV desktop */}
           <nav

@@ -296,7 +296,8 @@ function SectionTitle({ children }) {
   return <p className="text-[11px] font-semibold uppercase tracking-widest text-white mb-3">{children}</p>;
 }
 function KpiCard({ label, value, sub, accent }) {
-  const c = { green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400", white: "text-white", blue: "text-blue-300", pink: "text-pink-300" };
+  const c = { green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400", white: "text-white", blue: "text-blue-300", pink: "text-pink-300",cyan: "text-cyan-300",
+  lime: "text-lime-300" };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
       <p className="text-xs text-white">{label}</p>

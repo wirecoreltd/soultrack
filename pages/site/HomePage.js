@@ -363,28 +363,28 @@ export default function HomePage() {
         >
           {/* LOGO */}
           <div
-            onClick={() => router.push("/site/HomePage")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              cursor: "pointer",
-              zIndex: 1,
-              flexShrink: 0,
-            }}
-          >
-            <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
-            <span
-              style={{
-                color: "#fff",
-                fontSize: "22px",
-                fontWeight: 500,
-                fontFamily: "'Great Vibes', cursive",
-              }}
-            >
-              SoulTrack
-            </span>
-          </div>
+  onClick={() => router.push("/site/HomePage")}
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    cursor: "pointer",
+    zIndex: 1,
+    flexShrink: 0,
+  }}
+>
+  <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
+  <span
+    className={greatVibes.className}  {/* ← remplacez fontFamily inline par ça */}
+    style={{
+      color: "#fff",
+      fontSize: "22px",
+      fontWeight: 500,
+    }}
+  >
+    SoulTrack
+  </span>
+</div>
 
           {/* NAV desktop */}
           <nav

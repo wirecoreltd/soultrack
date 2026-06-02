@@ -375,7 +375,7 @@ export default function HomePage() {
 >
   <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
   <span
-    className={greatVibes.className}  {/* ← remplacez fontFamily inline par ça */}
+    className={greatVibes.className}
     style={{
       color: "#fff",
       fontSize: "22px",

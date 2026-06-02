@@ -1,6 +1,6 @@
+import { Great_Vibes } from "next/font/google";
 import { MembersProvider } from "../context/MembersContext";
 import { FeaturesProvider } from "../components/FeaturesContext";
-import { Great_Vibes } from "next/font/google";
 
 const greatVibes = Great_Vibes({
   subsets: ["latin"],

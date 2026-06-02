@@ -337,7 +337,7 @@ function BlocParOfficiant({ rapports, t }) {
   });
   const lignes = Object.entries(parOfficiant).sort((a, b) => (b[1].h + b[1].f) - (a[1].h + a[1].f));
   const maxTot = Math.max(...lignes.map(([, v]) => v.h + v.f), 1);
-  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">{t.aucuneDonnee}</p>;
+  if (!lignes.length) return <p className="text-white text-sm text-center py-4">{t.aucuneDonnee}</p>;
   return (
     <div className="flex flex-col gap-2">
       {lignes.map(([nom, { h, f, nb }]) => {

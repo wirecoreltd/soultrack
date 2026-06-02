@@ -352,7 +352,7 @@ function BlocKpiGlobaux({ reports, t }) {
         <KpiCard label={t.kpiHommes} value={totalHommes} sub={t.kpiTotal2} accent="blue" />
         <KpiCard label={t.kpiFemmes} value={totalFemmes} sub={t.kpiTotal2} accent="pink" />
         <KpiCard label={t.kpiJeunes} value={totalJeunes} sub={t.kpiTotal2} accent="amber" />
-        <KpiCard label={t.kpiEnfants} value={totalEnfants} sub={t.kpiTotal2} accent="Cyan" />
+        <KpiCard label={t.kpiEnfants} value={totalEnfants} sub={t.kpiTotal2} accent="cyan" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <KpiCard label={t.kpiConnectes} value={totalConnectes} sub={t.kpiTotal2} accent="amber" />

@@ -1,9 +1,16 @@
 import { MembersProvider } from "../context/MembersContext";
 import { FeaturesProvider } from "../components/FeaturesContext";
+import { Great_Vibes } from "next/font/google";
+
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-great-vibes",
+});
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr">
+    <html lang="fr" className={greatVibes.variable}>
       <body>
         <MembersProvider>
           <FeaturesProvider>

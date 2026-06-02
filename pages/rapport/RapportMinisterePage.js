@@ -10,7 +10,7 @@ import { useLang } from "../../hooks/useLang";
 // ─── TRANSLATIONS ───────────────────────────────────────────────
 const translations = {
   fr: {
-    title: "Pilotage", titleAccent: "Pastoral",
+    title: "Rapport", titleAccent: "Ministère",
     subtitle: "Vision vivante de vos serviteurs — fidélité, engagement, alertes",
     // onglets
     ongletVision: "Vision globale",
@@ -69,7 +69,7 @@ const translations = {
     engagementLabel: "Niveau d'engagement",
   },
   en: {
-    title: "Pastoral", titleAccent: "Dashboard",
+    title: "Report", titleAccent: "Ministry",
     subtitle: "Living view of your servants — faithfulness, engagement, alerts",
     ongletVision: "Global view",
     ongletBerger: "Shepherd view",
@@ -507,14 +507,7 @@ function RapportMinistere() {
             {t.title} <span className="text-emerald-300">{t.titleAccent}</span>
           </h1>
           <p className="text-sm text-white/60 italic">{t.subtitle}</p>
-        </div>
-
-        {/* Alertes — toujours visibles si données */}
-        {hasData && alertes.length > 0 && (
-          <div className="flex flex-col gap-2">
-            {alertes.map((a, i) => <AlerteBadge key={i} type={a.type} message={a.message} />)}
-          </div>
-        )}
+        </div>        
 
         {/* Filtres */}
         <div className="bg-white/8 rounded-2xl p-4 flex flex-col gap-3 border border-white/10">

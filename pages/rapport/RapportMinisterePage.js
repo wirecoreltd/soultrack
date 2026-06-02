@@ -40,8 +40,9 @@ const translations = {
     alertePolyvalent: (n) => `${n} serviteur${n > 1 ? "s" : ""} sur 5+ ministères`,
     // vue berger
     aSuivreAujourdhui: "À suivre aujourd'hui",
-    inactifsRecents: "Inactifs récents",
-    irreguliersSuivi: "Irréguliers à encourager",
+    inactifsRecents: "Inactifs récents (Aucune présence enregistrée depuis plus de 2 mois)",
+    irreguliersSuivi: "Irréguliers à encourager (Présence occasionnelle ou inférieure à une fois par semaine)",
+    stableRecents : "Serviteurs stables (Stable : au moins une présence par semaine)",
     polyvalentsSurchages: "Polyvalents à risque",
     pasDeServiteur: "Aucun serviteur dans cette catégorie.",
     actionAppeler: "📞 Appeler",
@@ -93,8 +94,9 @@ const translations = {
     alerteSousDote: (m) => `${m} understaffed (< 3 servants)`,
     alertePolyvalent: (n) => `${n} servant${n > 1 ? "s" : ""} in 5+ ministries`,
     aSuivreAujourdhui: "To follow today",
-    inactifsRecents: "Recent inactives",
-    irreguliersSuivi: "Irregulars to encourage",
+    inactifsRecents: "Recent inactives (No recorded attendance for more than 2 months)",
+    irreguliersSuivi: "Irregulars to encourage (Attends occasionally or less than once per week.)",
+    stableRecents : "Stable Ministry (Attends at least once per week)",
     polyvalentsSurchages: "Overloaded polyvalents",
     pasDeServiteur: "No servants in this category.",
     actionAppeler: "📞 Call",
@@ -803,7 +805,7 @@ function RapportMinistere() {
 
               {/* Stables — encouragement */}
               <div>
-                <SectionTitle icon="🟢">Serviteurs stables — à valoriser</SectionTitle>
+                <SectionTitle icon="🟢">{t.stableRecents}</SectionTitle>                
                 {stables.length === 0 ? (
                   <p className="text-sm text-white/40 italic px-1">{t.pasDeServiteur}</p>
                 ) : (

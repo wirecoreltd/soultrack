@@ -389,7 +389,7 @@ function CarteSession({ r, onEdit, t }) {
               { label: t.total, value: total, color: "text-amber-300 font-bold" },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
-                <p className="text-[10px] text-white/40">{label}</p>
+                <p className="text-[10px] text-white">{label}</p>
                 <p className={`text-lg font-bold ${color}`}>{value || 0}</p>
               </div>
             ))}

@@ -342,7 +342,7 @@ function BlocKpiGlobaux({ reports, t }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard label={t.kpiSessions} value={totalSessions} sub={t.kpiSessionsSub} accent="white" />
+        <KpiCard label={t.kpiSessions} value={totalSessions} sub={t.kpiSessionsSub} accent="lime" />
         <KpiCard label={t.kpiMoyPresents} value={moyenneParSession} sub={t.kpiMoyPresentsSub} accent="amber" />
         <KpiCard label={t.kpiNouveauxVenus} value={totalNV} sub={t.kpiNVSub} accent="blue" />
         <KpiCard label={t.kpiConvertis} value={totalNC} sub={t.kpiConvSub} accent="green" />
@@ -351,7 +351,7 @@ function BlocKpiGlobaux({ reports, t }) {
         <KpiCard label={t.kpiHommes} value={totalHommes} sub={t.kpiTotal2} accent="blue" />
         <KpiCard label={t.kpiFemmes} value={totalFemmes} sub={t.kpiTotal2} accent="pink" />
         <KpiCard label={t.kpiJeunes} value={totalJeunes} sub={t.kpiTotal2} accent="amber" />
-        <KpiCard label={t.kpiEnfants} value={totalEnfants} sub={t.kpiTotal2} accent="cyan" />
+        <KpiCard label={t.kpiEnfants} value={totalEnfants} sub={t.kpiTotal2} accent="Cyan" />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <KpiCard label={t.kpiConnectes} value={totalConnectes} sub={t.kpiTotal2} accent="amber" />

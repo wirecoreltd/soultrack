@@ -256,7 +256,7 @@ function BlocKpiGlobaux({ rapports, t }) {
       </div>
       {total > 0 && (
         <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-          <p className="text-xs text-white/50">{t.kpiRepartition}</p>
+          <p className="text-xs text-white">{t.kpiRepartition}</p>
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
               <p className="text-xl font-bold text-blue-300">{totalH}</p>

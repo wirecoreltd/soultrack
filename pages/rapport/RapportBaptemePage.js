@@ -198,9 +198,9 @@ function KpiCard({ label, value, sub, accent }) {
   const c = { green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400", white: "text-white", blue: "text-blue-300", pink: "text-pink-300", purple: "text-purple-300" };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-xs text-white/50">{label}</p>
+      <p className="text-xs text-white">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+      {sub && <p className="text-[11px] text-white mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -250,7 +250,7 @@ function BlocKpiGlobaux({ rapports, t }) {
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KpiCard label={t.kpiTotalBaptises} value={total} sub={t.kpiSub} accent="amber" />
-        <KpiCard label={t.kpiSessions} value={nbSessions} sub={t.kpiCeremonies} accent="white" />
+        <KpiCard label={t.kpiSessions} value={nbSessions} sub={t.kpiCeremonies} accent="green" />
         <KpiCard label={t.kpiHommes} value={totalH} sub={`${pctH}% du total`} accent="blue" />
         <KpiCard label={t.kpiFemmes} value={totalF} sub={`${pctF}% du total`} accent="pink" />
       </div>
@@ -293,7 +293,7 @@ function BlocTendance({ rapports, t, lang }) {
     parMois[key].f += Number(r.femmes || 0);
   });
   const mois = Object.entries(parMois).sort(([a], [b]) => a.localeCompare(b)).slice(-8);
-  if (mois.length < 2) return <p className="text-white/30 text-sm text-center py-4">{t.tendanceInsuffisant}</p>;
+  if (mois.length < 2) return <p className="text-white text-sm text-center py-4">{t.tendanceInsuffisant}</p>;
   const maxVal = Math.max(...mois.map(([, v]) => v.h + v.f), 1);
   const derniere = mois[mois.length - 1];
   const avantDerniere = mois[mois.length - 2];
@@ -313,11 +313,11 @@ function BlocTendance({ rapports, t, lang }) {
               <div className="flex-1 bg-blue-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (h / maxVal) * 60)}px` }} />
               <div className="flex-1 bg-pink-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (f / maxVal) * 60)}px` }} />
             </div>
-            <p className="text-[9px] text-white/30 truncate w-full text-center">{label}</p>
+            <p className="text-[9px] text-white truncate w-full text-center">{label}</p>
           </div>
         ))}
       </div>
-      <div className="flex gap-3 text-[11px] text-white/40">
+      <div className="flex gap-3 text-[11px] text-white">
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70 inline-block" /> {t.legendH}</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-pink-500/70 inline-block" /> {t.legendF}</span>
       </div>

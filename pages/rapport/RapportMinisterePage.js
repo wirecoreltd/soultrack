@@ -496,7 +496,7 @@ function RapportMinistere() {
 
   // ─── RENDU ────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#1e1b4b" }}>
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
       <div className="w-full max-w-3xl flex flex-col gap-6">

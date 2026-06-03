@@ -189,12 +189,14 @@ function formatDateFR(dateStr) {
   const d = new Date(dateStr);
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 }
+
 function getStatutNormalise(statut) {
   if (!statut) return "";
-  const s = statut.toLowerCase();
+  const s = statut.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   if (s.includes("envoy")) return "en attente";
   return s;
 }
+
 function formatStatut(statut) {
   if (!statut) return "—";
   const s = statut.toLowerCase();
@@ -301,7 +303,7 @@ function BlocParCellule({ displayedReports, t }) {
     if (!parCellule[c]) parCellule[c] = { total: 0, integres: 0, encours: 0, refus: 0 };
     parCellule[c].total++;
     const s = getStatutNormalise(r.statut);
-    if (s === "integre" || s === "intégré") parCellule[c].integres++;
+    if (s === "integre") parCellule[c].integres++;
     else if (s === "en cours" || s === "en suivis") parCellule[c].encours++;
     else if (s === "refus") parCellule[c].refus++;
   });
@@ -399,7 +401,7 @@ function OngletParMois({ displayedReports, onDetails, t }) {
     <div className="flex flex-col gap-3">
       {sorted.map(([key, { label, rows }]) => {
         const isOpen = expandedMonths[key];
-        const integres = rows.filter(r => ["integre","intégré"].includes(getStatutNormalise(r.statut))).length;
+        const integres = rows.filter(r => getStatutNormalise(r.statut) === "integre").length;
         return (
           <div key={key} className="bg-white/10 rounded-2xl overflow-hidden">
             <button onClick={() => setExpandedMonths(p => ({ ...p, [key]: !p[key] }))}

@@ -75,9 +75,9 @@ jobs:
 
       - name: Install Capacitor
         run: |
-          npm install @capacitor/core @capacitor/cli
-          npm install @capacitor/ios
-          npm install @capacitor/push-notifications
+          npm install @capacitor/core@6 @capacitor/cli@6
+          npm install @capacitor/ios@6
+          npm install @capacitor/push-notifications@6
 
       - name: Add iOS platform
         run: npx cap add ios

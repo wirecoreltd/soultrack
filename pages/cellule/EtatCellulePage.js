@@ -566,7 +566,7 @@ function EtatCellule() {
 
     // ── ResponsableCellule → sa cellule + ses enfants ──
    else if (isResponsable) {
-  // 1. Ma cellule directe
+  // 1. Mes cellules directes (où je suis responsable_id)
   const { data: mesCellules } = await supabase
     .from("cellules")
     .select("id")
@@ -575,24 +575,23 @@ function EtatCellule() {
 
   const mesIds = (mesCellules || []).map(c => c.id);
 
-  // 2. Cellules enfants — celles dont cellule_mere_id = mon profile_id
+  // 2. Cellules enfants — celles dont cellule_mere_id = ID d'une de mes cellules
   const { data: filles } = await supabase
     .from("cellules")
     .select("id")
-    .eq("cellule_mere_id", userProfile.id)
+    .in("cellule_mere_id", mesIds.length > 0 ? mesIds : ["00000000-0000-0000-0000-000000000000"])
     .eq("eglise_id", userProfile.eglise_id);
 
   const fillesIds = (filles || []).map(c => c.id);
 
   const tousLesIds = [...new Set([...mesIds, ...fillesIds])];
 
-      if (tousLesIds.length > 0) {
-        query = query.in("cellule_id", tousLesIds);
-      } else {
-        // Aucune cellule trouvée → rien à afficher
-        query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
-      }
-    }
+  if (tousLesIds.length > 0) {
+    query = query.in("cellule_id", tousLesIds);
+  } else {
+    query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
+  }
+}
 
     // ── Autres rôles → rien ──
     else {

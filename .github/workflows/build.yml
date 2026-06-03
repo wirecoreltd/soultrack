@@ -61,12 +61,11 @@ jobs:
             -keypass soultrack123 \
             -dname "CN=SoulTrack, OU=Mobile, O=SoulTrack, L=Unknown, S=Unknown, C=US"
           cp soultrack.keystore android/app/soultrack.keystore
-
-      - name: Build APK Release
+        - name: Build APK Release
         run: |
           cd android
           ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file=soultrack.keystore \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/soultrack.keystore \
             -Pandroid.injected.signing.store.password=soultrack123 \
             -Pandroid.injected.signing.key.alias=soultrack \
             -Pandroid.injected.signing.key.password=soultrack123
@@ -75,10 +74,11 @@ jobs:
         run: |
           cd android
           ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file=soultrack.keystore \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/soultrack.keystore \
             -Pandroid.injected.signing.store.password=soultrack123 \
             -Pandroid.injected.signing.key.alias=soultrack \
             -Pandroid.injected.signing.key.password=soultrack123
+      
 
       - name: Upload APK Release
         uses: actions/upload-artifact@v4

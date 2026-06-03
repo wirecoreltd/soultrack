@@ -28,6 +28,11 @@ jobs:
           npm install @capacitor/android@6
           npm install @capacitor/push-notifications@6
 
+      - name: Generate app icons & splash
+        run: |
+          npm install @capacitor/assets --save-dev
+          npx capacitor-assets generate --android
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:

@@ -189,14 +189,12 @@ function formatDateFR(dateStr) {
   const d = new Date(dateStr);
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 }
-
 function getStatutNormalise(statut) {
   if (!statut) return "";
-  const s = statut.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const s = statut.toLowerCase();
   if (s.includes("envoy")) return "en attente";
   return s;
 }
-
 function formatStatut(statut) {
   if (!statut) return "—";
   const s = statut.toLowerCase();
@@ -303,7 +301,7 @@ function BlocParCellule({ displayedReports, t }) {
     if (!parCellule[c]) parCellule[c] = { total: 0, integres: 0, encours: 0, refus: 0 };
     parCellule[c].total++;
     const s = getStatutNormalise(r.statut);
-    if (s === "integre") parCellule[c].integres++;
+    if (s === "integre" || s === "intégré") parCellule[c].integres++;
     else if (s === "en cours" || s === "en suivis") parCellule[c].encours++;
     else if (s === "refus") parCellule[c].refus++;
   });
@@ -401,7 +399,7 @@ function OngletParMois({ displayedReports, onDetails, t }) {
     <div className="flex flex-col gap-3">
       {sorted.map(([key, { label, rows }]) => {
         const isOpen = expandedMonths[key];
-        const integres = rows.filter(r => getStatutNormalise(r.statut) === "integre").length;
+        const integres = rows.filter(r => ["integre","intégré"].includes(getStatutNormalise(r.statut))).length;
         return (
           <div key={key} className="bg-white/10 rounded-2xl overflow-hidden">
             <button onClick={() => setExpandedMonths(p => ({ ...p, [key]: !p[key] }))}
@@ -566,7 +564,7 @@ function EtatCellule() {
 
     // ── ResponsableCellule → sa cellule + ses enfants ──
    else if (isResponsable) {
-  // 1. Mes cellules directes (où je suis responsable_id)
+  // 1. Ma cellule directe
   const { data: mesCellules } = await supabase
     .from("cellules")
     .select("id")
@@ -575,23 +573,24 @@ function EtatCellule() {
 
   const mesIds = (mesCellules || []).map(c => c.id);
 
-  // 2. Cellules enfants — celles dont cellule_mere_id = ID d'une de mes cellules
+  // 2. Cellules enfants — celles dont cellule_mere_id = mon profile_id
   const { data: filles } = await supabase
     .from("cellules")
     .select("id")
-    .in("cellule_mere_id", mesIds.length > 0 ? mesIds : ["00000000-0000-0000-0000-000000000000"])
+    .eq("cellule_mere_id", userProfile.id)
     .eq("eglise_id", userProfile.eglise_id);
 
   const fillesIds = (filles || []).map(c => c.id);
 
   const tousLesIds = [...new Set([...mesIds, ...fillesIds])];
 
-  if (tousLesIds.length > 0) {
-    query = query.in("cellule_id", tousLesIds);
-  } else {
-    query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
-  }
-}
+      if (tousLesIds.length > 0) {
+        query = query.in("cellule_id", tousLesIds);
+      } else {
+        // Aucune cellule trouvée → rien à afficher
+        query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
+      }
+    }
 
     // ── Autres rôles → rien ──
     else {

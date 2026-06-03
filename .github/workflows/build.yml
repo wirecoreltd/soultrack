@@ -21,11 +21,11 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-- name: Install Capacitor
-  run: |
-    npm install @capacitor/core@6 @capacitor/cli@6
-    npm install @capacitor/android@6
-    npm install @capacitor/push-notifications@6
+      - name: Install Capacitor
+        run: |
+          npm install @capacitor/core@6 @capacitor/cli@6
+          npm install @capacitor/android@6
+          npm install @capacitor/push-notifications@6
      
       - name: Setup Java
         uses: actions/setup-java@v4

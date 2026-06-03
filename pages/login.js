@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
@@ -43,6 +43,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Vérifie si déjà connecté
+useEffect(() => {
+  const checkSession = async () => {
+    const { data } = await supabase.auth.getSession();
+    if (data?.session) {
+      router.replace("/index");
+    }
+  };
+  checkSession();
+}, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

@@ -21,12 +21,13 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
       - name: Install Capacitor
         run: |
           npm install @capacitor/core@6 @capacitor/cli@6
           npm install @capacitor/android@6
           npm install @capacitor/push-notifications@6
-     
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -48,82 +49,45 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build APK
+      - name: Generate Keystore
+        run: |
+          keytool -genkey -v \
+            -keystore soultrack.keystore \
+            -alias soultrack \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass soultrack123 \
+            -keypass soultrack123 \
+            -dname "CN=SoulTrack, OU=Mobile, O=SoulTrack, L=Unknown, S=Unknown, C=US"
+          cp soultrack.keystore android/app/soultrack.keystore
+
+      - name: Build APK Release
         run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=soultrack.keystore \
+            -Pandroid.injected.signing.store.password=soultrack123 \
+            -Pandroid.injected.signing.key.alias=soultrack \
+            -Pandroid.injected.signing.key.password=soultrack123
 
-      - name: Upload APK
+      - name: Build AAB Release
+        run: |
+          cd android
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=soultrack.keystore \
+            -Pandroid.injected.signing.store.password=soultrack123 \
+            -Pandroid.injected.signing.key.alias=soultrack \
+            -Pandroid.injected.signing.key.password=soultrack123
+
+      - name: Upload APK Release
         uses: actions/upload-artifact@v4
         with:
-          name: soultrack-android.apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: soultrack-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
 
-  build-ios:
-    name: Build iOS
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Install Capacitor
-        run: |
-          npm install @capacitor/core@6 @capacitor/cli@6
-          npm install @capacitor/ios@6
-          npm install @capacitor/push-notifications@6
-
-      - name: Add iOS platform
-        run: npx cap add ios
-
-      - name: Inject GoogleService-Info.plist
-        run: echo '${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}' > ios/App/App/GoogleService-Info.plist
-
-      - name: Diagnostic
-        run: |
-          echo "=== Capacitor iOS version ==="
-          cat node_modules/@capacitor/ios/package.json | grep '"version"'
-          echo "=== Podfile content ==="
-          cat ios/App/Podfile
-          echo "=== pods_helpers.rb ==="
-          cat node_modules/@capacitor/ios/scripts/pods_helpers.rb || echo "Pas de pods_helpers"
-
-      - name: Set iOS deployment target
-        run: |
-          PODFILE="ios/App/Podfile"
-          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
-          sed -i '' 's/assertDeploymentTarget(installer)//' "$PODFILE"
-          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" "$PODFILE"
-          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 16.0/g' "$PBXPROJ"
-          echo "=== Podfile après modification ==="
-          cat "$PODFILE"
-
-      - name: Install CocoaPods
-        run: |
-          cd ios/App
-          pod install --repo-update
-
-      - name: Sync Capacitor
-        run: npx cap sync ios
-
-      - name: Build iOS
-        run: |
-          cd ios/App
-          xcodebuild \
-            -workspace App.xcworkspace \
-            -scheme App \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            -derivedDataPath build
-
-      - name: Upload iOS build
+      - name: Upload AAB Release
         uses: actions/upload-artifact@v4
         with:
-          name: soultrack-ios
-          path: ios/App/build
+          name: soultrack-release.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab

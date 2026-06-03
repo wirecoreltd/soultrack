@@ -21,12 +21,13 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
       - name: Install Capacitor
         run: |
           npm install @capacitor/core@6 @capacitor/cli@6
           npm install @capacitor/android@6
           npm install @capacitor/push-notifications@6
-     
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -48,16 +49,41 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build APK
+      - name: Decode Keystore
+        run: |
+          echo '${{ secrets.KEYSTORE_BASE64 }}' | base64 -d > $GITHUB_WORKSPACE/soultrack.keystore
+
+      - name: Build APK Release
         run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/soultrack.keystore \
+            -Pandroid.injected.signing.store.password=soultrack123 \
+            -Pandroid.injected.signing.store.key.alias=soultrack \
+            -Pandroid.injected.signing.key.alias=soultrack \
+            -Pandroid.injected.signing.key.password=soultrack123
 
-      - name: Upload APK
+      - name: Build AAB Release
+        run: |
+          cd android
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/soultrack.keystore \
+            -Pandroid.injected.signing.store.password=soultrack123 \
+            -Pandroid.injected.signing.store.key.alias=soultrack \
+            -Pandroid.injected.signing.key.alias=soultrack \
+            -Pandroid.injected.signing.key.password=soultrack123
+
+      - name: Upload APK Release
         uses: actions/upload-artifact@v4
         with:
-          name: soultrack-android.apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: soultrack-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload AAB Release
+        uses: actions/upload-artifact@v4
+        with:
+          name: soultrack-release.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
 
   build-ios:
     name: Build iOS
@@ -85,15 +111,6 @@ jobs:
       - name: Inject GoogleService-Info.plist
         run: echo '${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}' > ios/App/App/GoogleService-Info.plist
 
-      - name: Diagnostic
-        run: |
-          echo "=== Capacitor iOS version ==="
-          cat node_modules/@capacitor/ios/package.json | grep '"version"'
-          echo "=== Podfile content ==="
-          cat ios/App/Podfile
-          echo "=== pods_helpers.rb ==="
-          cat node_modules/@capacitor/ios/scripts/pods_helpers.rb || echo "Pas de pods_helpers"
-
       - name: Set iOS deployment target
         run: |
           PODFILE="ios/App/Podfile"
@@ -101,8 +118,6 @@ jobs:
           sed -i '' 's/assertDeploymentTarget(installer)//' "$PODFILE"
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" "$PODFILE"
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 16.0/g' "$PBXPROJ"
-          echo "=== Podfile après modification ==="
-          cat "$PODFILE"
 
       - name: Install CocoaPods
         run: |

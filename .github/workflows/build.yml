@@ -42,6 +42,10 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Set launch URL
+        run: |
+           sed -i 's|launchUrl = null|launchUrl = "https://www.soultrack.org/login"|g' android/app/src/main/java/org/soultrack/app/MainActivity.java 2>/dev/null || true  
+
       - name: Inject google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
 

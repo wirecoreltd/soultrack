@@ -1,7 +1,12 @@
-/** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Pas d'output export — on garde le serveur Next.js
-  // L'app Capacitor chargera soultrack.org directement
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/login',
+        permanent: false,
+      },
+    ];
+  },
 }
-
-module.exports = nextConfig
+module.exports = nextConfig;

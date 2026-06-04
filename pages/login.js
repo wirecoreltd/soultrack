@@ -49,7 +49,7 @@ useEffect(() => {
   const checkSession = async () => {
     const { data } = await supabase.auth.getSession();
     if (data?.session) {
-      router.replace("/index");
+      router.replace("/hub");
     }
   };
   checkSession();
@@ -99,7 +99,7 @@ useEffect(() => {
       }
       // ← FIN AJOUT
       
-      if (roles.length > 1) { router.replace("/index"); return; }            
+      if (roles.length > 1) { router.replace("/hub"); return; }            
 
       if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")) {
         router.replace("/cellule/cellules-hub");
@@ -112,7 +112,7 @@ useEffect(() => {
       } else if (roles.includes("ResponsableIntegration")) {
         router.replace("/membres/membres-hub");
       } else {
-        router.replace("/index");
+        router.replace("/hub");
       }
 
     } catch (err) {

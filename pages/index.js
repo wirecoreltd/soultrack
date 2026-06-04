@@ -119,7 +119,7 @@ export default function IndexPage() {
     const init = async () => {
       try {
         const { data } = await supabase.auth.getSession();
-        if (!data?.session) { router.replace("/SignupEglise"); return; }
+        if (!data?.session) { router.replace("/login"); return; }
 
         const storedRoles = localStorage.getItem("userRole");
         let parsedRoles = [];

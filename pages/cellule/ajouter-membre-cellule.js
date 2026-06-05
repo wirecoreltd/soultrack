@@ -347,6 +347,14 @@ function AjouterMembreCelluleContent() {
     fetchCellules();
   }, [userScope, isFromLink]);
 
+  // Ajoute ce useEffect dans ajouter-membre-cellule.js
+useEffect(() => {
+  if (urlCelluleFull) {
+    setCelluleInfo(decodeURIComponent(urlCelluleFull));
+  }
+}, [urlCelluleFull]);
+
+  
   const handleBesoinChange = (e) => {
     const { value, checked } = e.target;
     if (value === "Autre") {

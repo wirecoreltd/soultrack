@@ -160,7 +160,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   const getLink = (cid) => {
     const base = window.location.origin;
     if (type === "ajouter_membre")             return `${base}/add-member?eglise_id=${egliseId}&lang=${lang}`;
-    if (type === "ajouter_membre_cellule")      return `${base}/cellule/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
+    if (type === "ajouter_membre_cellule")      return `${base}/cellule/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}&cellule_full=${encodeURIComponent(selectedGroupeName)}&lang=${lang}`;
     if (type === "ajouter_membre_famille")      return `${base}/famille/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
     if (type === "ajouter_evangelise")          return `${base}/add-evangelise?eglise_id=${egliseId}&lang=${lang}`;
     if (type === "ajouter_evangelise_cellule")  return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;

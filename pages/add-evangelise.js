@@ -12,6 +12,7 @@ const translations = {
     loading: "Chargement...",
     noEglise: "Votre compte n'est pas rattaché à une église.",
     title: "Ajouter une personne évangélisée",
+    subtitle: "«Allez par tout le monde, et prêchez la bonne nouvelle à toute la création.» – Marc 16:15",
     typeEvang: "Type d'Évangélisation",
     typeEvangOptions: [
       { value: "Individuel",                    label: "Individuel" },
@@ -58,6 +59,7 @@ const translations = {
     loading: "Loading...",
     noEglise: "Your account is not linked to a church.",
     title: "Add an evangelized person",
+    subtitle: "«Go ye into all the world, and preach the gospel to every creature.» – Marc 16:15",
     typeEvang: "Type of Outreach",
     typeEvangOptions: [
       { value: "Individuel",                    label: "Individual" },
@@ -425,16 +427,37 @@ export default function AddEvangelise({ onNewEvangelise }) {
             <img src={eglise.logo_url} alt={eglise.nom || "Logo"}
               style={{ width: 50, height: 50, objectFit: "contain" }} />
           )}
-          {eglise && (
-            <div className="text-center leading-snug mt-1">
-              <p className="font-bold text-lg text-[#c31850]">{eglise.nom}</p>
-              {eglise.branche && <p className="text-sm text-[#c31850]">{eglise.branche}</p>}
-              <p className="text-sm text-[#c31850]">{[eglise.ville, eglise.pays].filter(Boolean).join(", ")}</p>
-            </div>
+          {(eglise?.denomination || eglise?.nom) && (
+            <p className="font-semibold text-base text-[#c31850] text-center w-full break-words px-2">
+              {[eglise.denomination, eglise.nom].filter(Boolean).join(" - ")}
+            </p>
+          )}
+          {eglise?.branche && (
+            <p className="text-sm text-[#c31850] text-center">{eglise.branche}</p>
+          )}
+          {eglise?.ville && (
+            <p className="text-sm text-amber-500">{eglise.ville}</p>
+          )}
+          {eglise?.pays && (
+            <p className="text-sm text-gray-700 flex items-center gap-1">
+              <img
+                src={`https://flagcdn.com/w20/${getIsoCode(eglise.pays)}.png`}
+                width="20"
+                height="14"
+                alt={eglise.pays}
+              />
+              {(() => {
+                const found = PAYS_DATA.find(p => p.fr === eglise.pays || p.en === eglise.pays);
+                return lang === "en" ? (found?.en || eglise.pays) : (found?.fr || eglise.pays);
+              })()}
+            </p>
           )}
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 mt-4">{t.title}</h1>
+        <h1 className="text-2xl sm:text-2xl font-bold text-center mb-2 mt-4">{t.title}</h1>
+          <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
+          {t.subtitle}
+        </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 justify-center">
 

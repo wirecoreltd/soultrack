@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
+import FooterHub from "../components/FooterHub";
 import { useMembers } from "../../context/MembersContext";
 import { checkLimiteAtteinte } from "../../lib/checkLimite";
 import { useLang } from "../../hooks/useLang";
@@ -618,6 +619,7 @@ function AjouterMembreCelluleContent() {
         <style jsx>{`
           .input { width: 100%; border: 1px solid #ccc; border-radius: 12px; padding: 12px; }
         `}</style>
+          <FooterHub />
       </div>
     </div>
   );

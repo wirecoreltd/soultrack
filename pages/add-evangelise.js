@@ -208,6 +208,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const urlLang = router.query.lang;
   const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
   const t = translations[lang] || translations.fr;
+  const urlCelluleFull = router.query.cellule_full ? decodeURIComponent(router.query.cellule_full) : null;
 
   // ✅ Préfixe téléphonique
   const [phonePrefix, setPhonePrefix] = useState("");

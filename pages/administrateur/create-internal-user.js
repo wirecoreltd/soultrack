@@ -644,14 +644,14 @@ function CreateInternalUserContent() {
 
               {/* Téléphone */}
               <label className="text-sm font-semibold">{t.telephone}</label>
-              <input
-                type="tel"
-                value={formData.telephone}
-                onChange={e => setFormData(prev => ({ ...prev, telephone: e.target.value }))}
-                className="input"
-                placeholder={phonePrefix ? `${phonePrefix} ...` : t.telephone}
-                required
-              />
+                <input
+                  type="tel"
+                  value={formData.telephone}
+                  onChange={e => setFormData(prev => ({ ...prev, telephone: e.target.value }))}
+                  className="input"
+                  placeholder={t.telephone}
+                  required
+                />
               {/* WhatsApp */}
               <label className="inline-flex items-center gap-2 text-sm">
                 <input

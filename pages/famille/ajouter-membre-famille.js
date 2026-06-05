@@ -76,7 +76,7 @@ const translations = {
     errNoPhone: "Le téléphone est requis ou cochez 'Pas de téléphone'",
   },
   en: {
-    pageTitle: "Add a member to my",    
+    pageTitle: "Add a member",    
     pageSubtitle1: "Easily add",
     pageSubtitle2: "a member to",
     pageSubtitle3: "your Family",
@@ -567,7 +567,7 @@ const urlFamilleFull = router.query.famille_full
             </p>
           )}
           {familleInfo && (
-  <p className="font-semibold text-[#333699] mt-1 text-center">
+  <p className="text-2xl font-semibold text-[#333699] mt-1 text-center">
     👑 {familleInfo}
   </p>
 )}

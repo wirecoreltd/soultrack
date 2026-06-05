@@ -11,7 +11,7 @@ import { getPrefixForPays } from "../lib/phonePrefix";
 const translations = {
   fr: {
     pageTitle: "Ajouter un nouveau membre",
-    subtitle: "« Allez, faites de toutes les nations des disciples » – Matthieu 28:19",
+    subtitle: "« Et le Seigneur ajoutait chaque jour à l'Église ceux qui étaient sauvés » – Actes 2:47",
     retour: "← Retour",
     dateVenue: "Date de venue",
     etatContact: "État du contact",
@@ -62,7 +62,7 @@ const translations = {
   },
   en: {
     pageTitle: "Add a new member",
-    subtitle: "\"Go and make disciples of all nations\" – Matthew 28:19",
+    subtitle: "And the Lord added to the church daily those who were being saved – Actes 2:47",
     retour: "← Back",
     dateVenue: "Visit date",
     etatContact: "Contact status",
@@ -417,7 +417,7 @@ export default function AddContact() {
             )}
           </div>
 
-        <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">{t.pageTitle}</h1>
+        <h1 className="text-2xl sm:text-2xl font-bold text-center mb-2">{t.pageTitle}</h1>
         <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
           {t.subtitle}
         </p>

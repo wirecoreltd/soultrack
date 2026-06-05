@@ -513,17 +513,17 @@ function AjouterMembreCelluleContent() {
             onChange={e => setFormData({ ...formData, date_venu: e.target.value })}
             className="input" required />
 
-          <input name="prenom" placeholder={t.prenom} value={formData.prenom}
-            onChange={handleChange} className="input" required />
-          <input name="nom" placeholder={t.nom} value={formData.nom}
-            onChange={handleChange} className="input" required />
-
-          <select className="input" value={formData.sexe}
+               <select className="input" value={formData.sexe}
             onChange={e => setFormData({ ...formData, sexe: e.target.value })} required>
             <option value="">{t.civilite}</option>
             <option value="Homme">{t.homme}</option>
             <option value="Femme">{t.femme}</option>
           </select>
+
+          <input name="prenom" placeholder={t.prenom} value={formData.prenom}
+            onChange={handleChange} className="input" required />
+          <input name="nom" placeholder={t.nom} value={formData.nom}
+            onChange={handleChange} className="input" required />         
 
           <select value={formData.age}
             onChange={e => setFormData({ ...formData, age: e.target.value })}

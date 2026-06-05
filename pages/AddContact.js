@@ -112,11 +112,6 @@ const translations = {
   },
 };
 
-function getIsoCode(countryName) {
-  const found = PAYS_DATA.find(p => p.fr === countryName || p.en === countryName);
-  return found?.code || "un";
-}
-
 const PAYS_DATA = [
   { code: "af", fr: "Afghanistan", en: "Afghanistan" },
   { code: "za", fr: "Afrique du Sud", en: "South Africa" },

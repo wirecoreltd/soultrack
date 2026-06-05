@@ -1,6 +1,5 @@
 // pages/cellule/ajouter-membre-cellule.js
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
@@ -213,7 +212,6 @@ function getIsoCode(countryName) {
   return found?.code || "un";
 }
 
-
 export default function AjouterMembreCellule() {
   return <AjouterMembreCelluleContent />;
 }
@@ -224,21 +222,25 @@ function AjouterMembreCelluleContent() {
   const { setAllMembers } = useMembers();
   const { lang: hookLang } = useLang();
 
-  // ✅ Lire ?lang= depuis l'URL
   const urlLang = searchParams.get("lang");
   const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
   const t = translations[lang] || translations.fr;
 
   const urlEgliseId = searchParams.get("eglise_id");
   const urlCelluleId = searchParams.get("cellule_id");
+  // ✅ Récupéré directement depuis l'URL — pas de fetch nécessaire
+  const urlCelluleFull = searchParams.get("cellule_full");
   const isFromLink = !!urlEgliseId && !!urlCelluleId;
-  const [celluleInfo, setCelluleInfo] = useState(null);
+
   const [egliseInfo, setEgliseInfo] = useState(null);
   const [phonePrefix, setPhonePrefix] = useState("");
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
   const [cellules, setCellules] = useState([]);
   const [success, setSuccess] = useState(false);
   const [userScope, setUserScope] = useState({ eglise_id: null });
+
+  // ✅ celluleInfo : depuis l'URL si lien public, sinon fetch depuis profil connecté
+  const [celluleInfo, setCelluleInfo] = useState(urlCelluleFull || null);
 
   const [formData, setFormData] = useState({
     nom: "",
@@ -287,7 +289,7 @@ function AjouterMembreCelluleContent() {
     fetchUserScope();
   }, [urlEgliseId]);
 
-  // ✅ Fetch infos église + préfixe téléphonique automatique
+  // ✅ Fetch infos église + préfixe téléphonique
   useEffect(() => {
     if (!userScope.eglise_id) return;
     const fetchEglise = async () => {
@@ -301,47 +303,34 @@ function AjouterMembreCelluleContent() {
         const prefix = getPrefixForPays(data.pays);
         if (prefix) {
           setPhonePrefix(prefix);
-          setFormData(prev => ({
-            ...prev,
-            telephone: prev.telephone || prefix,
-          }));
+          setFormData(prev => ({ ...prev, telephone: prev.telephone || prefix }));
         }
       }
     };
     fetchEglise();
   }, [userScope.eglise_id]);
 
-      // ✅ Fetch Cellule
-      useEffect(() => {
-      const fetchCelluleInfo = async () => {
-        // Cas lien public : cellule_id dans l'URL
-        if (urlCelluleId) {
-          const { data, error } = await supabase
-            .from("cellules")
-            .select("cellule_full")
-            .eq("id", urlCelluleId)
-            .single();
-          if (!error && data) setCelluleInfo(data.cellule_full);
-          return;
-        }
-    
-        // Cas connecté : cellule du responsable
-        if (!userScope.eglise_id) return;
-        const { data: sessionData } = await supabase.auth.getSession();
-        const user = sessionData?.session?.user;
-        if (!user) return;
-    
-        const { data, error } = await supabase
-          .from("cellules")
-          .select("cellule_full")
-          .eq("responsable_id", user.id)
-          .eq("eglise_id", userScope.eglise_id)
-          .single();
-        if (!error && data) setCelluleInfo(data.cellule_full);
-      };
-    
-      fetchCelluleInfo();
-    }, [urlCelluleId, userScope.eglise_id]); // ← urlCelluleId en premier
+  // ✅ Fetch cellule_full uniquement si pas dans l'URL (utilisateur connecté)
+  useEffect(() => {
+    if (urlCelluleFull) return; // déjà dans l'URL
+    if (!userScope.eglise_id) return;
+
+    const fetchCelluleInfo = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user;
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("cellules")
+        .select("cellule_full")
+        .eq("responsable_id", user.id)
+        .eq("eglise_id", userScope.eglise_id)
+        .single();
+      if (!error && data) setCelluleInfo(data.cellule_full);
+    };
+
+    fetchCelluleInfo();
+  }, [userScope.eglise_id, urlCelluleFull]);
 
   useEffect(() => {
     if (!userScope.eglise_id || isFromLink) return;
@@ -376,13 +365,9 @@ function AjouterMembreCelluleContent() {
     setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
   };
 
-  // ✅ Téléphone avec préfixe protégé
   const handlePhoneChange = (e) => {
-  setFormData(prev => ({
-    ...prev,
-    telephone: e.target.value,
-  }));
-};
+    setFormData(prev => ({ ...prev, telephone: e.target.value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -460,44 +445,44 @@ function AjouterMembreCelluleContent() {
         </button>
 
         {/* Logo + infos église */}
-          <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
-            {egliseInfo?.logo_url && (
-              <img src={egliseInfo.logo_url} alt={egliseInfo.nom || "Logo"}
-                style={{ width: 50, height: 50, objectFit: "contain" }} />
-            )}
-            {(egliseInfo?.denomination || egliseInfo?.nom) && (
-              <p className="font-semibold text-base text-[#c31850] text-center w-full break-words px-2">
-                {[egliseInfo.denomination, egliseInfo.nom].filter(Boolean).join(" - ")}
-              </p>
-            )}
-            {egliseInfo?.branche && (
-              <p className="text-sm text-[#c31850] text-center">{egliseInfo.branche}</p>
-            )}
-            {egliseInfo?.ville && (
-              <p className="text-sm text-amber-500">{egliseInfo.ville}</p>
-            )}
-            {egliseInfo?.pays && (
-              <p className="text-sm text-gray-700 flex items-center gap-1">
-                <img
-                  src={`https://flagcdn.com/w20/${getIsoCode(egliseInfo.pays)}.png`}
-                  width="20"
-                  height="14"
-                  alt={egliseInfo.pays}
-                />
-                {(() => {
-                  const found = PAYS_DATA.find(p => p.fr === egliseInfo.pays || p.en === egliseInfo.pays);
-                  return lang === "en" ? (found?.en || egliseInfo.pays) : (found?.fr || egliseInfo.pays);
-                })()}
-              </p>
-            )}
-            {celluleInfo && (
-              <p className="text-sm font-semibold text-[#333699] mt-1">
-                📍 {celluleInfo}
-              </p>
-            )}
-          </div>
+        <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
+          {egliseInfo?.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={egliseInfo.logo_url} alt={egliseInfo.nom || "Logo"}
+              style={{ width: 50, height: 50, objectFit: "contain" }} />
+          )}
+          {(egliseInfo?.denomination || egliseInfo?.nom) && (
+            <p className="font-semibold text-base text-[#c31850] text-center w-full break-words px-2">
+              {[egliseInfo.denomination, egliseInfo.nom].filter(Boolean).join(" - ")}
+            </p>
+          )}
+          {egliseInfo?.branche && (
+            <p className="text-sm text-[#c31850] text-center">{egliseInfo.branche}</p>
+          )}
+          {egliseInfo?.ville && (
+            <p className="text-sm text-amber-500">{egliseInfo.ville}</p>
+          )}
+          {egliseInfo?.pays && (
+            <p className="text-sm text-gray-700 flex items-center gap-1">
+              <img
+                src={`https://flagcdn.com/w20/${getIsoCode(egliseInfo.pays)}.png`}
+                width="20"
+                height="14"
+                alt={egliseInfo.pays}
+              />
+              {(() => {
+                const found = PAYS_DATA.find(p => p.fr === egliseInfo.pays || p.en === egliseInfo.pays);
+                return lang === "en" ? (found?.en || egliseInfo.pays) : (found?.fr || egliseInfo.pays);
+              })()}
+            </p>
+          )}
+          {celluleInfo && (
+            <p className="text-sm font-semibold text-[#333699] mt-1">
+              📍 {celluleInfo}
+            </p>
+          )}
+        </div>
 
-        {/* ✅ Titre corrigé */}
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
           {t.pageTitlePrefix} <span className="text-[#333699]">{t.pageTitleHighlight}</span>
         </h1>
@@ -548,13 +533,13 @@ function AjouterMembreCelluleContent() {
             ))}
           </select>
 
-          {/* ✅ Téléphone avec préfixe automatique */}
           <input
             placeholder={phonePrefix ? `${phonePrefix} ...` : t.telephone}
             value={formData.telephone}
             onChange={handlePhoneChange}
             className="input"
           />
+
           <label className="flex items-center gap-2">
             <input type="checkbox" name="is_whatsapp" checked={formData.is_whatsapp} onChange={handleChange} />
             {t.whatsapp}

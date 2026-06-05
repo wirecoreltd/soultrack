@@ -112,6 +112,11 @@ const translations = {
   },
 };
 
+function getIsoCode(countryName) {
+  const found = PAYS_DATA.find(p => p.fr === countryName || p.en === countryName);
+  return found?.code || "un";
+}
+
 export default function AddContact() {
   const router = useRouter();
   const { lang } = useLang();
@@ -314,7 +319,10 @@ export default function AddContact() {
                   height="14"
                   alt={egliseInfo.pays}
                 />
-                {egliseInfo.pays}
+                {(() => {
+  const found = PAYS_DATA.find(p => p.fr === egliseInfo.pays || p.en === egliseInfo.pays);
+  return lang === "en" ? (found?.en || egliseInfo.pays) : (found?.fr || egliseInfo.pays);
+})()}
               </p>
             )}
           </div>

@@ -3,8 +3,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
 import { useMembers } from "../../context/MembersContext";
 import Footer from "../../components/Footer";
@@ -240,13 +239,17 @@ export default function AjouterMembreFamille() {
 
 function AjouterMembreFamilleContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  
   const { setAllMembers } = useMembers();
   const { lang } = useLang();
   const t = translations[lang];
-
-  const urlEgliseId = searchParams.get("eglise_id");
-  const urlFamilleId = searchParams.get("famille_id");
+const urlEgliseId = router.query.eglise_id || null;
+const urlFamilleId = router.query.famille_id || null;
+const urlFamilleFull = router.query.famille_full
+  ? decodeURIComponent(router.query.famille_full)
+  : null;
+  
+  
   const isFromLink = !!urlEgliseId && !!urlFamilleId;
 
   const [egliseInfo, setEgliseInfo] = useState(null);

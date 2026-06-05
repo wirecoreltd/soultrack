@@ -7,6 +7,7 @@ import Image from "next/image";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useFeature } from "../../components/FeaturesContext";
 import { useLang } from "../../hooks/useLang";
+import { getPrefixForPays } from "../../lib/phonePrefix";
 
 const translations = {
   fr: {
@@ -238,11 +239,10 @@ export default function CreateInternalUserPage() {
 function CreateInternalUserContent() {
   const { lang } = useLang();
   const t = translations[lang];
-
+  const [phonePrefix, setPhonePrefix] = useState("");
   const cellulesActive   = useFeature("cellules");
   const conseillerActive = useFeature("conseiller");
   const famillesActive   = useFeature("familles");
-
   const router = useRouter();
 
   const [members, setMembers]                   = useState([]);
@@ -312,6 +312,34 @@ function CreateInternalUserContent() {
     };
     fetchData();
   }, []);
+
+   // ─── Prefix ───
+  useEffect(() => {
+  const fetchPrefix = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("eglise_id")
+      .eq("id", session.user.id)
+      .single();
+
+    if (!profile?.eglise_id) return;
+
+    const { data: eglise } = await supabase
+      .from("eglises")
+      .select("pays")
+      .eq("id", profile.eglise_id)
+      .single();
+
+    if (eglise?.pays) {
+      const prefix = getPrefixForPays(eglise.pays);
+      if (prefix) setPhonePrefix(prefix);
+    }
+  };
+  fetchPrefix();
+}, []);
 
   // ─── Pré-remplissage membre sélectionné ───
   useEffect(() => {
@@ -600,14 +628,21 @@ function CreateInternalUserContent() {
 
               {/* Téléphone */}
               <label className="text-sm font-semibold">{t.telephone}</label>
-              <input
-                name="telephone"
-                placeholder={t.telephone}
-                value={formData.telephone}
-                onChange={handleChange}
-                className="input"
-                required
-              />
+                <div className="flex items-center border border-gray-300 rounded-xl shadow-sm overflow-hidden">
+                  {phonePrefix && (
+                    <span className="bg-gray-100 px-3 py-3 text-sm font-semibold text-gray-700 border-r border-gray-300 whitespace-nowrap">
+                      {phonePrefix}
+                    </span>
+                  )}
+                  <input
+                    type="tel"
+                    value={formData.telephone.replace(phonePrefix, "").trim()}
+                    onChange={e => setFormData(prev => ({ ...prev, telephone: phonePrefix + e.target.value }))}
+                    className="flex-1 px-3 py-3 outline-none text-sm"
+                    placeholder="..."
+                    required
+                  />
+                </div>
 
               {/* WhatsApp */}
               <label className="inline-flex items-center gap-2 text-sm">

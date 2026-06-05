@@ -173,7 +173,7 @@ export default function AddContact() {
   const fetchEglise = async () => {
     const { data, error } = await supabase
       .from("eglises")
-      .select("nom, branche, ville, pays, logo_url")
+      .select("nom, branche, ville, pays, logo_url, denomination")
       .eq("id", formData.eglise_id)
       .single();
 
@@ -282,33 +282,42 @@ export default function AddContact() {
           {t.retour}
         </button>
 
-         {/* ─── Logo + infos de l'église ─── */}
-        <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
-          {egliseInfo?.logo_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={egliseInfo.logo_url}
-              alt={egliseInfo.nom || "Logo église"}
-              style={{
-                width: 50,
-                height: 50,
-                objectFit: "contain",                
-              }}
-            />
-          )}
-
-          {egliseInfo && (
-            <div className="text-center leading-snug mt-1">
-              <p className="font-bold text-lg text-[#c31850]">{egliseInfo.nom}</p>
-              {egliseInfo.branche && (
-                <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>
-              )}
-              <p className="text-sm text-[#c31850]">
-                {[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}
+        {/* ─── Logo + infos de l'église ─── */}
+          <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
+            {egliseInfo?.logo_url && (
+              <img
+                src={egliseInfo.logo_url}
+                alt={egliseInfo.nom || "Logo église"}
+                className="w-12 h-12 object-contain"
+              />
+            )}
+          
+            {(egliseInfo?.denomination || egliseInfo?.nom) && (
+              <p className="font-semibold text-lg text-[#c31850]">
+                {[egliseInfo.denomination, egliseInfo.nom].filter(Boolean).join(" - ")}
               </p>
-            </div>
-          )}
-        </div>
+            )}
+          
+            {egliseInfo?.branche && (
+              <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>
+            )}
+          
+            {egliseInfo?.ville && (
+              <p className="text-sm text-amber-500">{egliseInfo.ville}</p>
+            )}
+          
+            {egliseInfo?.pays && (
+              <p className="text-sm text-gray-700 flex items-center gap-1">
+                <img
+                  src={`https://flagcdn.com/w20/${getIsoCode(egliseInfo.pays)}.png`}
+                  width="20"
+                  height="14"
+                  alt={egliseInfo.pays}
+                />
+                {egliseInfo.pays}
+              </p>
+            )}
+          </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2">{t.pageTitle}</h1>
         <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">

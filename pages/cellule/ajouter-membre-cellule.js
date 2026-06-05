@@ -487,7 +487,7 @@ useEffect(() => {
           )}
           {celluleInfo && (
             <p className="text-sm font-semibold text-[#333699] mt-1">
-              📍 {celluleInfo}
+              🏠 {celluleInfo}
             </p>
           )}
         </div>

@@ -14,8 +14,7 @@ import { getPrefixForPays } from "../../lib/phonePrefix";
 
 const translations = {
   fr: {
-    pageTitle: "Ajouter un membre",
-    pageTitleHighlight: "Famille",
+    pageTitle: "Ajouter un membre",    
     pageSubtitle1: "Ajoutez",
     pageSubtitle2: "facilement un membre à",
     pageSubtitle3: "votre Famille",
@@ -77,8 +76,7 @@ const translations = {
     errNoPhone: "Le téléphone est requis ou cochez 'Pas de téléphone'",
   },
   en: {
-    pageTitle: "Add a member to my",
-    pageTitleHighlight: "Family",
+    pageTitle: "Add a member to my",    
     pageSubtitle1: "Easily add",
     pageSubtitle2: "a member to",
     pageSubtitle3: "your Family",
@@ -250,6 +248,7 @@ const urlFamilleFull = router.query.famille_full
   : null;  
   
   const isFromLink = !!urlEgliseId && !!urlFamilleId;
+  const [familleInfo, setFamilleInfo] = useState(null);
 
   const [egliseInfo, setEgliseInfo] = useState(null);
   const [showBesoinLibre, setShowBesoinLibre] = useState(false);
@@ -344,6 +343,12 @@ const urlFamilleFull = router.query.famille_full
 
     fetchEglise();
   }, [userScope.eglise_id]);
+
+  useEffect(() => {
+  if (router.query.famille_full) {
+    setFamilleInfo(decodeURIComponent(router.query.famille_full));
+  }
+}, [router.query.famille_full]);
 
   // Fetch familles (uniquement si utilisateur connecté, pas via lien public)
   useEffect(() => {
@@ -561,11 +566,11 @@ const urlFamilleFull = router.query.famille_full
               })()}
             </p>
           )}
-          {urlFamilleFull && (
-            <p className="text-sm font-semibold text-[#333699] mt-1 text-center">
-              👑 {urlFamilleFull}
-            </p>
-          )}
+          {familleInfo && (
+  <p className="text-sm font-semibold text-[#333699] mt-1 text-center">
+    👑 {familleInfo}
+  </p>
+)}
         </div>
 
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">

@@ -455,6 +455,12 @@ export default function AddEvangelise({ onNewEvangelise }) {
           )}
         </div>
 
+          {urlCelluleFull && (
+              <p className="text-sm font-semibold text-[#333699] mt-1">
+                🏠 {urlCelluleFull}
+              </p>
+            )}
+
         <h1 className="text-2xl sm:text-2xl font-bold text-center mb-2 mt-4">{t.title}</h1>
           <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
           {t.subtitle}

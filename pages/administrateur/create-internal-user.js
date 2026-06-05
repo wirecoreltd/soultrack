@@ -352,6 +352,7 @@ function CreateInternalUserContent() {
     if (!selectedMemberId || selectedMemberId === "add-serviteur") {
       setFormData(prev => ({
         ...initialFormData(),
+        telephone: phonePrefix,
         email: prev.email,
         password: prev.password,
         confirmPassword: prev.confirmPassword,
@@ -509,7 +510,7 @@ function CreateInternalUserContent() {
       setMessage(t.succes);
       setDuplicatePhone(null);
       setDuplicateEmail(null);
-      setFormData(initialFormData());
+      setFormData({ ...initialFormData(), telephone: phonePrefix });
       setSelectedMemberId("");
 
     } catch (err) {

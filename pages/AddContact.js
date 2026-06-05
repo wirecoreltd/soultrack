@@ -694,8 +694,9 @@ export default function AddContact() {
             font-size: 0.95rem;
           }
         `}</style>
+          <FooterHub />
       </div>          
     </div>
-<FooterHub />
+
   );
 }

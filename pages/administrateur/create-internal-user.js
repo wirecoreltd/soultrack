@@ -521,6 +521,16 @@ function CreateInternalUserContent() {
 
   const handleCancel = () => router.back();
 
+   // ✅ Téléphone avec préfixe modifiable
+  const handlePhoneChange = (e) => {
+  const val = e.target.value;
+
+  setFormData(prev => ({
+    ...prev,
+    telephone: val,
+  }));
+};
+
   // ─── Flags d'affichage ───
   const isExistingMember  = !!selectedMemberId && selectedMemberId !== "add-serviteur";
   const isNewServant      = selectedMemberId === "add-serviteur";

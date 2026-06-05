@@ -447,21 +447,36 @@ export default function AddMember() {
         </button>
 
         {/* Logo + infos église */}
-        <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
-          {egliseInfo?.logo_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={egliseInfo.logo_url} alt={egliseInfo.nom || "Logo"} style={{ width: 50, height: 50, objectFit: "contain" }} />
-          )}
-          {(egliseInfo?.denomination || egliseInfo?.nom) && (
+          <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
+            {egliseInfo?.logo_url && (
+              <img src={egliseInfo.logo_url} alt={egliseInfo.nom || "Logo"} style={{ width: 50, height: 50, objectFit: "contain" }} />
+            )}
+            {(egliseInfo?.denomination || egliseInfo?.nom) && (
               <p className="font-semibold text-base text-[#c31850] text-center w-full break-words px-2">
                 {[egliseInfo.denomination, egliseInfo.nom].filter(Boolean).join(" - ")}
               </p>
             )}
-              {egliseInfo.branche && <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>}
-              <p className="text-sm text-[#c31850]">{[egliseInfo.ville, egliseInfo.pays].filter(Boolean).join(", ")}</p>
-            </div>
-          )}
-        </div>
+            {egliseInfo?.branche && (
+              <p className="text-sm text-[#c31850]">{egliseInfo.branche}</p>
+            )}
+            {egliseInfo?.ville && (
+              <p className="text-sm text-amber-500">{egliseInfo.ville}</p>
+            )}
+            {egliseInfo?.pays && (
+              <p className="text-sm text-gray-700 flex items-center gap-1">
+                <img
+                  src={`https://flagcdn.com/w20/${getIsoCode(egliseInfo.pays)}.png`}
+                  width="20"
+                  height="14"
+                  alt={egliseInfo.pays}
+                />
+                {(() => {
+                  const found = PAYS_DATA.find(p => p.fr === egliseInfo.pays || p.en === egliseInfo.pays);
+                  return lang === "en" ? (found?.en || egliseInfo.pays) : (found?.fr || egliseInfo.pays);
+                })()}
+              </p>
+            )}
+          </div>
 
         <h1 className="text-2xl sm:text-2xl font-bold text-center mb-2 mt-5">{t.title}</h1>
         <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">{t.subtitle}</p>

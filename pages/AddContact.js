@@ -376,7 +376,7 @@ export default function AddContact() {
         </button>
 
         {/* ─── Logo + infos de l'église ─── */}
-          <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2 mt-4">
+          <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2 mt-5">
             {egliseInfo?.logo_url && (
               <img
                 src={egliseInfo.logo_url}
@@ -694,8 +694,8 @@ export default function AddContact() {
             font-size: 0.95rem;
           }
         `}</style>
-      </div>
-          <FooterHub />
+      </div>          
     </div>
+<FooterHub />
   );
 }

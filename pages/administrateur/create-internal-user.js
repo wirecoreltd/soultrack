@@ -627,22 +627,16 @@ function CreateInternalUserContent() {
               />
 
               {/* Téléphone */}
-              <label className="text-sm font-semibold">{t.telephone}</label>
-                <div className="flex items-center border border-gray-300 rounded-xl shadow-sm overflow-hidden">
-                  {phonePrefix && (
-                    <span className="bg-gray-100 px-3 py-3 text-sm font-semibold text-gray-700 border-r border-gray-300 whitespace-nowrap">
-                      {phonePrefix}
-                    </span>
-                  )}
-                  <input
-                    type="tel"
-                    value={formData.telephone.replace(phonePrefix, "").trim()}
-                    onChange={e => setFormData(prev => ({ ...prev, telephone: phonePrefix + e.target.value }))}
-                    className="flex-1 px-3 py-3 outline-none text-sm"
-                    placeholder="..."
-                    required
-                  />
-                </div>
+          <div className="flex flex-col">
+            <label className="text-sm sm:text-base font-bold mb-1">{t.telephone}</label>
+            <input
+              type="tel"
+              value={formData.telephone}
+              onChange={handlePhoneChange}
+              className="input"
+              placeholder={phonePrefix ? `${phonePrefix} ...` : t.telephone}
+            />
+          </div>
 
               {/* WhatsApp */}
               <label className="inline-flex items-center gap-2 text-sm">

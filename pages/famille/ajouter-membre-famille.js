@@ -247,8 +247,7 @@ const urlEgliseId = router.query.eglise_id || null;
 const urlFamilleId = router.query.famille_id || null;
 const urlFamilleFull = router.query.famille_full
   ? decodeURIComponent(router.query.famille_full)
-  : null;
-  
+  : null;  
   
   const isFromLink = !!urlEgliseId && !!urlFamilleId;
 
@@ -257,12 +256,7 @@ const urlFamilleFull = router.query.famille_full
   const [Familles, setFamilles] = useState([]);
   const [success, setSuccess] = useState(false);
   const [noPhone, setNoPhone] = useState(false);
-  const [phonePrefix, setPhonePrefix] = useState("");
-  
-  const urlFamilleFull = router.query.famille_full
-  ? decodeURIComponent(router.query.famille_full)
-  : null;
-
+  const [phonePrefix, setPhonePrefix] = useState("");  
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",

@@ -311,39 +311,37 @@ function AjouterMembreCelluleContent() {
     fetchEglise();
   }, [userScope.eglise_id]);
 
-  // ✅ Fetch Cellule
-  useEffect(() => {
-  if (!userScope.eglise_id) return;
-
-  const fetchCelluleInfo = async () => {
-    // Cas lien public : cellule_id dans l'URL
-    if (urlCelluleId) {
-      const { data, error } = await supabase
-        .from("cellules")
-        .select("cellule_full")
-        .eq("id", urlCelluleId)
-        .single();
-      if (!error && data) setCelluleInfo(data.cellule_full);
-      return;
-    }
-
-    // Cas connecté : cellule du responsable
-    const { data: sessionData } = await supabase.auth.getSession();
-    const user = sessionData?.session?.user;
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("cellule_full")
-      .eq("responsable_id", user.id)
-      .eq("eglise_id", userScope.eglise_id)
-      .single();
-    if (!error && data) setCelluleInfo(data.cellule_full);
-  };
-
+      // ✅ Fetch Cellule
+      useEffect(() => {
+      const fetchCelluleInfo = async () => {
+        // Cas lien public : cellule_id dans l'URL
+        if (urlCelluleId) {
+          const { data, error } = await supabase
+            .from("cellules")
+            .select("cellule_full")
+            .eq("id", urlCelluleId)
+            .single();
+          if (!error && data) setCelluleInfo(data.cellule_full);
+          return;
+        }
     
-  fetchCelluleInfo();
-}, [userScope.eglise_id, urlCelluleId]);
+        // Cas connecté : cellule du responsable
+        if (!userScope.eglise_id) return;
+        const { data: sessionData } = await supabase.auth.getSession();
+        const user = sessionData?.session?.user;
+        if (!user) return;
+    
+        const { data, error } = await supabase
+          .from("cellules")
+          .select("cellule_full")
+          .eq("responsable_id", user.id)
+          .eq("eglise_id", userScope.eglise_id)
+          .single();
+        if (!error && data) setCelluleInfo(data.cellule_full);
+      };
+    
+      fetchCelluleInfo();
+    }, [urlCelluleId, userScope.eglise_id]); // ← urlCelluleId en premier
 
   useEffect(() => {
     if (!userScope.eglise_id || isFromLink) return;

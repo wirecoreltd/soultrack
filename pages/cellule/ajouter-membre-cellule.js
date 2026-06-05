@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
-import FooterHub from "../components/FooterHub";
+import FooterHub from "../../components/FooterHub";
 import { useMembers } from "../../context/MembersContext";
 import { checkLimiteAtteinte } from "../../lib/checkLimite";
 import { useLang } from "../../hooks/useLang";

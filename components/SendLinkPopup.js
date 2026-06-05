@@ -112,12 +112,12 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
             .single();
           if (groupeData) {
             const name = `${groupeData.ville} - ${groupeData[nameField]}`;
-            console.log("[SendLinkPopup] celluleId prop → name:", name);
+            //console.log("[SendLinkPopup] celluleId prop → name:", name);
             setGroupesList([{ id: celluleId, label: name }]);
             setSelectedGroupeId(celluleId);
             setSelectedGroupeName(name);
           } else {
-            console.warn("[SendLinkPopup] celluleId fourni mais aucune donnée retournée pour id:", celluleId);
+            //console.warn("[SendLinkPopup] celluleId fourni mais aucune donnée retournée pour id:", celluleId);
           }
           return;
         }
@@ -129,7 +129,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
             .eq("responsable_id", user.id)
             .eq("eglise_id", profile.eglise_id);
 
-          console.log("[SendLinkPopup] groupesData:", groupesData, "error:", groupesError);
+          //console.log("[SendLinkPopup] groupesData:", groupesData, "error:", groupesError);
 
           if (groupesData && groupesData.length > 0) {
             const list = groupesData.map((g) => ({
@@ -139,13 +139,13 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
             setGroupesList(list);
             setSelectedGroupeId(list[0].id);
             setSelectedGroupeName(list[0].label);
-            console.log("[SendLinkPopup] groupesList chargée:", list);
+            //console.log("[SendLinkPopup] groupesList chargée:", list);
           } else {
-            console.warn("[SendLinkPopup] Aucun groupe trouvé pour cet utilisateur.");
+            //console.warn("[SendLinkPopup] Aucun groupe trouvé pour cet utilisateur.");
           }
         }
       } catch (err) {
-        console.error("Erreur fetchUserData :", err.message);
+        //console.error("Erreur fetchUserData :", err.message);
       }
     };
 
@@ -161,7 +161,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
   const getLink = (cid, groupeName) => {
     const base = window.location.origin;
-    console.log("[SendLinkPopup] getLink → type:", type, "cid:", cid, "groupeName:", groupeName, "egliseId:", egliseId);
+    //console.log("[SendLinkPopup] getLink → type:", type, "cid:", cid, "groupeName:", groupeName, "egliseId:", egliseId);
     if (type === "ajouter_membre")
       return `${base}/add-member?eglise_id=${egliseId}&lang=${lang}`;
     if (type === "ajouter_membre_cellule")
@@ -171,7 +171,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     if (type === "ajouter_evangelise")
       return `${base}/add-evangelise?eglise_id=${egliseId}&lang=${lang}`;
     if (type === "ajouter_evangelise_cellule")
-      return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
+      return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}&cellule_full=${encodeURIComponent(groupeName)}&lang=${lang}`;
     if (type === "ajouter_evangelise_famille")
       return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
     return base;
@@ -186,7 +186,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   };
 
   const handleSend = () => {
-    console.log("[SendLinkPopup] handleSend → selectedGroupeId:", selectedGroupeId, "groupesList:", groupesList, "selectedGroupeName:", selectedGroupeName);
+    //console.log("[SendLinkPopup] handleSend → selectedGroupeId:", selectedGroupeId, "groupesList:", groupesList, "selectedGroupeName:", selectedGroupeName);
 
     if (needsGroupe && !selectedGroupeId) {
       alert(isFamille ? t.selectFamilleAlert : t.selectCelluleAlert);
@@ -196,10 +196,10 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     const currentGroupe = groupesList.find((g) => g.id === selectedGroupeId);
     const currentGroupeName = currentGroupe?.label || selectedGroupeName;
 
-    console.log("[SendLinkPopup] currentGroupe:", currentGroupe, "currentGroupeName:", currentGroupeName);
+    //console.log("[SendLinkPopup] currentGroupe:", currentGroupe, "currentGroupeName:", currentGroupeName);
 
     const link = getLink(selectedGroupeId, currentGroupeName);
-    console.log("[SendLinkPopup] lien généré:", link);
+    //console.log("[SendLinkPopup] lien généré:", link);
 
     let message = "";
     if (type === "ajouter_evangelise_cellule")

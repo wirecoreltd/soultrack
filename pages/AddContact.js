@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import supabase from "../lib/supabaseClient";
+import FooterHub from "../components/FooterHub";
 import { checkLimiteAtteinte } from "../lib/checkLimite";
 import { useLang } from "../hooks/useLang";
 import { getPrefixForPays } from "../lib/phonePrefix";
@@ -375,7 +376,7 @@ export default function AddContact() {
         </button>
 
         {/* ─── Logo + infos de l'église ─── */}
-          <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
+          <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2 mt-4">
             {egliseInfo?.logo_url && (
               <img
                 src={egliseInfo.logo_url}
@@ -694,6 +695,7 @@ export default function AddContact() {
           }
         `}</style>
       </div>
+          <FooterHub />
     </div>
   );
 }

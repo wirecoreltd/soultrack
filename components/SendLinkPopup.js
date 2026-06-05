@@ -72,9 +72,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   const [churchName, setChurchName] = useState("");
   const [egliseId, setEgliseId] = useState(null);
 
-  // Liste de tous les groupes disponibles (cellules ou familles)
   const [groupesList, setGroupesList] = useState([]);
-  // ID et nom du groupe actuellement sélectionné dans le <select>
   const [selectedGroupeId, setSelectedGroupeId] = useState(null);
   const [selectedGroupeName, setSelectedGroupeName] = useState("");
 
@@ -106,7 +104,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           .single();
         if (churchData) setChurchName(churchData.nom);
 
-        // Si celluleId est passé en prop → un seul groupe fixe, pas de sélection
         if (celluleId) {
           const { data: groupeData } = await supabase
             .from(table)
@@ -122,7 +119,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
           return;
         }
 
-        // Sinon : charger TOUS les groupes du responsable connecté
         if (needsGroupe) {
           const { data: groupesData } = await supabase
             .from(table)
@@ -136,7 +132,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
               label: `${g.ville} - ${g[nameField]}`,
             }));
             setGroupesList(list);
-            // Pré-sélectionner le premier par défaut
             setSelectedGroupeId(list[0].id);
             setSelectedGroupeName(list[0].label);
           }
@@ -149,7 +144,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     fetchUserData();
   }, [type, celluleId]);
 
-  // Met à jour le nom quand l'utilisateur change la sélection
   const handleGroupeChange = (e) => {
     const id = e.target.value;
     const found = groupesList.find((g) => g.id === id);
@@ -157,22 +151,29 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     setSelectedGroupeName(found ? found.label : "");
   };
 
-  const getLink = (cid) => {
+  // ✅ Accepte groupeName en paramètre pour éviter la dépendance au state asynchrone
+  const getLink = (cid, groupeName) => {
     const base = window.location.origin;
-    if (type === "ajouter_membre")             return `${base}/add-member?eglise_id=${egliseId}&lang=${lang}`;
-    if (type === "ajouter_membre_cellule")      return `${base}/cellule/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}&cellule_full=${encodeURIComponent(selectedGroupeName)}&lang=${lang}`;
-    if (type === "ajouter_membre_famille")      return `${base}/famille/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
-    if (type === "ajouter_evangelise")          return `${base}/add-evangelise?eglise_id=${egliseId}&lang=${lang}`;
-    if (type === "ajouter_evangelise_cellule")  return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
-    if (type === "ajouter_evangelise_famille")  return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
+    if (type === "ajouter_membre")
+      return `${base}/add-member?eglise_id=${egliseId}&lang=${lang}`;
+    if (type === "ajouter_membre_cellule")
+      return `${base}/cellule/ajouter-membre-cellule?eglise_id=${egliseId}&cellule_id=${cid}&cellule_full=${encodeURIComponent(groupeName)}&lang=${lang}`;
+    if (type === "ajouter_membre_famille")
+      return `${base}/famille/ajouter-membre-famille?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
+    if (type === "ajouter_evangelise")
+      return `${base}/add-evangelise?eglise_id=${egliseId}&lang=${lang}`;
+    if (type === "ajouter_evangelise_cellule")
+      return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}&lang=${lang}`;
+    if (type === "ajouter_evangelise_famille")
+      return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
     return base;
   };
 
   const getNote = () => {
-    if (type === "ajouter_membre_cellule")       return t.noteCelluleMembre;
-    if (type === "ajouter_evangelise_cellule")   return t.noteCelluleEvang;
-    if (type === "ajouter_membre_famille")       return t.noteFamilleMembre;
-    if (type === "ajouter_evangelise_famille")   return t.noteFamilleEvang;
+    if (type === "ajouter_membre_cellule")      return t.noteCelluleMembre;
+    if (type === "ajouter_evangelise_cellule")  return t.noteCelluleEvang;
+    if (type === "ajouter_membre_famille")      return t.noteFamilleMembre;
+    if (type === "ajouter_evangelise_famille")  return t.noteFamilleEvang;
     return null;
   };
 
@@ -182,15 +183,25 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
       return;
     }
 
-    const link = getLink(selectedGroupeId);
+    // ✅ Résoudre le nom depuis groupesList au moment du clic — fiable même si le state n'est pas encore synchronisé
+    const currentGroupe = groupesList.find((g) => g.id === selectedGroupeId);
+    const currentGroupeName = currentGroupe?.label || selectedGroupeName;
+
+    const link = getLink(selectedGroupeId, currentGroupeName);
 
     let message = "";
-    if (type === "ajouter_evangelise_cellule")     message = t.msgEvangeliseCellule(selectedGroupeName, link);
-    else if (type === "ajouter_membre_cellule")    message = t.msgMembreCellule(selectedGroupeName, link);
-    else if (type === "ajouter_evangelise_famille") message = t.msgEvangeliseFamille(selectedGroupeName, link);
-    else if (type === "ajouter_membre_famille")    message = t.msgMembreFamille(selectedGroupeName, link);
-    else if (type === "ajouter_membre")            message = t.msgMembre(churchName, link);
-    else                                            message = t.msgEvangelise(churchName, link);
+    if (type === "ajouter_evangelise_cellule")
+      message = t.msgEvangeliseCellule(currentGroupeName, link);
+    else if (type === "ajouter_membre_cellule")
+      message = t.msgMembreCellule(currentGroupeName, link);
+    else if (type === "ajouter_evangelise_famille")
+      message = t.msgEvangeliseFamille(currentGroupeName, link);
+    else if (type === "ajouter_membre_famille")
+      message = t.msgMembreFamille(currentGroupeName, link);
+    else if (type === "ajouter_membre")
+      message = t.msgMembre(churchName, link);
+    else
+      message = t.msgEvangelise(churchName, link);
 
     const whatsappLink = phoneNumber
       ? `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`
@@ -227,7 +238,6 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
               </div>
             )}
 
-            {/* Sélecteur de groupe — affiché uniquement si plusieurs groupes disponibles */}
             {needsGroupe && groupesList.length > 1 && (
               <select
                 value={selectedGroupeId || ""}

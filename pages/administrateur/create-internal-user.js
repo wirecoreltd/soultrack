@@ -313,33 +313,39 @@ function CreateInternalUserContent() {
     fetchData();
   }, []);
 
-   // ─── Prefix ───
-  useEffect(() => {
-  const fetchPrefix = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("eglise_id")
-      .eq("id", session.user.id)
-      .single();
-
-    if (!profile?.eglise_id) return;
-
-    const { data: eglise } = await supabase
-      .from("eglises")
-      .select("pays")
-      .eq("id", profile.eglise_id)
-      .single();
-
-    if (eglise?.pays) {
-      const prefix = getPrefixForPays(eglise.pays);
-      if (prefix) setPhonePrefix(prefix);
-    }
-  };
-  fetchPrefix();
-}, []);
+  // ─── Prefix ───
+    useEffect(() => {
+      const fetchPrefix = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return;
+    
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("eglise_id")
+          .eq("id", session.user.id)
+          .single();
+    
+        if (!profile?.eglise_id) return;
+    
+        const { data: eglise } = await supabase
+          .from("eglises")
+          .select("pays")
+          .eq("id", profile.eglise_id)
+          .single();
+    
+        if (eglise?.pays) {
+          const prefix = getPrefixForPays(eglise.pays);
+          if (prefix) {
+            setPhonePrefix(prefix);
+            setFormData(prev => ({
+              ...prev,
+              telephone: prev.telephone || prefix,
+            }));
+          }
+        }
+      };  // ← fermeture de fetchPrefix
+      fetchPrefix();
+    }, []);
 
   // ─── Pré-remplissage membre sélectionné ───
   useEffect(() => {
@@ -637,17 +643,15 @@ function CreateInternalUserContent() {
               />
 
               {/* Téléphone */}
-          <div className="flex flex-col">
-            <label className="text-sm sm:text-base font-bold mb-1">{t.telephone}</label>
-            <input
-              type="tel"
-              value={formData.telephone}
-              onChange={handlePhoneChange}
-              className="input"
-              placeholder={phonePrefix ? `${phonePrefix} ...` : t.telephone}
-            />
-          </div>
-
+              <label className="text-sm font-semibold">{t.telephone}</label>
+              <input
+                type="tel"
+                value={formData.telephone}
+                onChange={e => setFormData(prev => ({ ...prev, telephone: e.target.value }))}
+                className="input"
+                placeholder={phonePrefix ? `${phonePrefix} ...` : t.telephone}
+                required
+              />
               {/* WhatsApp */}
               <label className="inline-flex items-center gap-2 text-sm">
                 <input

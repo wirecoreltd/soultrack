@@ -573,7 +573,7 @@ const urlFamilleFull = router.query.famille_full
 )}
         </div>
 
-        <h1 className="text-base font-bold mt-4 mb-6 text-center text-black">
+        <h1 className="text-xl font-bold mt-4 mb-6 text-center text-black">
           {t.pageTitle}<br /><span className="text-[#333699]">{t.pageTitleHighlight}</span>
         </h1>
 

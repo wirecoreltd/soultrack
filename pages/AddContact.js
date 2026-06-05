@@ -387,7 +387,7 @@ export default function AddContact() {
             )}
           
             {(egliseInfo?.denomination || egliseInfo?.nom) && (
-              <p className="font-semibold text-lg text-[#c31850]">
+              <p className="font-semibold text-base text-[#c31850] text-center w-full break-words px-2">
                 {[egliseInfo.denomination, egliseInfo.nom].filter(Boolean).join(" - ")}
               </p>
             )}

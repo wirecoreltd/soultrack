@@ -456,7 +456,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
         </div>
 
           {urlCelluleFull && (
-              <p className="text-sm font-semibold text-[#333699] mt-1">
+              <p className="text-sm font-semibold text-[#333699] mt-1 text-center">
                 🏠 {urlCelluleFull}
               </p>
             )}

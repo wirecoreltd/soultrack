@@ -271,6 +271,7 @@ export default function AddContact() {
       .single();
 
     if (!error && data) {
+      console.log("egliseInfo:", data);
       setEgliseInfo(data);
 
       const prefix = getPrefixForPays(data.pays);

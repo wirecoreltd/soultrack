@@ -551,14 +551,22 @@ const urlFamilleFull = router.query.famille_full
           {egliseInfo?.branche && (
             <p className="text-sm text-[#c31850] text-center">{egliseInfo.branche}</p>
           )}
-          {egliseInfo?.ville && (
-            <p className="text-sm text-amber-500">{egliseInfo.ville}</p>
-          )}
-          {egliseInfo?.pays && (
-            <p className="text-sm text-gray-700 flex items-center gap-1">
-              <img
-                src={`https://flagcdn.com/w20/${getIsoCode(egliseInfo.pays)}.png`}
-                width="20" height="14" alt={egliseInfo.pays}
+          {(egliseInfo?.ville || egliseInfo?.pays) && (
+  <p className="text-sm text-gray-700 flex items-center gap-1">
+    {egliseInfo?.ville}
+    {egliseInfo?.ville && egliseInfo?.pays && ","}{" "}
+    {egliseInfo?.pays}
+    {egliseInfo?.pays && (
+      <img
+        src={`https://flagcdn.com/w20/${getIsoCode(egliseInfo.pays)}.png`}
+        width="20"
+        height="14"
+        alt={egliseInfo.pays}
+        className="inline-block ml-1"
+      />
+    )}
+  </p>
+)}
               />
               {(() => {
                 const found = PAYS_DATA.find(p => p.fr === egliseInfo.pays || p.en === egliseInfo.pays);

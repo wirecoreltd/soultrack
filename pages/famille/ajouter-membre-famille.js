@@ -567,14 +567,12 @@ const urlFamilleFull = router.query.famille_full
             </p>
           )}
           {familleInfo && (
-  <p className="text-2xl font-semibold text-[#333699] mt-1 text-center">
-    👑 {familleInfo}
-  </p>
-)}
+            <p className="text-2xl font-semibold text-[#333699] mt-1 text-center">
+              👑 {familleInfo}
+            </p>
+          )}
         </div>
-
-    // <h1 className="text-xl font-bold mt-4 mb-6 text-center text-black">{t.pageTitle}<br /><span className="text-[#333699]">{t.pageTitleHighlight}</span></h1>
-
+    //<h1 className="text-xl font-bold mt-4 mb-6 text-center text-black">{t.pageTitle}<br /><span className="text-[#333699]">{t.pageTitleHighlight}</span></h1>
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-black/90">
             <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle1}</span> {t.pageSubtitle2}{" "}

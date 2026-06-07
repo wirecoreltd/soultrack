@@ -486,15 +486,11 @@ useEffect(() => {
             </p>
           )}
           {celluleInfo && (
-            <p className="text-sm font-semibold text-[#333699] mt-1">
+                        <p className="text-2xl font-semibold text-[#333699] mt-1 text-center">
               🏠 {celluleInfo}
             </p>
           )}
         </div>
-
-        <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
-          {t.pageTitlePrefix} <span className="text-[#333699]">{t.pageTitleHighlight}</span>
-        </h1>
 
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-black/90">

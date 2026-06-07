@@ -14,6 +14,13 @@ const translations = {
     invalidLink: "Lien invalide ou expiré.",
     title: "Ajouter un nouveau membre",
     subtitle: "« Et le Seigneur ajoutait chaque jour à l'Église ceux qui étaient sauvés » – Actes 2:47",
+    pageSubtitle1: "Ajoutez",
+    pageSubtitle2: "facilement un membre à",
+    pageSubtitle3: "votre église",
+    pageSubtitle4: ". Renseignez ses informations, ses",
+    pageSubtitle5: "besoins et son parcours spirituel",
+    pageSubtitle6: " pour assurer",
+    pageSubtitle7: "un suivi structuré et personnalisé",
     close: "Fermer",
     dateVenue: "Date de venue",
     civility: "Civilité",
@@ -74,6 +81,13 @@ const translations = {
     invalidLink: "Invalid or expired link.",
     title: "Add a new member",
     subtitle: "And the Lord added to the church daily those who were being saved – Actes 2:47",
+    pageSubtitle1: "Easily add",
+    pageSubtitle2: "a member to",
+    pageSubtitle3: "your church",
+    pageSubtitle4: ". Fill in their information, their",
+    pageSubtitle5: "needs and spiritual journey",
+    pageSubtitle6: " to ensure",
+    pageSubtitle7: "structured and personalized follow-up",
     close: "Close",
     dateVenue: "Date of arrival",
     civility: "Title",
@@ -498,7 +512,16 @@ export default function AddMember() {
             )}
           </div>
             
-        <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">{t.subtitle}</p>
+         <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-black/90">
+            <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle1}</span> {t.pageSubtitle2}{" "}
+            <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle3}</span>{t.pageSubtitle4}
+            <span className="text-[#FFB07C] font-semibold"> {t.pageSubtitle5}</span>{t.pageSubtitle6}{" "}
+            <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle7}</span>.
+          </p>
+        </div>
+            
+            <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">{t.subtitle}</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:gap-4">
 

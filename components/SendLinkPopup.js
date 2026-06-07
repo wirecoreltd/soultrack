@@ -173,7 +173,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
     if (type === "ajouter_evangelise_cellule")
       return `${base}/add-evangelise?eglise_id=${egliseId}&cellule_id=${cid}&cellule_full=${encodeURIComponent(groupeName)}&lang=${lang}`;
     if (type === "ajouter_evangelise_famille")
-      return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}&lang=${lang}`;
+  return `${base}/add-evangelise?eglise_id=${egliseId}&famille_id=${cid}&famille_full=${encodeURIComponent(groupeName)}&lang=${lang}`;
     return base;
   };
 

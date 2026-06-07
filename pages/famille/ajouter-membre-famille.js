@@ -562,7 +562,7 @@ const urlFamilleFull = router.query.famille_full
           )}
         
           {(egliseInfo?.ville || egliseInfo?.pays) && (
-            <p className="text-sm text-gray-700 flex items-center justify-center gap-1">
+            <p className="text-sm text-[#c31850] flex items-center justify-center gap-1">
               {egliseInfo?.ville}
               {egliseInfo?.ville && egliseInfo?.pays && ","}{" "}
         

@@ -14,7 +14,7 @@ import { getPrefixForPays } from "../../lib/phonePrefix";
 
 const translations = {
   fr: {
-    pageTitle: "Ajouter un membre",    
+    //pageTitle: "Ajouter un membre",    
     pageSubtitle1: "Ajoutez",
     pageSubtitle2: "facilement un membre à",
     pageSubtitle3: "votre Famille",
@@ -76,7 +76,7 @@ const translations = {
     errNoPhone: "Le téléphone est requis ou cochez 'Pas de téléphone'",
   },
   en: {
-    pageTitle: "Add a member",    
+    //pageTitle: "Add a member",    
     pageSubtitle1: "Easily add",
     pageSubtitle2: "a member to",
     pageSubtitle3: "your Family",
@@ -573,9 +573,7 @@ const urlFamilleFull = router.query.famille_full
 )}
         </div>
 
-        <h1 className="text-xl font-bold mt-4 mb-6 text-center text-black">
-          {t.pageTitle}<br /><span className="text-[#333699]">{t.pageTitleHighlight}</span>
-        </h1>
+    // <h1 className="text-xl font-bold mt-4 mb-6 text-center text-black">{t.pageTitle}<br /><span className="text-[#333699]">{t.pageTitleHighlight}</span></h1>
 
         <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-black/90">

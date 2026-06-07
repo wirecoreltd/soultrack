@@ -213,18 +213,30 @@ function getIsoCode(countryName) {
 export default function AddEvangelise({ onNewEvangelise }) {
   const router = useRouter();
 
-  const urlEgliseId = router.query.eglise_id || null;
+  const urlEgliseId  = router.query.eglise_id  || null;
   const urlCelluleId = router.query.cellule_id || null;
   const urlFamilleId = router.query.famille_id || null;
-  const isFromLink = !!urlEgliseId;
+  const isFromLink   = !!urlEgliseId;
 
   const { lang: hookLang } = useLang();
   const urlLang = router.query.lang;
   const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
   const t = translations[lang] || translations.fr;
-  const urlCelluleFull = router.query.cellule_full ? decodeURIComponent(router.query.cellule_full) : null;
 
-  // ✅ Préfixe téléphonique
+  // ✅ cellule_full et famille_full via state — router.isReady
+  const [celluleFullInfo, setCelluleFullInfo] = useState(null);
+  const [familleFullInfo, setFamilleFullInfo] = useState(null);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (router.query.cellule_full) {
+      setCelluleFullInfo(decodeURIComponent(router.query.cellule_full));
+    }
+    if (router.query.famille_full) {
+      setFamilleFullInfo(decodeURIComponent(router.query.famille_full));
+    }
+  }, [router.isReady, router.query.cellule_full, router.query.famille_full]);
+
   const [phonePrefix, setPhonePrefix] = useState("");
 
   const [formData, setFormData] = useState({
@@ -251,14 +263,14 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [loading, setLoading] = useState(false);
   const [eglise, setEglise] = useState(null);
 
-  // ✅ Fetch église depuis l'URL + détection préfixe
+  // Fetch église depuis l'URL
   useEffect(() => {
     const fetchEglise = async () => {
       if (!urlEgliseId) return;
       setFormData(prev => ({ ...prev, eglise_id: urlEgliseId }));
       const { data, error } = await supabase
         .from("eglises")
-        .select("id, nom, denomination, ville, pays, branche, logo_url, denomination")
+        .select("id, nom, denomination, ville, pays, branche, logo_url")
         .eq("id", urlEgliseId)
         .single();
       if (!error && data) {
@@ -273,7 +285,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     fetchEglise();
   }, [urlEgliseId]);
 
-  // ✅ Fetch église depuis le profil connecté + détection préfixe
+  // Fetch église depuis le profil connecté
   useEffect(() => {
     if (isFromLink) return;
     const fetchUserEglise = async () => {
@@ -311,13 +323,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
     setFormData({ ...formData, besoin: updated });
   };
 
-  // ✅ Téléphone avec préfixe protégé
   const handlePhoneChange = (e) => {
-  setFormData(prev => ({
-    ...prev,
-    telephone: e.target.value,
-  }));
-};
+    setFormData(prev => ({ ...prev, telephone: e.target.value }));
+  };
 
   const resetForm = () => {
     setFormData(prev => ({
@@ -436,62 +444,53 @@ export default function AddEvangelise({ onNewEvangelise }) {
       <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">
 
         {/* Logo + infos église */}
-<div className="flex flex-col items-center mb-4 gap-1">
-  {eglise?.logo_url && (
-    <img
-      src={eglise.logo_url}
-      alt={eglise.nom || "Logo"}
-      className="w-20 h-20 object-contain"
-    />
-  )}
+        <div className="flex flex-col items-center mb-4 gap-1">
+          {eglise?.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={eglise.logo_url} alt={eglise.nom || "Logo"}
+              className="w-20 h-20 object-contain" />
+          )}
+          {(eglise?.denomination || eglise?.nom) && (
+            <p className="font-bold text-lg text-[#333699] text-center break-words px-2 leading-tight">
+              {[eglise.denomination, eglise.nom].filter(Boolean).join(" - ")}
+            </p>
+          )}
+          {eglise?.branche && (
+            <p className="text-sm text-[#666] text-center">{eglise.branche}</p>
+          )}
+          {(eglise?.ville || eglise?.pays) && (
+            <div className="flex items-center gap-2 text-sm text-[#c31850]">
+              <span>
+                {eglise?.ville}
+                {eglise?.ville && eglise?.pays ? ", " : ""}
+                {(() => {
+                  if (!eglise?.pays) return "";
+                  const found = PAYS_DATA.find(p => p.fr === eglise.pays || p.en === eglise.pays);
+                  return lang === "en" ? (found?.en || eglise.pays) : (found?.fr || eglise.pays);
+                })()}
+              </span>
+              {eglise?.pays && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={`https://flagcdn.com/w20/${getIsoCode(eglise.pays)}.png`}
+                  width="20" height="14" alt={eglise.pays} />
+              )}
+            </div>
+          )}
 
-  {(eglise?.denomination || eglise?.nom) && (
-    <p className="font-bold text-lg text-[#333699] text-center break-words px-2 leading-tight">
-      {[eglise.denomination, eglise.nom].filter(Boolean).join(" - ")}
-    </p>
-  )}
+          {/* ✅ Nom cellule ou famille depuis l'URL */}
+          {celluleFullInfo && (
+            <p className="text-sm font-semibold text-[#333699] text-center mt-2">
+              🏠 {celluleFullInfo}
+            </p>
+          )}
+          {familleFullInfo && (
+            <p className="text-sm font-semibold text-[#333699] text-center mt-2">
+              👑 {familleFullInfo.split(" - ")[1] || familleFullInfo}
+            </p>
+          )}
+        </div>
 
-  {eglise?.branche && (
-    <p className="text-sm text-[#666] text-center">
-      {eglise.branche}
-    </p>
-  )}
-
-  {(eglise?.ville || eglise?.pays) && (
-    <div className="flex items-center gap-2 text-sm text-[#c31850]">
-      <span>
-        {eglise?.ville}
-        {eglise?.ville && eglise?.pays ? ", " : ""}
-        {(() => {
-          if (!eglise?.pays) return "";
-          const found = PAYS_DATA.find(
-            p => p.fr === eglise.pays || p.en === eglise.pays
-          );
-          return lang === "en"
-            ? (found?.en || eglise.pays)
-            : (found?.fr || eglise.pays);
-        })()}
-      </span>
-
-      {eglise?.pays && (
-        <img
-          src={`https://flagcdn.com/w20/${getIsoCode(eglise.pays)}.png`}
-          width="20"
-          height="14"
-          alt={eglise.pays}
-        />
-      )}
-    </div>
-  )}
-
-  {urlCelluleFull && (
-    <p className="text-xl font-semibold text-[#333699] text-center mt-2">
-      🏠 {urlCelluleFull}
-    </p>
-  )}
-</div>
-
-  <div className="max-w-3xl w-full mb-6 text-center">
+        <div className="max-w-3xl w-full mb-6 text-center">
           <p className="italic text-base text-black/90">
             <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle1}</span> {t.pageSubtitle2}{" "}
             <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle3}</span>{t.pageSubtitle4}
@@ -499,8 +498,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
             <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle7}</span>.
           </p>
         </div>
-            
-          <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
+
+        <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
           {t.subtitle}
         </p>
 
@@ -536,14 +535,10 @@ export default function AddEvangelise({ onNewEvangelise }) {
             {t.ageOptions.map(v => <option key={v} value={v}>{v}</option>)}
           </select>
 
-          {/* ✅ Téléphone avec préfixe automatique */}
-          <input
-            className="input"
-            type="text"
+          <input className="input" type="text"
             placeholder={phonePrefix ? `${phonePrefix} ...` : t.telephone}
-            value={formData.telephone}
-            onChange={handlePhoneChange}
-          />
+            value={formData.telephone} onChange={handlePhoneChange} />
+
           <input className="input" type="text" placeholder={t.ville} value={formData.ville}
             onChange={e => setFormData({ ...formData, ville: e.target.value })} />
 
@@ -616,8 +611,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
         )}
 
         <style jsx>{`.input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #ccc; }`}</style>
-           <FooterHub />
-      </div>        
-             </div>
+        <FooterHub />
+      </div>
+    </div>
   );
 }

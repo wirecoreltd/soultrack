@@ -12,6 +12,13 @@ const translations = {
     loading: "Chargement...",
     noEglise: "Votre compte n'est pas rattaché à une église.",
     title: "Ajouter une personne évangélisée",
+    pageSubtitle1: "Enregistrez",
+    pageSubtitle2: "facilement une personne",
+    pageSubtitle3: "touchée par l'Évangile",
+    pageSubtitle4: ". Notez ses informations, ses",
+    pageSubtitle5: "besoins et son parcours spirituel",
+    pageSubtitle6: " afin d'assurer",
+    pageSubtitle7: "un accompagnement fidèle et structuré",
     subtitle: "«Allez par tout le monde, et prêchez la bonne nouvelle à toute la création.» – Marc 16:15",
     typeEvang: "Type d'Évangélisation",
     typeEvangOptions: [
@@ -59,6 +66,13 @@ const translations = {
     loading: "Loading...",
     noEglise: "Your account is not linked to a church.",
     title: "Add an evangelized person",
+    pageSubtitle1: "Easily add",
+    pageSubtitle2: "an evangelized person",
+    pageSubtitle3: "to your outreach records",
+    pageSubtitle4: ". Record their information,",
+    pageSubtitle5: "needs and spiritual response",
+    pageSubtitle6: " to ensure",
+    pageSubtitle7: "effective and personalized follow-up",
     subtitle: "«Go ye into all the world, and preach the gospel to every creature.» – Marc 16:15",
     typeEvang: "Type of Outreach",
     typeEvangOptions: [
@@ -476,6 +490,15 @@ export default function AddEvangelise({ onNewEvangelise }) {
     </p>
   )}
 </div>
+
+  <div className="max-w-3xl w-full mb-6 text-center">
+          <p className="italic text-base text-black/90">
+            <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle1}</span> {t.pageSubtitle2}{" "}
+            <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle3}</span>{t.pageSubtitle4}
+            <span className="text-[#FFB07C] font-semibold"> {t.pageSubtitle5}</span>{t.pageSubtitle6}{" "}
+            <span className="text-[#FFB07C] font-semibold">{t.pageSubtitle7}</span>.
+          </p>
+        </div>
             
           <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
           {t.subtitle}

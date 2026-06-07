@@ -422,46 +422,61 @@ export default function AddEvangelise({ onNewEvangelise }) {
       <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">
 
         {/* Logo + infos église */}
-        <div className="flex flex-col items-center mb-3 sm:mb-6 gap-2">
-          {eglise?.logo_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={eglise.logo_url} alt={eglise.nom || "Logo"}
-              style={{ width: 50, height: 50, objectFit: "contain" }} />
-          )}
-          {(eglise?.denomination || eglise?.nom) && (
-            <p className="font-semibold text-base text-[#c31850] text-center w-full break-words px-2">
-              {[eglise.denomination, eglise.nom].filter(Boolean).join(" - ")}
-            </p>
-          )}
-          {eglise?.branche && (
-            <p className="text-sm text-[#c31850] text-center">{eglise.branche}</p>
-          )}
-          {eglise?.ville && (
-            <p className="text-sm text-amber-500">{eglise.ville}</p>
-          )}
-          {eglise?.pays && (
-            <p className="text-sm text-gray-700 flex items-center gap-1">
+          <div className="flex flex-col items-center mb-4 gap-1">
+            {eglise?.logo_url && (
               <img
-                src={`https://flagcdn.com/w20/${getIsoCode(eglise.pays)}.png`}
-                width="20"
-                height="14"
-                alt={eglise.pays}
+                src={eglise.logo_url}
+                alt={eglise.nom || "Logo"}
+                className="w-20 h-20 object-contain"
               />
-              {(() => {
-                const found = PAYS_DATA.find(p => p.fr === eglise.pays || p.en === eglise.pays);
-                return lang === "en" ? (found?.en || eglise.pays) : (found?.fr || eglise.pays);
-              })()}
-            </p>
-          )}
-        </div>
-
-          {urlCelluleFull && (
-              <p className="text-sm font-semibold text-[#333699] mt-1 text-center">
+            )}
+          
+            {(eglise?.denomination || eglise?.nom) && (
+              <p className="font-bold text-lg text-[#333699] text-center break-words px-2 leading-tight">
+                {[eglise.denomination, eglise.nom].filter(Boolean).join(" - ")}
+              </p>
+            )}
+          
+            {eglise?.branche && (
+              <p className="text-sm text-[#666] text-center">
+                {eglise.branche}
+              </p>
+            )}
+          
+            {(eglise?.ville || eglise?.pays) && (
+              <div className="flex items-center gap-2 text-sm text-[#c31850]">
+                {eglise?.pays && (
+                  <img
+                    src={`https://flagcdn.com/w20/${getIsoCode(eglise.pays)}.png`}
+                    width="20"
+                    height="14"
+                    alt={eglise.pays}
+                  />
+                )}
+          
+                <span>
+                  {eglise?.ville}
+                  {eglise?.ville && eglise?.pays ? ", " : ""}
+                  {(() => {
+                    if (!eglise?.pays) return "";
+                    const found = PAYS_DATA.find(
+                      p => p.fr === eglise.pays || p.en === eglise.pays
+                    );
+                    return lang === "en"
+                      ? (found?.en || eglise.pays)
+                      : (found?.fr || eglise.pays);
+                  })()}
+                </span>
+              </div>
+            )}
+          
+            {urlCelluleFull && (
+              <p className="text-xl font-semibold text-[#333699] text-center mt-2">
                 🏠 {urlCelluleFull}
               </p>
             )}
-
-        <h1 className="text-2xl sm:text-2xl font-bold text-center mb-2 mt-4">{t.title}</h1>
+          </div>
+            
           <p className="text-center text-gray-500 italic mb-4 sm:mb-6 text-sm sm:text-base">
           {t.subtitle}
         </p>

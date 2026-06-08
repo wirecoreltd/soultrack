@@ -549,6 +549,7 @@ function Presence() {
   const [savingFilles, setSavingFilles] = useState(false);
   const [isResponsableCellule, setIsResponsableCellule] = useState(false);
   const [isCheckIn, setIsCheckIn] = useState(false);
+  const [isResponsableCheckIn, setIsResponsableCheckIn] = useState(false);
 
   const profileRef            = useRef(null);
   const myIdsRef              = useRef(null); // directs seulement → liste globale
@@ -592,6 +593,8 @@ function Presence() {
 
     const checkInRole = profile.roles?.includes("CheckInPresence");
     setIsCheckIn(!!checkInRole);
+    const respCheckIn = profile.roles?.includes("ResponsableCheckIn");
+    setIsResponsableCheckIn(!!respCheckIn);
 
     if (isAdmin) {
       myIdsRef.current    = null;
@@ -1160,7 +1163,7 @@ function Presence() {
             </div>
           )}
 
-          {!isCheckIn && (
+          {(!isCheckIn || isResponsableCheckIn) && (
             todaySessions.length > 0 ? (
               <button onClick={() => setEtape("form")}
                 className="w-full py-3 rounded-2xl border-2 border-dashed border-white/40 text-white/80 text-sm font-semibold hover:border-white hover:text-white hover:bg-white/10 transition">
@@ -1234,20 +1237,20 @@ function Presence() {
 
         <div
           className={`inline-flex flex-col items-center mt-3 px-4 py-2 rounded-xl ${readOnly ? "bg-amber-500/20 cursor-default" : "bg-white/10 cursor-pointer hover:bg-white/20"} transition group`}
-          onClick={() => !readOnly && !isCheckIn && setEditingSession(v => !v)}
+          onClick={() => !readOnly && (!isCheckIn || isResponsableCheckIn) && setEditingSession(v => !v)}
         >
           <div className="flex items-center gap-2">
             <span className="text-white font-semibold text-sm">
               {sessionCourante?.typeTemps}
               {sessionCourante?.numero_culte ? ` — ${sessionCourante.numero_culte}${sessionCourante.numero_culte === 1 ? t.form.er : t.form.eme} ${t.form.culte}` : ""}
             </span>
-            {!readOnly && !isCheckIn && <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>}
+            {!readOnly && (!isCheckIn || isResponsableCheckIn) && <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>}
           </div>
           <span className="text-white/60 text-xs mt-0.5">
             📅 {new Date(selectedDateRef.current + "T00:00:00").toLocaleDateString(locale, { day: "2-digit", month: "long", year: "numeric" })}
             {sessionCourante?.heure ? ` · 🕐 ${sessionCourante.heure}` : ""}
           </span>
-          {!readOnly && !isCheckIn && <span className="text-white/40 text-xs mt-0.5">{t.clickToEdit}</span>}
+          {!readOnly && (!isCheckIn || isResponsableCheckIn) && <span className="text-white/40 text-xs mt-0.5">{t.clickToEdit}</span>}
         </div>
 
         {totalPresents > 0 && <CompteurSexe presences={presentList} t={t} />}
@@ -1255,7 +1258,7 @@ function Presence() {
 
       {readOnly && <BanniereConsultation session={sessionCourante} onRetour={handleReset} t={t} lang={lang} />}
 
-      {!isAdminRef.current && !readOnly && !isCheckIn && (
+      {!isAdminRef.current && !readOnly && (!isCheckIn || isResponsableCheckIn) && (
         <ToggleVisibilite visible={listeVisible} onToggle={toggleVisibilite} saving={savingVisible} t={t} />
       )}
 
@@ -1263,12 +1266,12 @@ function Presence() {
         <ToggleCellulesFilles active={voirCellulesFilles} onToggle={toggleCellulesFilles} saving={savingFilles} t={t} />
       )}
 
-      {editingSession && !readOnly && !isCheckIn && (
-        <div className="w-full max-w-lg mb-6">
-          <h2 className="text-white font-semibold text-center mb-3">{t.editSession}</h2>
-          <FormulaireSession
-            isEdit={true}
-            selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+      {editingSession && !readOnly && (!isCheckIn || isResponsableCheckIn) && (
+      <div className="w-full max-w-lg mb-6">
+        <h2 className="text-white font-semibold text-center mb-3">{t.editSession}</h2>
+        <FormulaireSession
+          isEdit={true}
+                selectedDate={selectedDate} setSelectedDate={setSelectedDate}
             selectedTime={selectedTime} setSelectedTime={setSelectedTime}
             typeTemps={typeTemps} setTypeTemps={setTypeTemps}
             nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
@@ -1343,8 +1346,9 @@ function Presence() {
 
 export default function PresencePage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "Conseiller", "ResponsableCellule", "ResponsableFamilles",
-    "SuperviseurCellule", "SuperviseurFamilles", "CheckInPresence"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "Conseiller", 
+  "ResponsableCellule", "ResponsableFamilles", "SuperviseurCellule", 
+  "SuperviseurFamilles", "CheckInPresence", "ResponsableCheckIn"]}>
       <Presence />
     </ProtectedRoute>
   );

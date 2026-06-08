@@ -102,6 +102,9 @@ const roleCards = {
   CheckInPresence: [
     { path: "/Presence", key: "presence",      emoji: "✍🏻", color: "#0EA5E9" },    
   ],
+  ResponsableCheckIn: [
+    { path: "/Presence", key: "presence",      emoji: "✍🏻", color: "#0EA5E9" },    
+  ],
   Membre: [],
 };
 

@@ -1,11 +1,75 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import { useFeature } from "../components/FeaturesContext";
+import { useLang } from "../hooks/useLang";
+
+const translations = {
+  fr: {
+    title: "Modifier l'utilisateur",
+    editProfile: "Modifier le profil",
+    // Sections
+    identity: "👤 Identité",
+    roles: "🔐 Rôles",
+    cellules: "🏠 Cellules assignées",
+    // Field labels
+    prenom: "Prénom",
+    nom: "Nom",
+    email: "Email",
+    telephone: "Téléphone",
+    // Roles
+    administrateur: "Administrateur",
+    responsableIntegration: "Responsable Intégration",
+    responsableCheckIn: "Responsable CheckIn",
+    responsableCellule: "Responsable Cellule",
+    superviseurCellule: "Superviseur Cellule",
+    responsableEvangelisation: "Responsable Évangélisation",
+    conseiller: "Conseiller",
+    responsableFamilles: "Responsable Familles",
+    // Cellules
+    noCellule: "Aucune cellule trouvée pour cette église.",
+    dejaAssignee: "(déjà assignée)",
+    // Footer
+    cancel: "Annuler",
+    saving: "Enregistrement...",
+    save: "💾 Enregistrer",
+    // Success / error
+    success: "✔️ Modifié avec succès !",
+    errorUpdate: "❌ Erreur lors de la mise à jour : ",
+  },
+  en: {
+    title: "Edit user",
+    editProfile: "Edit profile",
+    identity: "👤 Identity",
+    roles: "🔐 Roles",
+    cellules: "🏠 Assigned cells",
+    prenom: "First name",
+    nom: "Last name",
+    email: "Email",
+    telephone: "Phone",
+    administrateur: "Administrator",
+    responsableIntegration: "Integration Manager",
+    responsableCheckIn: "CheckIn Manager",
+    responsableCellule: "Cell Leader",
+    superviseurCellule: "Cell Supervisor",
+    responsableEvangelisation: "Evangelisation Manager",
+    conseiller: "Counsellor",
+    responsableFamilles: "Families Manager",
+    noCellule: "No cell found for this church.",
+    dejaAssignee: "(already assigned)",
+    cancel: "Cancel",
+    saving: "Saving...",
+    save: "💾 Save",
+    success: "✔️ Updated successfully!",
+    errorUpdate: "❌ Error while updating: ",
+  },
+};
 
 export default function EditUserModal({ user, onClose, onUpdated }) {
-  // ✅ Tous les hooks en premier — avant tout return conditionnel
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const cellulesActive = useFeature("cellules");
   const conseillerActive = useFeature("conseiller");
   const famillesActive = useFeature("familles");
@@ -19,27 +83,28 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   });
 
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [message, setMessage] = useState("");
   const [cellules, setCellules] = useState([]);
   const [selectedCelluleIds, setSelectedCelluleIds] = useState([]);
 
-  // ✅ allRoles conditionné par features — seuls les rôles actifs sont proposés
+  const modalRef = useRef(null);
+
   const allRoles = useMemo(() => [
-    { value: "Administrateur",            label: "Administrateur" },
-    { value: "ResponsableIntegration",    label: "Responsable Intégration" },
-    { value: "ResponsableCheckIn",        label: "Responsable CheckIn" },
+    { value: "Administrateur",            label: t.administrateur },
+    { value: "ResponsableIntegration",    label: t.responsableIntegration },
+    { value: "ResponsableCheckIn",        label: t.responsableCheckIn },
     ...(cellulesActive ? [
-      { value: "ResponsableCellule",      label: "Responsable Cellule" },
-      { value: "SuperviseurCellule",      label: "Superviseur Cellule" },
+      { value: "ResponsableCellule",      label: t.responsableCellule },
+      { value: "SuperviseurCellule",      label: t.superviseurCellule },
     ] : []),
-    { value: "ResponsableEvangelisation", label: "Responsable Évangélisation" },
+    { value: "ResponsableEvangelisation", label: t.responsableEvangelisation },
     ...(conseillerActive ? [
-      { value: "Conseiller",              label: "Conseiller" },
+      { value: "Conseiller",              label: t.conseiller },
     ] : []),
     ...(famillesActive ? [
-      { value: "ResponsableFamilles",     label: "Responsable Familles" },
+      { value: "ResponsableFamilles",     label: t.responsableFamilles },
     ] : []),
-  ], [cellulesActive, conseillerActive, famillesActive]);
+  ], [cellulesActive, conseillerActive, famillesActive, lang]);
 
   useEffect(() => {
     if (!user) return;
@@ -52,30 +117,33 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     });
   }, [user]);
 
-  // ✅ Chargement Supabase conditionné par la feature cellules
   useEffect(() => {
-    if (!user?.eglise_id) return;
-    if (!cellulesActive) return;
-
+    if (!user?.eglise_id || !cellulesActive) return;
     const fetchCellules = async () => {
       const { data } = await supabase
         .from("cellules")
         .select("id, cellule_full, ville, cellule, responsable_id")
         .eq("eglise_id", user.eglise_id)
         .order("cellule_full");
-
       setCellules(data || []);
-
       const dejassignees = (data || [])
         .filter((c) => c.responsable_id === user.id)
         .map((c) => c.id);
       setSelectedCelluleIds(dejassignees);
     };
-
     fetchCellules();
   }, [user, cellulesActive]);
 
-  // ✅ Guard APRÈS tous les hooks
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
   if (!user) return null;
 
   const handleChange = (e) => {
@@ -102,6 +170,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
   const handleSave = async () => {
     if (!user?.id) return;
+    setMessage("");
     setSaving(true);
 
     const { data, error } = await supabase
@@ -119,24 +188,21 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
 
     if (error) {
       setSaving(false);
-      alert("❌ Erreur lors de la mise à jour : " + error.message);
+      setMessage(t.errorUpdate + error.message);
       return;
     }
 
-    // ✅ Gestion cellules — seulement si la feature est active
     if (cellulesActive) {
       if (form.roles.includes("ResponsableCellule")) {
         const cellulesARetirer = cellules
           .filter((c) => c.responsable_id === user.id && !selectedCelluleIds.includes(c.id))
           .map((c) => c.id);
-
         if (cellulesARetirer.length > 0) {
           await supabase
             .from("cellules")
             .update({ responsable_id: null })
             .in("id", cellulesARetirer);
         }
-
         if (selectedCelluleIds.length > 0) {
           await supabase
             .from("cellules")
@@ -155,14 +221,10 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     }
 
     setSaving(false);
-
-    if (data && data.length > 0 && onUpdated) {
-      onUpdated(data[0]);
-    }
-
-    setSuccess(true);
+    if (data && data.length > 0 && onUpdated) onUpdated(data[0]);
+    setMessage(t.success);
     setTimeout(() => {
-      setSuccess(false);
+      setMessage("");
       onClose();
     }, 700);
   };
@@ -170,89 +232,197 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   const showCellules = cellulesActive && form.roles.includes("ResponsableCellule");
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 p-4">
-      <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex flex-col items-center mb-4">
-          <img src="/logo.png" alt="Logo" className="w-20 h-20" />
-          <h2 className="text-xl font-bold text-center mt-2">
-            Modifier l'utilisateur
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{
+        background: "rgba(30,35,90,0.35)",
+        backdropFilter: "blur(6px)",
+      }}
+    >
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+        style={{ background: "#ffffff", border: "1px solid #e2e8f0" }}
+      >
+        {/* Header */}
+        <div
+          className="px-6 pt-6 pb-4"
+          style={{
+            background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+          }}
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm transition-all"
+            style={{ background: "rgba(255,255,255,0.2)" }}
+          >
+            ✕
+          </button>
+          <h2 className="text-xl font-bold text-white pr-10">
+            ✏️ {user.prenom} {user.nom}
           </h2>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">
+            {t.editProfile}
+          </p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <input type="text" name="prenom" value={form.prenom} onChange={handleChange} placeholder="Prénom" className="input" />
-          <input type="text" name="nom" value={form.nom} onChange={handleChange} placeholder="Nom" className="input" />
-          <input type="email" name="email" value={form.email} onChange={handleChange} placeholder="Email" className="input" />
-          <input type="text" name="telephone" value={form.telephone} onChange={handleChange} placeholder="Téléphone" className="input" />
+        {/* Body */}
+        <div
+          className="overflow-y-auto px-6 py-5 flex flex-col gap-5"
+          style={{ maxHeight: "68vh" }}
+        >
+          <SectionTitle>{t.identity}</SectionTitle>
 
-          {/* ✅ Rôles — uniquement ceux dont la feature est active */}
-          <div className="flex flex-col gap-2">
-            <label className="font-semibold">Rôles :</label>
+          {[
+            { name: "prenom", label: t.prenom, type: "text" },
+            { name: "nom",    label: t.nom,    type: "text" },
+            { name: "email",  label: t.email,  type: "email" },
+            { name: "telephone", label: t.telephone, type: "text" },
+          ].map(({ name, label, type }) => (
+            <Field key={name} label={label}>
+              <input
+                type={type}
+                name={name}
+                value={form[name]}
+                onChange={handleChange}
+                className="inp"
+              />
+            </Field>
+          ))}
+
+          <SectionTitle>{t.roles}</SectionTitle>
+
+          <div className="grid grid-cols-1 gap-1">
             {allRoles.map((r) => (
-              <label key={r.value} className="inline-flex items-center gap-2">
+              <label
+                key={r.value}
+                className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1"
+              >
                 <input
                   type="checkbox"
                   checked={form.roles.includes(r.value)}
                   onChange={() => handleRoleChange(r.value)}
+                  className="accent-[#2E3192] w-4 h-4"
                 />
                 {r.label}
               </label>
             ))}
           </div>
 
-          {/* ✅ Sélecteur cellules — visible seulement si feature active ET rôle coché */}
           {showCellules && (
-            <div className="flex flex-col gap-2 mt-2 p-4 bg-green-50 rounded-2xl border border-green-200">
-              <label className="font-semibold text-green-800">
-                🏠 Cellules assignées :
-              </label>
+            <>
+              <SectionTitle>{t.cellules}</SectionTitle>
+
               {cellules.length === 0 ? (
-                <p className="text-sm text-gray-500">Aucune cellule trouvée pour cette église.</p>
+                <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
+                  {t.noCellule}
+                </p>
               ) : (
-                cellules.map((c) => (
-                  <label key={c.id} className="inline-flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={selectedCelluleIds.includes(c.id)}
-                      onChange={() => handleCelluleChange(c.id)}
-                      className="w-4 h-4"
-                    />
-                    <span>{c.cellule_full || `${c.ville} - ${c.cellule}`}</span>
-                    {c.responsable_id && c.responsable_id !== user.id && (
-                      <span className="text-xs text-orange-500">(déjà assignée)</span>
-                    )}
-                  </label>
-                ))
+                <div className="flex flex-col gap-1">
+                  {cellules.map((c) => (
+                    <label
+                      key={c.id}
+                      className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedCelluleIds.includes(c.id)}
+                        onChange={() => handleCelluleChange(c.id)}
+                        className="accent-[#2E3192] w-4 h-4"
+                      />
+                      <span>{c.cellule_full || `${c.ville} - ${c.cellule}`}</span>
+                      {c.responsable_id && c.responsable_id !== user.id && (
+                        <span className="text-xs text-orange-400">
+                          {t.dejaAssignee}
+                        </span>
+                      )}
+                    </label>
+                  ))}
+                </div>
               )}
-            </div>
-          )}
-
-          <div className="flex gap-4 mt-4">
-            <button onClick={onClose} className="flex-1 bg-gray-400 text-white font-bold py-3 rounded-2xl hover:bg-gray-500 transition">
-              Annuler
-            </button>
-            <button onClick={handleSave} disabled={saving} className="flex-1 bg-gradient-to-r from-blue-400 to-indigo-500 text-white font-bold py-3 rounded-2xl hover:from-blue-500 hover:to-indigo-600 transition">
-              {saving ? "Enregistrement..." : "Enregistrer"}
-            </button>
-          </div>
-
-          {success && (
-            <p className="text-green-600 font-semibold text-center mt-2">
-              ✔️ Modifié avec succès !
-            </p>
+            </>
           )}
         </div>
 
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all"
+          >
+            {t.cancel}
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
+            style={{
+              background: saving
+                ? "#a0a0c0"
+                : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+            }}
+          >
+            {saving ? t.saving : t.save}
+          </button>
+        </div>
+
+        {message && (
+          <p
+            className="text-center text-sm font-semibold px-6 pb-4"
+            style={{ color: message.includes("❌") ? "#dc2626" : "#16a34a" }}
+          >
+            {message}
+          </p>
+        )}
+
         <style jsx>{`
-          .input {
+          .inp {
             width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 12px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            color: #1e293b;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+          }
+          .inp:focus {
+            border-color: #2E3192;
+            background: #fff;
           }
         `}</style>
       </div>
+    </div>
+  );
+}
+
+function SectionTitle({ children }) {
+  return (
+    <div className="flex items-center gap-2 pt-2">
+      <span
+        className="text-xs font-bold uppercase tracking-widest"
+        style={{ color: "#2E3192" }}
+      >
+        {children}
+      </span>
+      <div className="flex-1 h-px" style={{ background: "#e2e8f0" }} />
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <label
+        className="text-xs font-semibold uppercase tracking-wide"
+        style={{ color: "#64748b" }}
+      >
+        {label}
+      </label>
+      {children}
     </div>
   );
 }

@@ -54,6 +54,12 @@ const translations = {
     voirFillesSub: "Vous voyez aussi les membres des cellules rattachées à la vôtre",
     voirFillesOff: "🏠 Cellules filles masquées",
     voirFillesOffSub: "Afficher uniquement vos membres directs",
+    editable: "✏️ Modifiable",
+    archived: "🔒 Archivée",
+    editables: "modifiable",
+    editablesPlural: "modifiables",
+    archivedLabel: "archivée",
+    archivedLabelPlural: "archivées",
     form: {
       date: "📅 Date",
       heure: "🕐 Heure",
@@ -130,6 +136,12 @@ const translations = {
     voirFillesSub: "You also see members from cells linked to yours",
     voirFillesOff: "🏠 Child cells hidden",
     voirFillesOffSub: "Show only your direct members",
+    editable: "✏️ Editable",
+    archived: "🔒 Archived",
+    editables: "editable",
+    editablesPlural: "editable",
+    archivedLabel: "archived",
+    archivedLabelPlural: "archived",
     form: {
       date: "📅 Date",
       heure: "🕐 Time",
@@ -169,14 +181,22 @@ const today = () => {
 };
 const nowTime = () => new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
+// ── PATCH 1 : fenêtre élargie à 30 jours ──────────────────────
 function getLast5Days() {
   const days = [];
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 30; i++) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     days.push(d.toISOString().split("T")[0]);
   }
   return days;
+}
+
+// ── Helper : session modifiable si créée il y a ≤ 7 jours ─────
+function isSessionEditable(dateStr) {
+  const sessionDate = new Date(dateStr + "T00:00:00");
+  const diffJours = Math.floor((new Date() - sessionDate) / (1000 * 60 * 60 * 24));
+  return diffJours <= 7;
 }
 
 function formatSessionLabel(s, lang) {
@@ -476,7 +496,7 @@ function BanniereConsultation({ session, onRetour, t, lang }) {
   );
 }
 
-// ─── SESSIONS RÉCENTES ─────────────────────────────────────────
+// ── PATCH 2 : OldSessionsBlock avec couleurs + collapse ────────
 function OldSessionsBlock({ sessions, onConsulter, t, lang }) {
   const [showOld, setShowOld] = useState(false);
 
@@ -487,27 +507,65 @@ function OldSessionsBlock({ sessions, onConsulter, t, lang }) {
   }, {});
   const oldDates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
 
+  const editableCount = sessions.filter(s => isSessionEditable(s.date)).length;
+  const readOnlyCount = sessions.length - editableCount;
+
   return (
     <div className="flex flex-col gap-2">
-      <button onClick={() => setShowOld(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition">
-        <span>{t.oldSessions} — {sessions.length} session(s)</span>
-        <span className="text-xs text-white/70">{showOld ? t.oldSessionsHide : t.oldSessionsShow}</span>
+      {/* Bouton collapse avec compteurs */}
+      <button
+        onClick={() => setShowOld(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition"
+      >
+        <div className="flex items-center gap-2 flex-wrap">
+          <span>{t.oldSessions}</span>
+          {editableCount > 0 && (
+            <span className="text-xs bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded-full">
+              ✏️ {editableCount} {editableCount > 1 ? t.editablesPlural : t.editables}
+            </span>
+          )}
+          {readOnlyCount > 0 && (
+            <span className="text-xs bg-white/10 text-white/50 px-2 py-0.5 rounded-full">
+              🔒 {readOnlyCount} {readOnlyCount > 1 ? t.archivedLabelPlural : t.archivedLabel}
+            </span>
+          )}
+        </div>
+        <span className="text-xs text-white/70 flex-shrink-0 ml-2">
+          {showOld ? t.oldSessionsHide : t.oldSessionsShow}
+        </span>
       </button>
+
       {showOld && (
-        <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-3">
+        <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-4">
           {oldDates.map(date => (
             <div key={date} className="flex flex-col gap-2">
-              <p className="text-white/50 text-xs font-semibold uppercase tracking-wide">{formatDateFr(date, lang)}</p>
-              {byDate[date].map(s => (
-                <button key={s.id} onClick={() => onConsulter(s)}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-white/20 hover:bg-white/20 text-white transition">
-                  <span className="text-left text-sm">{formatSessionLabel(s, lang)}</span>
-                  <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
-                    {t.consulter}
-                  </span>
-                </button>
-              ))}
+              <p className="text-white/50 text-xs font-semibold uppercase tracking-wide">
+                {formatDateFr(date, lang)}
+              </p>
+              {byDate[date].map(s => {
+                const editable = isSessionEditable(s.date);
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => onConsulter(s)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition text-left
+                      ${editable
+                        ? "border-emerald-400/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-white"
+                        : "border-white/10 bg-white/5 hover:bg-white/10 text-white/60"
+                      }`}
+                  >
+                    <span className="text-sm flex-1">{formatSessionLabel(s, lang)}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ml-2 flex-shrink-0 font-semibold
+                      ${editable
+                        ? "bg-emerald-500/30 text-emerald-200"
+                        : "bg-white/10 text-white/40"
+                      }`}
+                    >
+                      {editable ? t.editable : t.archived}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           ))}
         </div>
@@ -552,8 +610,8 @@ function Presence() {
   const [isResponsableCheckIn, setIsResponsableCheckIn] = useState(false);
 
   const profileRef            = useRef(null);
-  const myIdsRef              = useRef(null); // directs seulement → liste globale
-  const myIdsAllRef           = useRef(null); // directs + filles → vue responsable
+  const myIdsRef              = useRef(null);
+  const myIdsAllRef           = useRef(null);
   const isAdminRef            = useRef(false);
   const useGroupedViewRef     = useRef(false);
   const fetchAllRef           = useRef(null);
@@ -614,7 +672,6 @@ function Presence() {
         : Promise.resolve({ data: [] }),
     ]);
 
-    // ── IDs directs seulement ──
     let idsDirects = new Set();
     assignmentsResult.data?.forEach(a => idsDirects.add(a.membre_id));
 
@@ -636,7 +693,6 @@ function Presence() {
       fm?.forEach(m => idsDirects.add(m.id));
     }
 
-    // ── IDs directs + filles ──
     let idsAll = new Set([...idsDirects]);
 
     if (respCellule && fillesVal && cellulesDirectesIds.length > 0) {
@@ -662,8 +718,8 @@ function Presence() {
       myIdsRef.current    = null;
       myIdsAllRef.current = null;
     } else {
-      myIdsRef.current    = [...idsDirects]; // directs → liste globale admin
-      myIdsAllRef.current = [...idsAll];     // directs + filles → vue responsable
+      myIdsRef.current    = [...idsDirects];
+      myIdsAllRef.current = [...idsAll];
     }
   }, []);
 
@@ -737,7 +793,11 @@ function Presence() {
     setEtape("ready");
   };
 
+  // ── PATCH 3 : readOnly automatique selon âge de la session ───
   const consulterAncienne = (session) => {
+    const diffJours = Math.floor(
+      (new Date() - new Date(session.date + "T00:00:00")) / (1000 * 60 * 60 * 24)
+    );
     setAttendanceId(session.id);
     attendanceIdRef.current = session.id;
     setSelectedDate(session.date);
@@ -747,7 +807,7 @@ function Presence() {
     setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
     setListeVisible(!!session.liste_presence_visible);
-    setReadOnly(false);
+    setReadOnly(diffJours > 7);
     pendingSessionIdRef.current = session.id;
     setEtape("ready");
   };
@@ -770,12 +830,10 @@ function Presence() {
       const presentIds   = new Set(allPresences.map(p => p.membre_id));
 
       const roles = profile?.roles || [];
-      const isCheckInUser             = roles.includes("CheckInPresence");
-      const isResponsableCelluleLocal = roles.includes("ResponsableCellule");
+      const isCheckInUser              = roles.includes("CheckInPresence");
+      const isResponsableCelluleLocal  = roles.includes("ResponsableCellule");
       const isResponsableFamillesLocal = roles.includes("ResponsableFamilles");
 
-      // ━━━ CAS ADMIN / RI / CHECKIN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-      // Ces rôles voient UNIQUEMENT les membres sans cellule ET sans famille
       if (isAdmin || isCheckInUser) {
         const { data: tousMembres } = await supabase
           .from("membres_complets")
@@ -784,8 +842,6 @@ function Presence() {
           .in("etat_contact", ["existant", "nouveau"]);
 
         const membres = tousMembres || [];
-
-        // Uniquement les sans rattachement
         const sansCellule = membres
           .filter(m => !m.cellule_id && !m.famille_id)
           .sort((a, b) => (a.nom || "").localeCompare(b.nom || "", "fr"));
@@ -802,7 +858,6 @@ function Presence() {
         return;
       }
 
-      // ━━━ CAS RESPONSABLE CELLULE / FAMILLE ━━━━━━━━━━━━━━━━━━━━━━━━
       if (!myIds || myIds.length === 0) {
         setAllMembers([]);
         setPresentList([]);
@@ -888,7 +943,6 @@ function Presence() {
         return;
       }
 
-      // ━━━ CAS CONSEILLER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       const { data: membresData } = await supabase.from("membres_complets")
         .select("id, prenom, nom, telephone, sexe, cellule_id, famille_id")
         .eq("eglise_id", profile.eglise_id)
@@ -1267,11 +1321,11 @@ function Presence() {
       )}
 
       {editingSession && !readOnly && (!isCheckIn || isResponsableCheckIn) && (
-      <div className="w-full max-w-lg mb-6">
-        <h2 className="text-white font-semibold text-center mb-3">{t.editSession}</h2>
-        <FormulaireSession
-          isEdit={true}
-                selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+        <div className="w-full max-w-lg mb-6">
+          <h2 className="text-white font-semibold text-center mb-3">{t.editSession}</h2>
+          <FormulaireSession
+            isEdit={true}
+            selectedDate={selectedDate} setSelectedDate={setSelectedDate}
             selectedTime={selectedTime} setSelectedTime={setSelectedTime}
             typeTemps={typeTemps} setTypeTemps={setTypeTemps}
             nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
@@ -1346,9 +1400,9 @@ function Presence() {
 
 export default function PresencePage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "Conseiller", 
-  "ResponsableCellule", "ResponsableFamilles", "SuperviseurCellule", 
-  "SuperviseurFamilles", "CheckInPresence", "ResponsableCheckIn"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "Conseiller",
+      "ResponsableCellule", "ResponsableFamilles", "SuperviseurCellule",
+      "SuperviseurFamilles", "CheckInPresence", "ResponsableCheckIn"]}>
       <Presence />
     </ProtectedRoute>
   );

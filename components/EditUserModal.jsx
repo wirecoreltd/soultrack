@@ -27,6 +27,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   const allRoles = useMemo(() => [
     { value: "Administrateur",            label: "Administrateur" },
     { value: "ResponsableIntegration",    label: "Responsable Intégration" },
+    { value: "ResponsableCheckIn",        label: "Responsable CheckIn" },
     ...(cellulesActive ? [
       { value: "ResponsableCellule",      label: "Responsable Cellule" },
       { value: "SuperviseurCellule",      label: "Superviseur Cellule" },

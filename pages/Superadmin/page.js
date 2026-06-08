@@ -18,13 +18,16 @@ const PLANS = [
 function BillingContent() {
   const router = useRouter();
 
-  const [rows, setRows]             = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [filterText, setFilterText] = useState("");
-  const [filterPlan, setFilterPlan] = useState("all");
-  const [modal, setModal]           = useState(null);
-  const [upgrading, setUpgrading]   = useState(false);
-  const [message, setMessage]       = useState(null);
+  const [rows, setRows]               = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [filterText, setFilterText]   = useState("");
+  const [filterPlan, setFilterPlan]   = useState("all");
+  const [modal, setModal]             = useState(null);
+  const [upgrading, setUpgrading]     = useState(false);
+  const [message, setMessage]         = useState(null);
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [deleting, setDeleting]       = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -94,6 +97,33 @@ function BillingContent() {
       loadAll();
     }
     setUpgrading(false);
+  }
+
+  async function supprimerEglise() {
+    if (!deleteModal) return;
+    setDeleting(true);
+    setDeleteError(null);
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+    const res = await fetch("/api/admin/delete-eglise", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ eglise_id: deleteModal.egliseId }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setDeleteError(data.error || "Erreur lors de la suppression.");
+    } else {
+      setDeleteModal(null);
+      loadAll();
+    }
+    setDeleting(false);
   }
 
   function openModal(egliseId, planActuelId, nomEglise) {
@@ -173,15 +203,15 @@ function BillingContent() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
 
-            {/* En-tête desktop — 8 colonnes fixes */}
+            {/* En-tête desktop — 9 colonnes */}
             <div style={{
               display: "grid",
-              gridTemplateColumns: "1.2fr 1.5fr 1.1fr 0.9fr 0.9fr 130px 150px 90px",
+              gridTemplateColumns: "1.2fr 1.5fr 1.1fr 0.9fr 0.9fr 130px 150px 90px 90px",
               padding: "0 16px 10px",
               borderBottom: "0.5px solid rgba(255,255,255,0.1)",
               gap: "8px",
             }} className="desk-only">
-              {["Dénomination","Nom de l'église","Branche","Ville","Pays","Plan","Membres",""].map((h, i) => (
+              {["Dénomination", "Nom de l'église", "Branche", "Ville", "Pays", "Plan", "Membres", "", ""].map((h, i) => (
                 <span key={i} style={{
                   color: "rgba(255,255,255,0.3)", fontSize: "10px",
                   fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.09em",
@@ -193,7 +223,6 @@ function BillingContent() {
               const planId     = subscription?.plan_id ?? "free";
               const plan       = PLANS.find(p => p.id === planId) || PLANS[0];
               const pct        = plan.limite ? Math.min(100, (membres / plan.limite) * 100) : 0;
-              // ligne "complète" si au moins denomination OU branche est renseigné
               const hasDetails = !!(eglise.denomination || eglise.branche);
 
               return (
@@ -210,15 +239,14 @@ function BillingContent() {
                   <div className="desk-only" style={{
                     display: "grid",
                     gridTemplateColumns: hasDetails
-                      ? "1.2fr 1.5fr 1.1fr 0.9fr 0.9fr 130px 150px 90px"   // complète
-                      : "1fr 130px 150px 90px",                              // incomplète
+                      ? "1.2fr 1.5fr 1.1fr 0.9fr 0.9fr 130px 150px 90px 90px"
+                      : "1fr 130px 150px 90px 90px",
                     alignItems: "center",
                     padding: "13px 16px",
                     gap: "8px",
                   }}>
                     {hasDetails ? (
                       <>
-                        {/* 8 colonnes */}
                         <DimText>{eglise.denomination || "—"}</DimText>
                         <WhiteText bold>{eglise.nom}</WhiteText>
                         <DimText>{eglise.branche || "—"}</DimText>
@@ -227,10 +255,10 @@ function BillingContent() {
                         <PlanBadge plan={plan} />
                         <MembresCell membres={membres} plan={plan} pct={pct} />
                         <ChangerBtn onClick={() => openModal(eglise.id, planId, eglise.nom)} />
+                        <SupprimerBtn onClick={() => setDeleteModal({ egliseId: eglise.id, nomEglise: eglise.nom })} />
                       </>
                     ) : (
                       <>
-                        {/* 4 colonnes — nom à gauche, tout le reste à droite */}
                         <span style={{ color: "#fff", fontWeight: 700, fontSize: "14px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {eglise.nom}
                           {(eglise.ville || eglise.pays) && (
@@ -242,6 +270,7 @@ function BillingContent() {
                         <PlanBadge plan={plan} />
                         <MembresCell membres={membres} plan={plan} pct={pct} />
                         <ChangerBtn onClick={() => openModal(eglise.id, planId, eglise.nom)} />
+                        <SupprimerBtn onClick={() => setDeleteModal({ egliseId: eglise.id, nomEglise: eglise.nom })} />
                       </>
                     )}
                   </div>
@@ -277,7 +306,10 @@ function BillingContent() {
                           </div>
                         )}
                       </div>
-                      <ChangerBtn onClick={() => openModal(eglise.id, planId, eglise.nom)} />
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <ChangerBtn onClick={() => openModal(eglise.id, planId, eglise.nom)} />
+                        <SupprimerBtn onClick={() => setDeleteModal({ egliseId: eglise.id, nomEglise: eglise.nom })} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -287,7 +319,7 @@ function BillingContent() {
         )}
       </div>
 
-      {/* MODAL */}
+      {/* MODAL CHANGER PLAN */}
       {modal && (
         <div
           onClick={e => { if (e.target === e.currentTarget) setModal(null); }}
@@ -362,6 +394,72 @@ function BillingContent() {
             >
               Annuler
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL SUPPRIMER EGLISE */}
+      {deleteModal && (
+        <div
+          onClick={e => { if (e.target === e.currentTarget) setDeleteModal(null); }}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 300, padding: "20px",
+          }}
+        >
+          <div style={{
+            background: "#1e2070", borderRadius: "20px",
+            padding: "28px 24px", width: "100%", maxWidth: "420px",
+            border: "0.5px solid rgba(239,68,68,0.3)",
+          }}>
+            <h2 style={{ color: "#f87171", fontSize: "17px", fontWeight: 700, margin: "0 0 8px" }}>
+              ⚠️ Supprimer définitivement
+            </h2>
+            <p style={{ color: "#fff", fontSize: "15px", fontWeight: 600, margin: "0 0 8px" }}>
+              {deleteModal.nomEglise}
+            </p>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", margin: "0 0 20px" }}>
+              Cette action est irréversible. Tous les membres, utilisateurs et données de cette église seront supprimés.
+            </p>
+
+            {deleteError && (
+              <div style={{
+                marginBottom: "16px", padding: "10px 14px", borderRadius: "10px",
+                background: "rgba(239,68,68,0.15)", color: "#f87171",
+                fontSize: "13px", border: "0.5px solid rgba(239,68,68,0.3)",
+              }}>
+                {deleteError}
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button
+                onClick={() => { setDeleteModal(null); setDeleteError(null); }}
+                disabled={deleting}
+                style={{
+                  flex: 1, padding: "10px", borderRadius: "10px",
+                  border: "0.5px solid rgba(255,255,255,0.15)",
+                  background: "transparent", color: "rgba(255,255,255,0.4)",
+                  fontSize: "14px", cursor: "pointer",
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={supprimerEglise}
+                disabled={deleting}
+                style={{
+                  flex: 1, padding: "10px", borderRadius: "10px",
+                  border: "none", background: "#ef4444",
+                  color: "#fff", fontSize: "14px", fontWeight: 700,
+                  cursor: deleting ? "not-allowed" : "pointer",
+                  opacity: deleting ? 0.6 : 1,
+                }}
+              >
+                {deleting ? "Suppression..." : "Supprimer"}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -459,6 +557,24 @@ function ChangerBtn({ onClick }) {
       onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
     >
       Changer
+    </button>
+  );
+}
+
+function SupprimerBtn({ onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: "rgba(239,68,68,0.15)", color: "#f87171",
+        border: "0.5px solid rgba(239,68,68,0.3)",
+        padding: "6px 14px", borderRadius: "8px",
+        fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = "rgba(239,68,68,0.28)"}
+      onMouseLeave={e => e.currentTarget.style.background = "rgba(239,68,68,0.15)"}
+    >
+      Supprimer
     </button>
   );
 }

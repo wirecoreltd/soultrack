@@ -29,6 +29,7 @@ const translations = {
     prieresSalut: "Prière du salut",
     formation: "Formation",
     etatContact: "État du contact",
+    dateVenu: "Date de venue",
     howCame: "Comment est-il venu ?",
     extraInfos: "Informations supplémentaires",
     statutArrivee: "Statut à l'arrivée",
@@ -113,6 +114,7 @@ const translations = {
     prieresSalut: "Prayer of salvation",
     formation: "Training",
     etatContact: "Contact state",
+    dateVenu: "Arrival date",
     howCame: "How did they come?",
     extraInfos: "Additional information",
     statutArrivee: "Status on arrival",
@@ -281,6 +283,7 @@ export default function EditMemberPopup({
       besoin: initialBesoin,
       autreBesoin: "",
       venu: data?.venu || "",
+      date_venu: data?.date_venu || "",
       infos_supplementaires: data?.infos_supplementaires || "",
       statut_initial: data?.statut_initial || "",
       suivi_statut: data?.suivi_statut || "",
@@ -423,6 +426,7 @@ export default function EditMemberPopup({
           : member.famille_id || null,
         besoin: JSON.stringify(finalBesoin),
         venu: formData.venu || null,
+        date_venu: formData.date_venu || null,
         infos_supplementaires: formData.infos_supplementaires || null,
         statut_initial: formData.statut_initial || null,
         suivi_statut: formData.suivi_statut || null,
@@ -579,6 +583,16 @@ export default function EditMemberPopup({
                     </option>
                   ))}
                 </select>
+              </Field>
+
+              <Field label={t.dateVenu}>
+                <input
+                  type="date"
+                  name="date_venu"
+                  value={formData.date_venu ? formData.date_venu.split("T")[0] : ""}
+                  onChange={handleChange}
+                  className="inp"
+                />
               </Field>
 
               {isPrivileged && (showCellules || showFamilles || showConseillers) && (

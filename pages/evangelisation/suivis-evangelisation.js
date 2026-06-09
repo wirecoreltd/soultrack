@@ -237,14 +237,9 @@ function SuivisEvangelisationContent() {
     return () => clearTimeout(timer);
   }, [loading, highlight]);
 
-  const init = async () => {
-
-      console.log("[init] démarrage");
+  const init = async () => {      
     
   const userData = await fetchUser();
-
-    console.log("[init] user récupéré:", userData?.role, userData?.roles, userData?.eglise_id);
-  console.log("[init] conseillerActive:", conseillerActive);
     
   if (conseillerActive) await fetchConseillers(userData); // ← userData ajouté
   const cellulesData = cellulesActive ? await fetchCellules(userData) : [];
@@ -268,20 +263,14 @@ function SuivisEvangelisationContent() {
 
   /* ================= CONSEILLERS ================= */
  const fetchConseillers = async (userData) => {
-  const u = userData || user;
-  console.log("[fetchConseillers] userData reçu:", u);
-  console.log("[fetchConseillers] eglise_id:", u?.eglise_id);
+  const u = userData || user;  
   if (!u) return [];
   
   const { data, error } = await supabase  // ← ajouter "error"
     .from("profiles")
     .select("id, prenom, nom")
     .eq("eglise_id", u.eglise_id)
-    .contains("roles", ["Conseiller"]);
-
-  console.log("[fetchConseillers] résultat data:", data);
-  console.log("[fetchConseillers] erreur:", error);
-  console.log("[fetchConseillers] nombre de conseillers:", data?.length);
+    .contains("roles", ["Conseiller"]);  
 
   setConseillers(data || []);
   return data || [];

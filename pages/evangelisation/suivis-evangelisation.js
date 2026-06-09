@@ -267,24 +267,22 @@ function SuivisEvangelisationContent() {
   };
 
   /* ================= CONSEILLERS ================= */
-  const fetchConseillers = async (userData) => {
+ const fetchConseillers = async (userData) => {
   const u = userData || user;
-    
-     console.log("[fetchConseillers] userData reçu:", u);
+  console.log("[fetchConseillers] userData reçu:", u);
   console.log("[fetchConseillers] eglise_id:", u?.eglise_id);
-    
   if (!u) return [];
-  const { data } = await supabase
+  
+  const { data, error } = await supabase  // ← ajouter "error"
     .from("profiles")
     .select("id, prenom, nom")
     .eq("eglise_id", u.eglise_id)
     .contains("roles", ["Conseiller"]);
 
-     console.log("[fetchConseillers] résultat data:", data);
+  console.log("[fetchConseillers] résultat data:", data);
   console.log("[fetchConseillers] erreur:", error);
   console.log("[fetchConseillers] nombre de conseillers:", data?.length);
 
-    
   setConseillers(data || []);
   return data || [];
 };

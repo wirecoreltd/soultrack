@@ -646,11 +646,7 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
                     if (window.confirm(t.confirmIntegrer)) handleIntegrer(member);
                   }}
                   disabled={integrating[member.id]}
-                  className="mt-3 w-full py-2 rounded-lg font-semibold text-white text-sm transition-all"
-                  style={{
-                    background: integrating[member.id] ? "#a3a3a3" : "#4ade80",
-                    cursor: integrating[member.id] ? "not-allowed" : "pointer",
-                  }}
+                  className="mt-3 w-full bg-white text-green-600 px-3 py-1 rounded-md text-sm font-semibold shadow-sm hover:shadow-md transition-shadow"
                 >
                   {integrating[member.id] ? t.integrating : t.integrer}
                 </button>

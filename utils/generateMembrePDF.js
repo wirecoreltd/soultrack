@@ -1,5 +1,4 @@
 // utils/generateMembrePDF.js
-// Grille 2 colonnes avec mesure exacte des hauteurs avant dessin — zéro espace mort
 
 import jsPDF from "jspdf";
 
@@ -116,7 +115,7 @@ function frect(doc, x, y, w, h, rgb)      { sf(doc, rgb); doc.rect(x, y, w, h, "
 function rrect(doc, x, y, w, h, r, rgb)   { sf(doc, rgb); doc.roundedRect(x, y, w, h, r, r, "F"); }
 function hline(doc, x1, x2, yy, rgb, lw)  { sd(doc, rgb); doc.setLineWidth(lw || 0.3); doc.line(x1, yy, x2, yy); }
 
-// ─── Mesure exacte d'un bloc de rows (sans dessiner) ──────────────────────────
+// ─── Mesure exacte d'un bloc de rows ──────────────────────────────────────────
 
 function measureRows(doc, rows, colW, fs = 8.5, lh = 5) {
   doc.setFontSize(fs);
@@ -130,7 +129,7 @@ function measureRows(doc, rows, colW, fs = 8.5, lh = 5) {
   return h;
 }
 
-// ─── Dessin d'un bloc de rows à position fixe ─────────────────────────────────
+// ─── Dessin d'un bloc de rows ─────────────────────────────────────────────────
 
 function drawRows(doc, rows, x, startY, colW, fs = 8.5, lh = 5) {
   let cy = startY;
@@ -149,49 +148,39 @@ function drawRows(doc, rows, x, startY, colW, fs = 8.5, lh = 5) {
 }
 
 // ─── Bloc grille 2 colonnes ───────────────────────────────────────────────────
-// Mesure les deux colonnes d'abord, prend le max, dessine en une passe.
-// Retourne le y suivant.
 
 function draw2ColBlock(doc, leftTitle, leftRows, rightTitle, rightRows, y, ML, CW) {
-  const PAD_H  = 5;   // padding horizontal intérieur
-  const PAD_T  = 6;   // espace entre entête et première ligne
-  const PAD_B  = 5;   // padding bas
-  const HDR_H  = 7.5; // hauteur barre de titre
-  const GAP    = 3;   // espace entre les 2 colonnes
+  const PAD_H  = 5;
+  const PAD_T  = 6;
+  const PAD_B  = 5;
+  const HDR_H  = 7.5;
+  const GAP    = 3;
   const COL_W  = (CW - GAP) / 2;
   const X2     = ML + COL_W + GAP;
 
-  // Mesure exacte
   const hL  = measureRows(doc, leftRows,  COL_W - PAD_H * 2);
   const hR  = measureRows(doc, rightRows, COL_W - PAD_H * 2);
   const bodyH  = Math.max(hL, hR) + PAD_T + PAD_B;
   const totalH = HDR_H + bodyH;
 
-  // ── Col gauche ────────────────────────────────────────────────────
+  // Col gauche
   rrect(doc, ML, y, COL_W, totalH, 2.5, C.gray50);
   sd(doc, C.gray100); doc.setLineWidth(0.2);
   doc.roundedRect(ML, y, COL_W, totalH, 2.5, 2.5, "S");
-
-  // Entête gauche : fond navy plein, coins ronds haut seulement
   rrect(doc, ML, y, COL_W, HDR_H, 2.5, C.navy);
   frect(doc, ML, y + HDR_H / 2, COL_W, HDR_H / 2, C.navy);
-
   doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); st(doc, C.white);
   doc.text(da(leftTitle).toUpperCase(), ML + PAD_H, y + 5.5);
-
   drawRows(doc, leftRows, ML + PAD_H, y + HDR_H + PAD_T, COL_W - PAD_H * 2);
 
-  // ── Col droite ────────────────────────────────────────────────────
+  // Col droite
   rrect(doc, X2, y, COL_W, totalH, 2.5, C.gray50);
   sd(doc, C.gray100); doc.setLineWidth(0.2);
   doc.roundedRect(X2, y, COL_W, totalH, 2.5, 2.5, "S");
-
   rrect(doc, X2, y, COL_W, HDR_H, 2.5, C.navyMid);
   frect(doc, X2, y + HDR_H / 2, COL_W, HDR_H / 2, C.navyMid);
-
   doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); st(doc, C.white);
   doc.text(da(rightTitle).toUpperCase(), X2 + PAD_H, y + 5.5);
-
   drawRows(doc, rightRows, X2 + PAD_H, y + HDR_H + PAD_T, COL_W - PAD_H * 2);
 
   return y + totalH + 3;
@@ -206,7 +195,6 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
     celluleName    = null,
     familleName    = null,
     conseillerName = null,
-    // Objet eglise depuis Supabase : { nom, denomination, branche, ville, pays }
     eglise         = null,
   } = options;
 
@@ -226,7 +214,6 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
     if (y + h > PH - BOT) { doc.addPage(); y = 16; }
   };
 
-  // Rubrique : filet avec label centré en médaillon
   const rubrique = (title) => {
     need(12);
     y += 5;
@@ -240,67 +227,82 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   };
 
   // ══════════════════════════════════════════════════════════════════
-  // HEADER
+  // HEADER — tout centré verticalement dans la bande navy (30mm)
   // ══════════════════════════════════════════════════════════════════
-  frect(doc, 0, 0, PW, 30, C.navy);
-  frect(doc, 0, 24, PW, 6, C.navyMid);
+  const HDR_H = 30;
+  frect(doc, 0, 0, PW, HDR_H, C.navy);
+  // Bande accent bas du header
+  frect(doc, 0, HDR_H - 5, PW, 5, C.navyMid);
 
+  // Centre vertical de la zone principale (hors bande accent) = (HDR_H - 5) / 2 = 12.5
+  const hdrMid = (HDR_H - 5) / 2; // 12.5mm
+
+  // Logo — centré verticalement (16mm de haut → top = hdrMid - 8)
+  const logoSize = 16;
+  const logoY    = hdrMid - logoSize / 2; // 4.5
   const drawLogo = (d) => {
-    rrect(d, ML, 5, 16, 16, 2, [95, 100, 195]);
+    rrect(d, ML, logoY, logoSize, logoSize, 2, [95, 100, 195]);
     st(d, C.white);
     d.setFontSize(14); d.setFont("helvetica", "bold");
-    d.text("+", ML + 8, 15, { align: "center" });
+    d.text("+", ML + logoSize / 2, logoY + logoSize / 2 + 2.5, { align: "center" });
   };
   if (logoBase64) {
-    try { doc.addImage(logoBase64, "PNG", ML, 5, 16, 16); }
+    try { doc.addImage(logoBase64, "PNG", ML, logoY, logoSize, logoSize); }
     catch { drawLogo(doc); }
   } else {
     drawLogo(doc);
   }
 
-  // Nom de l'église (priorité : eglise.nom sinon churchName)
+  // Texte église — bloc centré verticalement à droite du logo
+  // Nom église : ligne principale → à hdrMid - 3 (légèrement au-dessus du centre)
+  // Sous-titre  : hdrMid + 2.5
+  // Ville/pays  : hdrMid + 7
+  const txtX = ML + logoSize + 4;
+
   const egliseNom = eglise ? safe(eglise.nom) : safe(churchName);
   st(doc, C.white);
-  doc.setFontSize(12); doc.setFont("helvetica", "bold");
-  doc.text(egliseNom || "Eglise", ML + 20, 12);
+  doc.setFontSize(11); doc.setFont("helvetica", "bold");
+  doc.text(egliseNom || "Eglise", txtX, hdrMid - 2);
 
-  // Dénomination + branche
   if (eglise) {
     const parts = [eglise.denomination, eglise.branche].filter(v => v && String(v).trim() && String(v).trim() !== "");
     const sousTitre = da(parts.join("  •  "));
     if (sousTitre) {
       st(doc, [180, 185, 230]);
       doc.setFontSize(7); doc.setFont("helvetica", "normal");
-      doc.text(sousTitre, ML + 20, 18);
+      doc.text(sousTitre, txtX, hdrMid + 3.5);
     }
-    // Ville + pays
     const lieu = [eglise.ville, eglise.pays].filter(v => v && String(v).trim()).map(v => da(String(v))).join(", ");
     if (lieu) {
       st(doc, [155, 160, 210]);
       doc.setFontSize(6.5);
-      doc.text(lieu, ML + 20, 23.5);
+      doc.text(lieu, txtX, hdrMid + 8);
     }
   } else {
+    // Pas d'objet eglise → on affiche churchName comme sous-titre
     st(doc, [180, 185, 230]);
-    doc.setFontSize(6.5); doc.setFont("helvetica", "normal");
-    doc.text("FICHE CONFIDENTIELLE", ML + 20, 18);
+    doc.setFontSize(7); doc.setFont("helvetica", "normal");
+    doc.text(safe(churchName), txtX, hdrMid + 3.5);
   }
 
+  // Colonne droite : "Genere le" + date + "FICHE CONFIDENTIELLE"
+  // Centré verticalement : date au milieu, label au-dessus, badge en dessous
   st(doc, [180, 185, 230]);
   doc.setFontSize(6.5); doc.setFont("helvetica", "normal");
-  doc.text("Genere le", PW - MR, 11, { align: "right" });
+  doc.text("Genere le", PW - MR, hdrMid - 3.5, { align: "right" });
+
   st(doc, C.white);
   doc.setFontSize(8.5); doc.setFont("helvetica", "bold");
-  doc.text(formatDate(new Date().toISOString()), PW - MR, 17.5, { align: "right" });
-  // Label FICHE CONFIDENTIELLE en bas à droite
+  doc.text(formatDate(new Date().toISOString()), PW - MR, hdrMid + 2, { align: "right" });
+
   st(doc, [155, 160, 210]);
   doc.setFontSize(6); doc.setFont("helvetica", "normal");
-  doc.text("FICHE CONFIDENTIELLE", PW - MR, 23.5, { align: "right" });
+  doc.text("FICHE CONFIDENTIELLE", PW - MR, hdrMid + 7, { align: "right" });
 
-  y = 38;
+  y = HDR_H + 8;
 
   // ══════════════════════════════════════════════════════════════════
-  // HERO — nom uniquement, badge état supprimé (va dans Identité)
+  // HERO — nom du membre
   // ══════════════════════════════════════════════════════════════════
   st(doc, C.navy);
   doc.setFontSize(20); doc.setFont("helvetica", "bold");
@@ -308,16 +310,13 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   y += 10;
 
   // ══════════════════════════════════════════════════════════════════
-  // GRILLES — mesure avant dessin, aucun gap
+  // GRILLES
   // ══════════════════════════════════════════════════════════════════
-  const statutLabel = { 1:"En Attente", 2:"En Suivis", 3:"Integre", 4:"Refus" };
-
   const etat      = da((membre.etat_contact || "")).toLowerCase().trim();
   const etatLabel = etat === "nouveau"  ? "Nouveau"
                   : etat === "existant" ? "Existant"
                   : etat === "inactif"  ? "Inactif"
                   : safe(membre.etat_contact) || "-";
-  const starSuffix = (membre.star === true && etat === "existant") ? " *" : "";
 
   need(40);
   y = draw2ColBlock(doc,
@@ -330,12 +329,11 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
       ["WhatsApp",  membre.is_whatsapp ? "Oui" : "Non"],
       ["Date de sa venu", formatDate(membre.date_venu)],
     ],
-    "Suivi pastoral", [
-      ["Statut",      safe(statutLabel[membre.statut_suivis] || membre.suivi_statut)],
-      ["Envoi suivi", formatDate(membre.date_envoi_suivi)],
-      ["Cellule",     safe(celluleName)],
-      ["Famille",     safe(familleName)],
-      ["Conseiller",  safe(conseillerName)],
+    // ← "Followed by" remplace "Suivi pastoral", sans Statut ni Envoi suivi
+    "Followed by", [
+      ["Cellule",    safe(celluleName)],
+      ["Famille",    safe(familleName)],
+      ["Conseiller", safe(conseillerName)],
     ],
     y, ML, CW
   );
@@ -350,55 +348,17 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
       ["Ministere",    formatMinistere(membre.Ministere, membre.Autre_Ministere)],
     ],
     "Parcours", [
-      ["Comment venu", safe(membre.venu)],
-      ["Raison de sa venu",       safe(membre.statut_initial)],
-      ["Formation",    safe(membre.Formation)],
-      ["Infos supp.",  safe(membre.infos_supplementaires)],
+      ["Comment venu",      safe(membre.venu)],
+      ["Raison de sa venu", safe(membre.statut_initial)],
+      ["Formation",         safe(membre.Formation)],
+      ["Infos supp.",       safe(membre.infos_supplementaires)],
     ],
     y, ML, CW
   );
 
   // ══════════════════════════════════════════════════════════════════
-  // SOIN PASTORAL
-  // ══════════════════════════════════════════════════════════════════
-  rubrique("Soin pastoral — Besoins");
-
-  const besoins = parseBesoins(membre.besoin);
-  if (besoins.length > 0) {
-    let tx = ML;
-    const TAG_H = 6.5;
-    doc.setFontSize(8); doc.setFont("helvetica", "bold");
-    for (const b of besoins) {
-      const resolu = (b.statut || "").toLowerCase().includes("resolu");
-      const label  = resolu ? `${da(b.label)} - Resolu` : da(b.label);
-      const tw2    = doc.getTextWidth(label) + 10;
-      if (tx + tw2 > PW - MR) { tx = ML; y += TAG_H + 2; }
-      need(TAG_H + 2);
-      rrect(doc, tx, y, tw2, TAG_H, 3, resolu ? C.greenLight : C.orangeLight);
-      sd(doc, resolu ? C.green : C.orange); doc.setLineWidth(0.3);
-      doc.roundedRect(tx, y, tw2, TAG_H, 3, 3, "S");
-      st(doc, resolu ? C.greenDark : C.orange);
-      doc.text(label, tx + tw2 / 2, y + 4.8, { align: "center" });
-      tx += tw2 + 3;
-    }
-    y += TAG_H + 4;
-  } else {
-    need(6);
-    doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); st(doc, C.gray400);
-    doc.text("Aucun besoin enregistre.", ML, y);
-    y += 6;
-  }
-
-  if (membre.commentaire_suivis) {
-    const cL = doc.splitTextToSize(`"${da(membre.commentaire_suivis)}"`, CW);
-    need(cL.length * 4.5 + 3);
-    doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); st(doc, C.gray600);
-    doc.text(cL, ML, y);
-    y += cL.length * 4.5 + 4;
-  }
-
-  // ══════════════════════════════════════════════════════════════════
-  // HISTORIQUE DES SUIVIS — flux texte pur, zéro fond/case
+  // HISTORIQUE DES SUIVIS
+  // (section "Soin pastoral — Besoins" supprimée)
   // ══════════════════════════════════════════════════════════════════
   if (Array.isArray(suivis) && suivis.length > 0) {
     rubrique("Historique des suivis");
@@ -419,7 +379,7 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
         return v !== null && v !== undefined && String(v).trim() !== "";
       });
 
-      // ── Date — type + statut en texte coloré ──────────────────────
+      // Date — type + statut
       need(8);
       doc.setFontSize(9.5); doc.setFont("helvetica", "bold"); st(doc, C.gray700);
       doc.text(`${formatDate(s.date_action)}  —  ${safe(s.action_type)}`, ML, y);
@@ -429,29 +389,48 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
       doc.text(sLabel, PW - MR, y, { align: "right" });
       y += 6;
 
-      // ── Besoins ────────────────────────────────────────────────────
+      // Besoins — tags colorés inline
       if (besoinsArr.length > 0) {
-        const bt = besoinsArr.map(b => `${da(b.label)} (${da(b.statut)})`).join(", ");
+        const TAG_H  = 5.5;
+        const TAG_PH = 4;
+        const TAG_PV = 1.2;
+        const GAP    = 2.5;
         doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); st(doc, C.gray500);
-        const bpw = doc.getTextWidth("Besoin : ");
-        const btL = doc.splitTextToSize(bt, CW - bpw);
-        need(btL.length * 4.2 + 2);
-        doc.text("Besoin : ", ML, y);
-        doc.setFont("helvetica", "normal"); st(doc, C.gray700);
-        doc.text(btL, ML + bpw, y);
-        y += btL.length * 4.2 + 3;
+        const labelW = doc.getTextWidth("Besoin : ");
+        doc.text("Besoin : ", ML, y + TAG_H - TAG_PV - 0.5);
+        let tx = ML + labelW;
+        for (const b of besoinsArr) {
+          const isResolu = (b.statut || "").toLowerCase().includes("resolu");
+          const tagLabel = isResolu ? `${da(b.label)} - Resolu` : da(b.label);
+          doc.setFontSize(7); doc.setFont("helvetica", "bold");
+          const tw2 = doc.getTextWidth(tagLabel) + TAG_PH * 2;
+          if (tx + tw2 > PW - MR) { tx = ML + labelW; y += TAG_H + GAP; need(TAG_H + GAP); }
+          // fond + bordure
+          rrect(doc, tx, y, tw2, TAG_H, 2.5, isResolu ? C.greenLight : C.orangeLight);
+          sd(doc, isResolu ? C.green : C.orange); doc.setLineWidth(0.25);
+          doc.roundedRect(tx, y, tw2, TAG_H, 2.5, 2.5, "S");
+          // texte centré dans le tag
+          st(doc, isResolu ? C.greenDark : C.orange);
+          doc.text(tagLabel, tx + tw2 / 2, y + TAG_H - TAG_PV, { align: "center" });
+          tx += tw2 + GAP;
+        }
+        y += TAG_H + 4;
       }
 
-      // ── Commentaire ────────────────────────────────────────────────
+      // Commentaire
       if (s.commentaire) {
         const cl = doc.splitTextToSize(`"${da(s.commentaire)}"`, CW);
         need(cl.length * 4.5 + 2);
+        // Fond léger + bordure gauche
+        const commentH = cl.length * 4.5 + 3;
+        frect(doc, ML, y - 1, CW, commentH, [248, 250, 252]);
+        frect(doc, ML, y - 1, 1.5, commentH, C.navyMid);
         doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); st(doc, C.gray700);
-        doc.text(cl, ML, y);
-        y += cl.length * 4.5 + 3;
+        doc.text(cl, ML + 4, y + 2.5);
+        y += commentH + 2;
       }
 
-      // ── Questions / Réponses — texte pur, coule librement ─────────
+      // Questions / Réponses
       for (const q of filledQ) {
         need(5);
         doc.setFontSize(8); doc.setFont("helvetica", "bold"); st(doc, C.navyMid);
@@ -464,7 +443,7 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
         y += vL.length * 4.5 + 2;
       }
 
-      // ── Auteur ─────────────────────────────────────────────────────
+      // Auteur
       if (authorName) {
         need(6);
         doc.setFontSize(7); doc.setFont("helvetica", "italic"); st(doc, C.gray400);
@@ -472,7 +451,7 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
         y += 5;
       }
 
-      // ── Séparateur léger entre suivis ──────────────────────────────
+      // Séparateur entre suivis
       if (idx < suivis.length - 1) {
         y += 2;
         hline(doc, ML, PW - MR, y, C.gray200, 0.25);

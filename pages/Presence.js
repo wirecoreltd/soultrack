@@ -54,12 +54,15 @@ const translations = {
     voirFillesSub: "Vous voyez aussi les membres des cellules rattachées à la vôtre",
     voirFillesOff: "🏠 Cellules filles masquées",
     voirFillesOffSub: "Afficher uniquement vos membres directs",
-    editable: "✏️ Modifiable",
-    archived: "🔒 Archivée",
-    editables: "modifiable",
-    editablesPlural: "modifiables",
-    archivedLabel: "archivée",
-    archivedLabelPlural: "archivées",
+    editable: "✏️ Modifier",
+    archived: "👁 Consulter",
+    sectionEditable: "Sessions modifiables",
+    sectionArchived: "Sessions archivées",
+    editableInfo: "Ces sessions ont moins de 7 jours. Vous pouvez encore modifier les présences. Passé ce délai, elles passent automatiquement en lecture seule.",
+    archivedInfo: "Ces sessions ont plus de 7 jours. Les présences sont visibles mais ne peuvent plus être modifiées.",
+    expiresIn: "expire dans",
+    day: "jour",
+    days: "jours",
     form: {
       date: "📅 Date",
       heure: "🕐 Heure",
@@ -136,12 +139,15 @@ const translations = {
     voirFillesSub: "You also see members from cells linked to yours",
     voirFillesOff: "🏠 Child cells hidden",
     voirFillesOffSub: "Show only your direct members",
-    editable: "✏️ Editable",
-    archived: "🔒 Archived",
-    editables: "editable",
-    editablesPlural: "editable",
-    archivedLabel: "archived",
-    archivedLabelPlural: "archived",
+    editable: "✏️ Edit",
+    archived: "👁 View",
+    sectionEditable: "Editable sessions",
+    sectionArchived: "Archived sessions",
+    editableInfo: "These sessions are less than 7 days old. You can still edit attendance. After that, they automatically become read-only.",
+    archivedInfo: "These sessions are more than 7 days old. Attendance is visible but can no longer be modified.",
+    expiresIn: "expires in",
+    day: "day",
+    days: "days",
     form: {
       date: "📅 Date",
       heure: "🕐 Time",
@@ -496,80 +502,115 @@ function BanniereConsultation({ session, onRetour, t, lang }) {
   );
 }
 
-// ── PATCH 2 : OldSessionsBlock avec couleurs + collapse ────────
+// ── helper : jours restants avant archivage ────────────────────
+function joursRestants(dateStr) {
+  const diff = Math.floor((new Date() - new Date(dateStr + "T00:00:00")) / (1000 * 60 * 60 * 24));
+  return Math.max(0, 7 - diff);
+}
+
+// ── OldSessionsBlock : 3 sections séparées ─────────────────────
 function OldSessionsBlock({ sessions, onConsulter, t, lang }) {
-  const [showOld, setShowOld] = useState(false);
+  const [showEditable, setShowEditable]   = useState(true);
+  const [showArchived, setShowArchived]   = useState(false);
 
-  const byDate = sessions.reduce((acc, s) => {
-    if (!acc[s.date]) acc[s.date] = [];
-    acc[s.date].push(s);
-    return acc;
-  }, {});
-  const oldDates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
+  const editables = sessions.filter(s => isSessionEditable(s.date))
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const archived  = sessions.filter(s => !isSessionEditable(s.date))
+    .sort((a, b) => b.date.localeCompare(a.date));
 
-  const editableCount = sessions.filter(s => isSessionEditable(s.date)).length;
-  const readOnlyCount = sessions.length - editableCount;
-
-  return (
-    <div className="flex flex-col gap-2">
-      {/* Bouton collapse avec compteurs */}
+  const SessionRow = ({ s, isEditable }) => {
+    const remaining = joursRestants(s.date);
+    const urgent    = remaining <= 2;
+    return (
       <button
-        onClick={() => setShowOld(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition"
+        onClick={() => onConsulter(s)}
+        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition text-left gap-3
+          ${isEditable
+            ? "border-emerald-400/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-white"
+            : "border-white/10 bg-white/5 hover:bg-white/10 text-white/60"
+          }`}
       >
-        <div className="flex items-center gap-2 flex-wrap">
-          <span>{t.oldSessions}</span>
-          {editableCount > 0 && (
-            <span className="text-xs bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded-full">
-              ✏️ {editableCount} {editableCount > 1 ? t.editablesPlural : t.editables}
-            </span>
-          )}
-          {readOnlyCount > 0 && (
-            <span className="text-xs bg-white/10 text-white/50 px-2 py-0.5 rounded-full">
-              🔒 {readOnlyCount} {readOnlyCount > 1 ? t.archivedLabelPlural : t.archivedLabel}
+        <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+          <span className="text-sm truncate">{formatSessionLabel(s, lang)}</span>
+          {isEditable && (
+            <span className={`text-xs font-semibold ${urgent ? "text-amber-300" : "text-emerald-400"}`}>
+              {urgent
+                ? `⚠️ ${t.expiresIn} ${remaining} ${remaining <= 1 ? t.day : t.days}`
+                : `⏳ ${t.expiresIn} ${remaining} ${t.days}`}
             </span>
           )}
         </div>
-        <span className="text-xs text-white/70 flex-shrink-0 ml-2">
-          {showOld ? t.oldSessionsHide : t.oldSessionsShow}
+        <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-semibold
+          ${isEditable
+            ? "bg-emerald-500/30 text-emerald-200"
+            : "bg-white/10 text-white/40"
+          }`}
+        >
+          {isEditable ? t.editable : t.archived}
         </span>
       </button>
+    );
+  };
 
-      {showOld && (
-        <div className="bg-white/10 rounded-2xl p-5 flex flex-col gap-4">
-          {oldDates.map(date => (
-            <div key={date} className="flex flex-col gap-2">
-              <p className="text-white/50 text-xs font-semibold uppercase tracking-wide">
-                {formatDateFr(date, lang)}
-              </p>
-              {byDate[date].map(s => {
-                const editable = isSessionEditable(s.date);
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => onConsulter(s)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition text-left
-                      ${editable
-                        ? "border-emerald-400/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-white"
-                        : "border-white/10 bg-white/5 hover:bg-white/10 text-white/60"
-                      }`}
-                  >
-                    <span className="text-sm flex-1">{formatSessionLabel(s, lang)}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ml-2 flex-shrink-0 font-semibold
-                      ${editable
-                        ? "bg-emerald-500/30 text-emerald-200"
-                        : "bg-white/10 text-white/40"
-                      }`}
-                    >
-                      {editable ? t.editable : t.archived}
-                    </span>
-                  </button>
-                );
-              })}
+  return (
+    <div className="flex flex-col gap-3">
+
+      {/* ── Section modifiables ── */}
+      {editables.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => setShowEditable(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-white text-sm font-semibold hover:bg-emerald-500/25 transition"
+          >
+            <div className="flex items-center gap-2">
+              <span>✏️ {t.sectionEditable}</span>
+              <span className="text-xs bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded-full">
+                {editables.length}
+              </span>
             </div>
-          ))}
+            <span className="text-xs text-white/60">{showEditable ? t.oldSessionsHide : t.oldSessionsShow}</span>
+          </button>
+
+          {showEditable && (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-400/20">
+                <span className="text-emerald-300 text-sm mt-0.5">ℹ️</span>
+                <p className="text-xs text-emerald-200 leading-relaxed">{t.editableInfo}</p>
+              </div>
+              {editables.map(s => <SessionRow key={s.id} s={s} isEditable={true} />)}
+            </div>
+          )}
         </div>
       )}
+
+      {/* ── Section archivées ── */}
+      {archived.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => setShowArchived(v => !v)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white/70 text-sm font-semibold hover:bg-white/15 transition"
+          >
+            <div className="flex items-center gap-2">
+              <span>🔒 {t.sectionArchived}</span>
+              <span className="text-xs bg-white/10 text-white/50 px-2 py-0.5 rounded-full">
+                {archived.length}
+              </span>
+            </div>
+            <span className="text-xs text-white/50">{showArchived ? t.oldSessionsHide : t.oldSessionsShow}</span>
+          </button>
+
+          {showArchived && (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-start gap-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10">
+                <span className="text-white/40 text-sm mt-0.5">🔒</span>
+                <p className="text-xs text-white/50 leading-relaxed">{t.archivedInfo}</p>
+              </div>
+              {archived.map(s => <SessionRow key={s.id} s={s} isEditable={false} />)}
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }

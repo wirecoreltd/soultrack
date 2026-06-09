@@ -968,7 +968,6 @@ function SuivisEvangelisationContent() {
       </div>
 
       {editingContact && (
-          {console.log("[parent] conseillerActive:", conseillerActive, "| conseillers:", conseillers)}
         <EditEvangeliseSuiviPopup
           member={editingContact}
           conseillers={conseillerActive ? conseillers : []}

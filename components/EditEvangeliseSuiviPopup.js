@@ -118,11 +118,6 @@ export default function EditEvangeliseSuiviPopup({
     ["Administrateur", "ResponsableEvangelisation", "Superadmin"].includes(r)
   );
 
-  console.log("[EditPopup] currentUserRoles:", currentUserRoles);
-console.log("[EditPopup] isPrivileged:", isPrivileged);
-console.log("[EditPopup] conseillers reçus:", conseillers);
-console.log("[EditPopup] showConseillers:", showConseillers);
-
   const showCellules = Array.isArray(cellules) && cellules.length > 0;
   const showFamilles = Array.isArray(familles) && familles.length > 0;
   const showConseillers = Array.isArray(conseillers) && conseillers.length > 0;

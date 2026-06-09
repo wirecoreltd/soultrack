@@ -114,9 +114,20 @@ export default function EditEvangeliseSuiviPopup({
   const { lang } = useLang();
   const t = translations[lang];
 
-  const isPrivileged = (currentUserRoles || []).some((r) =>
-    ["Administrateur", "ResponsableEvangelisation", "Superadmin"].includes(r)
-  );
+  console.log("[EditPopup] currentUserRoles:", currentUserRoles);
+
+const rolesArray = Array.isArray(currentUserRoles)
+  ? currentUserRoles
+  : typeof currentUserRoles === "string"
+  ? [currentUserRoles]
+  : [];
+
+const isPrivileged = rolesArray.some((r) =>
+  ["Administrateur", "ResponsableEvangelisation", "Superadmin"].includes(r)
+);
+
+console.log("[EditPopup] isPrivileged:", isPrivileged);
+console.log("[EditPopup] conseillers reçus:", conseillers?.length);
 
   const showCellules = Array.isArray(cellules) && cellules.length > 0;
   const showFamilles = Array.isArray(familles) && familles.length > 0;

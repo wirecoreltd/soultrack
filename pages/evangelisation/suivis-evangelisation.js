@@ -973,7 +973,13 @@ function SuivisEvangelisationContent() {
           conseillers={conseillerActive ? conseillers : []}
           cellules={cellulesActive ? cellules : []}
           familles={famillesActive ? familles : []} 
-          currentUserRoles={user?.roles || (user?.role ? [user.role] : [])}
+          currentUserRoles={
+            Array.isArray(user?.roles) && user.roles.length > 0
+              ? user.roles
+              : user?.role
+              ? [user.role]
+              : []
+          }
           onClose={() => setEditingContact(null)}
           closeDetails={() => {}}
           onUpdateMember={(updates) => {

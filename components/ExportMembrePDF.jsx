@@ -1,8 +1,8 @@
 "use client";
-
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import { generateMembrePDF } from "../utils/generateMembrePDF";
+import { useLang } from "../hooks/useLang";
 
 export default function ExportMembrePDF({
   membre,
@@ -17,6 +17,7 @@ export default function ExportMembrePDF({
   compact = false,
 }) {
   const [loading, setLoading] = useState(false);
+  const { lang } = useLang(); // ← récupère la langue active
 
   const handleExport = async (e) => {
     e.stopPropagation();
@@ -27,9 +28,7 @@ export default function ExportMembrePDF({
         .select(`*, profiles (prenom, nom)`)
         .eq("membre_id", membre.id)
         .order("date_action", { ascending: false });
-
       if (error) throw error;
-
       await generateMembrePDF(membre, suivisData || [], {
         churchName,
         logoBase64,
@@ -37,6 +36,7 @@ export default function ExportMembrePDF({
         familleName,
         conseillerName,
         eglise,
+        lang, // ← transmis au générateur PDF
       });
     } catch (err) {
       console.error("Erreur export PDF :", err);
@@ -83,7 +83,7 @@ export default function ExportMembrePDF({
               d="M4 12a8 8 0 018-8v8H4z"
             />
           </svg>
-          {!compact && <span>Génération...</span>}
+          {!compact && <span>{lang === "en" ? "Generating..." : "Génération..."}</span>}
         </>
       ) : (
         <img src="/pdf.png" alt="PDF" width={15} height={15} />

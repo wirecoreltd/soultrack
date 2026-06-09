@@ -11,6 +11,7 @@ import Footer from "../../components/Footer";
 import { useFeature } from "../../components/FeaturesContext";
 import { useNotificationsContext } from "../../context/NotificationsContext";
 import { useLang } from "../../hooks/useLang";
+import { checkLimiteAtteinte } from "../../lib/checkLimite";
 
 const translations = {
   fr: {
@@ -55,12 +56,19 @@ const translations = {
     modifierContact: "✏️ Modifier le contact",
     supprimerContact: "🗑️ Supprimer le contact",
     confirmSuppression: "⚠️ Suppression définitive\n\nVoulez-vous vraiment supprimer ce contact ?",
+    confirmIntegrer: "Intégrer ce contact comme membre de l'église ?",
+    integrer: "✅ Intégrer à l'église",
+    integrating: "Intégration...",
+    limitError: "❌ Limite atteinte",
+    limitMsg: "membres. Upgradez votre plan.",
+    integreSucces: "✅ Contact intégré avec succès",
+    integreError: "❌ Erreur lors de l'intégration : ",
     doublonsDetectes: "⚠️ Doublons détectés",
     doublonsInfo: "Ces contacts sont déjà enregistrés dans les suivis.",
     envoyer: "Envoyer",
     annuler: "Annuler",
     fermer: "Fermer",
-    whatsappInfo: "Vérifiez les informations du responsable avant d'envoyer. Si le numéro est effacé, WhatsApp s'ouvrira sur vos contacts.",
+    whatsappInfo: "Vérifiez les informations du responsable avant d'envoyer.",
     nomResponsable: "👤 Nom du responsable",
     nomResponsablePl: "Nom du responsable",
     numeroWhatsApp: "📞 Numéro WhatsApp",
@@ -133,12 +141,19 @@ const translations = {
     modifierContact: "✏️ Edit contact",
     supprimerContact: "🗑️ Delete contact",
     confirmSuppression: "⚠️ Permanent deletion\n\nAre you sure you want to delete this contact?",
+    confirmIntegrer: "Integrate this contact as a church member?",
+    integrer: "✅ Integrate to church",
+    integrating: "Integrating...",
+    limitError: "❌ Limit reached",
+    limitMsg: "members. Upgrade your plan.",
+    integreSucces: "✅ Contact successfully integrated",
+    integreError: "❌ Integration error: ",
     doublonsDetectes: "⚠️ Duplicates detected",
     doublonsInfo: "These contacts are already registered in the follow-ups.",
     envoyer: "Send",
     annuler: "Cancel",
     fermer: "Close",
-    whatsappInfo: "Check the leader's information before sending. If the number is cleared, WhatsApp will open on your contacts.",
+    whatsappInfo: "Check the leader's information before sending.",
     nomResponsable: "👤 Leader's name",
     nomResponsablePl: "Leader's name",
     numeroWhatsApp: "📞 WhatsApp number",
@@ -200,6 +215,7 @@ function EvangelisationContent() {
   const [editMember, setEditMember] = useState(null);
   const [popupMember, setPopupMember] = useState(null);
   const [loadingSend, setLoadingSend] = useState(false);
+  const [integrating, setIntegrating] = useState({});
   const [openPhoneMenuId, setOpenPhoneMenuId] = useState(null);
   const phoneMenuRef = useRef(null);
   const highlightRef = useRef({});
@@ -216,19 +232,10 @@ function EvangelisationContent() {
   const selectedTargetRef = useRef("");
   const { triggerRefresh } = useNotificationsContext();
 
-  const [view, setView] = useState(() => {
-    if (typeof window !== "undefined") return localStorage.getItem("members_view") || "card";
-    return "card";
-  });
-
-  useEffect(() => { localStorage.setItem("members_view", view); }, [view]);
-
-  // ✅ Highlight harmonisé avec ListMembers — couleur ambrée
   const highlightDoneRef = useRef(false);
 
   useEffect(() => {
     if (!highlight || loading || highlightDoneRef.current) return;
-
     let attempts = 0;
     const tryHighlight = () => {
       const el = highlightRef.current[highlight];
@@ -238,11 +245,9 @@ function EvangelisationContent() {
         return;
       }
       highlightDoneRef.current = true;
-
       const url = new URL(window.location.href);
       url.searchParams.delete("highlight");
       window.history.replaceState({}, "", url.toString());
-
       el.scrollIntoView({ behavior: "smooth", block: "center" });
       el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
       el.style.boxShadow = "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
@@ -253,7 +258,6 @@ function EvangelisationContent() {
         el.style.transform = "";
       }, 5000);
     };
-
     const timer = setTimeout(tryHighlight, 300);
     return () => clearTimeout(timer);
   }, [loading, highlight]);
@@ -388,19 +392,52 @@ function EvangelisationContent() {
     }
   };
 
+  /* ================= INTÉGRER ================= */
+  const handleIntegrer = async (member) => {
+    const { atteinte, count, limite } = await checkLimiteAtteinte(profile.eglise_id);
+    if (atteinte) {
+      alert(`${t.limitError} : ${count}/${limite} ${t.limitMsg}`);
+      return;
+    }
+    try {
+      setIntegrating((p) => ({ ...p, [member.id]: true }));
+      const payload = {
+        eglise_id: profile.eglise_id,
+        nom: member.nom || "",
+        prenom: member.prenom || "",
+        telephone: member.telephone || "",
+        ville: member.ville || "",
+        sexe: member.sexe || "",
+        besoin: member.besoin || "",
+        infos_supplementaires: member.infos_supplementaires || "",
+        etat_contact: "Existant",
+        venu: "Évangélisation",
+        statut_suivis: 3,
+        suivi_updated_at: new Date().toISOString(),
+        evangelise_member_id: member.id,
+      };
+      const { error } = await supabase.from("membres_complets").insert(payload);
+      if (error) throw error;
+      await supabase.from("evangelises").update({ status_suivi: "Intégré" }).eq("id", member.id);
+      setContacts((prev) => prev.filter((c) => c.id !== member.id));
+      alert(t.integreSucces);
+    } catch (err) {
+      console.error("Erreur intégration :", err.message);
+      alert(t.integreError + err.message);
+    } finally {
+      setIntegrating((p) => ({ ...p, [member.id]: false }));
+    }
+  };
+
   const checkDoublons = async () => {
     if (!hasSelectedContacts || !selectedTargetType || !selectedTarget) return;
-
     selectedTargetTypeRef.current = selectedTargetType;
     selectedTargetRef.current = selectedTarget;
     contactsToSendRef.current = selectedContacts;
-
     const { data: existingSuivis } = await supabase.from("suivis_des_evangelises").select("telephone");
-
     const detected = selectedContacts.filter((c) =>
       (existingSuivis || []).some((s) => s.telephone === c.telephone)
     );
-
     if (detected.length > 0) {
       setDoublonsDetected(detected);
       setPendingContacts(selectedContacts);
@@ -420,7 +457,6 @@ function EvangelisationContent() {
     if (!insertedSuivis || insertedSuivis.length === 0) return;
     if (targetType !== "conseiller") return;
     if (!targetId) return;
-
     const assignmentRows = insertedSuivis.map((suivi) => ({
       suivi_evangelise_id: suivi.id,
       conseiller_id: targetId,
@@ -428,7 +464,6 @@ function EvangelisationContent() {
       statut: "actif",
       assigned_by: profile?.id || null,
     }));
-
     const { error } = await supabase.from("suivi_assignments_evangelises").insert(assignmentRows).select();
     if (error) console.error("Erreur écriture suivi_assignments_evangelises :", error);
   };
@@ -437,14 +472,11 @@ function EvangelisationContent() {
     setShowDoublonPopup(false);
     setShowWhatsappPopup(false);
     setLoadingSend(true);
-
     try {
       if (!targetType || !targetId) { alert(t.alertCible); setLoadingSend(false); return; }
       if (!contactsToSend || contactsToSend.length === 0) { alert(t.alertAucunContact); setLoadingSend(false); return; }
-
       const cible = resolveCible(targetType, targetId);
       if (!cible) { alert(t.alertCibleIntrouvable); setLoadingSend(false); return; }
-
       const inserts = contactsToSend.map((m) => ({
         prenom: m.prenom,
         nom: m.nom,
@@ -467,24 +499,18 @@ function EvangelisationContent() {
         type_evangelisation: m.type_evangelisation,
         notification_responsable: true,
       }));
-
       const { data: insertedSuivis, error: insertError } = await supabase
         .from("suivis_des_evangelises").insert(inserts).select("id, conseiller_id");
       if (insertError) throw insertError;
-
       await writeAssignments(insertedSuivis, targetType, targetId);
-
       const ids = contactsToSend.map((c) => c.id);
       const { error: updateError } = await supabase.from("evangelises").update({ status_suivi: "Envoyé" }).in("id", ids);
       if (updateError) throw updateError;
-
       setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
       setCheckedContacts({});
-
       const cibleName = getCibleName(targetType, cible);
       let message = `${t.msgBonjour} ${cibleName},\n\n`;
       message += contactsToSend.length > 1 ? t.msgIntroPlural : t.msgIntroSingular;
-
       contactsToSend.forEach((m, i) => {
         message += "────────────────────\n";
         if (contactsToSend.length > 1) message += `${t.msgPersonne} ${i + 1}\n`;
@@ -503,21 +529,17 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
 
 `;
       });
-
       message += t.msgMerci;
-
       const rawPhone = phoneNumber ? phoneNumber.replace(/\D/g, "") : "";
       const targetPhone = rawPhone.length >= 8 ? rawPhone : "";
       const whatsappLink = targetPhone
         ? `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodeURIComponent(message)}`
         : `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-
       window.open(whatsappLink, "_blank");
       setPhoneNumber("");
       setTargetName("");
       window.dispatchEvent(new CustomEvent("refresh-notif-count"));
       alert(t.alertSucces);
-
     } catch (err) {
       console.error("Erreur envoi WhatsApp :", err);
       alert(t.alertErreurEnvoi + err.message);
@@ -617,6 +639,22 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
                 <p className="text-[11px] text-gray-400 text-right mt-3">
                   {t.evangeliseLe} {formatDate(member.date_evangelise)}
                 </p>
+
+                {/* ===== BOUTON INTÉGRER ===== */}
+                <button
+                  onClick={() => {
+                    if (window.confirm(t.confirmIntegrer)) handleIntegrer(member);
+                  }}
+                  disabled={integrating[member.id]}
+                  className="mt-3 w-full py-2 rounded-lg font-semibold text-white text-sm transition-all"
+                  style={{
+                    background: integrating[member.id] ? "#a3a3a3" : "#4ade80",
+                    cursor: integrating[member.id] ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {integrating[member.id] ? t.integrating : t.integrer}
+                </button>
+
                 <button
                   onClick={() => setDetailsOpen((prev) => ({ ...prev, [member.id]: !prev[member.id] }))}
                   className="text-orange-500 underline text-sm block mx-auto mt-2"
@@ -686,7 +724,6 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
         />
       )}
 
-      {/* Doublon popup */}
       {showDoublonPopup && doublonsDetected.length > 0 && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-6 max-w-lg w-full space-y-4 text-center">
@@ -728,7 +765,6 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
         </div>
       )}
 
-      {/* WhatsApp confirmation popup */}
       {showWhatsappPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">

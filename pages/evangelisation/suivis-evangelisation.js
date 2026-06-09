@@ -238,13 +238,13 @@ function SuivisEvangelisationContent() {
   }, [loading, highlight]);
 
   const init = async () => {
-    const userData = await fetchUser();
-    if (conseillerActive) await fetchConseillers();
-    const cellulesData = cellulesActive ? await fetchCellules(userData) : [];
-    const famillesData = famillesActive ? await fetchFamilles(userData) : [];
-    if (userData) await fetchSuivis(userData, cellulesData, famillesData);
-    setLoading(false);
-  };
+  const userData = await fetchUser();
+  if (conseillerActive) await fetchConseillers(userData); // ← passer userData
+  const cellulesData = cellulesActive ? await fetchCellules(userData) : [];
+  const famillesData = famillesActive ? await fetchFamilles(userData) : [];
+  if (userData) await fetchSuivis(userData, cellulesData, famillesData);
+  setLoading(false);
+};
 
   /* ================= USER ================= */
   const fetchUser = async () => {
@@ -261,13 +261,16 @@ function SuivisEvangelisationContent() {
 
   /* ================= CONSEILLERS ================= */
   const fetchConseillers = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom")
-      .eq("role", "Conseiller");
-    setConseillers(data || []);
-    return data || [];
-  };
+      const userData = user || (await fetchUser());
+      if (!userData) return [];
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom")
+        .eq("role", "Conseiller")
+        .eq("eglise_id", userData.eglise_id);
+      setConseillers(data || []);
+      return data || [];
+    };
 
   /* ================= CELLULES ================= */
   const fetchCellules = async (userData) => {

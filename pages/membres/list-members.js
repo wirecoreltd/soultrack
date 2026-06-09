@@ -49,6 +49,7 @@ const translations = {
     inactifTitle: "Contacts inactifs",
     city: "🏙️ Ville :",
     etatContact: "🕊 Etat Contact :",
+    months: ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"],
     createdAt: "Créé le",
     cellule: "🏠 Cellule :",
     famille: "👨‍👩‍👦 Famille :",
@@ -136,6 +137,7 @@ const translations = {
     inactifTitle: "Inactive contacts",
     city: "🏙️ City:",
     etatContact: "🕊 Contact state:",
+    months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
     createdAt: "Created on",
     cellule: "🏠 Cell:",
     famille: "👨‍👩‍👦 Family:",
@@ -318,15 +320,11 @@ function ListMembersContent() {
   const statutSuiviLabels = t.statutSuivi;  
       
   const formatDateFr = (dateString) => {
-    if (!dateString) return "—";
-    const d = new Date(dateString);
-    const day = d.getDate().toString().padStart(2, "0");
-    const months = [
-      "Janv","Févr","Mars","Avr","Mai","Juin",
-      "Juil","Août","Sept","Oct","Nov","Déc",
-    ];
-    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
-  };
+  if (!dateString) return "—";
+  const d = new Date(dateString);
+  const day = d.getDate().toString().padStart(2, "0");
+  return `${day} ${t.months[d.getMonth()]} ${d.getFullYear()}`;
+};
 
   const formatMinistere = (ministereJson, autreMinistere) => {
     let ministereList = [];

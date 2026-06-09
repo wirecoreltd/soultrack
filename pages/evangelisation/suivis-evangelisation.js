@@ -954,6 +954,7 @@ function SuivisEvangelisationContent() {
           member={editingContact}
           conseillers={conseillerActive ? conseillers : []}
           cellules={cellulesActive ? cellules : []}
+          familles={famillesActive ? familles : []} 
           currentUserRoles={user?.role ? [user.role] : []}
           onClose={() => setEditingContact(null)}
           closeDetails={() => {}}

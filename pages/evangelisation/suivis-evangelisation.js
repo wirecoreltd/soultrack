@@ -239,7 +239,7 @@ function SuivisEvangelisationContent() {
 
   const init = async () => {
   const userData = await fetchUser();
-  if (conseillerActive) await fetchConseillers(userData); // ← passer userData
+  if (conseillerActive) await fetchConseillers(userData); // ← userData ajouté
   const cellulesData = cellulesActive ? await fetchCellules(userData) : [];
   const famillesData = famillesActive ? await fetchFamilles(userData) : [];
   if (userData) await fetchSuivis(userData, cellulesData, famillesData);
@@ -260,17 +260,17 @@ function SuivisEvangelisationContent() {
   };
 
   /* ================= CONSEILLERS ================= */
-  const fetchConseillers = async () => {
-      const userData = user || (await fetchUser());
-      if (!userData) return [];
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom")
-        .eq("role", "Conseiller")
-        .eq("eglise_id", userData.eglise_id);
-      setConseillers(data || []);
-      return data || [];
-    };
+  const fetchConseillers = async (userData) => {
+  const u = userData || user;
+  if (!u) return [];
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, prenom, nom")
+    .eq("eglise_id", u.eglise_id)
+    .contains("roles", ["Conseiller"]);
+  setConseillers(data || []);
+  return data || [];
+};
 
   /* ================= CELLULES ================= */
   const fetchCellules = async (userData) => {
@@ -958,7 +958,7 @@ function SuivisEvangelisationContent() {
           conseillers={conseillerActive ? conseillers : []}
           cellules={cellulesActive ? cellules : []}
           familles={famillesActive ? familles : []} 
-          currentUserRoles={user?.role ? [user.role] : []}
+          currentUserRoles={user?.roles || (user?.role ? [user.role] : [])}
           onClose={() => setEditingContact(null)}
           closeDetails={() => {}}
           onUpdateMember={(updates) => {

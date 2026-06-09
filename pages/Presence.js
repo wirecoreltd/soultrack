@@ -202,7 +202,7 @@ function getLast5Days() {
 function isSessionEditable(dateStr) {
   const sessionDate = new Date(dateStr + "T00:00:00");
   const diffJours = Math.floor((new Date() - sessionDate) / (1000 * 60 * 60 * 24));
-  return diffJours <= 7;
+  return diffJours < 7;
 }
 
 function formatSessionLabel(s, lang) {
@@ -848,7 +848,7 @@ function Presence() {
     setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
     setListeVisible(!!session.liste_presence_visible);
-    setReadOnly(diffJours > 7);
+    setReadOnly(diffJours >= 7);
     pendingSessionIdRef.current = session.id;
     setEtape("ready");
   };

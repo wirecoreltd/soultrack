@@ -415,6 +415,7 @@ function EvangelisationContent() {
         statut_suivis: 3,
         suivi_updated_at: new Date().toISOString(),
         evangelise_member_id: member.id,
+        date_venu: new Date().toISOString(),
       };
       const { error } = await supabase.from("membres_complets").insert(payload);
       if (error) throw error;

@@ -17,11 +17,16 @@ const translations = {
     ville: "Ville",
     telephone: "Téléphone",
     isWhatsapp: "Numéro WhatsApp",
+    sectionSuiviPar: "📌 Suivi par",
+    cellule: "Cellule",
+    famille: "Famille",
+    chooseCellule: "-- Cellule --",
+    chooseFamille: "-- Famille --",
     sectionConseiller: "👤 Ajouter conseiller",
     searchConseiller: "Rechercher un conseiller...",
     noResult: "Aucun résultat",
     principal: "(principal)",
-    conseillerLocked: "🔒 Les conseillers sont gérés par un administrateur.",
+    lockedMessage: "🔒 La cellule, la famille et les conseillers sont gérés par un administrateur.",
     sectionSpirituel: "🕊 Vie spirituelle",
     priereSalut: "Prière du salut",
     priereSalutDefault: "-- Prière du salut ? --",
@@ -59,11 +64,16 @@ const translations = {
     ville: "City",
     telephone: "Phone",
     isWhatsapp: "WhatsApp number",
+    sectionSuiviPar: "📌 Followed by",
+    cellule: "Cell",
+    famille: "Family",
+    chooseCellule: "-- Cell --",
+    chooseFamille: "-- Family --",
     sectionConseiller: "👤 Add counselor",
     searchConseiller: "Search for a counselor...",
     noResult: "No results",
     principal: "(primary)",
-    conseillerLocked: "🔒 Counselors are managed by an administrator.",
+    lockedMessage: "🔒 Cell, family and counsellors are managed by an administrator.",
     sectionSpirituel: "🕊 Spiritual life",
     priereSalut: "Salvation prayer",
     priereSalutDefault: "-- Salvation prayer? --",
@@ -107,6 +117,10 @@ export default function EditEvangeliseSuiviPopup({
   const isPrivileged = (currentUserRoles || []).some((r) =>
     ["Administrateur", "ResponsableEvangelisation", "Superadmin"].includes(r)
   );
+
+  const showCellules = Array.isArray(cellules) && cellules.length > 0;
+  const showFamilles = Array.isArray(familles) && familles.length > 0;
+  const showConseillers = Array.isArray(conseillers) && conseillers.length > 0;
 
   const initialBesoin =
     typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
@@ -332,79 +346,124 @@ export default function EditEvangeliseSuiviPopup({
             </label>
           </Field>
 
-          {/* Section: Ajouter conseiller */}
-          <SectionTitle>{t.sectionConseiller}</SectionTitle>
+          {/* Section: Suivi par (cellule / famille / conseiller) */}
+          {isPrivileged && (showCellules || showFamilles || showConseillers) && (
+            <SectionTitle>{t.sectionSuiviPar}</SectionTitle>
+          )}
 
           {isPrivileged ? (
             <>
-              <input
-                type="text"
-                placeholder={t.searchConseiller}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="inp"
-              />
-              <div
-                className="rounded-xl overflow-hidden divide-y divide-gray-100"
-                style={{ border: "1px solid #e2e8f0", maxHeight: "9rem", overflowY: "auto" }}
-              >
-                {filteredConseillers.map((c) => {
-                  const alreadySelected = selectedConseillers.some((s) => s.id === c.id);
-                  return (
-                    <div
-                      key={c.id}
-                      onClick={() => {
-                        if (!alreadySelected) {
-                          setSelectedConseillers((prev) => [
-                            ...prev,
-                            { id: c.id, prenom: c.prenom, nom: c.nom },
-                          ]);
-                        }
-                      }}
-                      className={
-                        "px-3 py-2 text-sm transition-colors " +
-                        (alreadySelected
-                          ? "bg-gray-50 text-gray-300 cursor-not-allowed"
-                          : "cursor-pointer hover:bg-blue-50 text-gray-700")
-                      }
-                    >
-                      {c.prenom} {c.nom} {alreadySelected ? "✓" : ""}
-                    </div>
-                  );
-                })}
-                {filteredConseillers.length === 0 && (
-                  <p className="text-xs text-gray-400 px-3 py-2">{t.noResult}</p>
-                )}
-              </div>
+              {showCellules && (
+                <Field label={t.cellule}>
+                  <select
+                    name="cellule_id"
+                    value={formData.cellule_id ?? ""}
+                    onChange={handleChange}
+                    className="inp"
+                  >
+                    <option value="">{t.chooseCellule}</option>
+                    {cellules.map((c) => (
+                      <option key={c.id} value={c.id}>{c.cellule_full}</option>
+                    ))}
+                  </select>
+                </Field>
+              )}
 
-              {selectedConseillers.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedConseillers.map((c, index) => (
-                    <div
-                      key={c.id}
-                      className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white"
-                      style={{ background: index === 0 ? "#2E3192" : "#6b7280" }}
-                    >
-                      <span>{c.prenom} {c.nom}</span>
-                      {index === 0 && selectedConseillers.length > 1 && (
-                        <span className="text-xs opacity-60 ml-1">{t.principal}</span>
-                      )}
-                      <button
-                        onClick={() =>
-                          setSelectedConseillers((prev) => prev.filter((x) => x.id !== c.id))
-                        }
-                        className="ml-1 opacity-70 hover:opacity-100"
-                      >
-                        ✕
-                      </button>
+              {showFamilles && (
+                <Field label={t.famille}>
+                  <select
+                    name="famille_id"
+                    value={formData.famille_id ?? ""}
+                    onChange={handleChange}
+                    className="inp"
+                  >
+                    <option value="">{t.chooseFamille}</option>
+                    {familles.map((f) => (
+                      <option key={f.id} value={f.id}>{f.famille_full}</option>
+                    ))}
+                  </select>
+                </Field>
+              )}
+
+              {showConseillers && (
+                <>
+                  <SectionTitle>{t.sectionConseiller}</SectionTitle>
+                  <input
+                    type="text"
+                    placeholder={t.searchConseiller}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="inp"
+                  />
+                  <div
+                    className="rounded-xl overflow-hidden divide-y divide-gray-100"
+                    style={{ border: "1px solid #e2e8f0", maxHeight: "9rem", overflowY: "auto" }}
+                  >
+                    {filteredConseillers.map((c) => {
+                      const alreadySelected = selectedConseillers.some((s) => s.id === c.id);
+                      return (
+                        <div
+                          key={c.id}
+                          onClick={() => {
+                            if (!alreadySelected) {
+                              setSelectedConseillers((prev) => [
+                                ...prev,
+                                { id: c.id, prenom: c.prenom, nom: c.nom },
+                              ]);
+                            }
+                          }}
+                          className={
+                            "px-3 py-2 text-sm transition-colors " +
+                            (alreadySelected
+                              ? "bg-gray-50 text-gray-300 cursor-not-allowed"
+                              : "cursor-pointer hover:bg-blue-50 text-gray-700")
+                          }
+                        >
+                          {c.prenom} {c.nom} {alreadySelected ? "✓" : ""}
+                        </div>
+                      );
+                    })}
+                    {filteredConseillers.length === 0 && (
+                      <p className="text-xs text-gray-400 px-3 py-2">{t.noResult}</p>
+                    )}
+                  </div>
+
+                  {selectedConseillers.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedConseillers.map((c, index) => (
+                        <div
+                          key={c.id}
+                          className="flex items-center gap-1 px-3 py-1 rounded-full text-sm text-white"
+                          style={{ background: index === 0 ? "#2E3192" : "#6b7280" }}
+                        >
+                          <span>{c.prenom} {c.nom}</span>
+                          {index === 0 && selectedConseillers.length > 1 && (
+                            <span className="text-xs opacity-60 ml-1">{t.principal}</span>
+                          )}
+                          <button
+                            onClick={() =>
+                              setSelectedConseillers((prev) => prev.filter((x) => x.id !== c.id))
+                            }
+                            className="ml-1 opacity-70 hover:opacity-100"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
+              )}
+
+              {!showCellules && !showFamilles && !showConseillers && (
+                <p className="text-sm text-gray-400 italic rounded-xl px-4 py-3" style={{ background: "#f8fafc" }}>
+                  {t.lockedMessage}
+                </p>
               )}
             </>
           ) : (
             <p className="text-sm text-gray-400 italic rounded-xl px-4 py-3" style={{ background: "#f8fafc" }}>
-              {t.conseillerLocked}
+              {t.lockedMessage}
             </p>
           )}
 

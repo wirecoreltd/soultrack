@@ -225,7 +225,7 @@ export default function HeaderPages() {
             <img
               src="/logo.png"
               alt="Logo SoulTrack"
-              className="w-10 h-auto cursor-pointer hover:opacity-80 transition"
+              className="w-7 h-auto cursor-pointer hover:opacity-80 transition"
               onClick={handleLogoClick}
             />
           </div>

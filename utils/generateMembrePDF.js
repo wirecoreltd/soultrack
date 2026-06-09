@@ -2,6 +2,154 @@
 
 import jsPDF from "jspdf";
 
+// ─── Traductions ──────────────────────────────────────────────────────────────
+
+const translations = {
+  fr: {
+    // Header
+    genere_le:        "Genere le",
+    confidentiel:     "FICHE CONFIDENTIELLE",
+
+    // Rubriques / titres de blocs
+    identite:         "Identite",
+    followed_by:      "Followed by",
+    vie_spirituelle:  "Vie spirituelle",
+    parcours:         "Parcours",
+    historique:       "Historique des suivis",
+
+    // Champs Identité
+    etat:             "Etat",
+    tel:              "Tel.",
+    civilite:         "Civilite",
+    age:              "Age",
+    ville:            "Ville",
+    whatsapp:         "WhatsApp",
+    date_venu:        "Date de sa venu",
+
+    // Champs Followed by
+    cellule:          "Cellule",
+    famille:          "Famille",
+    conseiller:       "Conseiller",
+
+    // Champs Vie spirituelle
+    bapteme_eau:      "Bapteme eau",
+    bapteme_feu:      "Bapteme feu",
+    priere_salut:     "Priere salut",
+    conversion:       "Conversion",
+    ministere:        "Ministere",
+
+    // Champs Parcours
+    comment_venu:     "Comment venu",
+    raison_venu:      "Raison de sa venu",
+    formation:        "Formation",
+    infos_supp:       "Infos supp.",
+
+    // Valeurs
+    oui:              "Oui",
+    non:              "Non",
+
+    // Etats contact
+    nouveau:          "Nouveau",
+    existant:         "Existant",
+    inactif:          "Inactif",
+
+    // Suivis
+    resolu:           "Resolu",
+    besoin_label:     "Besoin : ",
+    redige_par:       "Redige par",
+
+    // Questions qualitatives
+    iq: {
+      etat_general:       "Etat general",
+      vie_spirituelle:    "Vie spirituelle",
+      intention_priere:   "Intention de priere",
+      combats_luttes:     "Combats et luttes",
+      blocages:           "Blocages",
+      vie_personnelle:    "Vie personnelle",
+      besoins_avancement: "Besoins et avancement",
+      talents:            "Talents",
+      domaine_service:    "Domaine de service",
+    },
+
+    // Footer
+    footer_confidential: "Document confidentiel  -  Usage pastoral uniquement",
+    page:                "Page",
+    sur:                 "/",
+  },
+
+  en: {
+    // Header
+    genere_le:        "Generated on",
+    confidentiel:     "CONFIDENTIAL FILE",
+
+    // Rubriques / titres de blocs
+    identite:         "Identity",
+    followed_by:      "Followed by",
+    vie_spirituelle:  "Spiritual life",
+    parcours:         "Background",
+    historique:       "Follow-up history",
+
+    // Champs Identité
+    etat:             "Status",
+    tel:              "Phone",
+    civilite:         "Gender",
+    age:              "Age",
+    ville:            "City",
+    whatsapp:         "WhatsApp",
+    date_venu:        "Date joined",
+
+    // Champs Followed by
+    cellule:          "Cell group",
+    famille:          "Family",
+    conseiller:       "Counselor",
+
+    // Champs Vie spirituelle
+    bapteme_eau:      "Water baptism",
+    bapteme_feu:      "Spirit baptism",
+    priere_salut:     "Salvation prayer",
+    conversion:       "Conversion",
+    ministere:        "Ministry",
+
+    // Champs Parcours
+    comment_venu:     "How they came",
+    raison_venu:      "Reason for coming",
+    formation:        "Training",
+    infos_supp:       "Extra info.",
+
+    // Valeurs
+    oui:              "Yes",
+    non:              "No",
+
+    // Etats contact
+    nouveau:          "New",
+    existant:         "Existing",
+    inactif:          "Inactive",
+
+    // Suivis
+    resolu:           "Resolved",
+    besoin_label:     "Need: ",
+    redige_par:       "Written by",
+
+    // Questions qualitatives
+    iq: {
+      etat_general:       "General state",
+      vie_spirituelle:    "Spiritual life",
+      intention_priere:   "Prayer intention",
+      combats_luttes:     "Struggles",
+      blocages:           "Blockages",
+      vie_personnelle:    "Personal life",
+      besoins_avancement: "Needs & progress",
+      talents:            "Talents",
+      domaine_service:    "Area of service",
+    },
+
+    // Footer
+    footer_confidential: "Confidential document  -  Pastoral use only",
+    page:                "Page",
+    sur:                 "/",
+  },
+};
+
 // ─── Nettoyage ────────────────────────────────────────────────────────────────
 
 function da(str) {
@@ -34,9 +182,18 @@ function formatDate(dateStr) {
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return safe(dateStr);
-    const M = ["Janv","Fevr","Mars","Avr","Mai","Juin","Juil","Aout","Sept","Oct","Nov","Dec"];
-    return `${String(d.getDate()).padStart(2,"0")} ${M[d.getMonth()]} ${d.getFullYear()}`;
-  } catch { return safe(String(dateStr)); }
+    const MFR = ["Janv","Fevr","Mars","Avr","Mai","Juin","Juil","Aout","Sept","Oct","Nov","Dec"];
+    const MEN = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    // On retourne les deux pour laisser le choix à l'appelant via formatDateLang
+    return { fr: `${String(d.getDate()).padStart(2,"0")} ${MFR[d.getMonth()]} ${d.getFullYear()}`,
+             en: `${MEN[d.getMonth()]} ${String(d.getDate()).padStart(2,"0")}, ${d.getFullYear()}` };
+  } catch { return { fr: safe(String(dateStr)), en: safe(String(dateStr)) }; }
+}
+
+function formatDateLang(dateStr, lang = "fr") {
+  const r = formatDate(dateStr);
+  if (typeof r === "string") return r;
+  return r[lang] || r.fr;
 }
 
 function parseBesoins(val) {
@@ -71,18 +228,6 @@ function formatMinistere(mj, autre) {
     return da(list.join(", ")) || "-";
   } catch { return safe(mj); }
 }
-
-const IQ = [
-  { key: "etat_general",       label: "Etat general" },
-  { key: "vie_spirituelle",    label: "Vie spirituelle" },
-  { key: "intention_priere",   label: "Intention de priere" },
-  { key: "combats_luttes",     label: "Combats et luttes" },
-  { key: "blocages",           label: "Blocages" },
-  { key: "vie_personnelle",    label: "Vie personnelle" },
-  { key: "besoins_avancement", label: "Besoins et avancement" },
-  { key: "talents",            label: "Talents" },
-  { key: "domaine_service",    label: "Domaine de service" },
-];
 
 // ─── Palette ──────────────────────────────────────────────────────────────────
 
@@ -196,7 +341,10 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
     familleName    = null,
     conseillerName = null,
     eglise         = null,
+    lang           = "fr",   // ← nouveau paramètre
   } = options;
+
+  const T = translations[lang] || translations.fr;
 
   if (!membre) return;
 
@@ -227,19 +375,16 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   };
 
   // ══════════════════════════════════════════════════════════════════
-  // HEADER — tout centré verticalement dans la bande navy (30mm)
+  // HEADER
   // ══════════════════════════════════════════════════════════════════
   const HDR_H = 30;
   frect(doc, 0, 0, PW, HDR_H, C.navy);
-  // Bande accent bas du header
   frect(doc, 0, HDR_H - 5, PW, 5, C.navyMid);
 
-  // Centre vertical de la zone principale (hors bande accent) = (HDR_H - 5) / 2 = 12.5
-  const hdrMid = (HDR_H - 5) / 2; // 12.5mm
+  const hdrMid = (HDR_H - 5) / 2;
 
-  // Logo — centré verticalement (16mm de haut → top = hdrMid - 8)
   const logoSize = 16;
-  const logoY    = hdrMid - logoSize / 2; // 4.5
+  const logoY    = hdrMid - logoSize / 2;
   const drawLogo = (d) => {
     rrect(d, ML, logoY, logoSize, logoSize, 2, [95, 100, 195]);
     st(d, C.white);
@@ -253,12 +398,7 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
     drawLogo(doc);
   }
 
-  // Texte église — bloc centré verticalement à droite du logo
-  // Nom église : ligne principale → à hdrMid - 3 (légèrement au-dessus du centre)
-  // Sous-titre  : hdrMid + 2.5
-  // Ville/pays  : hdrMid + 7
   const txtX = ML + logoSize + 4;
-
   const egliseNom = eglise ? safe(eglise.nom) : safe(churchName);
   st(doc, C.white);
   doc.setFontSize(11); doc.setFont("helvetica", "bold");
@@ -279,25 +419,23 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
       doc.text(lieu, txtX, hdrMid + 8);
     }
   } else {
-    // Pas d'objet eglise → on affiche churchName comme sous-titre
     st(doc, [180, 185, 230]);
     doc.setFontSize(7); doc.setFont("helvetica", "normal");
     doc.text(safe(churchName), txtX, hdrMid + 3.5);
   }
 
-  // Colonne droite : "Genere le" + date + "FICHE CONFIDENTIELLE"
-  // Centré verticalement : date au milieu, label au-dessus, badge en dessous
+  // Colonne droite : date + badge
   st(doc, [180, 185, 230]);
   doc.setFontSize(6.5); doc.setFont("helvetica", "normal");
-  doc.text("Genere le", PW - MR, hdrMid - 3.5, { align: "right" });
+  doc.text(da(T.genere_le), PW - MR, hdrMid - 3.5, { align: "right" });
 
   st(doc, C.white);
   doc.setFontSize(8.5); doc.setFont("helvetica", "bold");
-  doc.text(formatDate(new Date().toISOString()), PW - MR, hdrMid + 2, { align: "right" });
+  doc.text(formatDateLang(new Date().toISOString(), lang), PW - MR, hdrMid + 2, { align: "right" });
 
   st(doc, [155, 160, 210]);
   doc.setFontSize(6); doc.setFont("helvetica", "normal");
-  doc.text("FICHE CONFIDENTIELLE", PW - MR, hdrMid + 7, { align: "right" });
+  doc.text(da(T.confidentiel), PW - MR, hdrMid + 7, { align: "right" });
 
   y = HDR_H + 8;
 
@@ -313,55 +451,56 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
   // GRILLES
   // ══════════════════════════════════════════════════════════════════
   const etat      = da((membre.etat_contact || "")).toLowerCase().trim();
-  const etatLabel = etat === "nouveau"  ? "Nouveau"
-                  : etat === "existant" ? "Existant"
-                  : etat === "inactif"  ? "Inactif"
+  const etatLabel = etat === "nouveau"  ? T.nouveau
+                  : etat === "existant" ? T.existant
+                  : etat === "inactif"  ? T.inactif
                   : safe(membre.etat_contact) || "-";
 
   need(40);
   y = draw2ColBlock(doc,
-    "Identite", [
-      ["Etat",      etatLabel],
-      ["Tel.",      membre.telephone ? da(String(membre.telephone)) : "-"],
-      ["Civilite",  safe(membre.sexe)],
-      ["Age",       safe(membre.age)],
-      ["Ville",     safe(membre.ville)],
-      ["WhatsApp",  membre.is_whatsapp ? "Oui" : "Non"],
-      ["Date de sa venu", formatDate(membre.date_venu)],
+    T.identite, [
+      [T.etat,      etatLabel],
+      [T.tel,       membre.telephone ? da(String(membre.telephone)) : "-"],
+      [T.civilite,  safe(membre.sexe)],
+      [T.age,       safe(membre.age)],
+      [T.ville,     safe(membre.ville)],
+      [T.whatsapp,  membre.is_whatsapp ? T.oui : T.non],
+      [T.date_venu, formatDateLang(membre.date_venu, lang)],
     ],
-    // ← "Followed by" remplace "Suivi pastoral", sans Statut ni Envoi suivi
-    "Followed by", [
-      ["Cellule",    safe(celluleName)],
-      ["Famille",    safe(familleName)],
-      ["Conseiller", safe(conseillerName)],
+    T.followed_by, [
+      [T.cellule,    safe(celluleName)],
+      [T.famille,    safe(familleName)],
+      [T.conseiller, safe(conseillerName)],
     ],
     y, ML, CW
   );
 
   need(40);
   y = draw2ColBlock(doc,
-    "Vie spirituelle", [
-      ["Bapteme eau",  safe(membre.bapteme_eau)],
-      ["Bapteme feu",  safe(membre.bapteme_esprit)],
-      ["Priere salut", safe(membre.priere_salut)],
-      ["Conversion",   safe(membre.type_conversion)],
-      ["Ministere",    formatMinistere(membre.Ministere, membre.Autre_Ministere)],
+    T.vie_spirituelle, [
+      [T.bapteme_eau,  safe(membre.bapteme_eau)],
+      [T.bapteme_feu,  safe(membre.bapteme_esprit)],
+      [T.priere_salut, safe(membre.priere_salut)],
+      [T.conversion,   safe(membre.type_conversion)],
+      [T.ministere,    formatMinistere(membre.Ministere, membre.Autre_Ministere)],
     ],
-    "Parcours", [
-      ["Comment venu",      safe(membre.venu)],
-      ["Raison de sa venu", safe(membre.statut_initial)],
-      ["Formation",         safe(membre.Formation)],
-      ["Infos supp.",       safe(membre.infos_supplementaires)],
+    T.parcours, [
+      [T.comment_venu,  safe(membre.venu)],
+      [T.raison_venu,   safe(membre.statut_initial)],
+      [T.formation,     safe(membre.Formation)],
+      [T.infos_supp,    safe(membre.infos_supplementaires)],
     ],
     y, ML, CW
   );
 
   // ══════════════════════════════════════════════════════════════════
   // HISTORIQUE DES SUIVIS
-  // (section "Soin pastoral — Besoins" supprimée)
   // ══════════════════════════════════════════════════════════════════
   if (Array.isArray(suivis) && suivis.length > 0) {
-    rubrique("Historique des suivis");
+    rubrique(T.historique);
+
+    // Questions qualitatives traduites
+    const IQ = Object.entries(T.iq).map(([key, label]) => ({ key, label }));
 
     for (let idx = 0; idx < suivis.length; idx++) {
       const s = suivis[idx];
@@ -369,7 +508,7 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
 
       const besoinsArr = parseHistoriqueBesoin(s.besoin);
       const statut     = da(s.statut || "En suivi");
-      const resolu     = statut.toLowerCase().includes("resolu");
+      const resolu     = statut.toLowerCase().includes("resolu") || statut.toLowerCase().includes("resolved");
       const authorRaw  = s.profiles
         ? `${s.profiles.prenom || ""} ${s.profiles.nom || ""}`.trim()
         : "";
@@ -382,8 +521,8 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
       // Date — type + statut
       need(8);
       doc.setFontSize(9.5); doc.setFont("helvetica", "bold"); st(doc, C.gray700);
-      doc.text(`${formatDate(s.date_action)}  —  ${safe(s.action_type)}`, ML, y);
-      const sLabel = resolu ? "Resolu" : statut;
+      doc.text(`${formatDateLang(s.date_action, lang)}  —  ${safe(s.action_type)}`, ML, y);
+      const sLabel = resolu ? T.resolu : statut;
       doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
       st(doc, resolu ? C.greenDark : C.navyMid);
       doc.text(sLabel, PW - MR, y, { align: "right" });
@@ -396,20 +535,18 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
         const TAG_PV = 1.2;
         const GAP    = 2.5;
         doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); st(doc, C.gray500);
-        const labelW = doc.getTextWidth("Besoin : ");
-        doc.text("Besoin : ", ML, y + TAG_H - TAG_PV - 0.5);
+        const labelW = doc.getTextWidth(da(T.besoin_label));
+        doc.text(da(T.besoin_label), ML, y + TAG_H - TAG_PV - 0.5);
         let tx = ML + labelW;
         for (const b of besoinsArr) {
-          const isResolu = (b.statut || "").toLowerCase().includes("resolu");
-          const tagLabel = isResolu ? `${da(b.label)} - Resolu` : da(b.label);
+          const isResolu = (b.statut || "").toLowerCase().includes("resolu") || (b.statut || "").toLowerCase().includes("resolved");
+          const tagLabel = isResolu ? `${da(b.label)} - ${T.resolu}` : da(b.label);
           doc.setFontSize(7); doc.setFont("helvetica", "bold");
           const tw2 = doc.getTextWidth(tagLabel) + TAG_PH * 2;
           if (tx + tw2 > PW - MR) { tx = ML + labelW; y += TAG_H + GAP; need(TAG_H + GAP); }
-          // fond + bordure
           rrect(doc, tx, y, tw2, TAG_H, 2.5, isResolu ? C.greenLight : C.orangeLight);
           sd(doc, isResolu ? C.green : C.orange); doc.setLineWidth(0.25);
           doc.roundedRect(tx, y, tw2, TAG_H, 2.5, 2.5, "S");
-          // texte centré dans le tag
           st(doc, isResolu ? C.greenDark : C.orange);
           doc.text(tagLabel, tx + tw2 / 2, y + TAG_H - TAG_PV, { align: "center" });
           tx += tw2 + GAP;
@@ -421,7 +558,6 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
       if (s.commentaire) {
         const cl = doc.splitTextToSize(`"${da(s.commentaire)}"`, CW);
         need(cl.length * 4.5 + 2);
-        // Fond léger + bordure gauche
         const commentH = cl.length * 4.5 + 3;
         frect(doc, ML, y - 1, CW, commentH, [248, 250, 252]);
         frect(doc, ML, y - 1, 1.5, commentH, C.navyMid);
@@ -447,7 +583,7 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
       if (authorName) {
         need(6);
         doc.setFontSize(7); doc.setFont("helvetica", "italic"); st(doc, C.gray400);
-        doc.text(`Redige par ${authorName}`, ML, y);
+        doc.text(`${da(T.redige_par)} ${authorName}`, ML, y);
         y += 5;
       }
 
@@ -471,10 +607,10 @@ export async function generateMembrePDF(membre, suivis = [], options = {}) {
     frect(doc, 0, PH - 13, PW, 13, C.navy);
     st(doc, [180, 185, 230]);
     doc.setFontSize(6.5); doc.setFont("helvetica", "normal");
-    doc.text("Document confidentiel  -  Usage pastoral uniquement", ML, PH - 5.5);
+    doc.text(da(T.footer_confidential), ML, PH - 5.5);
     st(doc, C.white);
     doc.setFontSize(7); doc.setFont("helvetica", "bold");
-    doc.text(`Page ${p} / ${total}`, PW - MR, PH - 5.5, { align: "right" });
+    doc.text(`${T.page} ${p} ${T.sur} ${total}`, PW - MR, PH - 5.5, { align: "right" });
   }
 
   // ══════════════════════════════════════════════════════════════════

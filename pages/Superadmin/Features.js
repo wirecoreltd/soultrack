@@ -25,6 +25,7 @@ const ALL_FEATURES = [
   { key: "familles", label: "Familles", emoji: "👑" },
   { key: "rapport", label: "Rapport", emoji: "📊" },
   { key: "presence", label: "Présence", emoji: "✍🏻" },
+  { key: "enfants", label: "Enfants", emoji: "🐼" },
   { key: "administrateur", label: "Admin", emoji: "🛠️" },
   { key: "notifications", label: "Notifications", emoji: "🔔" },
 ];

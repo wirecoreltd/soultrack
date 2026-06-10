@@ -492,6 +492,7 @@ export default function ListeEnfants() {
 function ListeEnfantsContent() {
   const { lang } = useLang();
   const t = translations[lang];
+  const router = useRouter();
 
   const [enfants, setEnfants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -504,6 +505,19 @@ function ListeEnfantsContent() {
   const [userRoles, setUserRoles] = useState([]);
 
   const isAdmin = userRoles.includes("Administrateur");
+
+  // Ouvrir le popup d'ajout automatiquement si ?add=true dans l'URL
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("add") === "true") {
+      setPopupEnfant(false);
+      // Nettoyer le param de l'URL sans recharger
+      const url = new URL(window.location.href);
+      url.searchParams.delete("add");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, []);
 
   useEffect(() => {
     const handleClick = (e) => {

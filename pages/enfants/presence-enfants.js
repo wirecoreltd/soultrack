@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
@@ -47,6 +48,7 @@ const translations = {
     noPresence: "Aucune présence",
     newSessionBtn: "↩ Nouvelle session",
     backBtn: "↩ Retour aux sessions",
+    addChild: "➕ Ajouter un enfant",
     editSession: "✏️ Modifier la session",
     clickToEdit: "Cliquer pour modifier",
     consultMode: "👁 Mode consultation",
@@ -116,6 +118,7 @@ const translations = {
     noPresence: "No attendance recorded",
     newSessionBtn: "↩ New session",
     backBtn: "↩ Back to sessions",
+    addChild: "➕ Add a child",
     editSession: "✏️ Edit session",
     clickToEdit: "Click to edit",
     consultMode: "👁 View mode",
@@ -471,6 +474,7 @@ function OldSessionsBlock({ sessions, onConsulter, t, lang }) {
 function PresenceEnfants() {
   const { lang } = useLang();
   const t = translations[lang];
+  const router = useRouter();
 
   const [etape, setEtape] = useState("check");
   const [sessionsRecentes, setSessionsRecentes] = useState([]);
@@ -1025,10 +1029,19 @@ function PresenceEnfants() {
             </div>
           )}
 
-          <button onClick={handleReset}
-            className="mt-8 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm">
-            {readOnly ? t.backBtn : t.newSessionBtn}
-          </button>
+          <div className="mt-8 flex gap-3 justify-center flex-wrap">
+            <button onClick={handleReset}
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm">
+              {readOnly ? t.backBtn : t.newSessionBtn}
+            </button>
+            {!readOnly && (
+              <button
+                onClick={() => router.push("/enfants/liste-enfants?add=true")}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-sm font-semibold transition">
+                {t.addChild}
+              </button>
+            )}
+          </div>
         </>
       )}
 

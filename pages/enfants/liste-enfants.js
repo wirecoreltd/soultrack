@@ -12,10 +12,10 @@ import { useLang } from "../../hooks/useLang";
 function getTranche(dateNaissance) {
   if (!dateNaissance) return { label: "—", color: "#e5e7eb" };
   const age = Math.floor((new Date() - new Date(dateNaissance)) / (1000 * 60 * 60 * 24 * 365.25));
-  if (age <= 2)  return { label: "0-2 ans",   color: "#FCA5A5" };
+ 
   if (age <= 6)  return { label: "3-6 ans",   color: "#FCD34D" };
-  if (age <= 12) return { label: "7-12 ans",  color: "#6EE7B7" };
-  return          { label: "13-14 ans", color: "#93C5FD" };
+  if (age <=13) return { label: "7-12 ans",  color: "#6EE7B7" };
+  return          { label: "14-15 ans", color: "#93C5FD" };
 }
 
 function formatDate(dateStr, lang) {
@@ -449,7 +449,7 @@ function ListeEnfantsContent() {
     return matchAge && matchSearch;
   });
 
-  const tranches = ["0-2 ans", "3-6 ans", "7-12 ans", "13-14 ans"];
+  const tranches = ["3-6 ans", "7-13 ans"];
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>

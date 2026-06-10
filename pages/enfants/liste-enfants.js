@@ -18,6 +18,13 @@ function getTranche(dateNaissance) {
   return          { label: "14-15 ans", color: "#93C5FD" };
 }
 
+// ─── CALCUL DE L'ÂGE ─────────────────────────────────────────────────────────
+function getAge(dateNaissance, lang) {
+  if (!dateNaissance) return "—";
+  const age = Math.floor((new Date() - new Date(dateNaissance)) / (1000 * 60 * 60 * 24 * 365.25));
+  return lang === "en" ? `${age} years old` : `${age} ans`;
+}
+
 function formatDate(dateStr, lang) {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
@@ -26,6 +33,26 @@ function formatDate(dateStr, lang) {
     : ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
   return `${d.getDate().toString().padStart(2,"0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
+
+// ─── BESOINS SPÉCIAUX (cases à cocher) ───────────────────────────────────────
+const BESOINS_OPTIONS = [
+  "Santé",
+  "École / Études",
+  "Famille",
+  "Amitiés",
+  "Confiance en soi",
+  "Émotions / Tristesse",
+  "Peur / Anxiété",
+  "Comportement",
+  "Harcèlement",
+  "Sécurité / Protection",
+  "Loisirs / Activités",
+  "Difficultés d'apprentissage",
+  "Handicap / Besoins spéciaux",
+  "Sommeil",
+  "Spiritualité / Foi",
+  "Prière pour un miracle",
+];
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
 const translations = {
@@ -46,7 +73,7 @@ const translations = {
     details: "Détails",
     closeDetails: "Fermer",
     dob: "📅 Né(e) le",
-    age: "⏳ Tranche",
+    age: "⏳ Âge",
     allergies: "⚠️ Allergies",
     sante: "🏥 Santé",
     comportement: "💬 Comportement",
@@ -101,7 +128,7 @@ const translations = {
     details: "Details",
     closeDetails: "Close",
     dob: "📅 Born on",
-    age: "⏳ Group",
+    age: "⏳ Age",
     allergies: "⚠️ Allergies",
     sante: "🏥 Health",
     comportement: "💬 Behaviour",
@@ -143,6 +170,14 @@ const translations = {
 // ─── POPUP AJOUT / ÉDITION ────────────────────────────────────────────────────
 function EnfantPopup({ enfant, egliseId, onClose, onSaved, t, lang }) {
   const isEdit = !!enfant;
+
+  // Parse besoins_speciaux from JSON string or array
+  const parseBesoins = (val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    try { return JSON.parse(val); } catch { return []; }
+  };
+
   const [form, setForm] = useState({
     prenom: enfant?.prenom || "",
     nom: enfant?.nom || "",
@@ -150,7 +185,7 @@ function EnfantPopup({ enfant, egliseId, onClose, onSaved, t, lang }) {
     allergies: enfant?.allergies || "",
     sante_notes: enfant?.sante_notes || "",
     comportement_notes: enfant?.comportement_notes || "",
-    besoins_speciaux: enfant?.besoins_speciaux || "",
+    besoins_speciaux: parseBesoins(enfant?.besoins_speciaux),
     parent1_nom: enfant?.parent1_nom || "",
     parent1_telephone: enfant?.parent1_telephone || "",
     parent2_nom: enfant?.parent2_nom || "",
@@ -188,12 +223,27 @@ function EnfantPopup({ enfant, egliseId, onClose, onSaved, t, lang }) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const toggleBesoin = (option) => {
+    setForm(prev => {
+      const current = prev.besoins_speciaux;
+      const updated = current.includes(option)
+        ? current.filter(b => b !== option)
+        : [...current, option];
+      return { ...prev, besoins_speciaux: updated };
+    });
+  };
+
   const handleSubmit = async () => {
     if (!form.prenom.trim()) return setMessage(t.errPrenom);
     if (!form.nom.trim()) return setMessage(t.errNom);
     setLoading(true);
     try {
-      const payload = { ...form, eglise_id: egliseId };
+      // Store besoins_speciaux as JSON string
+      const payload = {
+        ...form,
+        besoins_speciaux: JSON.stringify(form.besoins_speciaux),
+        eglise_id: egliseId,
+      };
       let error;
       if (isEdit) {
         ({ error } = await supabase.from("enfants").update(payload).eq("id", enfant.id));
@@ -253,13 +303,30 @@ function EnfantPopup({ enfant, egliseId, onClose, onSaved, t, lang }) {
             { name: "allergies", label: t.allergiesLabel },
             { name: "sante_notes", label: t.santeLabel },
             { name: "comportement_notes", label: t.comportementLabel },
-            { name: "besoins_speciaux", label: t.besoinsLabel },
           ].map(({ name, label }) => (
             <div key={name} className="flex flex-col gap-1">
               <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</label>
               <textarea name={name} value={form[name]} onChange={handleChange} className="inp" rows={2} />
             </div>
           ))}
+
+          {/* Besoins spéciaux — cases à cocher */}
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t.besoinsLabel}</label>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              {BESOINS_OPTIONS.map(option => (
+                <label key={option} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 select-none">
+                  <input
+                    type="checkbox"
+                    checked={form.besoins_speciaux.includes(option)}
+                    onChange={() => toggleBesoin(option)}
+                    className="w-4 h-4 rounded accent-[#2E3192] cursor-pointer"
+                  />
+                  {option}
+                </label>
+              ))}
+            </div>
+          </div>
 
           {/* Parent 1 */}
           <div className="flex items-center gap-2 pt-2">
@@ -449,6 +516,13 @@ function ListeEnfantsContent() {
     return matchAge && matchSearch;
   });
 
+  // Parse besoins from stored JSON string
+  const parseBesoins = (val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    try { return JSON.parse(val); } catch { return []; }
+  };
+
   const tranches = ["3-6 ans", "7-13 ans"];
 
   return (
@@ -511,6 +585,7 @@ function ListeEnfantsContent() {
           {filteredEnfants.map(enfant => {
             const tranche = getTranche(enfant.date_naissance);
             const isOpen = detailsOpen[enfant.id];
+            const besoins = parseBesoins(enfant.besoins_speciaux);
 
             return (
               <div
@@ -533,12 +608,12 @@ function ListeEnfantsContent() {
                   {enfant.prenom} {enfant.nom}
                 </h2>
 
-                {/* Date de naissance */}
+                {/* 1. Âge à la place de 📅 Born... */}
                 <p className="text-center text-sm text-gray-500 mb-2">
-                  {t.dob} {formatDate(enfant.date_naissance, lang)}
+                  ⏳ {getAge(enfant.date_naissance, lang)}
                 </p>
 
-                {/* Parent 1 téléphone */}
+                {/* 2. Téléphone parent 1 uniquement (sans nom) */}
                 {enfant.parent1_telephone && (
                   <div className="relative text-center phone-menu-container">
                     <p
@@ -548,7 +623,7 @@ function ListeEnfantsContent() {
                         setOpenPhoneId(openPhoneId === enfant.id ? null : enfant.id);
                       }}
                     >
-                      {enfant.parent1_nom ? `${enfant.parent1_nom} · ` : ""}{enfant.parent1_telephone}
+                      {enfant.parent1_telephone}
                     </p>
                     {openPhoneId === enfant.id && (
                       <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56">
@@ -574,24 +649,42 @@ function ListeEnfantsContent() {
                     <hr />
                     <div>
                       <p className="font-bold text-[#2E3192] mb-1">👶 Infos</p>
-                      <p>{t.age} : {tranche.label}</p>
+                      <p>{t.age} : {getAge(enfant.date_naissance, lang)}</p>
                       {enfant.allergies && <p>{t.allergies} : {enfant.allergies}</p>}
                       {enfant.sante_notes && <p>{t.sante} : {enfant.sante_notes}</p>}
                       {enfant.comportement_notes && <p>{t.comportement} : {enfant.comportement_notes}</p>}
-                      {enfant.besoins_speciaux && <p>{t.besoins} : {enfant.besoins_speciaux}</p>}
+                      {besoins.length > 0 && (
+                        <div className="mt-1">
+                          <p className="font-semibold text-gray-700 mb-1">{t.besoins} :</p>
+                          <div className="flex flex-wrap gap-1">
+                            {besoins.map(b => (
+                              <span key={b} className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium">
+                                {b}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <hr />
+                    {/* 3. Parent 1 : nom sur une ligne, téléphone sur une autre */}
                     <div>
                       <p className="font-bold text-[#2E3192] mb-1">👨‍👩‍👦 Parents</p>
                       {enfant.parent1_nom && (
-                        <p>{t.parent1} : {enfant.parent1_nom}
-                          {enfant.parent1_telephone && ` · ${enfant.parent1_telephone}`}
-                        </p>
+                        <div className="mb-1">
+                          <p>{t.parent1} : {enfant.parent1_nom}</p>
+                          {enfant.parent1_telephone && (
+                            <p className="pl-6 text-gray-600">📞 {enfant.parent1_telephone}</p>
+                          )}
+                        </div>
                       )}
                       {enfant.parent2_nom && (
-                        <p>{t.parent2} : {enfant.parent2_nom}
-                          {enfant.parent2_telephone && ` · ${enfant.parent2_telephone}`}
-                        </p>
+                        <div>
+                          <p>{t.parent2} : {enfant.parent2_nom}</p>
+                          {enfant.parent2_telephone && (
+                            <p className="pl-6 text-gray-600">📞 {enfant.parent2_telephone}</p>
+                          )}
+                        </div>
                       )}
                     </div>
 

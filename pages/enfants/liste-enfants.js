@@ -376,7 +376,7 @@ function EnfantPopup({ enfant, egliseId, onClose, onSaved, t, lang }) {
 // ─── PAGE PRINCIPALE ──────────────────────────────────────────────────────────
 export default function ListeEnfants() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEnfants"]} requiredFeature="enfants">
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEnfants"]}>
       <ListeEnfantsContent />
     </ProtectedRoute>
   );

@@ -81,11 +81,18 @@ const translations = {
       sessionNumPlaceholder: "Ex: 1, 2, 3...",
       saveType: "Enregistrer ce type pour une prochaine fois",
       saveTypeInfo: "sera enregistré dans la liste des types.",
+      culteNum: "🔢 Numéro de culte",
+      culteRequired: "* Obligatoire : sélectionner",
+      culteWarning: "⚠️ Le numéro de culte est obligatoire.",
+      er: "er",
+      eme: "ème",
+      culte: "Culte",
       btnStart: "▶ Démarrer la prise de présence",
       btnSave: "💾 Enregistrer les modifications",
       btnCancel: "Annuler",
       alertType: "Veuillez choisir un type de temps.",
       alertDate: "Veuillez choisir une date.",
+      alertCulte: "Le numéro de culte est obligatoire.",
       alertError: "Erreur : ",
     },
   },
@@ -151,11 +158,18 @@ const translations = {
       sessionNumPlaceholder: "e.g. 1, 2, 3...",
       saveType: "Save this type for next time",
       saveTypeInfo: "will be saved in the types list.",
+      culteNum: "🔢 Service number",
+      culteRequired: "* Required: please select",
+      culteWarning: "⚠️ The service number is required.",
+      er: "st",
+      eme: "th",
+      culte: "Service",
       btnStart: "▶ Start attendance",
       btnSave: "💾 Save changes",
       btnCancel: "Cancel",
       alertType: "Please choose a session type.",
       alertDate: "Please choose a date.",
+      alertCulte: "The service number is required.",
       alertError: "Error: ",
     },
   },
@@ -191,8 +205,11 @@ function joursRestants(dateStr) {
 function formatSessionLabel(s, lang) {
   const locale = lang === "en" ? "en-GB" : "fr-FR";
   const d = new Date(s.date + "T00:00:00").toLocaleDateString(locale, { day: "2-digit", month: "long" });
+  const culte = s.numero_culte
+    ? ` — ${s.numero_culte}${s.numero_culte === 1 ? (lang === "en" ? "st" : "er") : (lang === "en" ? "th" : "ème")} ${lang === "en" ? "Service" : "culte"}`
+    : "";
   const heure = s.heure ? ` · ${s.heure}` : "";
-  return `${s.typeTemps} · ${d}${heure}`;
+  return `${s.typeTemps}${culte} · ${d}${heure}`;
 }
 
 function formatDateFr(dateStr, lang) {
@@ -280,10 +297,13 @@ function CartePresent({ presence, onUnmark, readOnly, t }) {
 function FormulaireSession({
   isEdit, selectedDate, setSelectedDate, selectedTime, setSelectedTime,
   typeTemps, setTypeTemps, nouveauTemps, setNouveauTemps,
-  enregistrerTemps, setEnregistrerTemps, numeroSession, setNumeroSession,
-  tempsOptions, savingSession, onSubmit, onCancel, t,
+  enregistrerTemps, setEnregistrerTemps, numeroCulte, setNumeroCulte,
+  numeroSession, setNumeroSession, tempsOptions, savingSession, onSubmit, onCancel, t,
 }) {
-  const isDisabled = savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim());
+  const typeFinalLabel = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
+  const isCulte = typeFinalLabel?.toLowerCase().includes("culte") || typeFinalLabel?.toLowerCase().includes("service");
+  const culteOk = !isCulte || (isCulte && numeroCulte);
+  const isDisabled = savingSession || !typeTemps || (typeTemps === "AUTRE" && !nouveauTemps.trim()) || !culteOk;
   const optionsAffichees = sortTempsOptions(tempsOptions);
 
   return (
@@ -306,12 +326,12 @@ function FormulaireSession({
         <div className="grid grid-cols-2 gap-2">
           {optionsAffichees.map(type => (
             <button key={type} type="button"
-              onClick={() => { setTypeTemps(type); setNouveauTemps(""); }}
+              onClick={() => { setTypeTemps(type); setNouveauTemps(""); setNumeroCulte(""); }}
               className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${typeTemps === type ? "border-[#333699] bg-[#333699] text-white" : "border-gray-200 bg-gray-50 text-gray-700 hover:border-[#333699]"}`}>
               {type}
             </button>
           ))}
-          <button type="button" onClick={() => setTypeTemps("AUTRE")}
+          <button type="button" onClick={() => { setTypeTemps("AUTRE"); setNumeroCulte(""); }}
             className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition text-left ${typeTemps === "AUTRE" ? "border-[#333699] bg-[#333699] text-white" : "border-dashed border-gray-300 bg-white text-gray-500 hover:border-[#333699]"}`}>
             {t.form.newType}
           </button>
@@ -347,6 +367,24 @@ function FormulaireSession({
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {isCulte && (
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1">
+            {t.form.culteNum} <span className="text-red-500">*</span>
+          </label>
+          <select value={numeroCulte} onChange={e => setNumeroCulte(e.target.value)}
+            className={`w-full px-3 py-2 rounded-md border text-black ${!numeroCulte ? "border-red-400 bg-red-50" : "border-gray-300"}`}>
+            <option value="">--- {t.form.culteRequired} ---</option>
+            {[1, 2, 3, 4, 5, 6, 7].map(n => (
+              <option key={n} value={n}>
+                {n}{n === 1 ? t.form.er : t.form.eme} {t.form.culte}
+              </option>
+            ))}
+          </select>
+          {!numeroCulte && <p className="text-xs text-red-500 mt-1">{t.form.culteWarning}</p>}
         </div>
       )}
 
@@ -486,6 +524,7 @@ function PresenceEnfants() {
   const [typeTemps, setTypeTemps] = useState("");
   const [nouveauTemps, setNouveauTemps] = useState("");
   const [enregistrerTemps, setEnregistrerTemps] = useState(false);
+  const [numeroCulte, setNumeroCulte] = useState("");
   const [numeroSession, setNumeroSession] = useState("");
   const [tempsOptions, setTempsOptions] = useState([]);
   const [savingSession, setSavingSession] = useState(false);
@@ -536,7 +575,7 @@ function PresenceEnfants() {
     const last30 = getLast30Days();
     const { data } = await supabase
       .from("attendance_enfants")
-      .select("id, typeTemps, date, heure")
+      .select("id, typeTemps, date, heure, numero_culte")
       .eq("eglise_id", profile.eglise_id)
       .in("date", last30)
       .order("date", { ascending: false })
@@ -553,7 +592,7 @@ function PresenceEnfants() {
     const last30 = getLast30Days();
     const { data } = await supabase
       .from("attendance_enfants")
-      .select("id, typeTemps, date, heure")
+      .select("id, typeTemps, date, heure, numero_culte")
       .eq("eglise_id", profile.eglise_id)
       .in("date", last30)
       .order("date", { ascending: false })
@@ -629,6 +668,7 @@ function PresenceEnfants() {
     selectedDateRef.current = session.date;
     setSelectedTime(session.heure || "");
     setTypeTemps(session.typeTemps || "");
+    setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
     setReadOnly(false);
     pendingSessionIdRef.current = session.id;
@@ -645,6 +685,7 @@ function PresenceEnfants() {
     selectedDateRef.current = session.date;
     setSelectedTime(session.heure || "");
     setTypeTemps(session.typeTemps || "");
+    setNumeroCulte(session.numero_culte?.toString() || "");
     setSessionCourante(session);
     setReadOnly(diffJours >= 7);
     pendingSessionIdRef.current = session.id;
@@ -655,6 +696,8 @@ function PresenceEnfants() {
     const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
     if (!typeFinal) return alert(t.form.alertType);
     if (!selectedDate) return alert(t.form.alertDate);
+    const isCulte = typeFinal.toLowerCase().includes("culte") || typeFinal.toLowerCase().includes("service");
+    if (isCulte && !numeroCulte) return alert(t.form.alertCulte);
 
     setSavingSession(true);
     try {
@@ -666,7 +709,13 @@ function PresenceEnfants() {
 
       const { data, error } = await supabase
         .from("attendance_enfants")
-        .insert({ eglise_id: profile.eglise_id, date: selectedDate, heure: selectedTime, typeTemps: typeFinal })
+        .insert({
+          eglise_id: profile.eglise_id,
+          date: selectedDate,
+          heure: selectedTime,
+          typeTemps: typeFinal,
+          ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : {}),
+        })
         .select("id")
         .single();
       if (error) throw error;
@@ -675,7 +724,13 @@ function PresenceEnfants() {
       attendanceIdRef.current = newAttendanceId;
       await insererAbsentsEnMasse(newAttendanceId, selectedDate, profile);
 
-      const newSession = { id: newAttendanceId, typeTemps: typeFinal, date: selectedDate, heure: selectedTime };
+      const newSession = {
+        id: newAttendanceId,
+        typeTemps: typeFinal,
+        date: selectedDate,
+        heure: selectedTime,
+        numero_culte: numeroCulte ? Number(numeroCulte) : null,
+      };
       setAttendanceId(newAttendanceId);
       setSessionCourante(newSession);
       selectedDateRef.current = selectedDate;
@@ -728,14 +783,25 @@ function PresenceEnfants() {
   const modifierSession = async () => {
     const typeFinal = typeTemps === "AUTRE" ? nouveauTemps.trim() : typeTemps;
     if (!typeFinal || !attendanceId) return;
+    const isCulte = typeFinal.toLowerCase().includes("culte") || typeFinal.toLowerCase().includes("service");
+    if (isCulte && !numeroCulte) return alert(t.form.alertCulte);
 
     setSavingSession(true);
     try {
       await supabase.from("attendance_enfants").update({
-        date: selectedDate, heure: selectedTime, typeTemps: typeFinal,
+        date: selectedDate,
+        heure: selectedTime,
+        typeTemps: typeFinal,
+        ...(isCulte && numeroCulte ? { numero_culte: Number(numeroCulte) } : { numero_culte: null }),
       }).eq("id", attendanceId);
 
-      setSessionCourante(prev => ({ ...prev, typeTemps: typeFinal, date: selectedDate, heure: selectedTime }));
+      setSessionCourante(prev => ({
+        ...prev,
+        typeTemps: typeFinal,
+        date: selectedDate,
+        heure: selectedTime,
+        numero_culte: numeroCulte ? Number(numeroCulte) : null,
+      }));
       selectedDateRef.current = selectedDate;
       setEditingSession(false);
     } catch (err) {
@@ -806,7 +872,7 @@ function PresenceEnfants() {
     setAttendanceId(null);
     attendanceIdRef.current = null;
     setSessionCourante(null);
-    setTypeTemps(""); setNouveauTemps(""); setNumeroSession("");
+    setTypeTemps(""); setNouveauTemps(""); setNumeroCulte(""); setNumeroSession("");
     setEnregistrerTemps(false);
     setSelectedTime(nowTime());
     setReadOnly(false);
@@ -886,6 +952,7 @@ function PresenceEnfants() {
               typeTemps={typeTemps} setTypeTemps={setTypeTemps}
               nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
               enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+              numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
               numeroSession={numeroSession} setNumeroSession={setNumeroSession}
               tempsOptions={tempsOptions} savingSession={savingSession}
               onSubmit={demarrerSession} onCancel={null} t={t}
@@ -920,6 +987,7 @@ function PresenceEnfants() {
             typeTemps={typeTemps} setTypeTemps={setTypeTemps}
             nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
             enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+            numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
             numeroSession={numeroSession} setNumeroSession={setNumeroSession}
             tempsOptions={tempsOptions} savingSession={savingSession}
             onSubmit={demarrerSession} onCancel={() => setEtape("choix")} t={t}
@@ -947,7 +1015,12 @@ function PresenceEnfants() {
           onClick={() => !readOnly && setEditingSession(v => !v)}
         >
           <div className="flex items-center gap-2">
-            <span className="text-white font-semibold text-sm">{sessionCourante?.typeTemps}</span>
+            <span className="text-white font-semibold text-sm">
+              {sessionCourante?.typeTemps}
+              {sessionCourante?.numero_culte
+                ? ` — ${sessionCourante.numero_culte}${sessionCourante.numero_culte === 1 ? t.form.er : t.form.eme} ${t.form.culte}`
+                : ""}
+            </span>
             {!readOnly && <span className="text-white/50 text-xs group-hover:text-white transition">✏️</span>}
           </div>
           <span className="text-white/60 text-xs mt-0.5">
@@ -962,7 +1035,7 @@ function PresenceEnfants() {
             <p className="text-white text-sm mt-2 font-semibold">{t.total} : {totalPresents}</p>
             <CompteurTranches presents={presentList} t={t} />
           </>
-        )}             
+        )}
       </div>
 
       {readOnly && <BanniereConsultation session={sessionCourante} onRetour={handleReset} t={t} lang={lang} />}
@@ -977,6 +1050,7 @@ function PresenceEnfants() {
             typeTemps={typeTemps} setTypeTemps={setTypeTemps}
             nouveauTemps={nouveauTemps} setNouveauTemps={setNouveauTemps}
             enregistrerTemps={enregistrerTemps} setEnregistrerTemps={setEnregistrerTemps}
+            numeroCulte={numeroCulte} setNumeroCulte={setNumeroCulte}
             numeroSession={numeroSession} setNumeroSession={setNumeroSession}
             tempsOptions={tempsOptions} savingSession={savingSession}
             onSubmit={modifierSession} onCancel={() => setEditingSession(false)} t={t}
@@ -995,7 +1069,7 @@ function PresenceEnfants() {
               className={`px-4 py-2 rounded ${view === "presents" ? "bg-green-400 text-black font-bold" : "bg-white/20 text-white"}`}>
               {t.presents} ({totalPresents})
             </button>
-                {!readOnly && (
+            {!readOnly && (
               <button
                 onClick={() => router.push("/enfants/liste-enfants?add=true")}
                 className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-sm font-semibold transition">
@@ -1040,7 +1114,7 @@ function PresenceEnfants() {
             <button onClick={handleReset}
               className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm">
               {readOnly ? t.backBtn : t.newSessionBtn}
-            </button>            
+            </button>
           </div>
         </>
       )}

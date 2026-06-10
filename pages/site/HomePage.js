@@ -64,10 +64,22 @@ const translations = {
         accent: "rgba(239,159,39,0.4)",
       },
       {
+        icon: "📋",
+        title: "Présences Hub",
+        desc: "Gère la prise de présence par session, culte ou type de temps. Chaque responsable suit ses membres en temps réel avec un indicateur visuel de fidélité, et peut consulter ou modifier les sessions passées.",
+        accent: "rgba(99,179,237,0.45)",
+      },
+      {
         icon: "📊",
         title: "Rapports Hub",
-        desc: "Analyse toutes les données du ministère pour en ressortir des indicateurs clairs. Aide à prendre des décisions stratégiques basées sur des faits concrets et mesurables.",
+        desc: "Analyse toutes les données du ministère pour en ressortir des indicateurs clairs. Segmentation fidélité, alertes pastorales, tendance hebdomadaire et comparaison entre cellules pour des décisions stratégiques.",
         accent: "rgba(93,202,165,0.45)",
+      },
+      {
+        icon: "💡",
+        title: "Suivi Pastoral",
+        desc: "Permet à chaque conseiller de documenter ses visites, appels et entretiens. Historique complet, questions d'entretien guidées et assistant pastoral intégré pour un accompagnement profond et structuré.",
+        accent: "rgba(244,114,182,0.4)",
       },
       {
         icon: "⚙️",
@@ -130,10 +142,22 @@ const translations = {
         accent: "rgba(239,159,39,0.4)",
       },
       {
+        icon: "📋",
+        title: "Attendance Hub",
+        desc: "Manages attendance tracking by session, service or time type. Each leader monitors their members in real time with a visual loyalty indicator, and can view or edit past sessions.",
+        accent: "rgba(99,179,237,0.45)",
+      },
+      {
         icon: "📊",
         title: "Reports Hub",
-        desc: "Analyses all ministry data to surface clear indicators. Helps make strategic decisions based on concrete, measurable facts.",
+        desc: "Analyses all ministry data to surface clear indicators. Loyalty segmentation, pastoral alerts, weekly trends and cell comparisons to support strategic decision-making.",
         accent: "rgba(93,202,165,0.45)",
+      },
+      {
+        icon: "💡",
+        title: "Pastoral Follow-up",
+        desc: "Allows each counselor to document visits, calls and meetings. Full history, guided interview questions and a built-in pastoral assistant for deep and structured accompaniment.",
+        accent: "rgba(244,114,182,0.4)",
       },
       {
         icon: "⚙️",
@@ -154,7 +178,7 @@ export default function HomePage() {
   const pathname = usePathname();
   const { lang, changeLang } = useLang();
   const [testimonials, setTestimonials] = useState([]);
-  const [testimonialsLoaded, setTestimonialsLoaded] = useState(false); 
+  const [testimonialsLoaded, setTestimonialsLoaded] = useState(false);
   const SHOW_TESTIMONIALS = false;
 
   const t = translations[lang];
@@ -164,13 +188,11 @@ export default function HomePage() {
   const GAP = 16;
   const STEP = CARD_WIDTH + GAP;
 
-  // On triple le tableau pour avoir assez de marge des deux côtés
   const looped = testimonials.length
     ? [...testimonials, ...testimonials, ...testimonials]
     : [];
 
-  // On démarre au milieu de la copie centrale
-  const startIndex = testimonials.length; // index de la première carte de la copie du milieu
+  const startIndex = testimonials.length;
   const [tIndex, setTIndex] = useState(startIndex);
   const trackRef = useRef(null);
   const isJumping = useRef(false);
@@ -237,14 +259,12 @@ export default function HomePage() {
     fetchTestimonials();
   }, []);
 
-  // Recentre l'index quand les témoignages sont chargés
   useEffect(() => {
     if (testimonials.length > 0) {
       setTIndex(testimonials.length);
     }
   }, [testimonials.length]);
 
-  // ── Auto-défilement infini sans saut visible ──────────────────────────────
   useEffect(() => {
     if (testimonials.length === 0) return;
 
@@ -256,19 +276,17 @@ export default function HomePage() {
     return () => clearInterval(intervalRef.current);
   }, [testimonials.length]);
 
-  // Quand on atteint la fin de la 3e copie → jump invisible vers la copie du milieu
   useEffect(() => {
     if (testimonials.length === 0) return;
-    const total = looped.length; // testimonials.length * 3
+    const total = looped.length;
 
     if (tIndex >= total - testimonials.length) {
-      // On attend la fin de la transition CSS (700ms) puis on saute sans animation
       isJumping.current = true;
       setTimeout(() => {
         if (trackRef.current) {
           trackRef.current.style.transition = "none";
         }
-        setTIndex(testimonials.length); // retour silencieux au début de la copie centrale
+        setTIndex(testimonials.length);
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             if (trackRef.current) {
@@ -287,7 +305,6 @@ export default function HomePage() {
 
   const renderStars = (note = 5) => "⭐".repeat(note);
 
-  // index réel dans le tableau original (pour les dots)
   const realIndex = testimonials.length > 0 ? tIndex % testimonials.length : 0;
 
   return (
@@ -890,237 +907,232 @@ export default function HomePage() {
       </section>
 
       {/* ───── TÉMOIGNAGES ───── */}
-{SHOW_TESTIMONIALS && testimonialsLoaded && testimonials.length > 0 && (
-<section
-        style={{
-          padding: "40px 0 80px",
-          position: "relative",
-          zIndex: 1,
-          width: "100%",
-          overflow: "hidden",
-        }}
-      >
-        <div
+      {SHOW_TESTIMONIALS && testimonialsLoaded && testimonials.length > 0 && (
+        <section
           style={{
-            position: "absolute",
-            width: "min(700px, 100vw)",
-            height: "min(700px, 100vw)",
-            borderRadius: "50%",
-            background:
-              "radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 65%)",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            pointerEvents: "none",
-            zIndex: 0,
-          }}
-        />
-
-        <div
-          ref={addRef}
-          style={{
-            textAlign: "center",
-            marginBottom: "40px",
+            padding: "40px 0 80px",
             position: "relative",
             zIndex: 1,
-            padding: "0 24px",
-          }}
-        >
-          <h2
-            style={{
-              color: "#fbbf24",
-              fontSize: "clamp(1.3rem, 3vw, 2rem)",
-              fontWeight: 500,
-              maxWidth: "480px",
-              margin: "0 auto",
-              lineHeight: 1.3,
-            }}
-          >
-            {t.testimonialsTitle}
-          </h2>
-        </div>
-
-        {/* CAROUSEL */}
-        <div
-          style={{
-            position: "relative",
             width: "100%",
             overflow: "hidden",
-            zIndex: 1,
           }}
         >
-          {/* Fade gauche */}
           <div
             style={{
               position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: "80px",
-              background: "linear-gradient(90deg, #333699, transparent)",
-              zIndex: 2,
+              width: "min(700px, 100vw)",
+              height: "min(700px, 100vw)",
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 65%)",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
               pointerEvents: "none",
-            }}
-          />
-          {/* Fade droite */}
-          <div
-            style={{
-              position: "absolute",
-              right: 0,
-              top: 0,
-              bottom: 0,
-              width: "80px",
-              background: "linear-gradient(270deg, #333699, transparent)",
-              zIndex: 2,
-              pointerEvents: "none",
+              zIndex: 0,
             }}
           />
 
           <div
-            ref={trackRef}
+            ref={addRef}
             style={{
-              display: "flex",
-              gap: `${GAP}px`,
-              // Centre la carte active au milieu de l'écran
-              transform: `translateX(calc(50vw - ${tIndex * STEP + CARD_WIDTH / 2}px))`,
-              transition: "transform 700ms ease-in-out",
-              alignItems: "center",
-              padding: "24px 0",
-              willChange: "transform",
+              textAlign: "center",
+              marginBottom: "40px",
+              position: "relative",
+              zIndex: 1,
+              padding: "0 24px",
             }}
           >
-            {looped.map((item, i) => {
-              const isCenter = i === tIndex;
-              return (
-                <div
-                  key={i}
-                  style={{
-                    flexShrink: 0,
-                    width: `${CARD_WIDTH}px`,
-                    transition: "transform 0.5s ease, opacity 0.5s ease",
-                    transform: isCenter ? "scale(1.05)" : "scale(0.9)",
-                    opacity: isCenter ? 1 : 0.45,
-                  }}
-                >
+            <h2
+              style={{
+                color: "#fbbf24",
+                fontSize: "clamp(1.3rem, 3vw, 2rem)",
+                fontWeight: 500,
+                maxWidth: "480px",
+                margin: "0 auto",
+                lineHeight: 1.3,
+              }}
+            >
+              {t.testimonialsTitle}
+            </h2>
+          </div>
+
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              overflow: "hidden",
+              zIndex: 1,
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: "80px",
+                background: "linear-gradient(90deg, #333699, transparent)",
+                zIndex: 2,
+                pointerEvents: "none",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: "80px",
+                background: "linear-gradient(270deg, #333699, transparent)",
+                zIndex: 2,
+                pointerEvents: "none",
+              }}
+            />
+
+            <div
+              ref={trackRef}
+              style={{
+                display: "flex",
+                gap: `${GAP}px`,
+                transform: `translateX(calc(50vw - ${tIndex * STEP + CARD_WIDTH / 2}px))`,
+                transition: "transform 700ms ease-in-out",
+                alignItems: "center",
+                padding: "24px 0",
+                willChange: "transform",
+              }}
+            >
+              {looped.map((item, i) => {
+                const isCenter = i === tIndex;
+                return (
                   <div
+                    key={i}
                     style={{
-                      background: isCenter
-                        ? "rgba(255,255,255,0.15)"
-                        : "rgba(255,255,255,0.06)",
-                      border: isCenter
-                        ? "0.5px solid rgba(255,255,255,0.35)"
-                        : "0.5px solid rgba(255,255,255,0.1)",
-                      borderRadius: "18px",
-                      padding: "28px 24px",
-                      position: "relative",
-                      overflow: "hidden",
-                      backdropFilter: "blur(8px)",
+                      flexShrink: 0,
+                      width: `${CARD_WIDTH}px`,
+                      transition: "transform 0.5s ease, opacity 0.5s ease",
+                      transform: isCenter ? "scale(1.05)" : "scale(0.9)",
+                      opacity: isCenter ? 1 : 0.45,
                     }}
                   >
-                    {isCenter && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: "24px",
-                          right: "24px",
-                          height: "1px",
-                          background:
-                            "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
-                        }}
-                      />
-                    )}
-                    {isCenter && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "-30px",
-                          left: "-30px",
-                          width: "140px",
-                          height: "140px",
-                          borderRadius: "50%",
-                          background:
-                            "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)",
-                          pointerEvents: "none",
-                        }}
-                      />
-                    )}
-
-                    <p
+                    <div
                       style={{
-                        color: isCenter
-                          ? "rgba(255,255,255,0.9)"
-                          : "rgba(255,255,255,0.4)",
-                        fontSize: "13px",
-                        lineHeight: 1.7,
-                        fontStyle: "italic",
-                        textAlign: "center",
-                        marginBottom: "18px",
+                        background: isCenter
+                          ? "rgba(255,255,255,0.15)"
+                          : "rgba(255,255,255,0.06)",
+                        border: isCenter
+                          ? "0.5px solid rgba(255,255,255,0.35)"
+                          : "0.5px solid rgba(255,255,255,0.1)",
+                        borderRadius: "18px",
+                        padding: "28px 24px",
+                        position: "relative",
+                        overflow: "hidden",
+                        backdropFilter: "blur(8px)",
                       }}
                     >
-                      "{item.message}"
-                    </p>
+                      {isCenter && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: "24px",
+                            right: "24px",
+                            height: "1px",
+                            background:
+                              "linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)",
+                          }}
+                        />
+                      )}
+                      {isCenter && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "-30px",
+                            left: "-30px",
+                            width: "140px",
+                            height: "140px",
+                            borderRadius: "50%",
+                            background:
+                              "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)",
+                            pointerEvents: "none",
+                          }}
+                        />
+                      )}
 
-                    <div style={{ textAlign: "center", marginBottom: "6px" }}>
-                      <div
+                      <p
                         style={{
-                          color: "#fff",
-                          fontSize: "14px",
-                          fontWeight: 600,
+                          color: isCenter
+                            ? "rgba(255,255,255,0.9)"
+                            : "rgba(255,255,255,0.4)",
+                          fontSize: "13px",
+                          lineHeight: 1.7,
+                          fontStyle: "italic",
+                          textAlign: "center",
+                          marginBottom: "18px",
                         }}
                       >
-                        {item.title ? `${item.title} ${item.name}` : item.name}
-                      </div>
-                    </div>
+                        "{item.message}"
+                      </p>
 
-                    <div style={{ textAlign: "center", marginBottom: "10px" }}>
-                      <div style={{ color: "#FFFFFF", fontSize: "14px" }}>
-                        {item.church}
+                      <div style={{ textAlign: "center", marginBottom: "6px" }}>
+                        <div
+                          style={{
+                            color: "#fff",
+                            fontSize: "14px",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {item.title ? `${item.title} ${item.name}` : item.name}
+                        </div>
                       </div>
-                    </div>
 
-                    <div style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: "14px" }}>
-                        {renderStars(item.note)}
+                      <div style={{ textAlign: "center", marginBottom: "10px" }}>
+                        <div style={{ color: "#FFFFFF", fontSize: "14px" }}>
+                          {item.church}
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: "14px" }}>
+                          {renderStars(item.note)}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* DOTS */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "8px",
-            marginTop: "36px",
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          {testimonials.map((_, i) => (
-            <div
-              key={i}
-              onClick={() => setTIndex(testimonials.length + i)}
-              style={{
-                width: realIndex === i ? "20px" : "6px",
-                height: "6px",
-                borderRadius: "3px",
-                background:
-                  realIndex === i ? "#fff" : "rgba(255,255,255,0.25)",
-                transition: "width 0.3s ease, background 0.3s ease",
-                cursor: "pointer",
-              }}
-            />
-          ))}
-        </div>
-      </section>
-)}
-
+          {/* DOTS */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              gap: "8px",
+              marginTop: "36px",
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            {testimonials.map((_, i) => (
+              <div
+                key={i}
+                onClick={() => setTIndex(testimonials.length + i)}
+                style={{
+                  width: realIndex === i ? "20px" : "6px",
+                  height: "6px",
+                  borderRadius: "3px",
+                  background:
+                    realIndex === i ? "#fff" : "rgba(255,255,255,0.25)",
+                  transition: "width 0.3s ease, background 0.3s ease",
+                  cursor: "pointer",
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ───── CTA ───── */}
       <section
@@ -1174,50 +1186,50 @@ export default function HomePage() {
       </section>
 
       {/* ───── FOOTER ───── */}
-        <footer
+      <footer
+        style={{
+          borderTop: "0.5px solid rgba(255,255,255,0.1)",
+          padding: "20px 24px",
+          boxSizing: "border-box",
+          width: "100%",
+        }}
+      >
+        <div
           style={{
-            borderTop: "0.5px solid rgba(255,255,255,0.1)",
-            padding: "20px 24px",
-            boxSizing: "border-box",
-            width: "100%",
+            maxWidth: "1100px",
+            margin: "0 auto",
+            textAlign: "center",
+            color: "rgba(255,255,255,0.35)",
+            fontSize: "14px",
           }}
         >
+          {/* COPYRIGHT */}
+          <div>
+            © {new Date().getFullYear()} SoulTrack. {t.footer}
+          </div>
+
+          {/* LINKS PADDLE */}
           <div
             style={{
-              maxWidth: "1100px",
-              margin: "0 auto",
-              textAlign: "center",
-              color: "rgba(255,255,255,0.35)",
-              fontSize: "14px",
+              marginTop: "10px",
+              display: "flex",
+              justifyContent: "center",
+              gap: "16px",
+              flexWrap: "wrap",
             }}
           >
-            {/* COPYRIGHT */}
-            <div>
-              © {new Date().getFullYear()} SoulTrack. {t.footer}
-            </div>
-    
-            {/* LINKS PADDLE */}
-            <div
-              style={{
-                marginTop: "10px",
-                display: "flex",
-                justifyContent: "center",
-                gap: "16px",
-                flexWrap: "wrap",
-              }}
-            >
-              <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-  Terms
-</span>
-<span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-  Privacy
-</span>
-<span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-  Refund
-</span>
-            </div>
+            <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+              Terms
+            </span>
+            <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+              Privacy
+            </span>
+            <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+              Refund
+            </span>
           </div>
-        </footer>
+        </div>
+      </footer>
 
       <style>{`
         html, body {

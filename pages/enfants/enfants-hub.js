@@ -98,10 +98,10 @@ function EnfantsHubContent() {
 
       <div className="flex flex-col md:flex-row flex-wrap gap-6 justify-center items-center w-full max-w-4xl">
         {hubCards.map((card) => (
-          <div
+         <div
             key={card.key}
             onClick={() => router.push(card.path)}
-            className="flex-1 min-w-[250px] w-full bg-white rounded-2xl shadow-xl border-t-4 p-6 flex flex-col items-center justify-center cursor-pointer hover:shadow-2xl transition-all hover:-translate-y-1"
+            className="w-full md:w-[280px] md:max-w-[280px] h-[180px] bg-white rounded-2xl shadow-xl border-t-4 p-6 flex flex-col items-center justify-center cursor-pointer hover:shadow-2xl transition-all"
             style={{ borderTopColor: card.color }}
           >
             <span className="text-5xl mb-3">{card.emoji}</span>

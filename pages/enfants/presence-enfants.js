@@ -171,7 +171,7 @@ function CompteurTranches({ presents, t }) {
 // ─── PAGE PRINCIPALE ──────────────────────────────────────────────────────────
 export default function PresenceEnfants() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEnfants"]} requiredFeature="enfants">
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEnfants"]}>
       <PresenceEnfantsContent />
     </ProtectedRoute>
   );

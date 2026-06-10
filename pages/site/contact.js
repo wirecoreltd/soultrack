@@ -46,7 +46,9 @@ const translations = {
     placeholderAmelioration: "Partagez votre suggestion pour améliorer SoulTrack...",
     placeholderQuestion: "Posez votre question, nous vous répondrons avec soin...",
     placeholderTemoignage: "Partagez ce que Dieu a accompli à travers SoulTrack dans votre église...",
-    placeholderReseaux: "Décrivez brièvement votre réseau d'églises et ce que vous recherchez...",
+    placeholderReseaux: "Décrivez votre demande, votre question ou le problème rencontré...",
+    placeholderRequete: "Décrivez brièvement votre réseau d'églises et ce que vous recherchez...",
+    placeholderRefund: "Expliquez la raison de votre demande de remboursement et fournissez les détails nécessaires...",
     placeholderDefault: "Écrivez votre message ici...",
     errorRequired: "Veuillez remplir tous les champs.",
     errorTemoignage: "Veuillez remplir tous les champs du témoignage.",
@@ -79,8 +81,7 @@ const translations = {
         icon: "💳",
         title: "Demande de remboursement reçue !",
         text: "Votre demande de remboursement a bien été enregistrée. Notre équipe l'examinera dans les plus brefs délais et vous contactera pour vous informer de la suite donnée.",
-      },
-      
+      },      
       request: {
         icon: "📩",
         title: "Demande reçue !",
@@ -126,6 +127,8 @@ const translations = {
     placeholderQuestion: "Ask your question, we will reply with care...",
     placeholderTemoignage: "Share what God has accomplished through SoulTrack in your church...",
     placeholderReseaux: "Briefly describe your church network and what you're looking for...",
+    placeholderRequete: "Describe your request, question, or the issue you are experiencing...",
+    placeholderRefund: "Explain the reason for your refund request and provide the necessary details...",
     placeholderDefault: "Write your message here...",
     errorRequired: "Please fill in all required fields.",
     errorTemoignage: "Please fill in all testimony fields.",
@@ -454,8 +457,8 @@ export default function ContactPage() {
                     <option value="question" style={{ background: "#333699", color: "#fff" }}>{t.typeQuestion}</option>
                     <option value="temoignage" style={{ background: "#333699", color: "#fff" }}>{t.typeTemoignage}</option>
                     <option value="reseaux" style={{ background: "#333699", color: "#fff" }}>{t.typeReseaux}</option>
-                    <option value="reseaux" style={{ background: "#333699", color: "#fff" }}>{t.typeRequete}</option>
-                    <option value="reseaux" style={{ background: "#333699", color: "#fff" }}>{t.typeRefund}</option>
+                    <option value="requette" style={{ background: "#333699", color: "#fff" }}>{t.typeRequete}</option>
+                    <option value="refund" style={{ background: "#333699", color: "#fff" }}>{t.typeRefund}</option>
                   </select>
                 </div>
 
@@ -491,6 +494,8 @@ export default function ContactPage() {
                       form.type === "question" ? t.placeholderQuestion :
                       form.type === "temoignage" ? t.placeholderTemoignage :
                       form.type === "reseaux" ? t.placeholderReseaux :
+                      form.type === "requete" ? t.placeholderRequete :
+                      form.type === "refund" ? t.placeholderRefund :
                       t.placeholderDefault
                     }
                     rows={5}

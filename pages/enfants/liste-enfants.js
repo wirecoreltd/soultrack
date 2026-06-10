@@ -35,7 +35,8 @@ function formatDate(dateStr, lang) {
 }
 
 // ─── BESOINS SPÉCIAUX (cases à cocher) ───────────────────────────────────────
-const BESOINS_OPTIONS = [
+// Clés stables (toujours en FR) pour le stockage en base
+const BESOINS_KEYS = [
   "Santé",
   "École / Études",
   "Famille",
@@ -53,6 +54,45 @@ const BESOINS_OPTIONS = [
   "Spiritualité / Foi",
   "Prière pour un miracle",
 ];
+
+const BESOINS_LABELS = {
+  fr: {
+    "Santé": "Santé",
+    "École / Études": "École / Études",
+    "Famille": "Famille",
+    "Amitiés": "Amitiés",
+    "Confiance en soi": "Confiance en soi",
+    "Émotions / Tristesse": "Émotions / Tristesse",
+    "Peur / Anxiété": "Peur / Anxiété",
+    "Comportement": "Comportement",
+    "Harcèlement": "Harcèlement",
+    "Sécurité / Protection": "Sécurité / Protection",
+    "Loisirs / Activités": "Loisirs / Activités",
+    "Difficultés d'apprentissage": "Difficultés d'apprentissage",
+    "Handicap / Besoins spéciaux": "Handicap / Besoins spéciaux",
+    "Sommeil": "Sommeil",
+    "Spiritualité / Foi": "Spiritualité / Foi",
+    "Prière pour un miracle": "Prière pour un miracle",
+  },
+  en: {
+    "Santé": "Health",
+    "École / Études": "School / Studies",
+    "Famille": "Family",
+    "Amitiés": "Friendships",
+    "Confiance en soi": "Self-confidence",
+    "Émotions / Tristesse": "Emotions / Sadness",
+    "Peur / Anxiété": "Fear / Anxiety",
+    "Comportement": "Behaviour",
+    "Harcèlement": "Bullying",
+    "Sécurité / Protection": "Safety / Protection",
+    "Loisirs / Activités": "Hobbies / Activities",
+    "Difficultés d'apprentissage": "Learning difficulties",
+    "Handicap / Besoins spéciaux": "Disability / Special needs",
+    "Sommeil": "Sleep",
+    "Spiritualité / Foi": "Spirituality / Faith",
+    "Prière pour un miracle": "Prayer for a miracle",
+  },
+};
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
 const translations = {
@@ -314,15 +354,15 @@ function EnfantPopup({ enfant, egliseId, onClose, onSaved, t, lang }) {
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t.besoinsLabel}</label>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-              {BESOINS_OPTIONS.map(option => (
-                <label key={option} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 select-none">
+              {BESOINS_KEYS.map(key => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 select-none">
                   <input
                     type="checkbox"
-                    checked={form.besoins_speciaux.includes(option)}
-                    onChange={() => toggleBesoin(option)}
+                    checked={form.besoins_speciaux.includes(key)}
+                    onChange={() => toggleBesoin(key)}
                     className="w-4 h-4 rounded accent-[#2E3192] cursor-pointer"
                   />
-                  {option}
+                  {BESOINS_LABELS[lang][key]}
                 </label>
               ))}
             </div>
@@ -613,28 +653,6 @@ function ListeEnfantsContent() {
                   ⏳ {getAge(enfant.date_naissance, lang)}
                 </p>
 
-                {/* 2. Téléphone parent 1 uniquement (sans nom) */}
-                {enfant.parent1_telephone && (
-                  <div className="relative text-center phone-menu-container">
-                    <p
-                      className="text-orange-500 underline cursor-pointer font-semibold text-sm"
-                      onClick={e => {
-                        e.stopPropagation();
-                        setOpenPhoneId(openPhoneId === enfant.id ? null : enfant.id);
-                      }}
-                    >
-                      {enfant.parent1_telephone}
-                    </p>
-                    {openPhoneId === enfant.id && (
-                      <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-lg border z-50 w-56">
-                        <a href={`tel:${enfant.parent1_telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">{t.call}</a>
-                        <a href={`sms:${enfant.parent1_telephone}`} className="block px-4 py-2 text-sm text-black hover:bg-gray-100">{t.sms}</a>
-                        <a href={`https://wa.me/${enfant.parent1_telephone.replace(/\D/g,"")}`} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">{t.whatsapp}</a>
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {/* Bouton détails */}
                 <button
                   onClick={() => setDetailsOpen(prev => ({ ...prev, [enfant.id]: !prev[enfant.id] }))}
@@ -649,7 +667,6 @@ function ListeEnfantsContent() {
                     <hr />
                     <div>
                       <p className="font-bold text-[#2E3192] mb-1">👶 Infos</p>
-                      <p>{t.age} : {getAge(enfant.date_naissance, lang)}</p>
                       {enfant.allergies && <p>{t.allergies} : {enfant.allergies}</p>}
                       {enfant.sante_notes && <p>{t.sante} : {enfant.sante_notes}</p>}
                       {enfant.comportement_notes && <p>{t.comportement} : {enfant.comportement_notes}</p>}
@@ -659,7 +676,7 @@ function ListeEnfantsContent() {
                           <div className="flex flex-wrap gap-1">
                             {besoins.map(b => (
                               <span key={b} className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium">
-                                {b}
+                                {BESOINS_LABELS[lang]?.[b] ?? b}
                               </span>
                             ))}
                           </div>

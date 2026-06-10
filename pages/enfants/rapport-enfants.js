@@ -1,5 +1,5 @@
-cat > /home/claude/rapport-presence-enfants.jsx << 'ENDOFFILE'
 "use client";
+
 import { useEffect, useState, useCallback, useRef } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";

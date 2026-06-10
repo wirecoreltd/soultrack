@@ -47,7 +47,7 @@ const hubCards = [
   {
     key: "liste",
     path: "/enfants/liste-enfants",
-    emoji: "👶",
+    emoji: "🐨",
     color: "#FCA5A5",
   },
   {

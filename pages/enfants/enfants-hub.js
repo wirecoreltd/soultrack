@@ -66,7 +66,7 @@ const hubCards = [
 
 export default function EnfantsHub() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEnfants"]} requiredFeature="enfants">
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableEnfants"]}>    
       <EnfantsHubContent />
     </ProtectedRoute>
   );

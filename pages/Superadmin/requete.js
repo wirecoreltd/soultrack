@@ -13,7 +13,7 @@ const STATUTS = [
   { id: "rejected", label: "Rejeté",     emoji: "✖",  color: "rgba(239,68,68,0.85)"   },
 ];
 
-function requeteContent() {
+function RequeteContent() {
   const router = useRouter();
   const [rows, setRows]                 = useState([]);
   const [loading, setLoading]           = useState(true);
@@ -189,10 +189,10 @@ function ActionBtn({ onClick }) {
   );
 }
 
-export default function requetePage() {
+export default function RequetePage() {
   return (
     <ProtectedRoute allowedRoles={["Superadmin"]}>
-      <requeteContent />
+      <RequeteContent />
     </ProtectedRoute>
   );
 }

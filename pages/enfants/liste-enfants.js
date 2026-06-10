@@ -15,7 +15,7 @@ function getTranche(dateNaissance) {
   const age = Math.floor((new Date() - new Date(dateNaissance)) / (1000 * 60 * 60 * 24 * 365.25));
  
   if (age <= 6)  return { label: "3-6 ans",   color: "#FCD34D" };
-  if (age <=13) return { label: "7-12 ans",  color: "#6EE7B7" };
+  if (age <=13) return { label: "7-13 ans",  color: "#6EE7B7" };
   return          { label: "14-15 ans", color: "#93C5FD" };
 }
 

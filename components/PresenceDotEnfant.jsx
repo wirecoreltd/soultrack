@@ -202,7 +202,7 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
 
   // ── Rendu ─────────────────────────────────────────────────────────────────────
   return (
-    <div className="relative inline-block" ref={popupRef}>
+    <div className="relative inline-block" ref={popupRef} style={{ overflow: "visible" }}>
 
       {/* Le rond */}
       <button

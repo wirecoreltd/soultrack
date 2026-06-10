@@ -105,7 +105,7 @@ function EnfantsHubContent() {
             style={{ borderTopColor: card.color }}
           >
             <span className="text-5xl mb-3">{card.emoji}</span>
-            <h2 className="text-lg font-bold text-gray-800 mb-1">
+            <h2 className="text-lg font-bold text-center text-gray-800 mb-1">
               {t.cards[card.key]}
             </h2>
             <p className="text-sm text-gray-400 text-center">

@@ -48,7 +48,7 @@ const translations = {
     noPresence: "Aucune présence",
     newSessionBtn: "↩ Nouvelle session",
     backBtn: "↩ Retour aux sessions",
-    addChild: "➕ Ajouter un enfant",
+    addChild: "➕ Ajouter un nouvel enfant",
     editSession: "✏️ Modifier la session",
     clickToEdit: "Cliquer pour modifier",
     consultMode: "👁 Mode consultation",
@@ -118,7 +118,7 @@ const translations = {
     noPresence: "No attendance recorded",
     newSessionBtn: "↩ New session",
     backBtn: "↩ Back to sessions",
-    addChild: "➕ Add a child",
+    addChild: "➕ Add a new child",
     editSession: "✏️ Edit session",
     clickToEdit: "Click to edit",
     consultMode: "👁 View mode",
@@ -962,15 +962,7 @@ function PresenceEnfants() {
             <p className="text-white text-sm mt-2 font-semibold">{t.total} : {totalPresents}</p>
             <CompteurTranches presents={presentList} t={t} />
           </>
-        )}
-
-             {!readOnly && (
-              <button
-                onClick={() => router.push("/enfants/liste-enfants?add=true")}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-sm font-semibold transition">
-                {t.addChild}
-              </button>
-            )}
+        )}             
       </div>
 
       {readOnly && <BanniereConsultation session={sessionCourante} onRetour={handleReset} t={t} lang={lang} />}
@@ -1003,6 +995,13 @@ function PresenceEnfants() {
               className={`px-4 py-2 rounded ${view === "presents" ? "bg-green-400 text-black font-bold" : "bg-white/20 text-white"}`}>
               {t.presents} ({totalPresents})
             </button>
+                {!readOnly && (
+              <button
+                onClick={() => router.push("/enfants/liste-enfants?add=true")}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-sm font-semibold transition">
+                {t.addChild}
+              </button>
+            )}
           </div>
 
           {view === "absents" && !readOnly && (

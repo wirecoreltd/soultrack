@@ -32,7 +32,7 @@ function RequeteContent() {
     const { data, error } = await supabase
       .from("contact")
       .select("*")
-      .eq("type", "amelioration")
+      .eq("type", "requete")
       .order("created_at", { ascending: false });
     if (error) { console.error(error); setRows([]); }
     else setRows(data || []);

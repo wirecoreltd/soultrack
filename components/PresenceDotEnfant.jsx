@@ -52,9 +52,9 @@ const translations = {
 /**
  * PresenceDotEnfant
  * Props:
- *   - enfantId  : string  (enfant.id)
- *   - egliseId  : string  (userProfile.eglise_id)
- *   - dateVenu  : string  (enfant.date_venu)
+ *   - enfantId  : string
+ *   - egliseId  : string
+ *   - dateVenu  : string
  */
 export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
   const { lang } = useLang();
@@ -64,6 +64,8 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
   const [open, setOpen] = useState(false);
   const [monthData, setMonthData] = useState([]);
   const [loadingPopup, setLoadingPopup] = useState(false);
+  const [popupPos, setPopupPos] = useState({ top: 0, right: 0 });
+  const dotRef = useRef(null);
   const popupRef = useRef(null);
 
   // ── Calcul couleur ──────────────────────────────────────────────────────────
@@ -124,7 +126,6 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
     const effectiveSince =
       dateVenu && dateVenu > sinceStr ? dateVenu : sinceStr;
 
-    // Fetch sessions enfants for this church in the period
     const { data: sessions } = await supabase
       .from("attendance_enfants")
       .select("id, date, heure, typeTemps, numero_culte")
@@ -133,7 +134,6 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
       .lte("date", todayStr)
       .order("date", { ascending: false });
 
-    // Fetch this child's presences
     const { data: presences } = await supabase
       .from("presences_enfants")
       .select("attendance_enfant_id")
@@ -159,18 +159,41 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
 
   const handleDotClick = (e) => {
     e.stopPropagation();
-    if (!open) loadMonthData();
+    if (!open) {
+      // Calcule la position du popup en fixed par rapport au dot
+      const rect = dotRef.current?.getBoundingClientRect();
+      if (rect) {
+        setPopupPos({
+          top: rect.bottom + 10,
+          right: window.innerWidth - rect.right,
+        });
+      }
+      loadMonthData();
+    }
     setOpen((v) => !v);
   };
 
+  // Ferme le popup au clic extérieur
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
-      if (popupRef.current && !popupRef.current.contains(e.target))
+      if (
+        popupRef.current && !popupRef.current.contains(e.target) &&
+        dotRef.current && !dotRef.current.contains(e.target)
+      ) {
         setOpen(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Ferme aussi au scroll pour éviter un popup flottant désynchronisé
+  useEffect(() => {
+    if (!open) return;
+    const handler = () => setOpen(false);
+    window.addEventListener("scroll", handler, true);
+    return () => window.removeEventListener("scroll", handler, true);
   }, [open]);
 
   // ── Couleurs ─────────────────────────────────────────────────────────────────
@@ -202,10 +225,10 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
 
   // ── Rendu ─────────────────────────────────────────────────────────────────────
   return (
-    <div className="relative inline-block" ref={popupRef} style={{ overflow: "visible" }}>
-
+    <>
       {/* Le rond */}
       <button
+        ref={dotRef}
         onClick={handleDotClick}
         title={color.label}
         style={{
@@ -223,14 +246,16 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
         className="hover:scale-125"
       />
 
-      {/* Popup */}
+      {/* Popup en position FIXED — échappe à tout parent overflow/clip */}
       {open && (
         <div
+          ref={popupRef}
+          onClick={(e) => e.stopPropagation()}
           style={{
-            position: "absolute",
-            zIndex: 100,
-            top: "calc(100% + 10px)",
-            right: 0,
+            position: "fixed",
+            zIndex: 9999,
+            top: popupPos.top,
+            right: popupPos.right,
             width: 280,
             background: "#1e1b4b",
             borderRadius: 14,
@@ -238,7 +263,6 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
             padding: "14px 16px",
             color: "white",
           }}
-          onClick={(e) => e.stopPropagation()}
         >
           {/* Flèche */}
           <div
@@ -311,6 +335,6 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
           )}
         </div>
       )}
-    </div>
+    </>
   );
 }

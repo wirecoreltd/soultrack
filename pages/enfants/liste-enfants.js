@@ -130,7 +130,7 @@ const translations = {
     whatsapp: "💬 WhatsApp",
     popupTitleAdd: "Ajouter un enfant",
     popupTitleEdit: "Modifier l'enfant",
-    dateVenu: "Date de venue",
+    createdAt: "Créé le",
     dateVenuRequired: "❌ La date de venue est obligatoire.",
     prenom: "Prénom",
     nom: "Nom",
@@ -186,7 +186,7 @@ const translations = {
     whatsapp: "💬 WhatsApp",
     popupTitleAdd: "Add a child",
     popupTitleEdit: "Edit child",
-    dateVenu: "Date of arrival",
+    createdAt: "Created on",
     dateVenuRequired: "❌ The date of arrival is required.",
     prenom: "First name",
     nom: "Last name",
@@ -670,7 +670,7 @@ function ListeEnfantsContent() {
               <div
                 key={enfant.id}
                 className="bg-white rounded-2xl shadow-lg border-l-4 p-4 transition-all hover:shadow-2xl"
-                style={{ borderLeftColor: tranche.color }}
+                style={{ borderLeftColor: tranche.color, overflow: "visible" }}
               >
                 {/* Badge tranche */}
                 <div className="flex justify-between items-start mb-2">
@@ -683,19 +683,28 @@ function ListeEnfantsContent() {
                 </div>
 
                 {/* Nom + dot */}
-                <h2 className="font-bold text-black text-base text-center mb-1 flex items-center justify-center gap-2">
+                <h2 className="font-bold text-black text-base text-center mb-1 relative flex items-center justify-center">
                   <span>{enfant.prenom} {enfant.nom}</span>
-                  <PresenceDotEnfant
-                    enfantId={enfant.id}
-                    egliseId={egliseId}
-                    dateVenu={enfant.date_venu}
-                  />
+                  <div className="absolute right-0">
+                    <PresenceDotEnfant
+                      enfantId={enfant.id}
+                      egliseId={egliseId}
+                      dateVenu={enfant.date_venu}
+                    />
+                  </div>
                 </h2>
 
                 {/* Âge */}
-                <p className="text-center text-sm text-gray-500 mb-2">
-                  ⏳ {getAge(enfant.date_naissance, lang)}
-                </p>
+                  <p className="text-center text-sm text-gray-500 mb-2">
+                    ⏳ {getAge(enfant.date_naissance, lang)}
+                  </p>
+                  
+                  {/* Date venu — même position que liste-membres */}
+                  <div className="w-full flex justify-end mt-1">
+                    <p className="text-[11px] text-gray-400">
+                      {t.createdAt} {formatDate(enfant.date_venu, lang)}
+                    </p>
+                  </div>
 
                 {/* Bouton détails */}
                 <button

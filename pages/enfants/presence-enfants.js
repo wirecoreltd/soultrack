@@ -963,6 +963,14 @@ function PresenceEnfants() {
             <CompteurTranches presents={presentList} t={t} />
           </>
         )}
+
+             {!readOnly && (
+              <button
+                onClick={() => router.push("/enfants/liste-enfants?add=true")}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-sm font-semibold transition">
+                {t.addChild}
+              </button>
+            )}
       </div>
 
       {readOnly && <BanniereConsultation session={sessionCourante} onRetour={handleReset} t={t} lang={lang} />}
@@ -1033,14 +1041,7 @@ function PresenceEnfants() {
             <button onClick={handleReset}
               className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-sm">
               {readOnly ? t.backBtn : t.newSessionBtn}
-            </button>
-            {!readOnly && (
-              <button
-                onClick={() => router.push("/enfants/liste-enfants?add=true")}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-sm font-semibold transition">
-                {t.addChild}
-              </button>
-            )}
+            </button>            
           </div>
         </>
       )}

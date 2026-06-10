@@ -1,3 +1,4 @@
+cat > /home/claude/rapport-presence-enfants.jsx << 'ENDOFFILE'
 "use client";
 import { useEffect, useState, useCallback, useRef } from "react";
 import supabase from "../../lib/supabaseClient";
@@ -47,6 +48,7 @@ const translations = {
     sectionTendance:    "Tendance hebdomadaire",
     sectionTopFideles:  "Top fidèles",
     sectionTranches:    "Répartition par tranche d'âge",
+    sectionBesoins:     "Besoins spéciaux — vue globale",
     reguliers:        "Réguliers",
     irreguliers:      "Irréguliers",
     decrocheurs:      "Décrocheurs",
@@ -71,6 +73,7 @@ const translations = {
     aucun:        "Aucun",
     aucunEnfant:  "Aucun enfant",
     tendanceStable: "→ stable",
+    aucunBesoin: "Aucun besoin renseigné",
   },
   en: {
     pageTitle: "Attendance Report",
@@ -102,6 +105,7 @@ const translations = {
     sectionTendance:    "Weekly trend",
     sectionTopFideles:  "Top regulars",
     sectionTranches:    "Breakdown by age group",
+    sectionBesoins:     "Special needs — global view",
     reguliers:        "Regulars",
     irreguliers:      "Irregulars",
     decrocheurs:      "Dropping off",
@@ -126,6 +130,7 @@ const translations = {
     aucun:       "None",
     aucunEnfant: "No children",
     tendanceStable: "→ stable",
+    aucunBesoin: "No needs recorded",
   },
 };
 
@@ -180,6 +185,50 @@ function tauxPresence(enfantId, sessions, presencesParSession) {
   }
   return Math.round((presents / sessions.length) * 100);
 }
+function parseBesoins(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  try { return JSON.parse(val); } catch { return []; }
+}
+
+const BESOINS_LABELS = {
+  fr: {
+    "Santé": "Santé",
+    "École / Études": "École / Études",
+    "Famille": "Famille",
+    "Amitiés": "Amitiés",
+    "Confiance en soi": "Confiance en soi",
+    "Émotions / Tristesse": "Émotions / Tristesse",
+    "Peur / Anxiété": "Peur / Anxiété",
+    "Comportement": "Comportement",
+    "Harcèlement": "Harcèlement",
+    "Sécurité / Protection": "Sécurité / Protection",
+    "Loisirs / Activités": "Loisirs / Activités",
+    "Difficultés d'apprentissage": "Difficultés d'apprentissage",
+    "Handicap / Besoins spéciaux": "Handicap / Besoins spéciaux",
+    "Sommeil": "Sommeil",
+    "Spiritualité / Foi": "Spiritualité / Foi",
+    "Prière pour un miracle": "Prière pour un miracle",
+  },
+  en: {
+    "Santé": "Health",
+    "École / Études": "School / Studies",
+    "Famille": "Family",
+    "Amitiés": "Friendships",
+    "Confiance en soi": "Self-confidence",
+    "Émotions / Tristesse": "Emotions / Sadness",
+    "Peur / Anxiété": "Fear / Anxiety",
+    "Comportement": "Behaviour",
+    "Harcèlement": "Bullying",
+    "Sécurité / Protection": "Safety / Protection",
+    "Loisirs / Activités": "Hobbies / Activities",
+    "Difficultés d'apprentissage": "Learning difficulties",
+    "Handicap / Besoins spéciaux": "Disability / Special needs",
+    "Sommeil": "Sleep",
+    "Spiritualité / Foi": "Spirituality / Faith",
+    "Prière pour un miracle": "Prayer for a miracle",
+  },
+};
 
 const AVATAR_COLORS = [
   "bg-yellow-100 text-yellow-700", "bg-emerald-100 text-emerald-700",
@@ -505,8 +554,38 @@ function BlocTranches({ sessions, presencesParSession, allEnfants, t }) {
   );
 }
 
+// ─── BLOC BESOINS ─────────────────────────────────────────────────────────────
+function BlocBesoins({ allEnfants, lang, t }) {
+  const compteur = {};
+  allEnfants.forEach(e => {
+    parseBesoins(e.besoins_speciaux).forEach(b => {
+      compteur[b] = (compteur[b] || 0) + 1;
+    });
+  });
+  const lignes = Object.entries(compteur).sort((a, b) => b[1] - a[1]);
+  if (!lignes.length)
+    return <p className="text-white/30 text-sm text-center py-4">{t.aucunBesoin}</p>;
+  const max = lignes[0][1];
+  return (
+    <div className="flex flex-col gap-2">
+      {lignes.map(([besoin, count]) => (
+        <div key={besoin} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
+          <p className="text-sm text-white w-48 flex-shrink-0 truncate">
+            {BESOINS_LABELS[lang]?.[besoin] ?? besoin}
+          </p>
+          <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-full rounded-full bg-blue-400 transition-all"
+              style={{ width: `${Math.round((count / max) * 100)}%` }} />
+          </div>
+          <span className="text-sm font-bold text-white w-6 text-right">{count}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── CARTE SESSION ────────────────────────────────────────────────────────────
-function CarteSession({ session, presences, allEnfants, t }) {
+function CarteSession({ session, presences, allEnfants, lang, t }) {
   const [open, setOpen] = useState(false);
   const [tab, setTab]   = useState("presents");
 
@@ -552,13 +631,27 @@ function CarteSession({ session, presences, allEnfants, t }) {
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            {(tab === "presents" ? presents : absents).map(e => (
-              <div key={e.id} className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-lg">
-                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${tab === "presents" ? "bg-emerald-400" : "bg-red-400"}`} />
-                <span className="text-sm text-white/80 truncate flex-1">{e.prenom} {e.nom}</span>
-                <TrancheBadge dateNaissance={e.date_naissance} />
-              </div>
-            ))}
+            {(tab === "presents" ? presents : absents).map(e => {
+              const besoins = parseBesoins(e.besoins_speciaux);
+              return (
+                <div key={e.id} className="flex flex-col gap-1 px-3 py-2 bg-white/5 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${tab === "presents" ? "bg-emerald-400" : "bg-red-400"}`} />
+                    <span className="text-sm text-white/80 truncate flex-1">{e.prenom} {e.nom}</span>
+                    <TrancheBadge dateNaissance={e.date_naissance} />
+                  </div>
+                  {besoins.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pl-3.5">
+                      {besoins.map(b => (
+                        <span key={b} className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-900/60 text-blue-300 font-medium">
+                          {BESOINS_LABELS[lang]?.[b] ?? b}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             {(tab === "presents" ? presents : absents).length === 0 && (
               <p className="text-white/30 text-sm col-span-2 text-center py-2">{t.aucun}</p>
             )}
@@ -570,7 +663,7 @@ function CarteSession({ session, presences, allEnfants, t }) {
 }
 
 // ─── DRAWER SEGMENT ───────────────────────────────────────────────────────────
-function DrawerSegment({ segment, onClose, t }) {
+function DrawerSegment({ segment, onClose, lang, t }) {
   if (!segment) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
@@ -585,13 +678,27 @@ function DrawerSegment({ segment, onClose, t }) {
           <button onClick={onClose} className="text-white/40 hover:text-white transition text-xl leading-none">×</button>
         </div>
         <div className="overflow-y-auto flex-1 px-5 py-3 flex flex-col gap-2">
-          {segment.enfants.sort((a, b) => a.nom.localeCompare(b.nom, "fr")).map(e => (
-            <div key={e.id} className="flex items-center gap-3 py-2 border-b border-white/5">
-              <Avatar prenom={e.prenom} nom={e.nom} />
-              <p className="text-sm text-white flex-1">{e.prenom} {e.nom}</p>
-              <TrancheBadge dateNaissance={e.date_naissance} />
-            </div>
-          ))}
+          {segment.enfants.sort((a, b) => a.nom.localeCompare(b.nom, "fr")).map(e => {
+            const besoins = parseBesoins(e.besoins_speciaux);
+            return (
+              <div key={e.id} className="flex flex-col gap-1.5 py-2 border-b border-white/5">
+                <div className="flex items-center gap-3">
+                  <Avatar prenom={e.prenom} nom={e.nom} />
+                  <p className="text-sm text-white flex-1">{e.prenom} {e.nom}</p>
+                  <TrancheBadge dateNaissance={e.date_naissance} />
+                </div>
+                {besoins.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pl-11">
+                    {besoins.map(b => (
+                      <span key={b} className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-900/60 text-blue-300 font-medium">
+                        {BESOINS_LABELS[lang]?.[b] ?? b}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {segment.enfants.length === 0 && (
             <p className="text-white/30 text-sm text-center py-6">{t.aucunEnfant}</p>
           )}
@@ -656,7 +763,7 @@ function RapportPresenceEnfants() {
       // ── Enfants ───────────────────────────────────────────────
       const { data: enfantsData } = await supabase
         .from("enfants")
-        .select("id, prenom, nom, date_naissance")
+        .select("id, prenom, nom, date_naissance, besoins_speciaux")
         .eq("eglise_id", profile.eglise_id)
         .order("nom");
       setAllEnfants(enfantsData || []);
@@ -799,18 +906,23 @@ function RapportPresenceEnfants() {
               </div>
             </div>
 
+            <div>
+              <SectionTitle>{t.sectionBesoins}</SectionTitle>
+              <BlocBesoins allEnfants={allEnfants} lang={lang} t={t} />
+            </div>
+
           </div>
         ) : (
           <div className="flex flex-col gap-3">
             {sessions.map(s => (
-              <CarteSession key={s.id} session={s} presences={presencesParSession[s.id] || []} allEnfants={allEnfants} t={t} />
+              <CarteSession key={s.id} session={s} presences={presencesParSession[s.id] || []} allEnfants={allEnfants} lang={lang} t={t} />
             ))}
           </div>
         )}
 
       </div>
 
-      <DrawerSegment segment={segmentOuvert} onClose={() => setSegmentOuvert(null)} t={t} />
+      <DrawerSegment segment={segmentOuvert} onClose={() => setSegmentOuvert(null)} lang={lang} t={t} />
       <Footer />
     </div>
   );

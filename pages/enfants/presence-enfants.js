@@ -9,10 +9,9 @@ import { useLang } from "../../hooks/useLang";
 
 function getTranche(dateNaissance) {
   if (!dateNaissance) return { label: "—", color: "#e5e7eb" };
-  const age = Math.floor((new Date() - new Date(dateNaissance)) / (1000 * 60 * 60 * 24 * 365.25));
-  if (age <= 2)  return { label: "0-2 ans",   color: "#FCA5A5" };
+  const age = Math.floor((new Date() - new Date(dateNaissance)) / (1000 * 60 * 60 * 24 * 365.25));  
   if (age <= 6)  return { label: "3-6 ans",   color: "#FCD34D" };
-  if (age <= 12) return { label: "7-12 ans",  color: "#6EE7B7" };
+  if (age <= 13) return { label: "7-12 ans",  color: "#6EE7B7" };
   return          { label: "13-14 ans", color: "#93C5FD" };
 }
 
@@ -146,10 +145,8 @@ function CartePresent({ presence, onUnmark, readOnly, t }) {
 function CompteurTranches({ presents, t }) {
   const compter = (label) => presents.filter(p => getTranche(p.enfants?.date_naissance).label === label).length;
   const tranches = [
-    { label: "0-2 ans",   tKey: "tranche02", color: "#FCA5A5" },
     { label: "3-6 ans",   tKey: "tranche36", color: "#FCD34D" },
-    { label: "7-12 ans",  tKey: "tranche712", color: "#6EE7B7" },
-    { label: "13-14 ans", tKey: "tranche1314", color: "#93C5FD" },
+    { label: "7-13 ans",  tKey: "tranche712", color: "#6EE7B7" },    
   ];
   return (
     <div className="flex gap-2 justify-center mt-2 flex-wrap">

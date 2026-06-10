@@ -493,7 +493,7 @@ function ListeEnfantsContent() {
   const { lang } = useLang();
   const t = translations[lang];
   const router = useRouter();
-
+  const cameFromPresence = useRef(false);
   const [enfants, setEnfants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -508,17 +508,18 @@ function ListeEnfantsContent() {
 
   // Ouvrir le popup d'ajout automatiquement si ?add=true dans l'URL
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("add") === "true") {
-      setPopupEnfant(false);
-      // Nettoyer le param de l'URL sans recharger
-      const url = new URL(window.location.href);
-      url.searchParams.delete("add");
-      window.history.replaceState({}, "", url.toString());
-    }
-  }, []);
-
+      if (typeof window === "undefined") return;
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("add") === "true") {
+        if (params.get("from") === "presence") cameFromPresence.current = true;
+        setPopupEnfant(false);
+        const url = new URL(window.location.href);
+        url.searchParams.delete("add");
+        url.searchParams.delete("from");
+        window.history.replaceState({}, "", url.toString());
+      }
+    }, []);
+  
   useEffect(() => {
     const handleClick = (e) => {
       if (!e.target.closest(".phone-menu-container")) setOpenPhoneId(null);
@@ -744,12 +745,18 @@ function ListeEnfantsContent() {
       )}
 
       {/* Popup */}
-      {popupEnfant !== null && (
+     {popupEnfant !== null && (
         <EnfantPopup
           enfant={popupEnfant || null}
           egliseId={egliseId}
-          onClose={() => setPopupEnfant(null)}
-          onSaved={() => fetchEnfants()}
+          onClose={() => {
+            setPopupEnfant(null);
+            if (cameFromPresence.current) router.push("/enfants/presence-enfants");
+          }}
+          onSaved={() => {
+            fetchEnfants();
+            if (cameFromPresence.current) router.push("/enfants/presence-enfants");
+          }}
           t={t}
           lang={lang}
         />

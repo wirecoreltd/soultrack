@@ -32,7 +32,7 @@ function RefundContent() {
     const { data, error } = await supabase
       .from("contact")
       .select("*")
-      .eq("type", "amelioration")
+      .eq("type", "refund")
       .order("created_at", { ascending: false });
     if (error) { console.error(error); setRows([]); }
     else setRows(data || []);

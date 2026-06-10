@@ -36,7 +36,6 @@ function formatDate(dateStr, lang) {
 }
 
 // ─── BESOINS SPÉCIAUX (cases à cocher) ───────────────────────────────────────
-// Clés stables (toujours en FR) pour le stockage en base
 const BESOINS_KEYS = [
   "Santé",
   "École / Études",
@@ -129,9 +128,10 @@ const translations = {
     call: "📞 Appeler",
     sms: "✉️ SMS",
     whatsapp: "💬 WhatsApp",
-    // Popup ajout/édition
     popupTitleAdd: "Ajouter un enfant",
     popupTitleEdit: "Modifier l'enfant",
+    dateVenu: "Date de venue",
+    dateVenuRequired: "❌ La date de venue est obligatoire.",
     prenom: "Prénom",
     nom: "Nom",
     dateNaissance: "Date de naissance",
@@ -186,6 +186,8 @@ const translations = {
     whatsapp: "💬 WhatsApp",
     popupTitleAdd: "Add a child",
     popupTitleEdit: "Edit child",
+    dateVenu: "Date of arrival",
+    dateVenuRequired: "❌ The date of arrival is required.",
     prenom: "First name",
     nom: "Last name",
     dateNaissance: "Date of birth",
@@ -212,7 +214,6 @@ const translations = {
 function EnfantPopup({ enfant, egliseId, onClose, onSaved, t, lang }) {
   const isEdit = !!enfant;
 
-  // Parse besoins_speciaux from JSON string or array
   const parseBesoins = (val) => {
     if (!val) return [];
     if (Array.isArray(val)) return val;
@@ -220,6 +221,7 @@ function EnfantPopup({ enfant, egliseId, onClose, onSaved, t, lang }) {
   };
 
   const [form, setForm] = useState({
+    date_venu: enfant?.date_venu || new Date().toISOString().slice(0, 10),
     prenom: enfant?.prenom || "",
     nom: enfant?.nom || "",
     date_naissance: enfant?.date_naissance || "",
@@ -275,11 +277,11 @@ function EnfantPopup({ enfant, egliseId, onClose, onSaved, t, lang }) {
   };
 
   const handleSubmit = async () => {
+    if (!form.date_venu) return setMessage(t.dateVenuRequired);
     if (!form.prenom.trim()) return setMessage(t.errPrenom);
     if (!form.nom.trim()) return setMessage(t.errNom);
     setLoading(true);
     try {
-      // Store besoins_speciaux as JSON string
       const payload = {
         ...form,
         besoins_speciaux: JSON.stringify(form.besoins_speciaux),
@@ -323,7 +325,30 @@ function EnfantPopup({ enfant, egliseId, onClose, onSaved, t, lang }) {
         {/* Body */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-4" style={{ maxHeight: "68vh" }}>
 
-          {/* Identité */}
+          {/* ── Date de venue (required) — en tête de formulaire ── */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold uppercase tracking-wide text-[#2E3192] flex items-center gap-1">
+              📅 {t.dateVenu}
+              <span className="text-red-500 text-sm leading-none">*</span>
+            </label>
+            <input
+              type="date"
+              name="date_venu"
+              value={form.date_venu}
+              onChange={handleChange}
+              className="inp"
+              style={{ borderColor: !form.date_venu ? "#fca5a5" : undefined }}
+            />
+          </div>
+
+          {/* Séparateur */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400 uppercase tracking-widest">Identité</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          {/* Prénom & Nom */}
           {[
             { name: "prenom", label: t.prenom },
             { name: "nom", label: t.nom },
@@ -351,7 +376,7 @@ function EnfantPopup({ enfant, egliseId, onClose, onSaved, t, lang }) {
             </div>
           ))}
 
-          {/* Besoins spéciaux — cases à cocher */}
+          {/* Besoins spéciaux */}
           <div className="flex flex-col gap-2">
             <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t.besoinsLabel}</label>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
@@ -501,26 +526,25 @@ function ListeEnfantsContent() {
   const [filterAge, setFilterAge] = useState("");
   const [detailsOpen, setDetailsOpen] = useState({});
   const [openPhoneId, setOpenPhoneId] = useState(null);
-  const [popupEnfant, setPopupEnfant] = useState(null); // null = fermé, false = ajout, object = édition
+  const [popupEnfant, setPopupEnfant] = useState(null);
   const [egliseId, setEgliseId] = useState(null);
   const [userRoles, setUserRoles] = useState([]);
 
   const isAdmin = userRoles.includes("Administrateur");
 
-  // Ouvrir le popup d'ajout automatiquement si ?add=true dans l'URL
   useEffect(() => {
-      if (typeof window === "undefined") return;
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("add") === "true") {
-        if (params.get("from") === "presence") cameFromPresence.current = true;
-        setPopupEnfant(false);
-        const url = new URL(window.location.href);
-        url.searchParams.delete("add");
-        url.searchParams.delete("from");
-        window.history.replaceState({}, "", url.toString());
-      }
-    }, []);
-  
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("add") === "true") {
+      if (params.get("from") === "presence") cameFromPresence.current = true;
+      setPopupEnfant(false);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("add");
+      url.searchParams.delete("from");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, []);
+
   useEffect(() => {
     const handleClick = (e) => {
       if (!e.target.closest(".phone-menu-container")) setOpenPhoneId(null);
@@ -572,7 +596,6 @@ function ListeEnfantsContent() {
     return matchAge && matchSearch;
   });
 
-  // Parse besoins from stored JSON string
   const parseBesoins = (val) => {
     if (!val) return [];
     if (Array.isArray(val)) return val;
@@ -659,7 +682,7 @@ function ListeEnfantsContent() {
                   </span>
                 </div>
 
-                {/* Nom */}
+                {/* Nom + dot */}
                 <h2 className="font-bold text-black text-base text-center mb-1 flex items-center justify-center gap-2">
                   <span>{enfant.prenom} {enfant.nom}</span>
                   <PresenceDotEnfant
@@ -669,7 +692,7 @@ function ListeEnfantsContent() {
                   />
                 </h2>
 
-                {/* 1. Âge à la place de 📅 Born... */}
+                {/* Âge */}
                 <p className="text-center text-sm text-gray-500 mb-2">
                   ⏳ {getAge(enfant.date_naissance, lang)}
                 </p>
@@ -705,7 +728,6 @@ function ListeEnfantsContent() {
                       )}
                     </div>
                     <hr />
-                    {/* 3. Parent 1 : nom sur une ligne, téléphone sur une autre */}
                     <div>
                       <p className="font-bold text-[#2E3192] mb-1">👨‍👩‍👦 Parents</p>
                       {enfant.parent1_nom && (
@@ -751,7 +773,7 @@ function ListeEnfantsContent() {
       )}
 
       {/* Popup */}
-     {popupEnfant !== null && (
+      {popupEnfant !== null && (
         <EnfantPopup
           enfant={popupEnfant || null}
           egliseId={egliseId}

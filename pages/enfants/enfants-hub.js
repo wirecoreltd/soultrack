@@ -53,7 +53,7 @@ const hubCards = [
   {
     key: "presence",
     path: "/enfants/presence-enfants",
-    emoji: "✍🏻",
+    emoji: "🧸",
     color: "#FCD34D",
   },
   {

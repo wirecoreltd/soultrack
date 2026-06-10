@@ -6,6 +6,7 @@ import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import PresenceDotEnfant from "../../components/PresenceDotEnfant";
 import { useLang } from "../../hooks/useLang";
 
 // ─── COULEURS PAR TRANCHE D'ÂGE ──────────────────────────────────────────────
@@ -659,8 +660,13 @@ function ListeEnfantsContent() {
                 </div>
 
                 {/* Nom */}
-                <h2 className="font-bold text-black text-base text-center mb-1">
-                  {enfant.prenom} {enfant.nom}
+                <h2 className="font-bold text-black text-base text-center mb-1 flex items-center justify-center gap-2">
+                  <span>{enfant.prenom} {enfant.nom}</span>
+                  <PresenceDotEnfant
+                    enfantId={enfant.id}
+                    egliseId={egliseId}
+                    dateVenu={enfant.date_venu}
+                  />
                 </h2>
 
                 {/* 1. Âge à la place de 📅 Born... */}

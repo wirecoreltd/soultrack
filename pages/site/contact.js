@@ -73,6 +73,17 @@ const translations = {
         title: "Demande reçue !",
         text: "Merci pour votre intérêt. Notre équipe vous contactera sous 48h pour échanger sur votre réseau d'églises.",
       },
+      refund: {
+        icon: "💳",
+        title: "Demande de remboursement reçue !",
+        text: "Votre demande de remboursement a bien été enregistrée. Notre équipe l'examinera dans les plus brefs délais et vous contactera pour vous informer de la suite donnée.",
+      },
+      
+      request: {
+        icon: "📩",
+        title: "Demande reçue !",
+        text: "Merci pour votre demande. Notre équipe l'étudiera attentivement et reviendra vers vous dans les meilleurs délais.",
+      },
     },
     footer: "Tous droits réservés.",
   },
@@ -138,6 +149,17 @@ const translations = {
         icon: "🔗",
         title: "Request received!",
         text: "Thank you for your interest. Our team will reach out within 48 hours to discuss your church network.",
+      },
+      refund: {
+        icon: "💳",
+        title: "Refund Request Received!",
+        text: "Your refund request has been successfully submitted. Our team will review it as soon as possible and contact you regarding the outcome.",
+      },
+      
+      request: {
+        icon: "📩",
+        title: "Request Received!",
+        text: "Thank you for your request. Our team will review it carefully and get back to you as soon as possible.",
       },
     },
     footer: "All rights reserved.",

@@ -49,13 +49,9 @@ const translations = {
   },
 };
 
-/**
- * PresenceDotEnfant
- * Props:
- *   - enfantId  : string
- *   - egliseId  : string
- *   - dateVenu  : string
- */
+const POPUP_WIDTH = 280;
+const POPUP_ESTIMATED_HEIGHT = 380;
+
 export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
   const { lang } = useLang();
   const t = translations[lang];
@@ -64,7 +60,8 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
   const [open, setOpen] = useState(false);
   const [monthData, setMonthData] = useState([]);
   const [loadingPopup, setLoadingPopup] = useState(false);
-  const [popupPos, setPopupPos] = useState({ top: 0, right: 0 });
+  const [popupStyle, setPopupStyle] = useState({});
+  const [openUpward, setOpenUpward] = useState(false);
   const dotRef = useRef(null);
   const popupRef = useRef(null);
 
@@ -86,24 +83,17 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
         .eq("statut", "present")
         .gte("date", effectiveSince);
 
-      if (!presences || presences.length === 0) {
-        setStatus("grey");
-        return;
-      }
+      if (!presences || presences.length === 0) { setStatus("grey"); return; }
 
       const dates = presences
         .map((p) => p.date)
         .filter(Boolean)
         .sort((a, b) => new Date(b) - new Date(a));
 
-      if (dates.length === 0) {
-        setStatus("grey");
-        return;
-      }
+      if (dates.length === 0) { setStatus("grey"); return; }
 
-      const lastPresence = new Date(dates[0]);
       const diffDays = Math.floor(
-        (new Date() - lastPresence) / (1000 * 60 * 60 * 24)
+        (new Date() - new Date(dates[0])) / (1000 * 60 * 60 * 24)
       );
 
       if (diffDays <= 7)       setStatus("green");
@@ -160,35 +150,51 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
   const handleDotClick = (e) => {
     e.stopPropagation();
     if (!open) {
-      // Calcule la position du popup en fixed par rapport au dot
       const rect = dotRef.current?.getBoundingClientRect();
       if (rect) {
-        setPopupPos({
-          top: rect.bottom + 10,
-          right: window.innerWidth - rect.right,
-        });
+        const viewportH = window.innerHeight;
+        const viewportW = window.innerWidth;
+
+        // Espace dispo en bas vs en haut
+        const spaceBelow = viewportH - rect.bottom;
+        const goUp = spaceBelow < POPUP_ESTIMATED_HEIGHT + 20;
+        setOpenUpward(goUp);
+
+        // Horizontal : aligner à droite du dot, sans sortir à gauche
+        const rightEdge = viewportW - rect.right;
+        const leftPos = Math.max(8, rect.right - POPUP_WIDTH);
+
+        const style = {
+          position: "fixed",
+          zIndex: 9999,
+          width: POPUP_WIDTH,
+          // Vertical
+          ...(goUp
+            ? { bottom: viewportH - rect.top + 10 }
+            : { top: rect.bottom + 10 }),
+          // Horizontal : préférer aligner à droite du dot
+          right: Math.max(8, rightEdge),
+        };
+
+        setPopupStyle(style);
       }
       loadMonthData();
     }
     setOpen((v) => !v);
   };
 
-  // Ferme le popup au clic extérieur
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
       if (
         popupRef.current && !popupRef.current.contains(e.target) &&
-        dotRef.current && !dotRef.current.contains(e.target)
-      ) {
-        setOpen(false);
-      }
+        dotRef.current  && !dotRef.current.contains(e.target)
+      ) setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  // Ferme aussi au scroll pour éviter un popup flottant désynchronisé
   useEffect(() => {
     if (!open) return;
     const handler = () => setOpen(false);
@@ -196,7 +202,6 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
     return () => window.removeEventListener("scroll", handler, true);
   }, [open]);
 
-  // ── Couleurs ─────────────────────────────────────────────────────────────────
   const dotColors = {
     grey:   { bg: "#9ca3af", label: t.aucuneDonnee,     ring: "#d1d5db" },
     green:  { bg: "#22c55e", label: t.presentRecemment, ring: "#bbf7d0" },
@@ -223,10 +228,8 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
   const absenceCount  = monthData.filter((r) => !r.present).length;
   const sessionCount  = monthData.length;
 
-  // ── Rendu ─────────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* Le rond */}
       <button
         ref={dotRef}
         onClick={handleDotClick}
@@ -246,29 +249,27 @@ export default function PresenceDotEnfant({ enfantId, egliseId, dateVenu }) {
         className="hover:scale-125"
       />
 
-      {/* Popup en position FIXED — échappe à tout parent overflow/clip */}
       {open && (
         <div
           ref={popupRef}
           onClick={(e) => e.stopPropagation()}
           style={{
-            position: "fixed",
-            zIndex: 9999,
-            top: popupPos.top,
-            right: popupPos.right,
-            width: 280,
+            ...popupStyle,
             background: "#1e1b4b",
             borderRadius: 14,
             boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
             padding: "14px 16px",
             color: "white",
+            // Hauteur max + scroll interne si beaucoup de sessions
+            maxHeight: "80vh",
+            overflowY: "auto",
           }}
         >
-          {/* Flèche */}
+          {/* Flèche orientée selon direction */}
           <div
             style={{
               position: "absolute",
-              top: -7,
+              ...(openUpward ? { bottom: -7 } : { top: -7 }),
               right: 4,
               width: 14,
               height: 14,

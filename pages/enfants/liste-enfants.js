@@ -719,7 +719,7 @@ function ListeEnfantsContent() {
                   <div className="text-black text-sm mt-3 space-y-3">
                     <hr />
                     <div>
-                      <p className="font-bold text-[#2E3192] mb-1">👶 Infos</p>
+                      <p className="font-bold text-[#2E3192] mb-1">📒 Infos</p>
                       {enfant.allergies && <p>{t.allergies} : {enfant.allergies}</p>}
                       {enfant.sante_notes && <p>{t.sante} : {enfant.sante_notes}</p>}
                       {enfant.comportement_notes && <p>{t.comportement} : {enfant.comportement_notes}</p>}

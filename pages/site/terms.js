@@ -77,8 +77,7 @@ const translations = {
       },
       {
         title: "11. Contact",
-        content:
-          "content:
+        content:         
           "Pour toute question concernant ces Conditions d'utilisation, veuillez nous contacter via notre page de contact. Notre équipe vous répondra dans les meilleurs délais.",
       },
       {

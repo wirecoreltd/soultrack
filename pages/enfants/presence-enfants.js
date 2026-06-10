@@ -1071,7 +1071,7 @@ function PresenceEnfants() {
             </button>
             {!readOnly && (
               <button
-                onClick={() => router.push("/enfants/liste-enfants?add=true")}
+                onClick={() => router.push("/enfants/liste-enfants?add=true&from=presence")}
                 className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-sm font-semibold transition">
                 {t.addChild}
               </button>

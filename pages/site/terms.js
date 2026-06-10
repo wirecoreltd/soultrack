@@ -160,7 +160,7 @@ const translations = {
           "For any questions regarding these Terms of Service, please contact us at support@soultrack.org or through our contact page. Our team will respond as soon as possible.",
       },
       {
-        title: "6. Children's Data",
+        title: "12. Children's Data",
         content:
           "When you register information relating to children in SoulTrack, you represent and warrant that you have obtained all necessary permissions and consents from the children's parents, legal guardians, or authorized representatives. You are solely responsible for the accuracy, legality, and use of the data entered, including names, dates of birth, and any other information relating to children. SoulTrack acts solely as a platform provider and is not responsible for the data entered by users or for compliance with applicable laws regarding the protection of minors' personal data."
       },

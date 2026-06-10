@@ -35,6 +35,8 @@ const translations = {
     typeQuestion: "❓ Question",
     typeTemoignage: "✝️ Témoignage",
     typeReseaux: "🔗 Plan Réseaux",
+    typeRequete: "📩 requête",
+    typeRefund: "💳 Remboursement",
     fieldTitre: "Titre",
     fieldTitrePlaceholder: "Ex : Apôtre, Pasteur, Bishop...",
     fieldEglise: "Nom de l'église",
@@ -112,6 +114,8 @@ const translations = {
     typeQuestion: "❓ Question",
     typeTemoignage: "✝️ Testimony",
     typeReseaux: "🔗 Networks Plan",
+    typeRequete: "📩 Query",
+    typeRefund: "💳 Refund",
     fieldTitre: "Title",
     fieldTitrePlaceholder: "e.g. Apostle, Pastor, Bishop...",
     fieldEglise: "Church name",
@@ -450,6 +454,8 @@ export default function ContactPage() {
                     <option value="question" style={{ background: "#333699", color: "#fff" }}>{t.typeQuestion}</option>
                     <option value="temoignage" style={{ background: "#333699", color: "#fff" }}>{t.typeTemoignage}</option>
                     <option value="reseaux" style={{ background: "#333699", color: "#fff" }}>{t.typeReseaux}</option>
+                    <option value="reseaux" style={{ background: "#333699", color: "#fff" }}>{t.typeRequete}</option>
+                    <option value="reseaux" style={{ background: "#333699", color: "#fff" }}>{t.typeRefund}</option>
                   </select>
                 </div>
 

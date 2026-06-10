@@ -38,7 +38,7 @@ const translations = {
       {
         title: "3. Comptes et inscription",
         content:
-          "Pour utiliser SoulTrack, vous devez créer un compte en fournissant des informations exactes et complètes. Vous êtes responsable de la confidentialité de vos identifiants de connexion et de toutes les activités effectuées sous votre compte. Signalez immédiatement tout accès non autorisé à support@soultrack.org.",
+          "Pour utiliser SoulTrack, vous devez créer un compte en fournissant des informations exactes et complètes. Vous êtes responsable de la confidentialité de vos identifiants de connexion et de toutes les activités effectuées sous votre compte. Veuillez signaler immédiatement tout accès non autorisé via notre page de contact.",
       },
       {
         title: "4. Utilisation acceptable",
@@ -78,7 +78,8 @@ const translations = {
       {
         title: "11. Contact",
         content:
-          "Pour toute question concernant ces Conditions d'utilisation, veuillez nous contacter à support@soultrack.org ou via notre page de contact. Notre équipe vous répondra dans les meilleurs délais.",
+          "content:
+          "Pour toute question concernant ces Conditions d'utilisation, veuillez nous contacter via notre page de contact. Notre équipe vous répondra dans les meilleurs délais.",
       },
       {
         title: "12. Données relatives aux enfants",
@@ -117,7 +118,7 @@ const translations = {
       {
         title: "3. Accounts & Registration",
         content:
-          "To use SoulTrack, you must create an account by providing accurate and complete information. You are responsible for maintaining the confidentiality of your login credentials and all activities conducted under your account. Report any unauthorized access immediately to support@soultrack.org.",
+          "To use SoulTrack, you must create an account by providing accurate and complete information. You are responsible for maintaining the confidentiality of your login credentials and for all activities that occur under your account. Please report any unauthorized access immediately through our contact page.",
       },
       {
         title: "4. Acceptable Use",
@@ -157,7 +158,7 @@ const translations = {
       {
         title: "11. Contact",
         content:
-          "For any questions regarding these Terms of Service, please contact us at support@soultrack.org or through our contact page. Our team will respond as soon as possible.",
+          "If you have any questions regarding these Terms of Service, please contact us through our contact page. Our team will get back to you as soon as possible.",
       },
       {
         title: "12. Children's Data",

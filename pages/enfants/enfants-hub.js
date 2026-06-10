@@ -18,9 +18,9 @@ const translations = {
     cards: {
       liste: "Liste des enfants",
       listeSub: "Voir et gérer les fiches enfants",
-      presence: "Présence",
+      presence: "Saisie des présences individuelles",
       presenceSub: "Prendre la présence du jour",
-      rapport: "Rapports",
+      rapport: "Statistiques des présences individuelles",
       rapportSub: "Évolution, fidélité, tranches d'âge",
     },
   },
@@ -35,9 +35,9 @@ const translations = {
     cards: {
       liste: "Children list",
       listeSub: "View and manage children profiles",
-      presence: "Attendance",
+      presence: "Individual Attendance Entry",
       presenceSub: "Take today's attendance",
-      rapport: "Reports",
+      rapport: "Individual Attendance Statistics",
       rapportSub: "Growth, loyalty, age groups",
     },
   },

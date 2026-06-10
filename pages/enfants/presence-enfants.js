@@ -74,7 +74,7 @@ const translations = {
       selectType: "Sélectionner un Type de Temps",
       newType: "➕ Nouveau type...",
       newTypeName: "✏️ Nom du nouveau type",
-      newTypePlaceholder: "Ex: Culte Enfants, Retraite...",
+      newTypePlaceholder: "Ex: Culte, Retraite...",
       chars: "caractères",
       sessionNum: "🔢 Numéro de session",
       sessionNumOptional: "(optionnel)",
@@ -220,8 +220,8 @@ function formatDateFr(dateStr, lang) {
 }
 
 function sortTempsOptions(options) {
-  const withoutCulte = options.filter(t => t !== "Culte Enfants");
-  return ["Culte Enfants", ...withoutCulte];
+  const withoutCulte = options.filter(t => t !== "Culte");
+  return ["Culte", ...withoutCulte];
 }
 
 // ─── COMPTEUR PAR TRANCHE ─────────────────────────────────────────────────────
@@ -569,7 +569,7 @@ function PresenceEnfants() {
       .not("typeTemps", "is", null);
 
     const fromDb = [...new Set((tempsData || []).map(t => t.typeTemps?.trim()).filter(t => t && t !== ""))];
-    if (!fromDb.includes("Culte Enfants")) fromDb.push("Culte Enfants");
+    if (!fromDb.includes("Culte")) fromDb.push("Culte");
     setTempsOptions(sortTempsOptions(fromDb));
 
     const last30 = getLast30Days();

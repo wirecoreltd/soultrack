@@ -905,7 +905,7 @@ export default function HomePage() {
                 </h3>
                 <p
                   style={{
-                    color: "rgba(255,255,255,0.6)",
+                    color: "rgba(255,255,255)",
                     fontSize: "13.5px",
                     lineHeight: 1.7,
                   }}

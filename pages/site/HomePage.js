@@ -82,6 +82,12 @@ const translations = {
         accent: "rgba(244,114,182,0.4)",
       },
       {
+        icon: "🦁",
+        title: "Enfants Hub",
+        desc: "Gère les fiches de chaque enfant, leur présence par session et leurs besoins spéciaux. Indicateurs de fidélité, alertes, répartition par tranche d'âge et rapports détaillés pour accompagner chaque enfant avec soin.",
+        accent: "rgba(252,211,77,0.45)",
+      },
+      {
         icon: "⚙️",
         title: "Admin Hub",
         desc: "Pilote l'ensemble de la structure : gestion des accès, organisation interne et configuration de l'église. Assure une base solide, cohérente et alignée pour tout le système.",
@@ -158,6 +164,12 @@ const translations = {
         title: "Pastoral Follow-up",
         desc: "Allows each counselor to document visits, calls and meetings. Full history, guided interview questions and a built-in pastoral assistant for deep and structured accompaniment.",
         accent: "rgba(244,114,182,0.4)",
+      },
+      {
+        icon: "🦁",
+        title: "Children Hub",
+        desc: "Manages each child's profile, session attendance and special needs. Loyalty indicators, alerts, age group breakdown and detailed reports to accompany every child with care.",
+        accent: "rgba(252,211,77,0.45)",
       },
       {
         icon: "⚙️",

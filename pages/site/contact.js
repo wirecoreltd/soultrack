@@ -32,7 +32,7 @@ const translations = {
     fieldType: "Type de message",
     fieldTypePlaceholder: "Sélectionnez un type",
     typeAmelioration: "💡 Amélioration",
-    typeQuestion: " Question",
+    typeQuestion: "❓ Question",
     typeTemoignage: "✝️ Témoignage",
     typeReseaux: "🔗 Plan Réseaux",
     typeRequete: "📩 requête",

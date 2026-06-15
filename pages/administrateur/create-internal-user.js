@@ -22,6 +22,7 @@ const translations = {
       { key: "ResponsableEvangelisation", label: "Responsable Évangélisation",    desc: "suivi de l'évangélisation" },
       { key: "CheckInPresence",           label: "Check-in (Présence)",           desc: "gestion des présences" },
       { key: "ResponsableCheckIn",        label: "Responsable Check-in",          desc: "gestion des sessions de présence" },
+      { key: "ResponsableEnfants",        label: "Responsable Enfants",           desc: "gestion des enfants" },      
       { key: "ResponsableCellule",        label: "Responsable Cellule",           desc: "gestion des cellules",        feature: "cellules" },
       { key: "SuperviseurCellule",        label: "Superviseur Cellule",           desc: "supervision des cellules",    feature: "cellules" },
       { key: "ResponsableFamilles",       label: "Responsable Familles",          desc: "gestion des familles",        feature: "familles" },
@@ -118,6 +119,7 @@ const translations = {
       { key: "ResponsableEvangelisation", label: "Evangelization Leader",      desc: "evangelization tracking" },
       { key: "CheckInPresence",           label: "Check-in (Attendance)",      desc: "attendance management" },
       { key: "ResponsableCheckIn",        label: "Check-in Coordinator",       desc: "attendance session management" },
+      { key: "ResponsableEnfants",        label: "Children Monitor",           desc: "child management" },    
       { key: "ResponsableCellule",        label: "Cell Group Leader",          desc: "cell group management",    feature: "cellules" },
       { key: "SuperviseurCellule",        label: "Cell Supervisor",            desc: "cell group supervision",   feature: "cellules" },
       { key: "ResponsableFamilles",       label: "Family Leader",              desc: "family management",        feature: "familles" },
@@ -268,6 +270,7 @@ function CreateInternalUserContent() {
     else if (role === "Conseiller")                router.push("/conseiller/conseiller-hub");
     else if (role === "ResponsableEvangelisation") router.push("/evangelisation/evangelisation-hub");
     else if (role === "ResponsableIntegration")    router.push("/membres/membres-hub");
+    else if (role === "ResponsableEnfants")    router.push("/enfants/enfants-hub");
     else router.push("/index");
   };
 

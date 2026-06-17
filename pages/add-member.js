@@ -496,18 +496,32 @@ export default function AddMember() {
                   />
                 )}
           
-                <span>
-                  {egliseInfo?.ville}
-                  {egliseInfo?.ville && egliseInfo?.pays ? " • " : ""}
-                  {(() => {
-                    const found = PAYS_DATA.find(
-                      p => p.fr === egliseInfo?.pays || p.en === egliseInfo?.pays
-                    );
-                    return lang === "en"
-                      ? (found?.en || egliseInfo?.pays)
-                      : (found?.fr || egliseInfo?.pays);
-                  })()}
-                </span>
+               <>
+  {egliseInfo?.ville && (
+    <span>{egliseInfo.ville}{egliseInfo?.pays ? " • " : ""}</span>
+  )}
+  {egliseInfo?.pays && (
+    <>
+      <img
+        src={`https://flagcdn.com/w20/${getIsoCode(egliseInfo.pays)}.png`}
+        width="20"
+        height="14"
+        alt={egliseInfo.pays}
+        className="rounded-sm"
+      />
+      <span>
+        {(() => {
+          const found = PAYS_DATA.find(
+            p => p.fr === egliseInfo?.pays || p.en === egliseInfo?.pays
+          );
+          return lang === "en"
+            ? (found?.en || egliseInfo?.pays)
+            : (found?.fr || egliseInfo?.pays);
+        })()}
+      </span>
+    </>
+  )}
+</>
               </div>
             )}
           </div>

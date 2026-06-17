@@ -15,7 +15,7 @@ const translations = {
   },
   en: {
     back: "← Back",
-    ut: "Log out",
+    logout: "Log out",
     connected: "Logged in:",
     supervisedBy: "🔗 Supervised by:",
   },
@@ -177,26 +177,6 @@ export default function HeaderPages() {
     fetchProfile();
   }, []);
 
-  const handleLogoClick = () => {
-    if (!roles || roles.length === 0) { router.push("/index"); return; }
-    if (roles.length > 1) { router.push("/index"); return; }
-
-    const role = roles[0];
-    if (role === "ResponsableCellule" || role === "SuperviseurCellule") {
-      router.push("/cellule/cellules-hub");
-    } else if (role === "ResponsableFamilles") {
-      router.push("/famille/familles-hub");
-    } else if (role === "Conseiller") {
-      router.push("/conseiller/conseiller-hub");
-    } else if (role === "ResponsableEvangelisation") {
-      router.push("/evangelisation/evangelisation-hub");
-    } else if (role === "ResponsableIntegration") {
-      router.push("/membres/membres-hub");
-    } else {
-      router.push("/index");
-    }
-  };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -210,21 +190,22 @@ export default function HeaderPages() {
     <div className="w-full max-w-5xl mx-auto">
 
       {/* HEADER */}
-      <div className="flex justify-between items-start mb-1">
+      <div className="flex justify-between items-center mb-1">
 
-        {/* LEFT */}
-        <div className="flex flex-col items-center">
+        {/* LEFT — Retour aligné avec Déconnexion */}
+        <div className="flex items-center">
           <button
             onClick={() => router.back()}
             className="text-amber-300 hover:text-gray-200 transition"
           >
             {t.back}
-          </button>         
+          </button>
         </div>
 
         {/* RIGHT */}
         <div className="flex flex-col items-end text-right text-sm leading-tight">
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-3 mt-3">
 
             {/* Invitation */}
             {userRole?.includes("Administrateur") && invitationPending && (
@@ -255,7 +236,7 @@ export default function HeaderPages() {
             </button>
           </div>
 
-          <p className="text-white text-sm mt-2">
+          <p className="text-white text-sm mt-1">
             {t.connected} <span className="font-semibold">{loading ? "..." : prenom}</span>
           </p>
 
@@ -270,7 +251,12 @@ export default function HeaderPages() {
       {/* INFOS EGLISE */}
       <div className="flex flex-col items-center mb-4">
         {logoUrl && (
-          <img src={logoUrl} className="w-12 h-12 object-contain mb-2" />
+          <img
+            src={logoUrl}
+            className="w-12 h-12 object-contain mb-2 cursor-pointer hover:opacity-80 transition"
+            onClick={() => router.push("/index")}
+            alt="Logo église"
+          />
         )}
 
         {(denomination || eglise) && (

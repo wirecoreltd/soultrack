@@ -480,12 +480,12 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
           {/* ✅ Nom cellule ou famille depuis l'URL */}
           {celluleFullInfo && (
-            <p className="text-sm font-semibold text-[#333699] text-center mt-2">
+            <p className="text-2xl font-semibold text-[#333699] mt-1 text-center">
               🏠 {celluleFullInfo}
             </p>
           )}
           {familleFullInfo && (
-            <p className="text-sm font-semibold text-[#333699] text-center mt-2">
+            <p className="text-2xl font-semibold text-[#333699] mt-1 text-center">
               👑 {familleFullInfo.split(" - ")[1] || familleFullInfo}
             </p>
           )}

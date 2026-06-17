@@ -482,13 +482,7 @@ export default function AddMember() {
               <p className="text-sm font-medium text-[#c31850] text-center">
                 {egliseInfo.branche}
               </p>
-            )}
-          
-            {(egliseInfo?.ville || egliseInfo?.pays) && (
-              <div className="flex items-center gap-2 text-sm text-[#c31850]">
-                {egliseInfo?.pays && (                 
-                )}
-          
+            )}                             
                <>
   {egliseInfo?.ville && (
     <span>{egliseInfo.ville}{egliseInfo?.pays ? " • " : ""}</span>

@@ -15,7 +15,7 @@ const translations = {
   },
   en: {
     back: "← Back",
-    logout: "Log out",
+    ut: "Log out",
     connected: "Logged in:",
     supervisedBy: "🔗 Supervised by:",
   },
@@ -219,21 +219,11 @@ export default function HeaderPages() {
             className="text-amber-300 hover:text-gray-200 transition"
           >
             {t.back}
-          </button>
-
-          <div className="mt-2">
-            <img
-              src="/logo.png"
-              alt="Logo SoulTrack"
-              className="w-8 h-auto cursor-pointer hover:opacity-80 transition"
-              onClick={handleLogoClick}
-            />
-          </div>
+          </button>         
         </div>
 
         {/* RIGHT */}
         <div className="flex flex-col items-end text-right text-sm leading-tight">
-
           <div className="flex items-center gap-3">
 
             {/* Invitation */}
@@ -265,7 +255,7 @@ export default function HeaderPages() {
             </button>
           </div>
 
-          <p className="text-white text-sm mt-1">
+          <p className="text-white text-sm mt-2">
             {t.connected} <span className="font-semibold">{loading ? "..." : prenom}</span>
           </p>
 

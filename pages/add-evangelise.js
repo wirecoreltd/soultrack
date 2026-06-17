@@ -460,19 +460,20 @@ export default function AddEvangelise({ onNewEvangelise }) {
           )}
           {(eglise?.ville || eglise?.pays) && (
             <div className="flex items-center gap-2 text-sm text-[#c31850]">
-              <span>
-                {eglise?.ville}
-                {eglise?.ville && eglise?.pays ? ", " : ""}
-                {(() => {
-                  if (!eglise?.pays) return "";
-                  const found = PAYS_DATA.find(p => p.fr === eglise.pays || p.en === eglise.pays);
-                  return lang === "en" ? (found?.en || eglise.pays) : (found?.fr || eglise.pays);
-                })()}
-              </span>
+              {eglise?.ville && (
+                <span>{eglise.ville}{eglise?.pays ? " • " : ""}</span>
+              )}
               {eglise?.pays && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={`https://flagcdn.com/w20/${getIsoCode(eglise.pays)}.png`}
-                  width="20" height="14" alt={eglise.pays} />
+                <>
+                  <img src={`https://flagcdn.com/w20/${getIsoCode(eglise.pays)}.png`}
+                    width="20" height="14" alt={eglise.pays} />
+                  <span>
+                    {(() => {
+                      const found = PAYS_DATA.find(p => p.fr === eglise.pays || p.en === eglise.pays);
+                      return lang === "en" ? (found?.en || eglise.pays) : (found?.fr || eglise.pays);
+                    })()}
+                  </span>
+                </>
               )}
             </div>
           )}

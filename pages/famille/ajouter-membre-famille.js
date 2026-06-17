@@ -562,29 +562,31 @@ const urlFamilleFull = router.query.famille_full
           )}
         
           {(egliseInfo?.ville || egliseInfo?.pays) && (
-            <p className="text-sm text-[#c31850] flex items-center justify-center gap-1">
-              {egliseInfo?.ville}
-              {egliseInfo?.ville && egliseInfo?.pays && ","}{" "}
-        
-              {(() => {
-                const found = PAYS_DATA.find(
-                  p => p.fr === egliseInfo.pays || p.en === egliseInfo.pays
-                );
-                return lang === "en"
-                  ? (found?.en || egliseInfo.pays)
-                  : (found?.fr || egliseInfo.pays);
-              })()}
-        
-              {egliseInfo?.pays && (
-                <img
-                  src={`https://flagcdn.com/w20/${getIsoCode(egliseInfo.pays)}.png`}
-                  width="20"
-                  height="14"
-                  alt={egliseInfo.pays}
-                  className="inline-block ml-1"
-                />
+            <div className="text-sm text-[#c31850] flex items-center justify-center gap-1">
+              {egliseInfo?.ville && (
+                <span>{egliseInfo.ville}{egliseInfo?.pays ? " •" : ""}</span>
               )}
-            </p>
+              {egliseInfo?.pays && (
+                <>
+                  <img
+                    src={`https://flagcdn.com/w20/${getIsoCode(egliseInfo.pays)}.png`}
+                    width="20"
+                    height="14"
+                    alt={egliseInfo.pays}
+                  />
+                  <span>
+                    {(() => {
+                      const found = PAYS_DATA.find(
+                        p => p.fr === egliseInfo.pays || p.en === egliseInfo.pays
+                      );
+                      return lang === "en"
+                        ? (found?.en || egliseInfo.pays)
+                        : (found?.fr || egliseInfo.pays);
+                    })()}
+                  </span>
+                </>
+              )}
+            </div>
           )}
         
           {familleInfo && (

@@ -56,6 +56,11 @@ const translations = {
     btnSend: "Envoyer le message",
     btnSending: "Envoi en cours...",
     btnSendAnother: "Envoyer un autre message",
+    typeDeleteAccount: "🗑️ Supprimer mon compte",
+    placeholderDeleteAccount: "En soumettant ce formulaire, vous confirmez la suppression définitive de votre compte et de toutes les données de votre église (membres, cellules, familles, historiques). Cette action est irréversible.",
+    btnDelete: "Supprimer mon compte",
+    btnConfirm: "Confirmer la suppression",
+    deleteWarning: "⚠️ Cette action est irréversible. Toutes les données de votre église seront supprimées définitivement.",
     successMessages: {
       amelioration: {
         icon: "💡",
@@ -136,6 +141,11 @@ const translations = {
     btnSend: "Send message",
     btnSending: "Sending...",
     btnSendAnother: "Send another message",
+    typeDeleteAccount: "🗑️ Delete my account",
+    placeholderDeleteAccount: "By submitting this form, you confirm the permanent deletion of your account and all your church data (members, cells, families, history). This action cannot be undone.",
+    btnDelete: "Delete my account",
+    btnConfirm: "Confirm deletion",
+    deleteWarning: "⚠️ This action is irreversible. All your church data will be permanently deleted.",
     successMessages: {
       amelioration: {
         icon: "💡",
@@ -199,11 +209,23 @@ export default function ContactPage() {
 
   // ── Lire le paramètre ?type= après hydratation ──
   useEffect(() => {
-    const typeParam = searchParams.get("type");
-    if (typeParam) {
+  const typeParam = searchParams.get("type");
+  const fetchUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const storedName = localStorage.getItem("userName") || "";
+      setForm((prev) => ({
+        ...prev,
+        type: typeParam || prev.type,
+        nom: storedName,
+        email: user.email || "",
+      }));
+    } else if (typeParam) {
       setForm((prev) => ({ ...prev, type: typeParam }));
     }
-  }, [searchParams]);
+  };
+  fetchUser();
+}, [searchParams]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -459,7 +481,8 @@ export default function ContactPage() {
                     <option value="reseaux" style={{ background: "#333699", color: "#fff" }}>{t.typeReseaux}</option>
                     <option value="requette" style={{ background: "#333699", color: "#fff" }}>{t.typeRequete}</option>
                     <option value="refund" style={{ background: "#333699", color: "#fff" }}>{t.typeRefund}</option>
-                  </select>
+                    <option value="delete_account" style={{ background: "#6b0000", color: "#fff" }}>{t.typeDeleteAccount}</option>
+                      </select>
                 </div>
 
                 {/* Champs supplémentaires Témoignage */}
@@ -496,6 +519,7 @@ export default function ContactPage() {
                       form.type === "reseaux" ? t.placeholderReseaux :
                       form.type === "requete" ? t.placeholderRequete :
                       form.type === "refund" ? t.placeholderRefund :
+                      form.type === "delete_account" ? t.placeholderDeleteAccount :
                       t.placeholderDefault
                     }
                     rows={5}
@@ -513,20 +537,31 @@ export default function ContactPage() {
                 </div>
 
                 {error && (
-                  <p style={{ color: "#fca5a5", fontSize: "13px", textAlign: "center", margin: 0 }}>{error}</p>
-                )}
-
-                <div style={{ display: "flex", justifyContent: "center" }}>
-                  <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    style={{ background: loading ? "rgba(255,255,255,0.5)" : "#fff", color: "#333699", border: "none", padding: "13px 36px", borderRadius: "10px", fontSize: "15px", fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", transition: "opacity 0.2s" }}
-                    onMouseEnter={(e) => { if (!loading) e.currentTarget.style.opacity = "0.9"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                  >
-                    {loading ? t.btnSending : t.btnSend}
-                  </button>
-                </div>
+                    <p style={{ color: "#fca5a5", fontSize: "13px", textAlign: "center", margin: 0 }}>{error}</p>
+                  )}
+                  
+                  {form.type === "delete_account" && (
+                    <div style={{ background: "rgba(220,38,38,0.15)", border: "0.5px solid rgba(220,38,38,0.5)", borderRadius: "10px", padding: "14px 16px", color: "#fca5a5", fontSize: "13px", lineHeight: 1.7 }}>
+                      {t.deleteWarning}
+                    </div>
+                  )}
+                  
+                  <div style={{ display: "flex", justifyContent: "center" }}>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={loading}
+                      style={{
+                        background: loading ? "rgba(255,255,255,0.5)" : form.type === "delete_account" ? "#dc2626" : "#fff",
+                        color: form.type === "delete_account" ? "#fff" : "#333699",
+                        border: "none", padding: "13px 36px", borderRadius: "10px", fontSize: "15px", fontWeight: 600,
+                        cursor: loading ? "not-allowed" : "pointer", transition: "opacity 0.2s"
+                      }}
+                      onMouseEnter={(e) => { if (!loading) e.currentTarget.style.opacity = "0.9"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                    >
+                      {loading ? t.btnSending : form.type === "delete_account" ? t.btnDelete : t.btnSend}
+                    </button>
+                  </div>
               </div>
             )}
           </div>

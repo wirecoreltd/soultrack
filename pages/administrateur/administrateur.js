@@ -28,6 +28,7 @@ const translations = {
       linkEglise:   "Invitations & Liens d'églises",
       createUser:   "Créer un Utilisateur",
       subscription: "Subscription",
+      deleteAccount: "Supprimer le compte",
       editEglise:   "Modifier l'église",
     },
   },
@@ -49,6 +50,7 @@ const translations = {
       linkEglise:   "Invitations & Church links",
       createUser:   "Create a User",
       subscription: "Subscription",
+      deleteAccount: "Delete account",
       editEglise:   "Edit church",
     },
   },
@@ -141,6 +143,11 @@ export default function Administrateur() {
           <Link href="/administrateur/edit-eglise" className={cardClass} style={{ borderTopColor: "#F97316" }}>
             <div className="text-4xl mb-1">🔧</div>
             <div className="text-lg font-bold text-gray-800 text-center">{t.cards.editEglise}</div>
+          </Link>
+
+          <Link href="/site/contact?type=delete_account" className={cardClass} style={{ borderTopColor: "#EF4444" }}>
+            <div className="text-4xl mb-1">🗑️</div>
+            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.deleteAccount}</div>
           </Link>
 
         </div>

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
+import Head from "next/head";
 import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
 
@@ -328,6 +329,23 @@ export default function HomePage() {
         overflowX: "hidden",
       }}
     >
+      <Head>
+        <title>SoulTrack</title>
+        <meta name="description" content="Pilotez votre église avec clarté et précision." />
+
+        <meta property="og:title" content="SoulTrack" />
+        <meta property="og:description" content="Pilotez votre église avec clarté et précision." />
+        <meta property="og:image" content="https://soultrack.org/logo.png" />
+        <meta property="og:url" content="https://soultrack.org" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="SoulTrack" />
+
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="SoulTrack" />
+        <meta name="twitter:description" content="Pilotez votre église avec clarté et précision." />
+        <meta name="twitter:image" content="https://soultrack.org/logo.png" />
+      </Head>
+
       {/* GLOW 1 */}
       <div
         style={{

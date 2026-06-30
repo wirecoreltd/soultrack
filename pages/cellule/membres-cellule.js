@@ -40,6 +40,39 @@ const translations = {
     msgWhatsApp: "💬 Message WhatsApp",
     identiteLabel: "👤 Identité",
     civilite: "🎗️ Civilité",
+    homme: "Homme",
+    femme: "Femme",
+    oui: "Oui",
+    non: "Non",
+    conversionOptions: {
+      "Nouveau converti": "Nouveau converti",
+      "Réconciliation": "Réconciliation",
+    },
+    venuOptions: {
+      "invité": "Invité",
+      "réseaux": "Réseaux",
+      "evangélisation": "Évangélisation",
+      "autre": "Autre",
+    },
+    statutInitialOptions: {
+      "veut rejoindre ICC": "Veut rejoindre ICC",
+      "a déjà son église": "A déjà son église",
+      "visiteur": "Visiteur",
+    },
+    besoinOptions: {
+      "Finances": "Finances",
+      "Santé": "Santé",
+      "Travail / Études": "Travail / Études",
+      "Famille / Enfants": "Famille / Enfants",
+      "Relations / Conflits": "Relations / Conflits",
+      "Miracle": "Miracle",
+      "Délivrance": "Délivrance",
+      "Addictions / Dépendances": "Addictions / Dépendances",
+      "Guidance spirituelle": "Guidance spirituelle",
+      "Logement / Sécurité": "Logement / Sécurité",
+      "Communauté / Isolement": "Communauté / Isolement",
+      "Dépression / Santé mentale": "Dépression / Santé mentale",
+    },
     age: "⏳ Tranche d'age",
     whatsapp: "💬 WhatsApp",
     oui: "Oui",
@@ -99,6 +132,39 @@ const translations = {
     msgWhatsApp: "💬 WhatsApp message",
     identiteLabel: "👤 Identity",
     civilite: "🎗️ Title",
+    homme: "Man",
+    femme: "Woman",
+    oui: "Yes",
+    non: "No",
+    conversionOptions: {
+      "Nouveau converti": "New convert",
+      "Réconciliation": "Reconciliation",
+    },
+    venuOptions: {
+      "invité": "Invited",
+      "réseaux": "Social networks",
+      "evangélisation": "Evangelisation",
+      "autre": "Other",
+    },
+    statutInitialOptions: {
+      "veut rejoindre ICC": "Wants to join ICC",
+      "a déjà son église": "Already has a church",
+      "visiteur": "Visitor",
+    },
+    besoinOptions: {
+      "Finances": "Finances",
+      "Santé": "Health",
+      "Travail / Études": "Work / Studies",
+      "Famille / Enfants": "Family / Children",
+      "Relations / Conflits": "Relationships / Conflicts",
+      "Miracle": "Miracle",
+      "Délivrance": "Deliverance",
+      "Addictions / Dépendances": "Addictions / Dependencies",
+      "Guidance spirituelle": "Spiritual guidance",
+      "Logement / Sécurité": "Housing / Safety",
+      "Communauté / Isolement": "Community / Isolation",
+      "Dépression / Santé mentale": "Depression / Mental health",
+    },
     age: "⏳ Age range",
     whatsapp: "💬 WhatsApp",
     oui: "Yes",
@@ -194,6 +260,17 @@ function MembresCelluleContent() {
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
     return `${day} ${t.mois[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+    const getYesNo = (value) => {
+    if (value === "Oui" || value === true) return t.oui;
+    if (value === "Non" || value === false) return t.non;
+    return "—";
+  };
+  
+  const getMapLabel = (map, value) => {
+    if (!value) return "—";
+    return map[value] || value;
   };
 
   const getBorderColor = (member) => {
@@ -500,7 +577,7 @@ useEffect(() => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-6xl">
                 {filteredMembres.map((m) => {
                   const cellule = cellules.find((c) => c.id === m.cellule_id);
-                  const besoins = parseJsonArray(m.besoin).join(", ") || "—";
+                  const besoins = formatBesoinField(m.besoin);
                   const isOpen = detailsOpen[m.id];
                   const nomResponsable = cellule?.responsable || "—";
 
@@ -620,7 +697,7 @@ useEffect(() => {
                             <p className="font-bold text-[#2E3192] mb-1">
                               {t.identiteLabel}
                             </p>
-                            <p>{t.civilite} : {m.sexe || ""}</p>
+                            <p>{t.civilite} : {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
                             <p>{t.age} : {m.age || ""}</p>
                             <p>
                               {t.whatsapp} :{" "}
@@ -650,17 +727,14 @@ useEffect(() => {
                             <p className="font-bold text-[#2E3192] mb-1">
                               {t.spirituelLabel}
                             </p>
-                            <p>{t.baptemeEau} : {m.bapteme_eau || "—"}</p>
-                            {m.bapteme_eau === "Non" &&
-                              m.veut_se_faire_baptiser === "Oui" && (
-                                <p className="ml-6">{t.veutBaptise}</p>
-                              )}
-                            <p>{t.baptemeFeu} : {m.bapteme_esprit || "—"}</p>
-                            <p>{t.priereSalut} : {m.priere_salut || "—"}</p>
-                            <p>
-                              {t.typeConversion} :{" "}
-                              {m.type_conversion || "—"}
-                            </p>
+                            <p>{t.baptemeEau} : {getYesNo(m.bapteme_eau)}</p>
+                              {m.bapteme_eau === "Non" &&
+                                m.veut_se_faire_baptiser === "Oui" && (
+                                  <p className="ml-6">{t.veutBaptise}</p>
+                                )}
+                              <p>{t.baptemeFeu} : {getYesNo(m.bapteme_esprit)}</p>
+                              <p>{t.priereSalut} : {getYesNo(m.priere_salut)}</p>
+                              <p>{t.typeConversion} : {getMapLabel(t.conversionOptions, m.type_conversion)}</p>
                             <p>{t.formation} : {m.Formation || ""}</p>
                             <p>
                               {t.ministere} :{" "}
@@ -673,11 +747,8 @@ useEffect(() => {
                             <p className="font-bold text-[#2E3192] mb-1">
                               {t.parcoursLabel}
                             </p>
-                            <p>{t.commentVenu} : {m.venu || ""}</p>
-                            <p>
-                              {t.raisonVenue} :{" "}
-                              {m.statut_initial ?? m.statut ?? "—"}
-                            </p>
+                            <p>{t.commentVenu} : {getMapLabel(t.venuOptions, m.venu)}</p>
+                            <p>{t.raisonVenue} : {getMapLabel(t.statutInitialOptions, m.statut_initial ?? m.statut)}</p>
                             <p>
                               {t.infos} :{" "}
                               {m.infos_supplementaires || "—"}

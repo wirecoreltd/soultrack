@@ -251,12 +251,33 @@ export default function HeaderPages() {
       {/* INFOS EGLISE */}
       <div className="flex flex-col items-center mb-4">
         {logoUrl && (
-          <img
-            src={logoUrl}
-            className="w-12 h-12 object-contain mb-2 cursor-pointer hover:opacity-80 transition"
+          <div
+            className="relative w-12 h-12 mb-2 cursor-pointer group"
             onClick={() => router.push("/index")}
-            alt="Logo église"
-          />
+          >
+            <img
+              src={logoUrl}
+              className="w-12 h-12 object-contain group-hover:opacity-80 transition"
+              alt="Logo église"
+            />
+            <div className="absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-amber-300 border-2 border-[#333699] flex items-center justify-center group-hover:scale-110 transition">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#412402"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+                <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+              </svg>
+            </div>
+          </div>
         )}
 
         {(denomination || eglise) && (

@@ -710,8 +710,7 @@ else count[label].enSuivi++;
               <SectionTitle>{t.sectionClassement}</SectionTitle>
               <BlocClassement besoinsCount={besoinsCount} t={t} lang={lang} />
             </div>
-          </div>
-        ) : (
+          </div>        
           ) : (
           <div className="flex flex-col gap-3">
             {Object.entries(besoinsCount).map(([besoin, data]) => (

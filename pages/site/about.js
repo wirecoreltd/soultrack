@@ -171,6 +171,7 @@ export default function AboutPage() {
 
   // ── Profil connecté ─────────────────────────────────────────────────────
   const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   const t = translations[lang];
 
@@ -181,31 +182,7 @@ export default function AboutPage() {
   }, []);
 
   // ── Profil : chargement + écoute des changements de session ────────────
-  useEffect(() => {
-    const loadProfile = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        setProfile(null);
-        return;
-      }
-
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, role, roles")
-        .eq("id", sessionData.session.user.id)
-        .single();
-
-      if (!error) setProfile(profileData);
-    };
-
-    loadProfile();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      loadProfile();
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
+  
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -214,7 +191,34 @@ export default function AboutPage() {
     router.push("/login");
   };
 
-  return (
+  return (useEffect(() => {
+  const loadProfile = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session) {
+      setProfile(null);
+      setLoadingProfile(false);
+      return;
+    }
+
+    const { data: profileData, error } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom, role, roles")
+      .eq("id", sessionData.session.user.id)
+      .single();
+
+    if (!error) setProfile(profileData);
+    setLoadingProfile(false);
+  };
+
+  loadProfile();
+
+  const { data: listener } = supabase.auth.onAuthStateChange(() => {
+    loadProfile();
+  });
+
+  return () => listener.subscription.unsubscribe();
+}, []);
+  
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
 
       {/* GLOWS */}
@@ -271,7 +275,10 @@ export default function AboutPage() {
 
           {/* BOUTONS desktop */}
           <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
-            {profile ? (
+            {loadingProfile ? (
+              // Rien, ou un skeleton léger pour éviter le saut de layout
+              <div style={{ width: "180px", height: "34px" }} />
+            ) : profile ? (
               <>
                 <span
                   onClick={() => router.push("/hub")}

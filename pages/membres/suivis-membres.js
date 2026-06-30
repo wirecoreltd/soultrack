@@ -55,6 +55,8 @@ const translations = {
     whatsapp: "💬 WhatsApp :",
     oui: "Oui",
     non: "Non",
+    homme: "Homme",
+    femme: "Femme",
     suivi: "📊 Suivi",
     arriveLe: "Arrivé le :",
     arrivedLe: "Arrivée le :",
@@ -64,14 +66,43 @@ const translations = {
     baptemeFeu: "🔥 Baptême de Feu :",
     priereSalut: "🙏 Prière du salut :",
     typeConversion: "☀️ Type de conversion :",
+    conversionOptions: {
+      "Nouveau converti": "Nouveau converti",
+      "Réconciliation": "Réconciliation",
+    },
     formation: "✒️ Formation :",
     ministere: "💢 Ministère :",
     parcours: "🌱 Parcours",
     commentEstVenu: "🧩 Comment est-il venu :",
+    venuOptions: {
+      "invité": "Invité",
+      "réseaux": "Réseaux",
+      "evangélisation": "Évangélisation",
+      "autre": "Autre",
+    },
     raisonVenue: "✨ Raison de la venue :",
+    statutInitialOptions: {
+      "veut rejoindre ICC": "Veut rejoindre ICC",
+      "a déjà son église": "A déjà son église",
+      "visiteur": "Visiteur",
+    },
     infos: "📝 Infos :",
     soinPastoral: "❤️‍🩹 Soin pastoral",
     besoins: "❓ Difficultés / Besoins :",
+    besoinOptions: {
+      "Finances": "Finances",
+      "Santé": "Santé",
+      "Travail / Études": "Travail / Études",
+      "Famille / Enfants": "Famille / Enfants",
+      "Relations / Conflits": "Relations / Conflits",
+      "Miracle": "Miracle",
+      "Délivrance": "Délivrance",
+      "Addictions / Dépendances": "Addictions / Dépendances",
+      "Guidance spirituelle": "Guidance spirituelle",
+      "Logement / Sécurité": "Logement / Sécurité",
+      "Communauté / Isolement": "Communauté / Isolement",
+      "Dépression / Santé mentale": "Dépression / Santé mentale",
+    },
     ajouterVoirSuivis: "💡 Ajouter / Voir suivis",
     modifierContact: "✏️ Modifier le contact",
     months: ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"],
@@ -119,6 +150,8 @@ const translations = {
     whatsapp: "💬 WhatsApp:",
     oui: "Yes",
     non: "No",
+    homme: "Man",
+    femme: "Woman",
     suivi: "📊 Follow-up",
     arriveLe: "Arrived on:",
     arrivedLe: "Arrived on:",
@@ -128,14 +161,43 @@ const translations = {
     baptemeFeu: "🔥 Spirit Baptism:",
     priereSalut: "🙏 Salvation prayer:",
     typeConversion: "☀️ Conversion type:",
+    conversionOptions: {
+      "Nouveau converti": "New convert",
+      "Réconciliation": "Reconciliation",
+    },
     formation: "✒️ Training:",
     ministere: "💢 Ministry:",
     parcours: "🌱 Journey",
     commentEstVenu: "🧩 How they came:",
+    venuOptions: {
+      "invité": "Invited",
+      "réseaux": "Social networks",
+      "evangélisation": "Evangelisation",
+      "autre": "Other",
+    },
     raisonVenue: "✨ Reason for coming:",
+    statutInitialOptions: {
+      "veut rejoindre ICC": "Wants to join ICC",
+      "a déjà son église": "Already has a church",
+      "visiteur": "Visitor",
+    },
     infos: "📝 Notes:",
     soinPastoral: "❤️‍🩹 Pastoral care",
     besoins: "❓ Difficulties / Needs:",
+    besoinOptions: {
+      "Finances": "Finances",
+      "Santé": "Health",
+      "Travail / Études": "Work / Studies",
+      "Famille / Enfants": "Family / Children",
+      "Relations / Conflits": "Relationships / Conflicts",
+      "Miracle": "Miracle",
+      "Délivrance": "Deliverance",
+      "Addictions / Dépendances": "Addictions / Dependencies",
+      "Guidance spirituelle": "Spiritual guidance",
+      "Logement / Sécurité": "Housing / Safety",
+      "Communauté / Isolement": "Community / Isolation",
+      "Dépression / Santé mentale": "Depression / Mental health",
+    },
     ajouterVoirSuivis: "💡 Add / View follow-ups",
     modifierContact: "✏️ Edit contact",
     months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
@@ -157,12 +219,16 @@ const DetailsPopup = React.memo(function DetailsPopup({
     } catch { return "—"; }
   };
 
-  const formatArrayField = (field) => {
+  const formatBesoinField = (field) => {
     if (!field) return "—";
+    let arr = [];
     try {
       const parsed = typeof field === "string" ? JSON.parse(field) : field;
-      return Array.isArray(parsed) ? parsed.join(", ") : parsed;
-    } catch { return "—"; }
+      arr = Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      arr = [field];
+    }
+    return arr.map((b) => t.besoinOptions[b] || b).join(", ");
   };
 
   const formatDate = (dateString) => {
@@ -170,6 +236,17 @@ const DetailsPopup = React.memo(function DetailsPopup({
     const d = new Date(dateString);
     const day = d.getDate().toString().padStart(2, "0");
     return `${day} ${t.months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  const getYesNo = (value) => {
+    if (value === "Oui" || value === true) return t.oui;
+    if (value === "Non" || value === false) return t.non;
+    return "—";
+  };
+
+  const getMapLabel = (map, value) => {
+    if (!value) return "—";
+    return map[value] || value;
   };
 
   const getConseillersForMember = (memberId) => {
@@ -190,7 +267,7 @@ const DetailsPopup = React.memo(function DetailsPopup({
     <div className="text-black text-sm space-y-2 w-full">
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.identite}</p>
-        <p>{t.civilite} {m.sexe || "—"}</p>
+        <p>{t.civilite} {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
         <p>{t.age} {m.age || "—"}</p>
         <p>{t.whatsapp} {m.is_whatsapp ? t.oui : t.non}</p>
       </div>
@@ -206,24 +283,24 @@ const DetailsPopup = React.memo(function DetailsPopup({
       <hr />
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.vieSpirituelle}</p>
-        <p>{t.baptemeEau} {m.bapteme_eau || "—"}</p>
-        <p>{t.baptemeFeu} {m.bapteme_esprit || "—"}</p>
-        <p>{t.priereSalut} {m.priere_salut || "—"}</p>
-        <p>{t.typeConversion} {m.type_conversion || "—"}</p>
+        <p>{t.baptemeEau} {getYesNo(m.bapteme_eau)}</p>
+        <p>{t.baptemeFeu} {getYesNo(m.bapteme_esprit)}</p>
+        <p>{t.priereSalut} {getYesNo(m.priere_salut)}</p>
+        <p>{t.typeConversion} {getMapLabel(t.conversionOptions, m.type_conversion)}</p>
         <p>{t.formation} {m.Formation || "—"}</p>
         <p>{t.ministere} {formatMinistere(m.Ministere) || "—"}</p>
       </div>
       <hr />
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.parcours}</p>
-        <p>{t.commentEstVenu} {m.venu || "—"}</p>
-        <p>{t.raisonVenue} {m.statut_initial ?? m.statut ?? "—"}</p>
+        <p>{t.commentEstVenu} {getMapLabel(t.venuOptions, m.venu)}</p>
+        <p>{t.raisonVenue} {getMapLabel(t.statutInitialOptions, m.statut_initial ?? m.statut)}</p>
         <p>{t.infos} {m.infos_supplementaires || "—"}</p>
       </div>
       <hr />
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.soinPastoral}</p>
-        <p>{t.besoins} {formatArrayField(m.besoin)}</p>
+        <p>{t.besoins} {formatBesoinField(m.besoin)}</p>
         <div className="flex justify-center">
           <button
             onClick={() => setOpenSuiviMemberId(m.id)}

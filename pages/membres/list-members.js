@@ -111,6 +111,11 @@ const translations = {
     sms: "✉️ SMS",
     waCall: "📱 Appel WhatsApp",
     waMsg: "💬 Message WhatsApp",
+    conversion: "✨ Conversion :",
+    conversionOptions: [
+    { value: "Nouveau converti", label: "Nouveau converti" },
+    { value: "Réconciliation",   label: "Réconciliation" },
+  ],
   },
   en: {
     pageTitle: "Members",
@@ -199,6 +204,11 @@ const translations = {
     sms: "✉️ SMS",
     waCall: "📱 WhatsApp Call",
     waMsg: "💬 WhatsApp Message",
+    conversion: "✨ Conversion:",
+    conversionOptions: [
+    { value: "Nouveau converti", label: "New convert" },
+    { value: "Réconciliation",   label: "Reconciliation" },
+  ],
   },
 };
 
@@ -296,6 +306,12 @@ function ListMembersContent() {
   const isIntegration = roles.includes("ResponsableIntegration");
   const canAddMember = isAdmin || isIntegration;
   const canEditSensitiveFields = isAdmin || isIntegration;
+
+  const getLabel = (options, value) => {
+  if (!value) return "—";
+  const found = options.find((o) => o.value === value);
+  return found ? found.label : value;
+  };
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined")
@@ -1288,7 +1304,7 @@ function ListMembersContent() {
                   )}
                 <p>{t.baptemeFeu} {m.bapteme_esprit || "—"}</p>
                 <p>{t.prayer} {m.priere_salut || "—"}</p>
-                <p>{t.conversion} {m.type_conversion || "—"}</p>
+                <p>{t.conversion} {getLabel(t.conversionOptions, m.type_conversion)}</p>
                 <p>{t.formation} {m.Formation || "—"}</p>
                 <p>
                   {t.ministere}{" "}

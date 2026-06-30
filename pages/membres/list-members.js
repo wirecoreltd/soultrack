@@ -67,6 +67,21 @@ const translations = {
     details: "Détails",
     identity: "👤 Identité",
     civility: "🎗️ Civilité :",
+    homme: "Homme",
+    femme: "Femme",
+    ouiVal: "Oui",
+    nonVal: "Non",
+    venuOptions: {
+      "invité": "Invité",
+      "réseaux": "Réseaux",
+      "evangélisation": "Évangélisation",
+      "autre": "Autre",
+    },
+    statutInitialOptions: {
+      "veut rejoindre ICC": "Veut rejoindre ICC",
+      "a déjà son église": "A déjà son église",
+      "visiteur": "Visiteur",
+    },
     age: "⏳ Tranche d'âge :",
     whatsapp: "💬 WhatsApp :",
     yes: "Oui",
@@ -160,6 +175,21 @@ const translations = {
     details: "Details",
     identity: "👤 Identity",
     civility: "🎗️ Title:",
+     homme: "Man",
+      femme: "Woman",
+      ouiVal: "Yes",
+      nonVal: "No",
+      venuOptions: {
+        "invité": "Invited",
+        "réseaux": "Social networks",
+        "evangélisation": "Evangelisation",
+        "autre": "Other",
+      },
+      statutInitialOptions: {
+        "veut rejoindre ICC": "Wants to join ICC",
+        "a déjà son église": "Already has a church",
+        "visiteur": "Visitor",
+      },
     age: "⏳ Age range:",
     whatsapp: "💬 WhatsApp:",
     yes: "Yes",
@@ -312,6 +342,17 @@ function ListMembersContent() {
   const found = options.find((o) => o.value === value);
   return found ? found.label : value;
   };
+
+  const getMapLabel = (map, value) => {
+  if (!value) return "—";
+  return map[value] || value;
+};
+
+const getYesNo = (value) => {
+  if (value === "Oui" || value === true) return t.ouiVal;
+  if (value === "Non" || value === false) return t.nonVal;
+  return "—";
+};
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined")
@@ -1254,7 +1295,7 @@ function ListMembersContent() {
             <div className="text-black text-sm mt-3 w-full space-y-4">
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">{t.identity}</p>
-                <p>{t.civility} {m.sexe || "—"}</p>
+                <p>{t.civility} {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
                 <p>{t.age} {m.age || "—"}</p>
                 <p>{t.whatsapp} {m.is_whatsapp ? t.yes : t.no}</p>
               </div>
@@ -1297,11 +1338,11 @@ function ListMembersContent() {
 
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">{t.spiritual}</p>
-                <p>{t.baptemeEau} {m.bapteme_eau || "—"}</p>
-                {m.bapteme_eau === "Non" &&
-                  m.veut_se_faire_baptiser === "Oui" && (
-                    <p className="ml-4">{t.wantsBaptism}</p>
-                  )}
+                <p>{t.baptemeEau} {getYesNo(m.bapteme_eau)}</p>
+                  {m.bapteme_eau === "Non" &&
+                    m.veut_se_faire_baptiser === "Oui" && (
+                      <p className="ml-4">{t.wantsBaptism}</p>
+                    )}
                 <p>{t.baptemeFeu} {m.bapteme_esprit || "—"}</p>
                 <p>{t.prayer} {m.priere_salut || "—"}</p>
                 <p>{t.conversion} {getLabel(t.conversionOptions, m.type_conversion)}</p>
@@ -1315,8 +1356,8 @@ function ListMembersContent() {
 
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">{t.parcours}</p>
-                <p>{t.howCame} {m.venu || "—"}</p>
-                <p>{t.reason} {m.statut_initial || "—"}</p>
+                <p>{t.howCame} {getMapLabel(t.venuOptions, m.venu)}</p>
+                <p>{t.reason} {getMapLabel(t.statutInitialOptions, m.statut_initial)}</p>
                 <p>{t.infos} {m.infos_supplementaires || "—"}</p>
               </div>
               <hr />

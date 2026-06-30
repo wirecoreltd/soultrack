@@ -191,36 +191,45 @@ export default function AboutPage() {
     router.push("/login");
   };
 
-  return (useEffect(() => {
-  const loadProfile = async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData?.session) {
-      setProfile(null);
+  // ── Profil : chargement + écoute des changements de session ────────────
+  useEffect(() => {
+    const loadProfile = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        setProfile(null);
+        setLoadingProfile(false);
+        return;
+      }
+
+      const { data: profileData, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, role, roles")
+        .eq("id", sessionData.session.user.id)
+        .single();
+
+      if (!error) setProfile(profileData);
       setLoadingProfile(false);
-      return;
-    }
+    };
 
-    const { data: profileData, error } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, role, roles")
-      .eq("id", sessionData.session.user.id)
-      .single();
+    loadProfile();
 
-    if (!error) setProfile(profileData);
-    setLoadingProfile(false);
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      loadProfile();
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.clear();
+    setProfile(null);
+    router.push("/login");
   };
 
-  loadProfile();
-
-  const { data: listener } = supabase.auth.onAuthStateChange(() => {
-    loadProfile();
-  });
-
-  return () => listener.subscription.unsubscribe();
-}, []);
-  
+  return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
-
+   
       {/* GLOWS */}
       <div style={{
         position: "absolute", width: "800px", height: "800px", borderRadius: "50%",

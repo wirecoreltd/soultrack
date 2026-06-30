@@ -200,6 +200,7 @@ export default function HomePage() {
 
   // ── Profil connecté ─────────────────────────────────────────────────────
   const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   const t = translations[lang];
 
@@ -253,6 +254,7 @@ export default function HomePage() {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session) {
         setProfile(null);
+        setLoadingProfile(false);
         return;
       }
 
@@ -263,6 +265,7 @@ export default function HomePage() {
         .single();
 
       if (!error) setProfile(profileData);
+      setLoadingProfile(false);
     };
 
     loadProfile();
@@ -517,7 +520,9 @@ export default function HomePage() {
             }}
             className="nav-hide"
           >
-            {profile ? (
+            {loadingProfile ? (
+              <div style={{ width: "180px", height: "34px" }} />
+            ) : profile ? (
               <>
                 <span
                   onClick={() => router.push("/hub")}
@@ -789,7 +794,7 @@ export default function HomePage() {
                 marginTop: "4px",
               }}
             >
-              {profile ? (
+              {loadingProfile ? null : profile ? (
                 <>
                   <span
                     onClick={() => {

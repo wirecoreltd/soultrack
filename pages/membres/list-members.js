@@ -126,7 +126,21 @@ const translations = {
     sms: "✉️ SMS",
     waCall: "📱 Appel WhatsApp",
     waMsg: "💬 Message WhatsApp",
-    conversion: "✨ Conversion :",
+    besoinOptions: {
+    "Finances": "Finances",
+    "Santé": "Santé",
+    "Travail / Études": "Travail / Études",
+    "Famille / Enfants": "Famille / Enfants",
+    "Relations / Conflits": "Relations / Conflits",
+    "Miracle": "Miracle",
+    "Délivrance": "Délivrance",
+    "Addictions / Dépendances": "Addictions / Dépendances",
+    "Guidance spirituelle": "Guidance spirituelle",
+    "Logement / Sécurité": "Logement / Sécurité",
+    "Communauté / Isolement": "Communauté / Isolement",
+    "Dépression / Santé mentale": "Dépression / Santé mentale",
+  },
+    conversion: "✨ Conversion :",    
     conversionOptions: [
     { value: "Nouveau converti", label: "Nouveau converti" },
     { value: "Réconciliation",   label: "Réconciliation" },
@@ -234,6 +248,20 @@ const translations = {
     sms: "✉️ SMS",
     waCall: "📱 WhatsApp Call",
     waMsg: "💬 WhatsApp Message",
+    besoinOptions: {
+    "Finances": "Finances",
+    "Santé": "Health",
+    "Travail / Études": "Work / Studies",
+    "Famille / Enfants": "Family / Children",
+    "Relations / Conflits": "Relationships / Conflicts",
+    "Miracle": "Miracle",
+    "Délivrance": "Deliverance",
+    "Addictions / Dépendances": "Addictions / Dependencies",
+    "Guidance spirituelle": "Spiritual guidance",
+    "Logement / Sécurité": "Housing / Safety",
+    "Communauté / Isolement": "Community / Isolation",
+    "Dépression / Santé mentale": "Depression / Mental health",
+  },
     conversion: "✨ Conversion:",
     conversionOptions: [
     { value: "Nouveau converti", label: "New convert" },
@@ -1343,8 +1371,8 @@ const getYesNo = (value) => {
                     m.veut_se_faire_baptiser === "Oui" && (
                       <p className="ml-4">{t.wantsBaptism}</p>
                     )}
-                <p>{t.baptemeFeu} {m.bapteme_esprit || "—"}</p>
-                <p>{t.prayer} {m.priere_salut || "—"}</p>
+                <p>{t.baptemeFeu} {getYesNo(m.bapteme_esprit)}</p>
+                <p>{t.prayer} {getYesNo(m.priere_salut)}</p>
                 <p>{t.conversion} {getLabel(t.conversionOptions, m.type_conversion)}</p>
                 <p>{t.formation} {m.Formation || "—"}</p>
                 <p>

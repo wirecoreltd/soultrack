@@ -211,6 +211,7 @@ export default function ContactPage() {
 
   // ── Profil connecté ─────────────────────────────────────────────────────
   const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   const t = translations[lang];
 
@@ -246,6 +247,7 @@ export default function ContactPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData?.session) {
         setProfile(null);
+        setLoadingProfile(false);
         return;
       }
 
@@ -256,6 +258,7 @@ export default function ContactPage() {
         .single();
 
       if (!error) setProfile(profileData);
+      setLoadingProfile(false);
     };
 
     loadProfile();
@@ -390,7 +393,9 @@ export default function ContactPage() {
 
           {/* BOUTONS desktop */}
           <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
-            {profile ? (
+            {loadingProfile ? (
+              <div style={{ width: "180px", height: "34px" }} />
+            ) : profile ? (
               <>
                 <span
                   onClick={() => router.push("/hub")}
@@ -500,7 +505,7 @@ export default function ContactPage() {
               </button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
-              {profile ? (
+              {loadingProfile ? null : profile ? (
                 <>
                   <span
                     onClick={() => {

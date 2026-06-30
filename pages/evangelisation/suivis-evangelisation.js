@@ -501,7 +501,14 @@ function SuivisEvangelisationContent() {
 
 const getMapLabel = (map, value) => {
   if (!value) return "—";
-  return map[value] || value;
+  // Cherche d'abord une correspondance exacte
+  if (map[value]) return map[value];
+  // Sinon, normalise les apostrophes typographiques et réessaie
+  const normalized = value.replace(/['']/g, "'");
+  const foundKey = Object.keys(map).find(
+    (k) => k.replace(/['']/g, "'") === normalized
+  );
+  return foundKey ? map[foundKey] : value;
 };
 
   const formatDateFr = (dateString) => {

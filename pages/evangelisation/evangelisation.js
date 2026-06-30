@@ -416,7 +416,7 @@ function EvangelisationContent() {
         suivi_updated_at: new Date().toISOString(),
         evangelise_member_id: member.id,
         date_venu: new Date().toISOString(),
-        priere_salut: member.priere_salut ?? null,
+        priere_salut: member.priere_salut ? "Oui" : "Non",
         type_conversion: member.type_conversion || null,
       };
       const { error } = await supabase.from("membres_complets").insert(payload);

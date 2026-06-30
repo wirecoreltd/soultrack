@@ -273,6 +273,12 @@ function MembresCelluleContent() {
     return map[value] || value;
   };
 
+  const formatBesoinField = (field) => {
+  if (!field) return "—";
+  const arr = parseJsonArray(field);
+  return arr.map((b) => t.besoinOptions[b] || b).join(", ") || "—";
+};
+
   const getBorderColor = (member) => {
     switch ((member?.etat_contact || "").toLowerCase().trim()) {
       case "nouveau":  return "#fb923c";

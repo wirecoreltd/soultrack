@@ -425,7 +425,7 @@ export default function ContactPage() {
                   >
                     {profile.prenom?.[0]?.toUpperCase() || "U"}
                   </span>
-                  {profile.prenom} {profile.nom}
+                  {profile.prenom}
                 </span>
 
                 <button
@@ -519,7 +519,7 @@ export default function ContactPage() {
                       cursor: "pointer",
                     }}
                   >
-                    👤 {profile.prenom} {profile.nom}
+                    👤 {profile.prenom}
                   </span>
                   <button
                     onClick={() => {

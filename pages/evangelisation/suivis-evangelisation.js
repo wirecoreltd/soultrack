@@ -48,6 +48,32 @@ const translations = {
     closeDetails: "Fermer détails",
     identiteTitle: "👤 Identité",
     civilite: "🎗️ Civilité",
+    homme: "Homme",
+    femme: "Femme",
+    conversionOptions: {
+      "Nouveau converti": "Nouveau converti",
+      "Réconciliation": "Réconciliation",
+    },
+    typeEvangOptions: {
+      "evangélisation": "Évangélisation",
+      "campagne": "Campagne",
+      "réseaux": "Réseaux",
+      "autre": "Autre",
+    },
+    besoinOptions: {
+      "Finances": "Finances",
+      "Santé": "Santé",
+      "Travail / Études": "Travail / Études",
+      "Famille / Enfants": "Famille / Enfants",
+      "Relations / Conflits": "Relations / Conflits",
+      "Miracle": "Miracle",
+      "Délivrance": "Délivrance",
+      "Addictions / Dépendances": "Addictions / Dépendances",
+      "Guidance spirituelle": "Guidance spirituelle",
+      "Logement / Sécurité": "Logement / Sécurité",
+      "Communauté / Isolement": "Communauté / Isolement",
+      "Dépression / Santé mentale": "Dépression / Santé mentale",
+    },
     age: "⏳ Tranche d'age",
     whatsapp: "💬 WhatsApp",
     oui: "Oui",
@@ -108,6 +134,32 @@ const translations = {
     closeDetails: "Close details",
     identiteTitle: "👤 Identity",
     civilite: "🎗️ Title",
+    homme: "Man",
+    femme: "Woman",
+    conversionOptions: {
+      "Nouveau converti": "New convert",
+      "Réconciliation": "Reconciliation",
+    },
+    typeEvangOptions: {
+      "evangélisation": "Evangelisation",
+      "campagne": "Campaign",
+      "réseaux": "Social networks",
+      "autre": "Other",
+    },
+    besoinOptions: {
+      "Finances": "Finances",
+      "Santé": "Health",
+      "Travail / Études": "Work / Studies",
+      "Famille / Enfants": "Family / Children",
+      "Relations / Conflits": "Relationships / Conflicts",
+      "Miracle": "Miracle",
+      "Délivrance": "Deliverance",
+      "Addictions / Dépendances": "Addictions / Dependencies",
+      "Guidance spirituelle": "Spiritual guidance",
+      "Logement / Sécurité": "Housing / Safety",
+      "Communauté / Isolement": "Community / Isolation",
+      "Dépression / Santé mentale": "Depression / Mental health",
+    },
     age: "⏳ Age range",
     whatsapp: "💬 WhatsApp",
     oui: "Yes",
@@ -429,15 +481,28 @@ function SuivisEvangelisationContent() {
     return "#ccc";
   };
 
-  const formatBesoin = (b) => {
-    if (!b) return "—";
-    try {
-      const arr = JSON.parse(b);
-      return Array.isArray(arr) ? arr.join(", ") : b;
-    } catch {
-      return b;
-    }
-  };
+  vconst formatBesoin = (b) => {
+  if (!b) return "—";
+  let arr = [];
+  try {
+    const parsed = JSON.parse(b);
+    arr = Array.isArray(parsed) ? parsed : [b];
+  } catch {
+    arr = [b];
+  }
+  return arr.map((item) => t.besoinOptions[item] || item).join(", ") || "—";
+};
+
+  const getYesNo = (value) => {
+  if (value === "Oui" || value === true) return t.oui;
+  if (value === "Non" || value === false) return t.non;
+  return "—";
+};
+
+const getMapLabel = (map, value) => {
+  if (!value) return "—";
+  return map[value] || value;
+};
 
   const formatDateFr = (dateString) => {
     if (!dateString) return "—";
@@ -880,8 +945,8 @@ function SuivisEvangelisationContent() {
                         {t.identiteTitle}
                       </p>
                       <p>
-                        {t.civilite} : {m.sexe || ""}
-                      </p>
+  {t.civilite} : {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}
+</p>
                       <p>
                         {t.age} : {m.age || ""}
                       </p>
@@ -896,10 +961,10 @@ function SuivisEvangelisationContent() {
                         {t.spiritualTitle}
                       </p>
                       <p>
-                        {t.priereSalut} : {m.priere_salut ? t.oui : t.non}
+                        {t.priereSalut} : {getYesNo(m.priere_salut)}
                       </p>
                       <p>
-                        {t.typeConversion} : {m.type_conversion || ""}
+                        {t.typeConversion} : {getMapLabel(t.conversionOptions, m.type_conversion)}
                       </p>
                     </div>
                     <hr />
@@ -915,7 +980,7 @@ function SuivisEvangelisationContent() {
                         {formatDateFr(m.date_evangelise)}
                       </p>
                       <p>
-                        {t.typeEvang} : {m.type_evangelisation || ""}
+                        {t.typeEvang} : {getMapLabel(t.typeEvangOptions, m.type_evangelisation)}
                       </p>
                     </div>
                     <hr />

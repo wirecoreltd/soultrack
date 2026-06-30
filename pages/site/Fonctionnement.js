@@ -206,6 +206,7 @@ export default function Fonctionnement() {
 
   // ── Profil connecté ─────────────────────────────────────────────────────
   const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
   const t = translations[lang];
 
@@ -216,31 +217,33 @@ export default function Fonctionnement() {
   }, []);
 
   // ── Profil : chargement + écoute des changements de session ────────────
-  useEffect(() => {
-    const loadProfile = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        setProfile(null);
-        return;
-      }
-
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, role, roles")
-        .eq("id", sessionData.session.user.id)
-        .single();
-
-      if (!error) setProfile(profileData);
-    };
-
-    loadProfile();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      useEffect(() => {
+      const loadProfile = async () => {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData?.session) {
+          setProfile(null);
+          setLoadingProfile(false);
+          return;
+        }
+    
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("id, prenom, nom, role, roles")
+          .eq("id", sessionData.session.user.id)
+          .single();
+    
+        if (!error) setProfile(profileData);
+        setLoadingProfile(false);
+      };
+    
       loadProfile();
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
+    
+      const { data: listener } = supabase.auth.onAuthStateChange(() => {
+        loadProfile();
+      });
+    
+      return () => listener.subscription.unsubscribe();
+    }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -363,7 +366,9 @@ export default function Fonctionnement() {
             }}
             className="nav-hide"
           >
-            {profile ? (
+            {loadingProfile ? (
+              <div style={{ width: "180px", height: "34px" }} />
+            ) : profile ? (
               <>
                 <span
                   onClick={() => router.push("/hub")}
@@ -558,7 +563,7 @@ export default function Fonctionnement() {
                 marginTop: "4px",
               }}
             >
-              {profile ? (
+              {loadingProfile ? null : profile ? (
                 <>
                   <span
                     onClick={() => {

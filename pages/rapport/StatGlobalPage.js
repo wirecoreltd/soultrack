@@ -56,7 +56,7 @@ const translations = {
     kpiMoyParEglise: "Moy. par église",
     kpiMoyParEgliseSub: "présences/église",
     kpiCellules: "Cellules actives",
-    kpiCellulesSub: "total réseau",
+    kpiCellulesSub: "avec contacts, réseau",
     kpiEvangelises: "Évangélisés",
     kpiEvangelisesSub: "âmes touchées",
     kpiBaptemes: "Baptêmes",
@@ -149,13 +149,13 @@ const translations = {
     kpiMembresActifs: "Active members",
     kpiMembresActifsSub: "in the network",
     kpiTauxPresence: "Attendance rate",
-    kpiTauxPresenceSub: "present / members",
+    kpiTauxPresenceSub: "present / (sessions × members)",
     kpiTotalCulte: "Total worship attendance",
     kpiTotalCulteSub: "M+F+Y+Ch+Online",
     kpiMoyParEglise: "Avg. per church",
     kpiMoyParEgliseSub: "attendance/church",
     kpiCellules: "Active cell groups",
-    kpiCellulesSub: "network total",
+    kpiCellulesSub: "with contacts, network",
     kpiEvangelises: "Evangelized",
     kpiEvangelisesSub: "souls reached",
     kpiBaptemes: "Baptisms",
@@ -929,6 +929,34 @@ function StatGlobalPage() {
     );
   };
 
+  // ── CORRECTION #1 : Cellules actives = cellules ayant au moins
+  // un membre actif rattaché (statut_suivis = 3, etat_contact != 'supprime').
+  // Indépendant de la période sélectionnée — c'est un état structurel actuel,
+  // pas un événement daté comme une présence ou un baptême.
+  const getCellulesActives = async (egliseIds) => {
+    const { data: toutesCellules } = await supabase
+      .from("cellules")
+      .select("id, eglise_id")
+      .in("eglise_id", egliseIds);
+
+    if (!toutesCellules?.length) return [];
+
+    const celluleIds = toutesCellules.map((c) => c.id);
+
+    const { data: membresActifs } = await supabase
+      .from("membres_complets")
+      .select("cellule_id")
+      .in("cellule_id", celluleIds)
+      .eq("statut_suivis", 3)
+      .neq("etat_contact", "supprime");
+
+    const cellulesAvecMembres = new Set(
+      (membresActifs || []).map((m) => m.cellule_id)
+    );
+
+    return toutesCellules.filter((c) => cellulesAvecMembres.has(c.id));
+  };
+
   // ── Agréger les stats de plusieurs lignes ──
   const buildStatsFromData = (
     egliseIds,
@@ -936,7 +964,7 @@ function StatGlobalPage() {
     formationData,
     baptemeData,
     evangeData,
-    cellulesData,
+    cellulesActivesData,
     serviteurData
   ) => {
     const statsMap = {};
@@ -1020,7 +1048,9 @@ function StatGlobalPage() {
       else if (sexe === "femme") serv.femmes += 1;
     });
 
-    cellulesData.forEach((c) => {
+    // Cellules actives uniquement (avec contacts) — comptées par église,
+    // indépendamment de la période sélectionnée.
+    cellulesActivesData.forEach((c) => {
       if (c.eglise_id && statsMap[c.eglise_id]) statsMap[c.eglise_id].cellules.total++;
     });
 
@@ -1076,9 +1106,16 @@ function StatGlobalPage() {
       const rootIdValue = profileData.eglise_id;
       setRootId(rootIdValue);
 
-      const { data: filteredEglisesData } = await supabase.rpc(
+      const { data: rawDescendants } = await supabase.rpc(
         "get_descendant_eglises",
         { root_id: rootIdValue }
+      );
+
+      // ── CORRECTION #5 : la RPC inclut l'église elle-même (root) dans le
+      // résultat. "Églises supervisées" doit exclure l'église du superviseur
+      // et ne compter que ses vraies descendantes.
+      const filteredEglisesData = (rawDescendants || []).filter(
+        (e) => e.id !== rootIdValue
       );
 
       if (!filteredEglisesData?.length) {
@@ -1117,13 +1154,13 @@ function StatGlobalPage() {
       };
 
       // ── Fetch période courante ──
-      const [attendanceData, formationData, baptemeData, evangeData, cellulesData] =
+      const [attendanceData, formationData, baptemeData, evangeData, cellulesActivesData] =
         await Promise.all([
           tableFetch("attendance_stats", "mois", debut, fin),
           tableFetch("formations", "date_debut", debut, fin),
           tableFetch("baptemes", "date", debut, fin),
           tableFetch("rapport_evangelisation", "date", debut, fin),
-          tableFetch("cellules", "created_at", debut, fin),
+          getCellulesActives(egliseIds),
         ]);
 
       const { data: serviteurData } = await supabase
@@ -1137,18 +1174,19 @@ function StatGlobalPage() {
         formationData,
         baptemeData,
         evangeData,
-        cellulesData,
+        cellulesActivesData,
         serviteurData
       );
 
       // ── Fetch période précédente ──
+      // Les cellules actives ne sont pas recalculées pour la période précédente
+      // (état structurel actuel, pas un historique daté) — pas de delta affiché dessus.
       if (prevDebut && prevFin) {
-        const [pAtt, pForm, pBap, pEvang, pCell] = await Promise.all([
+        const [pAtt, pForm, pBap, pEvang] = await Promise.all([
           tableFetch("attendance_stats", "mois", prevDebut, prevFin),
           tableFetch("formations", "date_debut", prevDebut, prevFin),
           tableFetch("baptemes", "date", prevDebut, prevFin),
           tableFetch("rapport_evangelisation", "date", prevDebut, prevFin),
-          tableFetch("cellules", "created_at", prevDebut, prevFin),
         ]);
         const prevMap = buildStatsFromData(
           egliseIds,
@@ -1156,7 +1194,7 @@ function StatGlobalPage() {
           pForm,
           pBap,
           pEvang,
-          pCell,
+          [],
           serviteurData
         );
         const pt = {

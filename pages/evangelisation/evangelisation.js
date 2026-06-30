@@ -441,7 +441,7 @@ function EvangelisationContent() {
         sexe: member.sexe || "",
         besoin: member.besoin || "",
         infos_supplementaires: member.infos_supplementaires || "",
-        etat_contact: "Existant",
+        etat_contact: "existant",
         venu: "Évangélisation",
         statut_suivis: 3,
         suivi_updated_at: new Date().toISOString(),

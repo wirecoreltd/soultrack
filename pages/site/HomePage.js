@@ -32,6 +32,8 @@ const translations = {
     ctaBtn: "Démarrer SoulTrack →",
     login: "Connexion",
     signup: "Créer mon église",
+    webVersion: "Version web",
+    logout: "Déconnexion",
     nav: [
       { label: "Accueil", path: "/site/HomePage" },
       { label: "Fonctionnement", path: "/site/Fonctionnement" },
@@ -116,6 +118,8 @@ const translations = {
     ctaBtn: "Start SoulTrack →",
     login: "Log in",
     signup: "Create my church",
+    webVersion: "Web version",
+    logout: "Log out",
     nav: [
       { label: "Home", path: "/site/HomePage" },
       { label: "How it works", path: "/site/Fonctionnement" },
@@ -194,6 +198,9 @@ export default function HomePage() {
   const [testimonialsLoaded, setTestimonialsLoaded] = useState(false);
   const SHOW_TESTIMONIALS = false;
 
+  // ── Profil connecté ─────────────────────────────────────────────────────
+  const [profile, setProfile] = useState(null);
+
   const t = translations[lang];
 
   // ── Carousel ──────────────────────────────────────────────────────────────
@@ -239,6 +246,40 @@ export default function HomePage() {
     fadeRefs.current.forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
   }, []);
+
+  // ── Profil : chargement + écoute des changements de session ────────────
+  useEffect(() => {
+    const loadProfile = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        setProfile(null);
+        return;
+      }
+
+      const { data: profileData, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, role, roles")
+        .eq("id", sessionData.session.user.id)
+        .single();
+
+      if (!error) setProfile(profileData);
+    };
+
+    loadProfile();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      loadProfile();
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.clear();
+    setProfile(null);
+    router.push("/login");
+  };
 
   // ── Témoignages fetch ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -476,35 +517,102 @@ export default function HomePage() {
             }}
             className="nav-hide"
           >
-            <button
-              onClick={() => router.push("/login")}
-              style={{
-                background: "transparent",
-                color: "#fbbf24",
-                border: "0.5px solid rgba(255,255,255,0.35)",
-                padding: "7px 18px",
-                borderRadius: "8px",
-                fontSize: "14px",
-                cursor: "pointer",
-              }}
-            >
-              {t.login}
-            </button>
-            <button
-              onClick={() => router.push("/site/pricing")}
-              style={{
-                background: "#fff",
-                color: "#333699",
-                border: "none",
-                padding: "7px 18px",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              {t.signup}
-            </button>
+            {profile ? (
+              <>
+                <span
+                  onClick={() => router.push("/hub")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    cursor: "pointer",
+                    color: "#fff",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: "28px",
+                      height: "28px",
+                      borderRadius: "50%",
+                      background: "#fbbf24",
+                      color: "#333699",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 700,
+                      fontSize: "13px",
+                    }}
+                  >
+                    {profile.prenom?.[0]?.toUpperCase() || "U"}
+                  </span>
+                  {profile.prenom} {profile.nom}
+                </span>
+
+                <button
+                  onClick={() => router.push("/hub")}
+                  style={{
+                    background: "transparent",
+                    color: "#fff",
+                    border: "0.5px solid rgba(255,255,255,0.35)",
+                    padding: "7px 14px",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {t.webVersion}
+                </button>
+
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    background: "transparent",
+                    color: "#fbbf24",
+                    border: "0.5px solid rgba(255,255,255,0.35)",
+                    padding: "7px 14px",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {t.logout}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => router.push("/login")}
+                  style={{
+                    background: "transparent",
+                    color: "#fbbf24",
+                    border: "0.5px solid rgba(255,255,255,0.35)",
+                    padding: "7px 18px",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {t.login}
+                </button>
+                <button
+                  onClick={() => router.push("/site/pricing")}
+                  style={{
+                    background: "#fff",
+                    color: "#333699",
+                    border: "none",
+                    padding: "7px 18px",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  {t.signup}
+                </button>
+              </>
+            )}
           </div>
 
           {/* Switcher langue desktop */}
@@ -681,35 +789,90 @@ export default function HomePage() {
                 marginTop: "4px",
               }}
             >
-              <button
-                onClick={() => { router.push("/login"); setOpenMenu(false); }}
-                style={{
-                  background: "transparent",
-                  color: "#fff",
-                  border: "0.5px solid rgba(255,255,255,0.35)",
-                  padding: "11px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                }}
-              >
-                {t.login}
-              </button>
-              <button
-                onClick={() => { router.push("/site/pricing"); setOpenMenu(false); }}
-                style={{
-                  background: "#fff",
-                  color: "#333699",
-                  border: "none",
-                  padding: "11px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                {t.signup}
-              </button>
+              {profile ? (
+                <>
+                  <span
+                    onClick={() => {
+                      router.push("/hub");
+                      setOpenMenu(false);
+                    }}
+                    style={{
+                      color: "#fff",
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    👤 {profile.prenom} {profile.nom}
+                  </span>
+                  <button
+                    onClick={() => {
+                      router.push("/hub");
+                      setOpenMenu(false);
+                    }}
+                    style={{
+                      background: "transparent",
+                      color: "#fff",
+                      border: "0.5px solid rgba(255,255,255,0.35)",
+                      padding: "11px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t.webVersion}
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setOpenMenu(false);
+                    }}
+                    style={{
+                      background: "transparent",
+                      color: "#fbbf24",
+                      border: "0.5px solid rgba(255,255,255,0.35)",
+                      padding: "11px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t.logout}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => { router.push("/login"); setOpenMenu(false); }}
+                    style={{
+                      background: "transparent",
+                      color: "#fff",
+                      border: "0.5px solid rgba(255,255,255,0.35)",
+                      padding: "11px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t.login}
+                  </button>
+                  <button
+                    onClick={() => { router.push("/site/pricing"); setOpenMenu(false); }}
+                    style={{
+                      background: "#fff",
+                      color: "#333699",
+                      border: "none",
+                      padding: "11px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t.signup}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}

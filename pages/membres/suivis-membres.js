@@ -274,11 +274,7 @@ const DetailsPopup = React.memo(function DetailsPopup({
       <hr />
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.suivi}</p>
-        <p>📅 {m.sexe === "Femme" ? t.arrivedLe : t.arriveLe} {formatDate(m.date_venu)}</p>
-        <div className="mt-1">
-          <span className="font-semibold">{t.conseillersLabel} </span>
-          {getConseillersForMember(m.id)}
-        </div>
+        <p>📅 {m.sexe === "Femme" ? t.arrivedLe : t.arriveLe} {formatDate(m.date_venu)}</p>        
       </div>
       <hr />
       <div>

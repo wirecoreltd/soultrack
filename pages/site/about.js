@@ -182,16 +182,6 @@ export default function AboutPage() {
   }, []);
 
   // ── Profil : chargement + écoute des changements de session ────────────
-  
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    setProfile(null);
-    router.push("/login");
-  };
-
-  // ── Profil : chargement + écoute des changements de session ────────────
   useEffect(() => {
     const loadProfile = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -229,6 +219,14 @@ export default function AboutPage() {
 
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
+  
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.clear();
+    setProfile(null);
+    router.push("/login");
+  };  
    
       {/* GLOWS */}
       <div style={{

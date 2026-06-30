@@ -49,10 +49,18 @@ const translations = {
     ],
     needs: "Difficultés / Besoins :",
     needsOptions: [
-      "Finances", "Santé", "Travail / Études", "Famille / Enfants",
-      "Relations / Conflits", "Miracle", "Délivrance",
-      "Addictions / Dépendances", "Guidance spirituelle", "Logement / Sécurité",
-      "Communauté / Isolement", "Dépression / Santé mentale",
+      { value: "Finances", label: "Finances" },
+      { value: "Santé", label: "Santé" },
+      { value: "Travail / Études", label: "Travail / Études" },
+      { value: "Famille / Enfants", label: "Famille / Enfants" },
+      { value: "Relations / Conflits", label: "Relations / Conflits" },
+      { value: "Miracle", label: "Miracle" },
+      { value: "Délivrance", label: "Délivrance" },
+      { value: "Addictions / Dépendances", label: "Addictions / Dépendances" },
+      { value: "Guidance spirituelle", label: "Guidance spirituelle" },
+      { value: "Logement / Sécurité", label: "Logement / Sécurité" },
+      { value: "Communauté / Isolement", label: "Communauté / Isolement" },
+      { value: "Dépression / Santé mentale", label: "Dépression / Santé mentale" },
     ],
     other: "Autre",
     specifyNeed: "Précisez le besoin...",
@@ -103,10 +111,18 @@ const translations = {
     ],
     needs: "Difficulties / Needs:",
     needsOptions: [
-      "Finances", "Health", "Work / Studies", "Family / Children",
-      "Relationships / Conflicts", "Miracle", "Deliverance",
-      "Addictions / Dependencies", "Spiritual guidance", "Housing / Safety",
-      "Community / Isolation", "Depression / Mental health",
+      { value: "Finances", label: "Finances" },
+      { value: "Santé", label: "Health" },
+      { value: "Travail / Études", label: "Work / Studies" },
+      { value: "Famille / Enfants", label: "Family / Children" },
+      { value: "Relations / Conflits", label: "Relationships / Conflicts" },
+      { value: "Miracle", label: "Miracle" },
+      { value: "Délivrance", label: "Deliverance" },
+      { value: "Addictions / Dépendances", label: "Addictions / Dependencies" },
+      { value: "Guidance spirituelle", label: "Spiritual guidance" },
+      { value: "Logement / Sécurité", label: "Housing / Safety" },
+      { value: "Communauté / Isolement", label: "Community / Isolation" },
+      { value: "Dépression / Santé mentale", label: "Depression / Mental health" },
     ],
     other: "Other",
     specifyNeed: "Please specify the need...",
@@ -571,11 +587,11 @@ export default function AddEvangelise({ onNewEvangelise }) {
           <div className="mt-4">
             <p className="font-semibold mb-2">{t.needs}</p>
             {t.needsOptions.map(b => (
-              <label key={b} className="flex items-center gap-3 mb-2">
-                <input type="checkbox" value={b} checked={formData.besoin.includes(b)}
-                  onChange={() => handleBesoinChange(b)}
+              <label key={b.value} className="flex items-center gap-3 mb-2">
+                <input type="checkbox" value={b.value} checked={formData.besoin.includes(b.value)}
+                  onChange={() => handleBesoinChange(b.value)}
                   className="w-5 h-5 rounded border-gray-400 cursor-pointer accent-indigo-600" />
-                <span>{b}</span>
+                <span>{b.label}</span>
               </label>
             ))}
             <label className="flex items-center gap-3 mb-2">

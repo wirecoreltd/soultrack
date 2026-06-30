@@ -155,7 +155,7 @@ export default function PricingPage() {
 
   // ── Profil connecté ─────────────────────────────────────────────────────
   const [profile, setProfile] = useState(null);
-
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const t = translations[lang];
 
   useEffect(() => {
@@ -164,32 +164,34 @@ export default function PricingPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // ── Profil : chargement + écoute des changements de session ────────────
-  useEffect(() => {
-    const loadProfile = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        setProfile(null);
-        return;
-      }
-
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, role, roles")
-        .eq("id", sessionData.session.user.id)
-        .single();
-
-      if (!error) setProfile(profileData);
-    };
-
-    loadProfile();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      loadProfile();
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
+      // ── Profil : chargement + écoute des changements de session ────────────
+      useEffect(() => {
+        const loadProfile = async () => {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (!sessionData?.session) {
+            setProfile(null);
+            setLoadingProfile(false);
+            return;
+          }
+    
+          const { data: profileData, error } = await supabase
+            .from("profiles")
+            .select("id, prenom, nom, role, roles")
+            .eq("id", sessionData.session.user.id)
+            .single();
+    
+          if (!error) setProfile(profileData);
+          setLoadingProfile(false);
+        };
+    
+        loadProfile();
+    
+        const { data: listener } = supabase.auth.onAuthStateChange(() => {
+          loadProfile();
+        });
+    
+        return () => listener.subscription.unsubscribe();
+      }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -240,7 +242,9 @@ export default function PricingPage() {
           </nav>
 
           <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
-            {profile ? (
+            {loadingProfile ? (
+              <div style={{ width: "120px", height: "34px" }} />
+            ) : profile ? (
               <>
                 <span
                   onClick={() => router.push("/hub")}
@@ -332,7 +336,7 @@ export default function PricingPage() {
               <span key={item.path} onClick={() => { router.push(item.path); setOpenMenu(false); }} style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>{item.label}</span>
             ))}
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
-              {profile ? (
+              {loadingProfile ? null : profile ? (
                 <>
                   <span
                     onClick={() => {

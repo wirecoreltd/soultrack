@@ -995,17 +995,18 @@ const getYesNo = (value) => {
   const renderMemberCard = (m) => {
     const isOpen = detailsOpen[m.id];
     const besoins = !m.besoin
-      ? "—"
-      : Array.isArray(m.besoin)
-      ? m.besoin.join(", ")
+  ? "—"
+  : (Array.isArray(m.besoin)
+      ? m.besoin
       : (() => {
           try {
             const arr = JSON.parse(m.besoin);
-            return Array.isArray(arr) ? arr.join(", ") : m.besoin;
+            return Array.isArray(arr) ? arr : [m.besoin];
           } catch {
-            return m.besoin;
+            return [m.besoin];
           }
-        })();
+        })()
+    ).map((b) => t.besoinOptions[b] || b).join(", ");
 
     return (
       <div

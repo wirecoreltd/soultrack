@@ -219,15 +219,7 @@ export default function AboutPage() {
 
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
-  
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    setProfile(null);
-    router.push("/login");
-  };  
-   
       {/* GLOWS */}
       <div style={{
         position: "absolute", width: "800px", height: "800px", borderRadius: "50%",
@@ -283,7 +275,6 @@ export default function AboutPage() {
           {/* BOUTONS desktop */}
           <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
             {loadingProfile ? (
-              // Rien, ou un skeleton léger pour éviter le saut de layout
               <div style={{ width: "180px", height: "34px" }} />
             ) : profile ? (
               <>
@@ -406,7 +397,7 @@ export default function AboutPage() {
               </button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
-              {profile ? (
+              {loadingProfile ? null : profile ? (
                 <>
                   <span
                     onClick={() => {

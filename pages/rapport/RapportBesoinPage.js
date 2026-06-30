@@ -212,6 +212,45 @@ const BESOIN_CONFIG = {
 };
 function getCfg(b) { return BESOIN_CONFIG[b] || BESOIN_CONFIG["Autres"]; }
 
+//-----------------------
+const BESOIN_LABELS = {
+  fr: {
+    "Finances": "Finances",
+    "Santé": "Santé", "Health": "Santé",
+    "Travail / Études": "Travail / Études", "Work / Studies": "Travail / Études",
+    "Famille / Enfants": "Famille / Enfants", "Family / Children": "Famille / Enfants",
+    "Relations / Conflits": "Relations / Conflits", "Relationships / Conflicts": "Relations / Conflits",
+    "Addictions / Dépendances": "Addictions / Dépendances", "Addictions / Dependencies": "Addictions / Dépendances",
+    "Guidance spirituelle": "Guidance spirituelle", "Spiritual Guidance": "Guidance spirituelle",
+    "Logement / Sécurité": "Logement / Sécurité", "Housing / Safety": "Logement / Sécurité",
+    "Communauté / Isolement": "Communauté / Isolement", "Community / Isolation": "Communauté / Isolement",
+    "Dépression / Santé mentale": "Dépression / Santé mentale", "Depression / Mental Health": "Dépression / Santé mentale",
+    "Miracle": "Miracle",
+    "Délivrance": "Délivrance", "Deliverance": "Délivrance",
+    "Others": "Autres", "Autres": "Autres",
+  },
+  en: {
+    "Finances": "Finances",
+    "Santé": "Health", "Health": "Health",
+    "Travail / Études": "Work / Studies", "Work / Studies": "Work / Studies",
+    "Famille / Enfants": "Family / Children", "Family / Children": "Family / Children",
+    "Relations / Conflits": "Relationships / Conflicts", "Relationships / Conflicts": "Relationships / Conflicts",
+    "Addictions / Dépendances": "Addictions / Dependencies", "Addictions / Dependencies": "Addictions / Dependencies",
+    "Guidance spirituelle": "Spiritual Guidance", "Spiritual Guidance": "Spiritual Guidance",
+    "Logement / Sécurité": "Housing / Safety", "Housing / Safety": "Housing / Safety",
+    "Communauté / Isolement": "Community / Isolation", "Community / Isolation": "Community / Isolation",
+    "Dépression / Santé mentale": "Depression / Mental Health", "Depression / Mental Health": "Depression / Mental Health",
+    "Miracle": "Miracle",
+    "Délivrance": "Deliverance", "Deliverance": "Deliverance",
+    "Others": "Others", "Autres": "Others",
+  },
+};
+
+function getBesoinLabel(besoin, lang) {
+  if (!besoin) return "—";
+  const map = BESOIN_LABELS[lang] || BESOIN_LABELS.fr;
+  return map[besoin] || besoin;
+}
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
 function BlocKpiGlobaux({ besoinsCount, totalMembres, t }) {
   const lignes = Object.entries(besoinsCount);
@@ -308,24 +347,24 @@ function BlocStatut({ besoinsCount, t }) {
   );
 }
 
-// ─── BLOC CLASSEMENT BESOINS ───────────────────────────────────
-function BlocClassement({ besoinsCount, t }) {
-  const lignes = Object.entries(besoinsCount).sort((a, b) => b[1].total - a[1].total);
-  const maxTotal = Math.max(...lignes.map(([, v]) => v.total), 1);
-
-  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">—</p>;
-
-  return (
-    <div className="flex flex-col gap-2">
-      {lignes.map(([besoin, data]) => {
-        const cfg = getCfg(besoin);
-        return (
-          <div key={besoin} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 w-44 flex-shrink-0">
-                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
-                <p className="text-sm text-white truncate">{besoin}</p>
-              </div>
+    // ─── BLOC CLASSEMENT BESOINS ───────────────────────────────────
+    function BlocClassement({ besoinsCount, t, lang }) {
+      const lignes = Object.entries(besoinsCount).sort((a, b) => b[1].total - a[1].total);
+      const maxTotal = Math.max(...lignes.map(([, v]) => v.total), 1);
+    
+      if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">—</p>;
+    
+      return (
+        <div className="flex flex-col gap-2">
+          {lignes.map(([besoin, data]) => {
+            const cfg = getCfg(besoin);
+            return (
+              <div key={besoin} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 w-44 flex-shrink-0">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
+                    <p className="text-sm text-white truncate">{getBesoinLabel(besoin, lang)}</p>
+                  </div>
               <BarreProgression pct={(data.total / maxTotal) * 100} color={cfg.bar} />
               <p className="text-sm font-bold text-orange-300 w-8 text-right">{data.total}</p>
             </div>
@@ -341,24 +380,24 @@ function BlocClassement({ besoinsCount, t }) {
     </div>
   );
 }
-
-// ─── CARTE BESOIN ──────────────────────────────────────────────
-function CarteBesoin({ besoin, data, totalMembres, onNavigate, t }) {
-  const [open, setOpen] = useState(false);
-  const cfg = getCfg(besoin);
-  const pctResolu = data.total > 0 ? Math.round((data.resolu / data.total) * 100) : 0;
-  const pctMembres = totalMembres > 0 ? ((data.total / totalMembres) * 100).toFixed(1) : 0;
-
-  return (
-    <div className="bg-white/10 rounded-2xl overflow-hidden">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3"
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
-          <span className="font-semibold text-white text-sm truncate">{besoin}</span>
-        </div>
+      
+      // ─── CARTE BESOIN ──────────────────────────────────────────────
+      function CarteBesoin({ besoin, data, totalMembres, onNavigate, t, lang }) {
+        const [open, setOpen] = useState(false);
+        const cfg = getCfg(besoin);
+        const pctResolu = data.total > 0 ? Math.round((data.resolu / data.total) * 100) : 0;
+        const pctMembres = totalMembres > 0 ? ((data.total / totalMembres) * 100).toFixed(1) : 0;
+      
+        return (
+          <div className="bg-white/10 rounded-2xl overflow-hidden">
+            <button
+              onClick={() => setOpen(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
+                <span className="font-semibold text-white text-sm truncate">{getBesoinLabel(besoin, lang)}</span>
+              </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge color="orange">{data.total}</Badge>
           <Badge color="yellow">S:{data.enSuivi}</Badge>
@@ -669,10 +708,11 @@ else count[label].enSuivi++;
             </div>
             <div>
               <SectionTitle>{t.sectionClassement}</SectionTitle>
-              <BlocClassement besoinsCount={besoinsCount} t={t} />
+              <BlocClassement besoinsCount={besoinsCount} t={t} lang={lang} />
             </div>
           </div>
         ) : (
+          ) : (
           <div className="flex flex-col gap-3">
             {Object.entries(besoinsCount).map(([besoin, data]) => (
               <CarteBesoin
@@ -682,6 +722,7 @@ else count[label].enSuivi++;
                 totalMembres={totalMembres}
                 onNavigate={handleNavigate}
                 t={t}
+                lang={lang}
               />
             ))}
           </div>

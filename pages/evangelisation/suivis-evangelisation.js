@@ -55,10 +55,12 @@ const translations = {
       "Réconciliation": "Réconciliation",
     },
     typeEvangOptions: {
-      "evangélisation": "Évangélisation",
-      "campagne": "Campagne",
-      "réseaux": "Réseaux",
-      "autre": "Autre",
+      "Individuel": "Individuel",
+      "Sortie de groupe": "Sortie de groupe",
+      "Campagne d'évangélisation": "Campagne d'évangélisation",
+      "Évangélisation de rue": "Évangélisation de rue",
+      "Évangélisation maison": "Évangélisation maison",
+      "Évangélisation stade": "Évangélisation stade",
     },
     besoinOptions: {
       "Finances": "Finances",
@@ -141,10 +143,12 @@ const translations = {
       "Réconciliation": "Reconciliation",
     },
     typeEvangOptions: {
-      "evangélisation": "Evangelisation",
-      "campagne": "Campaign",
-      "réseaux": "Social networks",
-      "autre": "Other",
+      "Individuel": "Individual",
+      "Sortie de groupe": "Group outing",
+      "Campagne d'évangélisation": "Evangelism campaign",
+      "Évangélisation de rue": "Street evangelism",
+      "Évangélisation maison": "House evangelism",
+      "Évangélisation stade": "Stadium evangelism",
     },
     besoinOptions: {
       "Finances": "Finances",
@@ -762,9 +766,6 @@ const getMapLabel = (map, value) => {
           const famille = famillesActive
             ? familles.find((f) => f.id === m.famille_id)
             : null;
-
-          console.log("RAW:", JSON.stringify(m.type_evangelisation));
-          console.log("MAP KEYS:", Object.keys(t.typeEvangOptions));
 
           return (
             <div

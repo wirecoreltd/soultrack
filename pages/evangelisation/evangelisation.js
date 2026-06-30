@@ -41,6 +41,14 @@ const translations = {
     appelWhatsApp: "📱 Appel WhatsApp",
     messageWhatsApp: "💬 Message WhatsApp",
     typeEvang: "📣 Type d'Evangélisation :",
+    typeEvangOptions: [
+      { value: "Individuel",                    label: "Individuel" },
+      { value: "Sortie de groupe",              label: "Sortie de groupe" },
+      { value: "Campagne d'évangélisation",     label: "Campagne d'évangélisation" },
+      { value: "Évangélisation de rue",         label: "Évangélisation de rue" },
+      { value: "Évangélisation maison",         label: "Évangélisation maison" },
+      { value: "Évangélisation stade",          label: "Évangélisation stade" },
+    ],
     identite: "👤 Identité",
     civilite: "🎗️ Civilité :",
     age: "⏳ Tranche d'age :",
@@ -50,6 +58,10 @@ const translations = {
     vieSpirituelle: "🕊 Vie spirituelle",
     priereSalut: "🙏 Prière du salut :",
     typeConversion: "☀️ Type de conversion :",
+    conversionOptions: [
+      { value: "Nouveau converti", label: "Nouveau converti" },
+      { value: "Réconciliation",   label: "Réconciliation" },
+    ],
     soinPastoral: "❤️‍🩹 Soin pastoral",
     besoins: "❓ Difficultés / Besoins :",
     infosSup: "📝 Infos supplémentaires :",
@@ -126,6 +138,14 @@ const translations = {
     appelWhatsApp: "📱 WhatsApp Call",
     messageWhatsApp: "💬 WhatsApp Message",
     typeEvang: "📣 Evangelism type:",
+    typeEvangOptions: [
+      { value: "Individuel",                    label: "Individual" },
+      { value: "Sortie de groupe",              label: "Group outing" },
+      { value: "Campagne d'évangélisation",     label: "Evangelism campaign" },
+      { value: "Évangélisation de rue",         label: "Street evangelism" },
+      { value: "Évangélisation maison",         label: "House evangelism" },
+      { value: "Évangélisation stade",          label: "Stadium evangelism" },
+    ],
     identite: "👤 Identity",
     civilite: "🎗️ Gender:",
     age: "⏳ Age range:",
@@ -135,6 +155,10 @@ const translations = {
     vieSpirituelle: "🕊 Spiritual life",
     priereSalut: "🙏 Salvation prayer:",
     typeConversion: "☀️ Conversion type:",
+    conversionOptions: [
+      { value: "Nouveau converti", label: "New convert" },
+      { value: "Réconciliation",   label: "Reconciliation" },
+    ],
     soinPastoral: "❤️‍🩹 Pastoral care",
     besoins: "❓ Difficulties / Needs:",
     infosSup: "📝 Additional info:",
@@ -199,6 +223,13 @@ function EvangelisationContent() {
   const { highlight } = router.query;
   const { lang } = useLang();
   const t = translations[lang];
+
+  // ✅ Conversion valeur stockée (toujours en français) -> label traduit
+  const getLabel = (options, value) => {
+    if (!value) return "—";
+    const found = options.find((o) => o.value === value);
+    return found ? found.label : value;
+  };
 
   const { profile, loading: loadingProfile, error: profileError, scopedQuery } = useChurchScope();
   const famillesActive = useFeature("familles");
@@ -517,7 +548,7 @@ function EvangelisationContent() {
       contactsToSend.forEach((m, i) => {
         message += "────────────────────\n";
         if (contactsToSend.length > 1) message += `${t.msgPersonne} ${i + 1}\n`;
-        message += `${t.msgTypeEvang} ${m.type_evangelisation || "—"}
+        message += `${t.msgTypeEvang} ${getLabel(t.typeEvangOptions, m.type_evangelisation)}
 ${t.msgDate} ${formatDate(m.date_evangelise)}  
 ${t.msgCivilite} ${m.sexe || "—"}  
 ${t.msgNom} ${m.prenom} ${m.nom}      
@@ -526,7 +557,7 @@ ${t.msgVille} ${m.ville || "—"}
 ${t.msgTel} ${m.telephone || "—"}  
 ${t.msgWa} ${m.is_whatsapp ? t.oui : t.non}     
 ${t.msgPriere} ${m.priere_salut ? t.oui : "—"}      
-${t.msgConversion} ${m.type_conversion || "—"}               
+${t.msgConversion} ${getLabel(t.conversionOptions, m.type_conversion)}               
 ${t.msgBesoins} ${formatBesoin(m.besoin)}      
 ${t.msgInfos} ${m.infos_supplementaires || "—"}
 
@@ -664,7 +695,7 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
                 {detailsOpen[member.id] && (
                   <div className="text-black text-sm mt-3 w-full space-y-4">
                     <div>
-                      <p>{t.typeEvang} {member.type_evangelisation || ""}</p>
+                      <p>{t.typeEvang} {getLabel(t.typeEvangOptions, member.type_evangelisation)}</p>
                     </div>
                     <hr />
                     <div>
@@ -677,7 +708,7 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
                     <div>
                       <p className="font-bold text-[#2E3192] mb-1">{t.vieSpirituelle}</p>
                       <p>{t.priereSalut} {member.priere_salut ? t.oui : "—"}</p>
-                      <p>{t.typeConversion} {member.type_conversion || "—"}</p>
+                      <p>{t.typeConversion} {getLabel(t.conversionOptions, member.type_conversion)}</p>
                     </div>
                     <hr />
                     <div>

@@ -97,14 +97,22 @@ const translations = {
     rapportMaj: "✅ Rapport mis à jour !",
 
     // Types d'évangélisation
-    typesEvangelisation: [
-      "Individuel",
-      "Sortie de groupe",
-      "Campagne d'évangélisation",
-      "Évangélisation de rue",
-      "Évangélisation maison",
-      "Évangélisation stade",
-    ],
+   typesEvangelisation: [
+    "Individuel",
+    "Sortie de groupe",
+    "Campagne d'évangélisation",
+    "Évangélisation de rue",
+    "Évangélisation maison",
+    "Évangélisation stade",
+  ],
+  typeEvangOptions: {
+    "Individuel": "Individuel",
+    "Sortie de groupe": "Sortie de groupe",
+    "Campagne d'évangélisation": "Campagne d'évangélisation",
+    "Évangélisation de rue": "Évangélisation de rue",
+    "Évangélisation maison": "Évangélisation maison",
+    "Évangélisation stade": "Évangélisation stade",
+  },
 
     // Mois
     mois: ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"],
@@ -198,13 +206,21 @@ const translations = {
 
     // Types d'évangélisation (kept in French as stored values in DB)
     typesEvangelisation: [
-      "Individuel",
-      "Sortie de groupe",
-      "Campagne d'évangélisation",
-      "Évangélisation de rue",
-      "Évangélisation maison",
-      "Évangélisation stade",
-    ],
+    "Individuel",
+    "Sortie de groupe",
+    "Campagne d'évangélisation",
+    "Évangélisation de rue",
+    "Évangélisation maison",
+    "Évangélisation stade",
+  ],
+  typeEvangOptions: {
+    "Individuel": "Individual",
+    "Sortie de groupe": "Group outing",
+    "Campagne d'évangélisation": "Evangelism campaign",
+    "Évangélisation de rue": "Street evangelism",
+    "Évangélisation maison": "House evangelism",
+    "Évangélisation stade": "Stadium evangelism",
+  },
 
     // Mois
     mois: ["January","February","March","April","May","June","July","August","September","October","November","December"],
@@ -224,6 +240,10 @@ function formatDateCourt(dateStr) {
 }
 function getMonthName(monthIndex, moisArray) {
   return moisArray[monthIndex] || "";
+}
+function getMapLabel(map, value) {
+  if (!value) return "—";
+  return map[value] || value;
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
@@ -362,7 +382,7 @@ function BlocParType({ filteredEvangelises, rapports, t }) {
       {lignes.map(([type, { nb, convertis }]) => (
         <div key={type} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
           <div className="flex items-center gap-3">
-            <p className="text-sm text-white w-40 flex-shrink-0 truncate">{type}</p>
+            <p className="text-sm text-white w-40 flex-shrink-0 truncate">{type === t.nonDefini ? type : getMapLabel(t.typeEvangOptions, type)}</p>
             <BarreProgression pct={(nb / max) * 100} color="bg-blue-400" />
             <span className="text-sm font-bold text-white w-8 text-right">{nb}</span>
           </div>
@@ -430,7 +450,7 @@ function CarteSession({ r, onEdit, t }) {
       <button onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5">
-          <span className="font-semibold text-white text-sm">{r.type_evangelisation || t.nonDefini}</span>
+          <span className="font-semibold text-white text-sm">{getMapLabel(t.typeEvangOptions, r.type_evangelisation) || t.nonDefini}</span>
           <span className="text-[11px] text-white/40">{formatDateFr(r.date_evangelise)}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -491,7 +511,7 @@ function OngletParType({ rapports, onEdit, t }) {
             <button onClick={() => setExpandedTypes(p => ({ ...p, [type]: !p[type] }))}
               className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
               <div className="flex flex-col gap-0.5">
-                <span className="font-semibold text-white text-sm">{type}</span>
+                <span className="font-semibold text-white text-sm">{type === t.nonDefini ? type : getMapLabel(t.typeEvangOptions, type)}</span>
                 <span className="text-[11px] text-white/40">
                   {rows.length} {rows.length > 1 ? t.rapportPlurielS : t.rapportPluriel}
                 </span>
@@ -714,7 +734,7 @@ export default function RapportEvangelisation() {
               className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
               <option value="" className="bg-[#2a2d80]">{t.tousTypes}</option>
               {t.typesEvangelisation.map(type => (
-                <option key={type} value={type} className="bg-[#2a2d80]">{type}</option>
+                <option key={type} value={type} className="bg-[#2a2d80]">{getMapLabel(t.typeEvangOptions, type)}</option>
               ))}
             </select>
           </div>

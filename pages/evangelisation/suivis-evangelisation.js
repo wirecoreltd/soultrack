@@ -481,7 +481,7 @@ function SuivisEvangelisationContent() {
     return "#ccc";
   };
 
-  vconst formatBesoin = (b) => {
+  const formatBesoin = (b) => {
   if (!b) return "—";
   let arr = [];
   try {

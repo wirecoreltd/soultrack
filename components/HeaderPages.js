@@ -260,7 +260,7 @@ export default function HeaderPages() {
               className="w-12 h-12 object-contain group-hover:opacity-80 transition"
               alt="Logo église"
             />
-            <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-white border-2 border-[#333699]" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-white border-[1.5px] border-[#333699]/50" />
           </div>
         )}
 

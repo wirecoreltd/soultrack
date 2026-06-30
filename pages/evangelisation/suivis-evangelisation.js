@@ -707,7 +707,7 @@ const getMapLabel = (map, value) => {
       prev.map((s) => (s.id === id ? { ...s, ...updates } : s))
     );
   };
-
+  
   /* ================= RENDER ================= */
   if (loading)
     return <p className="text-center mt-10">{t.loading}</p>;
@@ -762,6 +762,9 @@ const getMapLabel = (map, value) => {
           const famille = famillesActive
             ? familles.find((f) => f.id === m.famille_id)
             : null;
+
+          console.log("RAW:", JSON.stringify(m.type_evangelisation));
+          console.log("MAP KEYS:", Object.keys(t.typeEvangOptions));
 
           return (
             <div

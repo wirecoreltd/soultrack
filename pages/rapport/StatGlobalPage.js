@@ -578,7 +578,7 @@ function BlocVueEnsemble({
 
       {/* Répartition H/F/J */}
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-        <p className="text-sm text-white/50 font-semibold">{t.repartitionTitle}</p>
+        <p className="text-sm text-white/80 font-semibold">{t.repartitionTitle}</p>
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: t.hommes, val: totaux.culteHommes, color: "text-blue-300", bg: "bg-blue-900/40" },
@@ -1342,8 +1342,10 @@ function StatGlobalPage() {
         ) : onglet === "ensemble" ? (
           <div className="flex flex-col gap-4">
             <SectionTitle>
-              {t.synthese} — {allEglises.length}{" "}
-              {allEglises.length > 1 ? t.eglises : t.eglise}
+              <p className="text-white/80 text-sm font-semibold">
+  {t.synthese} — {allEglises.length}{" "}
+  {allEglises.length > 1 ? t.eglises : t.eglise}
+</p>
             </SectionTitle>
             <BlocVueEnsemble
               allEglises={allEglises}

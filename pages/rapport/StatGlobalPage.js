@@ -521,45 +521,65 @@ function BlocVueEnsemble({
         />
       </div>
 
-      {/* Ligne 2 : Total culte + Évangélisés + Baptêmes */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <KpiCard
-          label={t.kpiTotalCulte}
-          value={totalCulteGlobal}
-          sub={t.kpiTotalCulteSub}
-          accent="green"
-          delta={calcDelta(totalCulteGlobal, prevCulteGlobal)}
-        />
-        <KpiCard
-          label={t.kpiEvangelises}
-          value={totalEvangelisation}
-          sub={t.kpiEvangelisesSub}
-          accent="pink"
-        />
-        <KpiCard
-          label={t.kpiBaptemes}
-          value={totalBapteme}
-          sub={t.kpiBaptemesSub}
-          accent="purple"
-        />
-      </div>
-
-      {/* Ligne 3 : Taux conversion + Serviteurs */}
-      <div className="grid grid-cols-2 gap-3">
-        <KpiCard
-          label={t.kpiTauxConversion}
-          value={`${tauxConversion}%`}
-          sub={t.kpiTauxConversionSub}
-          accent="yellow"
-        />
-        <KpiCard
-          label={t.kpiServiteurs}
-          value={totalServiteurs}
-          sub={t.kpiServiteursSubFn(tauxEngagement)}
-          accent="teal"
-          delta={calcDelta(totalServiteurs, prevServiteurs)}
-        />
-      </div>
+      {/* Ligne 2 : Total culte + Évangélisés */}
+        <div className="grid grid-cols-2 gap-3">
+          <KpiCard
+            label={t.kpiTotalCulte}
+            value={totalCulteGlobal}
+            sub={t.kpiTotalCulteSub}
+            accent="green"
+            delta={calcDelta(totalCulteGlobal, prevCulteGlobal)}
+          />
+          <KpiCard
+            label={t.kpiEvangelises}
+            value={totalEvangelisation}
+            sub={t.kpiEvangelisesSub}
+            accent="pink"
+          />
+        </div>
+        
+        {/* Ligne 3 : Baptêmes + Serviteurs */}
+        <div className="grid grid-cols-2 gap-3">
+          <KpiCard
+            label={t.kpiBaptemes}
+            value={totalBapteme}
+            sub={t.kpiBaptemesSub}
+            accent="purple"
+          />
+          <KpiCard
+            label={t.kpiServiteurs}
+            value={totalServiteurs}
+            sub={t.kpiServiteursSubFn(tauxEngagement)}
+            accent="teal"
+            delta={calcDelta(totalServiteurs, prevServiteurs)}
+          />
+        </div>
+        
+        {/* Ligne 4 : Conversions (remplace Taux de conversion) — carte KPI compacte, pleine largeur */}
+        <div className="bg-white/10 rounded-2xl px-4 py-3.5 flex flex-col gap-2.5">
+          <div className="flex items-baseline justify-between">
+            <p className="text-xs text-white/65">{t.sectionConversions}</p>
+            <p className="text-2xl font-bold text-yellow-300 leading-none">{cd.total}</p>
+          </div>
+          <div className="grid grid-cols-4 gap-1.5">
+            <div className="bg-white/5 rounded-lg px-1 py-1.5 text-center">
+              <p className="text-sm font-bold text-yellow-300 leading-none">{cd.egliseNC}</p>
+              <p className="text-[9px] text-white/40 mt-1 leading-tight">{t.eglise} NC</p>
+            </div>
+            <div className="bg-white/5 rounded-lg px-1 py-1.5 text-center">
+              <p className="text-sm font-bold text-blue-300 leading-none">{cd.egliseRecon}</p>
+              <p className="text-[9px] text-white/40 mt-1 leading-tight">{t.eglise} Réc.</p>
+            </div>
+            <div className="bg-white/5 rounded-lg px-1 py-1.5 text-center">
+              <p className="text-sm font-bold text-yellow-300 leading-none">{cd.evangNC}</p>
+              <p className="text-[9px] text-white/40 mt-1 leading-tight">Evang. NC</p>
+            </div>
+            <div className="bg-white/5 rounded-lg px-1 py-1.5 text-center">
+              <p className="text-sm font-bold text-blue-300 leading-none">{cd.evangRecon}</p>
+              <p className="text-[9px] text-white/40 mt-1 leading-tight">Evang. Réc.</p>
+            </div>
+          </div>
+        </div>
 
       {/* Répartition H/F/J */}
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
@@ -647,32 +667,9 @@ function BlocVueEnsemble({
             <Badge color="green">{cd.total}</Badge>
           </div>
         </div>
-      )}
-
-      {/* Entonnoir */}
-      {totalCulteGlobal > 0 && (
-        <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-2">
-          <p className="text-xs text-white/50 font-semibold mb-1">{t.entonnoirTitle}</p>
-          {[
-            { label: t.presencesCulte, val: totalCulteGlobal, color: "bg-emerald-400" },
-            { label: t.evangelises, val: totalEvangelisation, color: "bg-pink-400" },
-            { label: t.baptises, val: totalBapteme, color: "bg-purple-400" },
-            { label: t.serviteurs, val: totalServiteurs, color: "bg-yellow-400" },
-          ].map(({ label, val, color }) => (
-            <div key={label} className="flex items-center gap-3">
-              <p className="text-xs text-white/50 w-28 flex-shrink-0">{label}</p>
-              <BarreProgression pct={Math.round((val / totalCulteGlobal) * 100)} color={color} />
-              <span className="text-xs text-white font-semibold w-8 text-right">{val}</span>
-              <span className="text-[10px] text-white/30 w-8 text-right">
-                {Math.round((val / totalCulteGlobal) * 100)}%
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      )}       
 
       <CarteTop5Besoins besoinsGlobaux={besoinsGlobaux} t={t} />
-
       {/* Classement des églises */}
       {allEglises.length > 1 && (
         <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-2">

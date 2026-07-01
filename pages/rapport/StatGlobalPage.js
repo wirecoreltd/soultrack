@@ -51,7 +51,7 @@ const translations = {
     kpiMembresActifsSub: "dans le réseau",
     kpiTauxPresence: "Taux de présence",
     kpiTauxPresenceSub: "moyenne par culte",
-    kpiTotalCulte: "Total présences culte",
+    kpiTotalCulte: "Participation totale aux services",
     kpiTotalCulteSub: "H+F+J+Enf+Conn.",
     kpiMoyParEglise: "Moy. par église",
     kpiMoyParEgliseSub: "présences/église",
@@ -72,7 +72,7 @@ const translations = {
     kpiServiteurs: "Serviteurs",
     kpiServiteursSubFn: (pct) => `${pct}% des présents`,
     vsPeriodePrecedente: "vs période préc.",
-    repartitionTitle: "Répartition H / F / J (culte)",
+    repartitionTitle: "H / F / J (Participation Services)",
     hommes: "Hommes",
     femmes: "Femmes",
     jeunes: "Jeunes",
@@ -156,7 +156,7 @@ const translations = {
     kpiMembresActifsSub: "in the network",
     kpiTauxPresence: "Attendance rate",
     kpiTauxPresenceSub: "average per service",
-    kpiTotalCulte: "Total worship attendance",
+    kpiTotalCulte: "Total Service Attendance",
     kpiTotalCulteSub: "M+F+Y+Ch+Online",
     kpiMoyParEglise: "Avg. per church",
     kpiMoyParEgliseSub: "attendance/church",
@@ -177,7 +177,7 @@ const translations = {
     kpiServiteurs: "Servants",
     kpiServiteursSubFn: (pct) => `${pct}% of attendees`,
     vsPeriodePrecedente: "vs prev. period",
-    repartitionTitle: "M / F / Y breakdown (worship)",
+    repartitionTitle: "M / F / Y Attendance Breakdown",
     hommes: "Men",
     femmes: "Women",
     jeunes: "Youth",
@@ -578,7 +578,7 @@ function BlocVueEnsemble({
 
       {/* Répartition H/F/J */}
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-        <p className="text-xs text-white/50 font-semibold">{t.repartitionTitle}</p>
+        <p className="text-sm text-white/50 font-semibold">{t.repartitionTitle}</p>
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: t.hommes, val: totaux.culteHommes, color: "text-blue-300", bg: "bg-blue-900/40" },
@@ -596,13 +596,16 @@ function BlocVueEnsemble({
           })}
         </div>
         {totalCulte > 0 && (
-          <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
-            <div className="bg-blue-400 rounded-l-full transition-all"
-              style={{ width: `${Math.round((totaux.culteHommes / totalCulte) * 100)}%` }} />
-            <div className="bg-pink-400 transition-all"
-              style={{ width: `${Math.round((totaux.culteFemmes / totalCulte) * 100)}%` }} />
-            <div className="bg-amber-400 rounded-r-full transition-all"
-              style={{ width: `${Math.round((totaux.culteJeunes / totalCulte) * 100)}%` }} />
+          <div className="flex h-6 rounded-full overflow-hidden gap-0.5">
+            <div className="bg-blue-400 rounded-l-full flex items-center justify-center text-white text-sm font-semibold transition-all"
+              style={{ width: `${Math.round((totaux.culteHommes / totalCulte) * 100)}%` }}>{Math.round((totaux.culteHommes / totalCulte) * 100)}%
+            </div>        
+            <div className="bg-pink-400 flex items-center justify-center text-white text-sm font-semibold transition-all" style={{ width: `${Math.round((totaux.culteFemmes / totalCulte) * 100)}%` }}
+            > {Math.round((totaux.culteFemmes / totalCulte) * 100)}% </div>        
+            <div className="bg-amber-400 rounded-r-full flex items-center justify-center text-white text-sm font-semibold transition-all"
+              style={{ width: `${Math.round((totaux.culteJeunes / totalCulte) * 100)}%` }}>
+              {Math.round((totaux.culteJeunes / totalCulte) * 100)}%
+            </div>
           </div>
         )}
       </div>

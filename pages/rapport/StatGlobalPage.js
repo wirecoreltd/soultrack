@@ -453,8 +453,10 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
     totalCulteGlobal > 0 ? Math.round((totaux.culteNC / totalCulteGlobal) * 100) : 0;
   const tauxEngagement =
     totalCulteGlobal > 0 ? Math.round((totalServiteurs / totalCulteGlobal) * 100) : 0;
-  const tauxPresence =
-    totalMembresActifs > 0 ? Math.round((totalCulteGlobal / totalMembresActifs) * 100) : 0;
+ const tauxPresence =
+    totalMembresActifs > 0 && nombreCultes > 0
+      ? Math.round((totalCulteGlobal / nombreCultes / totalMembresActifs) * 100)
+      : 0;
 
   const d = prevTotaux;
   const prevCulteGlobal = d
@@ -838,6 +840,15 @@ function StatGlobalPage() {
     const cellulesAvecMembres = new Set((membresActifs || []).map((m) => m.cellule_id));
     return toutesCellules.filter((c) => cellulesAvecMembres.has(c.id));
   };
+
+  const { data: sessionsData } = await supabase
+  .from("attendance")
+  .select("id, date")
+  .in("eglise_id", egliseIds)
+  .gte("date", debut || "1900-01-01")
+  .lte("date", fin || "2100-01-01");
+
+const nombreCultes = sessionsData?.length || 0;
 
   // ── Agréger les stats ──
   const buildStatsFromData = (

@@ -469,9 +469,6 @@ function BlocVueEnsemble({
   // Toutes les églises (y compris root) pour les calculs de moyennes
   const nbEglisesTotal = allEglises.length;
 
- const moyenneCulteParEglise =
-  nbEglisesSupervisees > 0 ? Math.round(totalCulteGlobal / nbEglisesSupervisees) : 0;
-
   // ── Conversions réelles : basées sur "priere_salut" dans membres_complets (nouveaux membres
   // rejoignant l'église) et dans evangelises (personnes touchées lors de l'évangélisation).
   // On distingue "Nouveau converti" (première fois) de "Réconciliation" (retour à la foi).
@@ -481,7 +478,7 @@ function BlocVueEnsemble({
   const tauxConversion =
     totalCulteGlobal > 0 ? Math.round((cd.total / totalCulteGlobal) * 100) : 0;
   const tauxEngagement =
-  totalMembresActifs > 0 ? Math.round((totalServiteurs / totalMembresActifs) * 100) : 0;
+    totalMembresActifs > 0 ? Math.round((totalServiteurs / totalMembresActifs) * 100) : 0;
 
   // ── Taux de présence : calculé en amont dans fetchStats à partir de la table `presences`
   // (moyenne, sur chaque culte, du % de membres actifs réellement présents)
@@ -491,10 +488,7 @@ function BlocVueEnsemble({
   const prevCulteGlobal = d
     ? d.culteHommes + d.culteFemmes + d.culteJeunes + d.culteEnfants + d.culteConnectes
     : null;
-  const prevEvangelisation = d ? d.evangH + d.evangF : null;
-  const prevBapteme = d ? d.baptemeH + d.baptemeF : null;
   const prevServiteurs = d ? d.servH + d.servF : null;
-  const prevMoy = d && nbEglisesSupervisees > 0 ? Math.round(prevCulteGlobal / nbEglisesSupervisees) : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -527,8 +521,8 @@ function BlocVueEnsemble({
         />
       </div>
 
-      {/* Ligne 2 : Total culte + Moy. par église + Évangélisés + Baptêmes */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Ligne 2 : Total culte + Évangélisés + Baptêmes */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <KpiCard
           label={t.kpiTotalCulte}
           value={totalCulteGlobal}
@@ -537,25 +531,16 @@ function BlocVueEnsemble({
           delta={calcDelta(totalCulteGlobal, prevCulteGlobal)}
         />
         <KpiCard
-          label={t.kpiMoyParEglise}
-          value={moyenneCulteParEglise}
-          sub={t.kpiMoyParEgliseSub}
-          accent="blue"
-          delta={calcDelta(moyenneCulteParEglise, prevMoy)}
-        />
-        <KpiCard
           label={t.kpiEvangelises}
           value={totalEvangelisation}
           sub={t.kpiEvangelisesSub}
           accent="pink"
-          delta={calcDelta(totalEvangelisation, prevEvangelisation)}
         />
         <KpiCard
           label={t.kpiBaptemes}
           value={totalBapteme}
           sub={t.kpiBaptemesSub}
           accent="purple"
-          delta={calcDelta(totalBapteme, prevBapteme)}
         />
       </div>
 
@@ -596,6 +581,73 @@ function BlocVueEnsemble({
           })}
         </div>
       </div>
+
+      {/* Conversions (prière du salut) */}
+      {cd.total > 0 && (
+        <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-4">
+          <p className="text-sm text-white/80 font-semibold">{t.sectionConversions}</p>
+
+          {/* Venu à l'église */}
+          <div className="flex flex-col gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-emerald-300">
+              {t.conversionsSourceEglise}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white/5 rounded-xl px-3 py-2.5 flex flex-col gap-0.5">
+                <span className="text-[11px] text-white/65">{t.chipNouveauxConvertis}</span>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-lg font-bold text-yellow-300">{cd.egliseNC}</span>
+                  <span className="text-[11px] text-white/50">
+                    {totalCulteGlobal > 0 ? Math.round((cd.egliseNC / totalCulteGlobal) * 100) : 0}%
+                  </span>
+                </div>
+              </div>
+              <div className="bg-white/5 rounded-xl px-3 py-2.5 flex flex-col gap-0.5">
+                <span className="text-[11px] text-white/65">{t.chipReconciliations}</span>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-lg font-bold text-blue-300">{cd.egliseRecon}</span>
+                  <span className="text-[11px] text-white/50">
+                    {totalCulteGlobal > 0 ? Math.round((cd.egliseRecon / totalCulteGlobal) * 100) : 0}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Évangélisation */}
+          <div className="flex flex-col gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-pink-300">
+              {t.conversionsSourceEvang}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white/5 rounded-xl px-3 py-2.5 flex flex-col gap-0.5">
+                <span className="text-[11px] text-white/65">{t.chipNouveauxConvertis}</span>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-lg font-bold text-yellow-300">{cd.evangNC}</span>
+                  <span className="text-[11px] text-white/50">
+                    {totalCulteGlobal > 0 ? Math.round((cd.evangNC / totalCulteGlobal) * 100) : 0}%
+                  </span>
+                </div>
+              </div>
+              <div className="bg-white/5 rounded-xl px-3 py-2.5 flex flex-col gap-0.5">
+                <span className="text-[11px] text-white/65">{t.chipReconciliations}</span>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-lg font-bold text-blue-300">{cd.evangRecon}</span>
+                  <span className="text-[11px] text-white/50">
+                    {totalCulteGlobal > 0 ? Math.round((cd.evangRecon / totalCulteGlobal) * 100) : 0}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Total */}
+          <div className="flex items-center justify-between border-t border-white/10 pt-2">
+            <span className="text-xs text-white font-semibold">{t.conversionsTotal}</span>
+            <Badge color="green">{cd.total}</Badge>
+          </div>
+        </div>
+      )}
 
       {/* Entonnoir */}
       {totalCulteGlobal > 0 && (
@@ -828,6 +880,8 @@ function StatGlobalPage() {
   // ── Taux de présence calculé à partir de la table `presences`
   // (% moyen de membres actifs réellement présents à chaque culte)
   const [tauxPresenceMoyen, setTauxPresenceMoyen] = useState(0);
+  // ── Détail des conversions (prière du salut) : église vs évangélisation, dédupliqué
+  const [conversionsDetail, setConversionsDetail] = useState(null);
 
   useEffect(() => {
     fetchStats(false);
@@ -861,6 +915,55 @@ function StatGlobalPage() {
 
     const cellulesAvecMembres = new Set((membresActifs || []).map((m) => m.cellule_id));
     return toutesCellules.filter((c) => cellulesAvecMembres.has(c.id));
+  };
+
+  // ── Conversions (prière du salut) ──
+  // Deux sources distinctes, sans doublon :
+  // 1. "Église" : nouveaux membres enregistrés dans membres_complets (priere_salut renseigné)
+  // 2. "Évangélisation" : personnes touchées lors des actions d'évangélisation, dédupliquées par id
+  // NOTE : adapte les noms de table/colonne ci-dessous à ton schéma exact si besoin.
+  const getConversions = async (egliseIds, debut, fin) => {
+    // ── Église (nouveaux membres) ──
+    let membresQuery = supabase
+      .from("membres_complets")
+      .select("id, eglise_id, priere_salut, date_creation")
+      .in("eglise_id", egliseIds)
+      .in("priere_salut", ["Nouveau converti", "Réconciliation"]);
+    if (debut) membresQuery = membresQuery.gte("date_creation", debut);
+    if (fin) membresQuery = membresQuery.lte("date_creation", fin);
+    const { data: membresData } = await membresQuery;
+
+    let egliseNC = 0;
+    let egliseRecon = 0;
+    (membresData || []).forEach((m) => {
+      if (m.priere_salut === "Nouveau converti") egliseNC++;
+      else if (m.priere_salut === "Réconciliation") egliseRecon++;
+    });
+
+    // ── Évangélisation (dédupliqué par evangelise_id) ──
+    let evangQuery = supabase
+      .from("evangelises")
+      .select("id, eglise_id, priere_salut, date")
+      .in("eglise_id", egliseIds)
+      .in("priere_salut", ["Nouveau converti", "Réconciliation"]);
+    if (debut) evangQuery = evangQuery.gte("date", debut);
+    if (fin) evangQuery = evangQuery.lte("date", fin);
+    const { data: evangData } = await evangQuery;
+
+    const uniqueEvang = new Map();
+    (evangData || []).forEach((e) => {
+      if (!uniqueEvang.has(e.id)) uniqueEvang.set(e.id, e);
+    });
+
+    let evangNC = 0;
+    let evangRecon = 0;
+    uniqueEvang.forEach((e) => {
+      if (e.priere_salut === "Nouveau converti") evangNC++;
+      else if (e.priere_salut === "Réconciliation") evangRecon++;
+    });
+
+    const total = egliseNC + egliseRecon + evangNC + evangRecon;
+    return { egliseNC, egliseRecon, evangNC, evangRecon, total };
   };
 
   // ── Agréger les stats ──
@@ -1000,6 +1103,7 @@ function StatGlobalPage() {
         setTotalMembresActifs(0);
         setPrevTotaux(null);
         setTauxPresenceMoyen(0);
+        setConversionsDetail(null);
         setHasData(false);
         setLoading(false);
         return;
@@ -1025,14 +1129,16 @@ function StatGlobalPage() {
       };
 
       // ── Fetch période courante ──
-      const [attendanceData, formationData, baptemeData, evangeData, cellulesActivesData] =
+      const [attendanceData, formationData, baptemeData, evangeData, cellulesActivesData, conversionsData] =
         await Promise.all([
           tableFetch("attendance_stats", "mois", debut, fin),
           tableFetch("formations", "date_debut", debut, fin),
           tableFetch("baptemes", "date", debut, fin),
           tableFetch("rapport_evangelisation", "date", debut, fin),
           getCellulesActives(egliseIds),
+          getConversions(egliseIds, debut, fin),
         ]);
+      setConversionsDetail(conversionsData);
 
       // ── Taux de présence réel : basé sur la table `presences` ──
       // (une ligne par membre par session de culte, avec statut "present"/"absent")
@@ -1164,6 +1270,7 @@ function StatGlobalPage() {
       setTotalMembresActifs(0);
       setPrevTotaux(null);
       setTauxPresenceMoyen(0);
+      setConversionsDetail(null);
       setHasData(false);
     }
     setLoading(false);
@@ -1339,6 +1446,7 @@ function StatGlobalPage() {
               besoinsGlobaux={besoinsGlobaux}
               totalMembresActifs={totalMembresActifs}
               tauxPresenceMoyen={tauxPresenceMoyen}
+              conversionsDetail={conversionsDetail}
               prevTotaux={prevTotaux}
               rootId={rootId}
               t={t}

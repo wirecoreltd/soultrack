@@ -917,54 +917,76 @@ function StatGlobalPage() {
     return toutesCellules.filter((c) => cellulesAvecMembres.has(c.id));
   };
 
-  // ── Conversions (prière du salut) ──
-  // Deux sources distinctes, sans doublon :
-  // 1. "Église" : nouveaux membres enregistrés dans membres_complets (priere_salut renseigné)
-  // 2. "Évangélisation" : personnes touchées lors des actions d'évangélisation, dédupliquées par id
-  // NOTE : adapte les noms de table/colonne ci-dessous à ton schéma exact si besoin.
-  const getConversions = async (egliseIds, debut, fin) => {
-    // ── Église (nouveaux membres) ──
-    let membresQuery = supabase
-      .from("membres_complets")
-      .select("id, eglise_id, priere_salut, date_creation")
-      .in("eglise_id", egliseIds)
-      .in("priere_salut", ["Nouveau converti", "Réconciliation"]);
-    if (debut) membresQuery = membresQuery.gte("date_creation", debut);
-    if (fin) membresQuery = membresQuery.lte("date_creation", fin);
-    const { data: membresData } = await membresQuery;
+ // ── Conversions (prière du salut) ──
+// Deux sources, dédupliquées pour ne jamais compter la même âme 2 fois :
+// 1. "Église"        : membres_complets, priere_salut = 'Oui', 
+//                       EXCLUT ceux liés à un évangélisé (evangelise_member_id_uuid non null)
+// 2. "Évangélisation" : fusion de `evangelises` + `suivis_des_evangelises`,
+//                       dédupliquée par evangelise_id (le suivi le plus récent gagne)
+const getConversions = async (egliseIds, debut, fin) => {
+  // ── Église (nouveaux membres arrivés directement) ──
+  let membresQuery = supabase
+    .from("membres_complets")
+    .select("id, eglise_id, priere_salut, type_conversion, created_at, evangelise_member_id_uuid")
+    .in("eglise_id", egliseIds)
+    .eq("priere_salut", "Oui")
+    .is("evangelise_member_id_uuid", null); // évite le doublon avec l'évangélisation
+  if (debut) membresQuery = membresQuery.gte("created_at", debut);
+  if (fin) membresQuery = membresQuery.lte("created_at", fin);
+  const { data: membresData } = await membresQuery;
 
-    let egliseNC = 0;
-    let egliseRecon = 0;
-    (membresData || []).forEach((m) => {
-      if (m.priere_salut === "Nouveau converti") egliseNC++;
-      else if (m.priere_salut === "Réconciliation") egliseRecon++;
-    });
+  let egliseNC = 0;
+  let egliseRecon = 0;
+  (membresData || []).forEach((m) => {
+    if (m.type_conversion === "Nouveau converti") egliseNC++;
+    else if (m.type_conversion === "Réconciliation") egliseRecon++;
+  });
 
-    // ── Évangélisation (dédupliqué par evangelise_id) ──
-    let evangQuery = supabase
-      .from("evangelises")
-      .select("id, eglise_id, priere_salut, date")
-      .in("eglise_id", egliseIds)
-      .in("priere_salut", ["Nouveau converti", "Réconciliation"]);
-    if (debut) evangQuery = evangQuery.gte("date", debut);
-    if (fin) evangQuery = evangQuery.lte("date", fin);
-    const { data: evangData } = await evangQuery;
+  // ── Évangélisation : source 1 = table evangelises ──
+  let evangQuery = supabase
+    .from("evangelises")
+    .select("id, eglise_id, priere_salut, type_conversion, date_evangelise")
+    .in("eglise_id", egliseIds)
+    .eq("priere_salut", true);
+  if (debut) evangQuery = evangQuery.gte("date_evangelise", debut);
+  if (fin) evangQuery = evangQuery.lte("date_evangelise", fin);
+  const { data: evangData } = await evangQuery;
 
-    const uniqueEvang = new Map();
-    (evangData || []).forEach((e) => {
-      if (!uniqueEvang.has(e.id)) uniqueEvang.set(e.id, e);
-    });
+  // ── Évangélisation : source 2 = table suivis_des_evangelises ──
+  // (peut mettre à jour/confirmer la conversion après un suivi)
+  let suivisQuery = supabase
+    .from("suivis_des_evangelises")
+    .select("id, evangelise_id, eglise_id, priere_salut, type_conversion, date_action")
+    .in("eglise_id", egliseIds)
+    .eq("priere_salut", true)
+    .not("evangelise_id", "is", null);
+  if (debut) suivisQuery = suivisQuery.gte("date_action", debut);
+  if (fin) suivisQuery = suivisQuery.lte("date_action", fin);
+  const { data: suivisData } = await suivisQuery;
 
-    let evangNC = 0;
-    let evangRecon = 0;
-    uniqueEvang.forEach((e) => {
-      if (e.priere_salut === "Nouveau converti") evangNC++;
-      else if (e.priere_salut === "Réconciliation") evangRecon++;
-    });
+  // ── Fusion + dédup par evangelise_id : on garde l'événement le plus récent ──
+  const evangMap = new Map();
+  (evangData || []).forEach((e) => {
+    evangMap.set(e.id, { type_conversion: e.type_conversion, date: e.date_evangelise });
+  });
+  (suivisData || []).forEach((s) => {
+    const existing = evangMap.get(s.evangelise_id);
+    if (!existing || new Date(s.date_action) > new Date(existing.date)) {
+      evangMap.set(s.evangelise_id, { type_conversion: s.type_conversion, date: s.date_action });
+    }
+  });
 
-    const total = egliseNC + egliseRecon + evangNC + evangRecon;
-    return { egliseNC, egliseRecon, evangNC, evangRecon, total };
-  };
+  let evangNC = 0;
+  let evangRecon = 0;
+  evangMap.forEach((v) => {
+    const tc = (v.type_conversion || "").toLowerCase();
+    if (tc === "nouveau converti") evangNC++;
+    else if (tc === "réconciliation" || tc === "reconciliation") evangRecon++;
+  });
+
+  const total = egliseNC + egliseRecon + evangNC + evangRecon;
+  return { egliseNC, egliseRecon, evangNC, evangRecon, total };
+};
 
   // ── Agréger les stats ──
   const buildStatsFromData = (

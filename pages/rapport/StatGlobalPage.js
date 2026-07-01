@@ -265,7 +265,7 @@ function KpiCard({ label, value, sub, accent, delta }) {
   };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-xs text-white">{label}</p>
+      <p className="text-xs text-white/65">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
       {sub && <p className="text-[11px] text-white mt-0.5">{sub}</p>}
       {delta !== null && delta !== undefined && (

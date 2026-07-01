@@ -406,7 +406,7 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
 
 // ─── BLOC VUE D'ENSEMBLE ─────────────────────────────────────
 // rootId est passé pour exclure l'église du superviseur du KPI "Supervised churches"
-function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevTotaux, rootId, t }) {
+function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, nombreCultes, prevTotaux, rootId, t }) {
   const totaux = allEglises.reduce(
     (acc, e) => {
       const s = e.stats;
@@ -806,6 +806,7 @@ function StatGlobalPage() {
   const [besoinsGlobaux, setBesoinsGlobaux] = useState({});
   const [totalMembresActifs, setTotalMembresActifs] = useState(0);
   const [prevTotaux, setPrevTotaux] = useState(null);
+  const [nombreCultes, setNombreCultes] = useState(0);
 
   useEffect(() => {
     fetchStats(false);
@@ -1018,7 +1019,7 @@ function StatGlobalPage() {
         .gte("date", debut || "1900-01-01")
         .lte("date", fin || "2100-01-01");
       
-      const nombreCultes = sessionsData?.length || 0;     
+      setNombreCultes(sessionsData?.length || 0);    
 
       const { data: serviteurData } = await supabase
         .from("stats_ministere_besoin")

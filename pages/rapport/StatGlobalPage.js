@@ -839,16 +839,7 @@ function StatGlobalPage() {
 
     const cellulesAvecMembres = new Set((membresActifs || []).map((m) => m.cellule_id));
     return toutesCellules.filter((c) => cellulesAvecMembres.has(c.id));
-  };
-
-  const { data: sessionsData } = await supabase
-  .from("attendance")
-  .select("id, date")
-  .in("eglise_id", egliseIds)
-  .gte("date", debut || "1900-01-01")
-  .lte("date", fin || "2100-01-01");
-
-const nombreCultes = sessionsData?.length || 0;
+  };  
 
   // ── Agréger les stats ──
   const buildStatsFromData = (
@@ -1020,9 +1011,14 @@ const nombreCultes = sessionsData?.length || 0;
           getCellulesActives(egliseIds),
         ]);
 
-      console.log("attendanceData:", attendanceData);
-console.log("egliseIds:", egliseIds);
-console.log("debut:", debut, "fin:", fin);
+      const { data: sessionsData } = await supabase
+        .from("attendance")
+        .select("id, date")
+        .in("eglise_id", egliseIds)
+        .gte("date", debut || "1900-01-01")
+        .lte("date", fin || "2100-01-01");
+      
+      const nombreCultes = sessionsData?.length || 0;     
 
       const { data: serviteurData } = await supabase
         .from("stats_ministere_besoin")
@@ -1298,6 +1294,7 @@ console.log("debut:", debut, "fin:", fin);
               allEglises={allEglises}
               besoinsGlobaux={besoinsGlobaux}
               totalMembresActifs={totalMembresActifs}
+              nombreCultes={nombreCultes} 
               prevTotaux={prevTotaux}
               rootId={rootId}
               t={t}

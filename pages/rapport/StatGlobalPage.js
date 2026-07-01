@@ -1009,6 +1009,10 @@ function StatGlobalPage() {
           getCellulesActives(egliseIds),
         ]);
 
+      console.log("attendanceData:", attendanceData);
+console.log("egliseIds:", egliseIds);
+console.log("debut:", debut, "fin:", fin);
+
       const { data: serviteurData } = await supabase
         .from("stats_ministere_besoin")
         .select("membre_id, eglise_id, sexe, type")

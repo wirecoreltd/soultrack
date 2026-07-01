@@ -469,8 +469,8 @@ function BlocVueEnsemble({
   // Toutes les églises (y compris root) pour les calculs de moyennes
   const nbEglisesTotal = allEglises.length;
 
-  const moyenneCulteParEglise =
-    nbEglisesTotal > 0 ? Math.round(totalCulteGlobal / nbEglisesTotal) : 0;
+ const moyenneCulteParEglise =
+  nbEglisesSupervisees > 0 ? Math.round(totalCulteGlobal / nbEglisesSupervisees) : 0;
 
   // ── Conversions réelles : basées sur "priere_salut" dans membres_complets (nouveaux membres
   // rejoignant l'église) et dans evangelises (personnes touchées lors de l'évangélisation).
@@ -481,7 +481,7 @@ function BlocVueEnsemble({
   const tauxConversion =
     totalCulteGlobal > 0 ? Math.round((cd.total / totalCulteGlobal) * 100) : 0;
   const tauxEngagement =
-    totalCulteGlobal > 0 ? Math.round((totalServiteurs / totalCulteGlobal) * 100) : 0;
+  totalMembresActifs > 0 ? Math.round((totalServiteurs / totalMembresActifs) * 100) : 0;
 
   // ── Taux de présence : calculé en amont dans fetchStats à partir de la table `presences`
   // (moyenne, sur chaque culte, du % de membres actifs réellement présents)
@@ -494,7 +494,7 @@ function BlocVueEnsemble({
   const prevEvangelisation = d ? d.evangH + d.evangF : null;
   const prevBapteme = d ? d.baptemeH + d.baptemeF : null;
   const prevServiteurs = d ? d.servH + d.servF : null;
-  const prevMoy = d && nbEglisesTotal > 0 ? Math.round(prevCulteGlobal / nbEglisesTotal) : null;
+  const prevMoy = d && nbEglisesSupervisees > 0 ? Math.round(prevCulteGlobal / nbEglisesSupervisees) : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -589,25 +589,12 @@ function BlocVueEnsemble({
             return (
               <div key={label} className={`${bg} rounded-xl px-3 py-3 text-center`}>  
                 <p className={`text-xl font-bold ${color}`}> {val}</p>              
-                <p className="text-[12px] font-medium text-white mt-1"> {label}</p>              
-                <p className="text-xs text-white/65 mt-0.5"> {pct}%</p>              
+                <p className="text-sm font-medium text-white mt-1"> {label}</p>              
+                <p className="text-sm text-white/65 mt-0.5"> {pct}%</p>              
               </div>
             );
           })}
         </div>
-        {totalCulte > 0 && (
-          <div className="flex h-6 rounded-full overflow-hidden gap-0.5">
-            <div className="bg-blue-400 rounded-l-full flex items-center justify-center text-white text-sm font-semibold transition-all"
-              style={{ width: `${Math.round((totaux.culteHommes / totalCulte) * 100)}%` }}>{Math.round((totaux.culteHommes / totalCulte) * 100)}%
-            </div>        
-            <div className="bg-pink-400 flex items-center justify-center text-white text-sm font-semibold transition-all" style={{ width: `${Math.round((totaux.culteFemmes / totalCulte) * 100)}%` }}
-            > {Math.round((totaux.culteFemmes / totalCulte) * 100)}% </div>        
-            <div className="bg-amber-400 rounded-r-full flex items-center justify-center text-white text-sm font-semibold transition-all"
-              style={{ width: `${Math.round((totaux.culteJeunes / totalCulte) * 100)}%` }}>
-              {Math.round((totaux.culteJeunes / totalCulte) * 100)}%
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Entonnoir */}

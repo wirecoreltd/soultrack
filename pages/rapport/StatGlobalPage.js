@@ -406,7 +406,16 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
 
 // ─── BLOC VUE D'ENSEMBLE ─────────────────────────────────────
 // rootId est passé pour exclure l'église du superviseur du KPI "Supervised churches"
-function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, nombreCultes, prevTotaux, rootId, t }) {
+// tauxPresenceMoyen est calculé en amont (dans fetchStats) à partir de la table `presences`
+function BlocVueEnsemble({
+  allEglises,
+  besoinsGlobaux,
+  totalMembresActifs,
+  tauxPresenceMoyen,
+  prevTotaux,
+  rootId,
+  t,
+}) {
   const totaux = allEglises.reduce(
     (acc, e) => {
       const s = e.stats;
@@ -453,10 +462,10 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, nombr
     totalCulteGlobal > 0 ? Math.round((totaux.culteNC / totalCulteGlobal) * 100) : 0;
   const tauxEngagement =
     totalCulteGlobal > 0 ? Math.round((totalServiteurs / totalCulteGlobal) * 100) : 0;
- const tauxPresence =
-    totalMembresActifs > 0 && nombreCultes > 0
-      ? Math.round((totalCulteGlobal / nombreCultes / totalMembresActifs) * 100)
-      : 0;
+
+  // ── Taux de présence : calculé en amont dans fetchStats à partir de la table `presences`
+  // (moyenne, sur chaque culte, du % de membres actifs réellement présents)
+  const tauxPresence = tauxPresenceMoyen || 0;
 
   const d = prevTotaux;
   const prevCulteGlobal = d
@@ -806,7 +815,9 @@ function StatGlobalPage() {
   const [besoinsGlobaux, setBesoinsGlobaux] = useState({});
   const [totalMembresActifs, setTotalMembresActifs] = useState(0);
   const [prevTotaux, setPrevTotaux] = useState(null);
-  const [nombreCultes, setNombreCultes] = useState(0);
+  // ── Taux de présence calculé à partir de la table `presences`
+  // (% moyen de membres actifs réellement présents à chaque culte)
+  const [tauxPresenceMoyen, setTauxPresenceMoyen] = useState(0);
 
   useEffect(() => {
     fetchStats(false);
@@ -840,7 +851,7 @@ function StatGlobalPage() {
 
     const cellulesAvecMembres = new Set((membresActifs || []).map((m) => m.cellule_id));
     return toutesCellules.filter((c) => cellulesAvecMembres.has(c.id));
-  };  
+  };
 
   // ── Agréger les stats ──
   const buildStatsFromData = (
@@ -978,6 +989,7 @@ function StatGlobalPage() {
         setBesoinsGlobaux({});
         setTotalMembresActifs(0);
         setPrevTotaux(null);
+        setTauxPresenceMoyen(0);
         setHasData(false);
         setLoading(false);
         return;
@@ -1012,14 +1024,32 @@ function StatGlobalPage() {
           getCellulesActives(egliseIds),
         ]);
 
+      // ── Taux de présence réel : basé sur la table `presences` ──
+      // (une ligne par membre par session de culte, avec statut "present"/"absent")
       const { data: sessionsData } = await supabase
         .from("attendance")
         .select("id, date")
         .in("eglise_id", egliseIds)
         .gte("date", debut || "1900-01-01")
         .lte("date", fin || "2100-01-01");
-      
-      setNombreCultes(sessionsData?.length || 0);    
+
+      const sessionIds = sessionsData?.map((s) => s.id) || [];
+      const nombreCultes = sessionIds.length;
+
+      let totalPresents = 0;
+      if (sessionIds.length > 0) {
+        const { data: presData } = await supabase
+          .from("presences")
+          .select("statut, attendance_id")
+          .in("attendance_id", sessionIds);
+        totalPresents = (presData || []).filter((p) => p.statut === "present").length;
+      }
+
+      const tauxCalcule =
+        membresActifsData?.length > 0 && nombreCultes > 0
+          ? Math.round((totalPresents / (membresActifsData.length * nombreCultes)) * 100)
+          : 0;
+      setTauxPresenceMoyen(tauxCalcule);
 
       const { data: serviteurData } = await supabase
         .from("stats_ministere_besoin")
@@ -1123,6 +1153,7 @@ function StatGlobalPage() {
       setBesoinsGlobaux({});
       setTotalMembresActifs(0);
       setPrevTotaux(null);
+      setTauxPresenceMoyen(0);
       setHasData(false);
     }
     setLoading(false);
@@ -1295,7 +1326,7 @@ function StatGlobalPage() {
               allEglises={allEglises}
               besoinsGlobaux={besoinsGlobaux}
               totalMembresActifs={totalMembresActifs}
-              nombreCultes={nombreCultes} 
+              tauxPresenceMoyen={tauxPresenceMoyen}
               prevTotaux={prevTotaux}
               rootId={rootId}
               t={t}

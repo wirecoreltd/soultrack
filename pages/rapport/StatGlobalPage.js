@@ -224,7 +224,7 @@ function calcDelta(current, previous) {
 
 function toYearMonth(dateStr) {
   if (!dateStr) return dateStr;
-  return dateStr.substring(0, 7);
+  return dateStr.substring(0, 7) + "-01";
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────

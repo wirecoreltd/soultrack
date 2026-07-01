@@ -62,7 +62,13 @@ const translations = {
     kpiBaptemes: "Baptêmes",
     kpiBaptemesSub: "cette période",
     kpiTauxConversion: "Taux conversion",
-    kpiTauxConversionSub: "NV convertis / présents",
+    kpiTauxConversionSub: "conversions / présences culte",
+    sectionConversions: "Conversions (prière du salut)",
+    conversionsSourceEglise: "Église (nouveaux membres)",
+    conversionsSourceEvang: "Évangélisation",
+    chipNouveauxConvertis: "Nouveaux convertis",
+    chipReconciliations: "Réconciliations",
+    conversionsTotal: "Total conversions",
     kpiServiteurs: "Serviteurs",
     kpiServiteursSubFn: (pct) => `${pct}% des présents`,
     vsPeriodePrecedente: "vs période préc.",
@@ -161,7 +167,13 @@ const translations = {
     kpiBaptemes: "Baptisms",
     kpiBaptemesSub: "this period",
     kpiTauxConversion: "Conversion rate",
-    kpiTauxConversionSub: "New converts / attendees",
+    kpiTauxConversionSub: "conversions / worship attendance",
+    sectionConversions: "Conversions (salvation prayer)",
+    conversionsSourceEglise: "Church (new members)",
+    conversionsSourceEvang: "Outreach",
+    chipNouveauxConvertis: "New converts",
+    chipReconciliations: "Reconciliations",
+    conversionsTotal: "Total conversions",
     kpiServiteurs: "Servants",
     kpiServiteursSubFn: (pct) => `${pct}% of attendees`,
     vsPeriodePrecedente: "vs prev. period",
@@ -412,6 +424,7 @@ function BlocVueEnsemble({
   besoinsGlobaux,
   totalMembresActifs,
   tauxPresenceMoyen,
+  conversionsDetail,
   prevTotaux,
   rootId,
   t,
@@ -458,8 +471,15 @@ function BlocVueEnsemble({
 
   const moyenneCulteParEglise =
     nbEglisesTotal > 0 ? Math.round(totalCulteGlobal / nbEglisesTotal) : 0;
+
+  // ── Conversions réelles : basées sur "priere_salut" dans membres_complets (nouveaux membres
+  // rejoignant l'église) et dans evangelises (personnes touchées lors de l'évangélisation).
+  // On distingue "Nouveau converti" (première fois) de "Réconciliation" (retour à la foi).
+  const cd = conversionsDetail || { egliseNC: 0, egliseRecon: 0, evangNC: 0, evangRecon: 0, total: 0 };
+  const totalConversionsEglise = cd.egliseNC + cd.egliseRecon;
+  const totalConversionsEvang = cd.evangNC + cd.evangRecon;
   const tauxConversion =
-    totalCulteGlobal > 0 ? Math.round((totaux.culteNC / totalCulteGlobal) * 100) : 0;
+    totalCulteGlobal > 0 ? Math.round((cd.total / totalCulteGlobal) * 100) : 0;
   const tauxEngagement =
     totalCulteGlobal > 0 ? Math.round((totalServiteurs / totalCulteGlobal) * 100) : 0;
 

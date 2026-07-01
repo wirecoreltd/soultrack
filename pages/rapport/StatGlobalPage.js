@@ -266,7 +266,7 @@ function KpiCard({ label, value, sub, accent, delta }) {
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
       <p className="text-xs text-white/65">{label}</p>
-      <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
+      <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white/65"}`}>{value}</p>
       {sub && <p className="text-[11px] text-white mt-0.5">{sub}</p>}
       {delta !== null && delta !== undefined && (
         <p
@@ -379,7 +379,7 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-sm font-semibold text-white">{t.top5Title}</p>
+        <p className="text-sm font-semibold text-white/80">{t.top5Title}</p>
         <div className="flex items-center gap-2">
           <Badge color="orange">{t.top5Cas(totalTous)}</Badge>
           <Badge color={tauxGlobal >= 50 ? "green" : "amber"}>{t.top5Resolus(tauxGlobal)}</Badge>
@@ -587,10 +587,10 @@ function BlocVueEnsemble({
           ].map(({ label, val, color, bg }) => {
             const pct = totalCulte > 0 ? Math.round((val / totalCulte) * 100) : 0;
             return (
-              <div key={label} className={`${bg} rounded-xl px-3 py-3 text-center`}>
-                <p className={`text-xl font-bold ${color}`}>{val}</p>
-                <p className={`text-[11px] ${color}/70`}>{label}</p>
-                <p className={`text-[10px] ${color}/50`}>{pct}%</p>
+              <div key={label} className={`${bg} rounded-xl px-3 py-3 text-center`}>  
+                <p className={`text-xl font-bold ${color}`}> {val}</p>              
+                <p className="text-[12px] font-medium text-white mt-1"> {label}</p>              
+                <p className="text-xs text-white/65 mt-0.5"> {pct}%</p>              
               </div>
             );
           })}

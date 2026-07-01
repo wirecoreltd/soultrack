@@ -50,13 +50,13 @@ const translations = {
     kpiMembresActifs: "Membres actifs",
     kpiMembresActifsSub: "dans le réseau",
     kpiTauxPresence: "Taux de présence",
-    kpiTauxPresenceSub: "présents / membres",
+    kpiTauxPresenceSub: "présents / membres actifs",
     kpiTotalCulte: "Total présences culte",
     kpiTotalCulteSub: "H+F+J+Enf+Conn.",
     kpiMoyParEglise: "Moy. par église",
     kpiMoyParEgliseSub: "présences/église",
     kpiCellules: "Cellules actives",
-    kpiCellulesSub: "total réseau",
+    kpiCellulesSub: "avec contacts, réseau",
     kpiEvangelises: "Évangélisés",
     kpiEvangelisesSub: "âmes touchées",
     kpiBaptemes: "Baptêmes",
@@ -149,13 +149,13 @@ const translations = {
     kpiMembresActifs: "Active members",
     kpiMembresActifsSub: "in the network",
     kpiTauxPresence: "Attendance rate",
-    kpiTauxPresenceSub: "present / members",
+    kpiTauxPresenceSub: "present / active members",
     kpiTotalCulte: "Total worship attendance",
     kpiTotalCulteSub: "M+F+Y+Ch+Online",
     kpiMoyParEglise: "Avg. per church",
     kpiMoyParEgliseSub: "attendance/church",
     kpiCellules: "Active cell groups",
-    kpiCellulesSub: "network total",
+    kpiCellulesSub: "with contacts, network",
     kpiEvangelises: "Evangelized",
     kpiEvangelisesSub: "souls reached",
     kpiBaptemes: "Baptisms",
@@ -222,7 +222,6 @@ function calcDelta(current, previous) {
   return Math.round(((current - previous) / previous) * 100);
 }
 
-// Tronque une date YYYY-MM-DD en YYYY-MM pour la table attendance_stats
 function toYearMonth(dateStr) {
   if (!dateStr) return dateStr;
   return dateStr.substring(0, 7);
@@ -406,7 +405,8 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
 }
 
 // ─── BLOC VUE D'ENSEMBLE ─────────────────────────────────────
-function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevTotaux, t }) {
+// rootId est passé pour exclure l'église du superviseur du KPI "Supervised churches"
+function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevTotaux, rootId, t }) {
   const totaux = allEglises.reduce(
     (acc, e) => {
       const s = e.stats;
@@ -428,45 +428,33 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
       return acc;
     },
     {
-      culteHommes: 0,
-      culteFemmes: 0,
-      culteJeunes: 0,
-      culteEnfants: 0,
-      culteConnectes: 0,
-      culteNV: 0,
-      culteNC: 0,
-      baptemeH: 0,
-      baptemeF: 0,
-      evangH: 0,
-      evangF: 0,
-      evangNC: 0,
-      servH: 0,
-      servF: 0,
-      cellules: 0,
+      culteHommes: 0, culteFemmes: 0, culteJeunes: 0, culteEnfants: 0,
+      culteConnectes: 0, culteNV: 0, culteNC: 0,
+      baptemeH: 0, baptemeF: 0,
+      evangH: 0, evangF: 0, evangNC: 0,
+      servH: 0, servF: 0, cellules: 0,
     }
   );
 
   const totalCulte = totaux.culteHommes + totaux.culteFemmes + totaux.culteJeunes;
-  const totalCulteGlobal =
-    totalCulte + totaux.culteEnfants + totaux.culteConnectes;
+  const totalCulteGlobal = totalCulte + totaux.culteEnfants + totaux.culteConnectes;
   const totalBapteme = totaux.baptemeH + totaux.baptemeF;
   const totalEvangelisation = totaux.evangH + totaux.evangF;
   const totalServiteurs = totaux.servH + totaux.servF;
-  const nbEglises = allEglises.length;
+
+  // ── CORRECTION #5 : exclure le root du compte "Églises supervisées"
+  const nbEglisesSupervisees = allEglises.filter((e) => e.id !== rootId).length;
+  // Toutes les églises (y compris root) pour les calculs de moyennes
+  const nbEglisesTotal = allEglises.length;
+
   const moyenneCulteParEglise =
-    nbEglises > 0 ? Math.round(totalCulteGlobal / nbEglises) : 0;
+    nbEglisesTotal > 0 ? Math.round(totalCulteGlobal / nbEglisesTotal) : 0;
   const tauxConversion =
-    totalCulteGlobal > 0
-      ? Math.round((totaux.culteNC / totalCulteGlobal) * 100)
-      : 0;
+    totalCulteGlobal > 0 ? Math.round((totaux.culteNC / totalCulteGlobal) * 100) : 0;
   const tauxEngagement =
-    totalCulteGlobal > 0
-      ? Math.round((totalServiteurs / totalCulteGlobal) * 100)
-      : 0;
+    totalCulteGlobal > 0 ? Math.round((totalServiteurs / totalCulteGlobal) * 100) : 0;
   const tauxPresence =
-    totalMembresActifs > 0
-      ? Math.round((totalCulteGlobal / totalMembresActifs) * 100)
-      : 0;
+    totalMembresActifs > 0 ? Math.round((totalCulteGlobal / totalMembresActifs) * 100) : 0;
 
   const d = prevTotaux;
   const prevCulteGlobal = d
@@ -475,12 +463,12 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
   const prevEvangelisation = d ? d.evangH + d.evangF : null;
   const prevBapteme = d ? d.baptemeH + d.baptemeF : null;
   const prevServiteurs = d ? d.servH + d.servF : null;
-  const prevMoy = d && nbEglises > 0 ? Math.round(prevCulteGlobal / nbEglises) : null;
+  const prevMoy = d && nbEglisesTotal > 0 ? Math.round(prevCulteGlobal / nbEglisesTotal) : null;
 
   return (
     <div className="flex flex-col gap-4">
 
-      {/* Ligne 1 : Membres actifs + Taux de présence + Églises + Cellules */}
+      {/* Ligne 1 : Membres actifs + Taux de présence + Églises supervisées + Cellules */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KpiCard
           label={t.kpiMembresActifs}
@@ -496,7 +484,7 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
         />
         <KpiCard
           label={t.kpiEglisesSup}
-          value={nbEglises}
+          value={nbEglisesSupervisees}
           sub={t.kpiEglisesSubSup}
           accent="amber"
         />
@@ -557,7 +545,7 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
         />
       </div>
 
-      {/* Répartition H/F/J — affiché même si totalCulte = 0 */}
+      {/* Répartition H/F/J */}
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
         <p className="text-xs text-white/50 font-semibold">{t.repartitionTitle}</p>
         <div className="grid grid-cols-3 gap-2">
@@ -578,18 +566,12 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
         </div>
         {totalCulte > 0 && (
           <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
-            <div
-              className="bg-blue-400 rounded-l-full transition-all"
-              style={{ width: `${Math.round((totaux.culteHommes / totalCulte) * 100)}%` }}
-            />
-            <div
-              className="bg-pink-400 transition-all"
-              style={{ width: `${Math.round((totaux.culteFemmes / totalCulte) * 100)}%` }}
-            />
-            <div
-              className="bg-amber-400 rounded-r-full transition-all"
-              style={{ width: `${Math.round((totaux.culteJeunes / totalCulte) * 100)}%` }}
-            />
+            <div className="bg-blue-400 rounded-l-full transition-all"
+              style={{ width: `${Math.round((totaux.culteHommes / totalCulte) * 100)}%` }} />
+            <div className="bg-pink-400 transition-all"
+              style={{ width: `${Math.round((totaux.culteFemmes / totalCulte) * 100)}%` }} />
+            <div className="bg-amber-400 rounded-r-full transition-all"
+              style={{ width: `${Math.round((totaux.culteJeunes / totalCulte) * 100)}%` }} />
           </div>
         )}
       </div>
@@ -606,10 +588,7 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
           ].map(({ label, val, color }) => (
             <div key={label} className="flex items-center gap-3">
               <p className="text-xs text-white/50 w-28 flex-shrink-0">{label}</p>
-              <BarreProgression
-                pct={Math.round((val / totalCulteGlobal) * 100)}
-                color={color}
-              />
+              <BarreProgression pct={Math.round((val / totalCulteGlobal) * 100)} color={color} />
               <span className="text-xs text-white font-semibold w-8 text-right">{val}</span>
               <span className="text-[10px] text-white/30 w-8 text-right">
                 {Math.round((val / totalCulteGlobal) * 100)}%
@@ -627,36 +606,16 @@ function BlocVueEnsemble({ allEglises, besoinsGlobaux, totalMembresActifs, prevT
           <p className="text-xs text-white/50 font-semibold mb-1">{t.classementTitle}</p>
           {[...allEglises]
             .sort((a, b) => {
-              const totA =
-                a.stats.culte.hommes +
-                a.stats.culte.femmes +
-                a.stats.culte.jeunes +
-                a.stats.culte.enfants +
-                a.stats.culte.connectes;
-              const totB =
-                b.stats.culte.hommes +
-                b.stats.culte.femmes +
-                b.stats.culte.jeunes +
-                b.stats.culte.enfants +
-                b.stats.culte.connectes;
+              const totA = a.stats.culte.hommes + a.stats.culte.femmes + a.stats.culte.jeunes + a.stats.culte.enfants + a.stats.culte.connectes;
+              const totB = b.stats.culte.hommes + b.stats.culte.femmes + b.stats.culte.jeunes + b.stats.culte.enfants + b.stats.culte.connectes;
               return totB - totA;
             })
             .map((e, index) => {
-              const tot =
-                e.stats.culte.hommes +
-                e.stats.culte.femmes +
-                e.stats.culte.jeunes +
-                e.stats.culte.enfants +
-                e.stats.culte.connectes;
-              const pct =
-                totalCulteGlobal > 0
-                  ? Math.round((tot / totalCulteGlobal) * 100)
-                  : 0;
+              const tot = e.stats.culte.hommes + e.stats.culte.femmes + e.stats.culte.jeunes + e.stats.culte.enfants + e.stats.culte.connectes;
+              const pct = totalCulteGlobal > 0 ? Math.round((tot / totalCulteGlobal) * 100) : 0;
               return (
                 <div key={e.id} className="flex items-center gap-3">
-                  <span className="text-[11px] font-bold text-white/30 w-4 flex-shrink-0">
-                    #{index + 1}
-                  </span>
+                  <span className="text-[11px] font-bold text-white/30 w-4 flex-shrink-0">#{index + 1}</span>
                   <p className="text-xs text-white w-32 flex-shrink-0 truncate">{e.nom}</p>
                   <BarreProgression pct={pct} color="bg-blue-400" />
                   <span className="text-xs text-white font-semibold w-8 text-right">{tot}</span>
@@ -676,30 +635,10 @@ function BlocStatsEglise({ stats, t }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-1">
-        <KpiCard
-          label={t.culte}
-          value={totalCulteGlobal}
-          sub={t.totalPresences}
-          accent="green"
-        />
-        <KpiCard
-          label={t.evangelisation}
-          value={stats.evangelisation.hommes + stats.evangelisation.femmes}
-          sub={t.amesTouchees}
-          accent="pink"
-        />
-        <KpiCard
-          label={t.bapteme}
-          value={stats.bapteme.hommes + stats.bapteme.femmes}
-          sub={t.cettePeriode}
-          accent="purple"
-        />
-        <KpiCard
-          label={t.kpiCellules}
-          value={stats.cellules.total}
-          sub={t.cellulesActives}
-          accent="orange"
-        />
+        <KpiCard label={t.culte} value={totalCulteGlobal} sub={t.totalPresences} accent="green" />
+        <KpiCard label={t.evangelisation} value={stats.evangelisation.hommes + stats.evangelisation.femmes} sub={t.amesTouchees} accent="pink" />
+        <KpiCard label={t.bapteme} value={stats.bapteme.hommes + stats.bapteme.femmes} sub={t.cettePeriode} accent="purple" />
+        <KpiCard label={t.kpiCellules} value={stats.cellules.total} sub={t.cellulesActives} accent="orange" />
       </div>
       <StatRow label={t.culte} color="border-emerald-500">
         <StatChip label={t.chipHommes} value={stats.culte.hommes} accent="blue" />
@@ -716,82 +655,39 @@ function BlocStatsEglise({ stats, t }) {
       <StatRow label={t.formation} color="border-blue-500">
         <StatChip label={t.chipHommes} value={stats.formation.hommes} accent="blue" />
         <StatChip label={t.chipFemmes} value={stats.formation.femmes} accent="pink" />
-        <StatChip
-          label={t.chipTotal}
-          value={stats.formation.hommes + stats.formation.femmes}
-          accent="orange"
-        />
+        <StatChip label={t.chipTotal} value={stats.formation.hommes + stats.formation.femmes} accent="orange" />
       </StatRow>
       <StatRow label={t.bapteme} color="border-purple-500">
         <StatChip label={t.chipHommes} value={stats.bapteme.hommes} accent="blue" />
         <StatChip label={t.chipFemmes} value={stats.bapteme.femmes} accent="pink" />
-        <StatChip
-          label={t.chipTotal}
-          value={stats.bapteme.hommes + stats.bapteme.femmes}
-          accent="orange"
-        />
+        <StatChip label={t.chipTotal} value={stats.bapteme.hommes + stats.bapteme.femmes} accent="orange" />
       </StatRow>
       <StatRow label={t.evangelisation} color="border-pink-500">
         <StatChip label={t.chipHommes} value={stats.evangelisation.hommes} accent="blue" />
         <StatChip label={t.chipFemmes} value={stats.evangelisation.femmes} accent="pink" />
-        <StatChip
-          label={t.chipTotal}
-          value={stats.evangelisation.hommes + stats.evangelisation.femmes}
-          accent="orange"
-        />
+        <StatChip label={t.chipTotal} value={stats.evangelisation.hommes + stats.evangelisation.femmes} accent="orange" />
         <StatChip label={t.chipPriere} value={stats.evangelisation.priere} accent="indigo" />
-        <StatChip
-          label={t.chipNvConvertis}
-          value={stats.evangelisation.nouveau_converti}
-          accent="yellow"
-        />
-        <StatChip
-          label={t.chipReconciliation}
-          value={stats.evangelisation.reconciliation}
-          accent="green"
-        />
-        <StatChip
-          label={t.chipMoissonneurs}
-          value={stats.evangelisation.moissonneurs}
-          accent="white"
-        />
+        <StatChip label={t.chipNvConvertis} value={stats.evangelisation.nouveau_converti} accent="yellow" />
+        <StatChip label={t.chipReconciliation} value={stats.evangelisation.reconciliation} accent="green" />
+        <StatChip label={t.chipMoissonneurs} value={stats.evangelisation.moissonneurs} accent="white" />
       </StatRow>
       <StatRow label={t.serviteursRow} color="border-yellow-500">
         <StatChip label={t.chipHommes} value={stats.serviteurs.hommes} accent="blue" />
         <StatChip label={t.chipFemmes} value={stats.serviteurs.femmes} accent="pink" />
-        <StatChip
-          label={t.chipTotal}
-          value={stats.serviteurs.hommes + stats.serviteurs.femmes}
-          accent="orange"
-        />
+        <StatChip label={t.chipTotal} value={stats.serviteurs.hommes + stats.serviteurs.femmes} accent="orange" />
       </StatRow>
       {totalCulteGlobal > 0 && (
         <div className="bg-white/10 rounded-xl p-3 flex flex-col gap-2 mt-1">
           <SectionTitle>{t.entonnoir}</SectionTitle>
           {[
             { label: t.presencesCulte, val: totalCulteGlobal, color: "bg-emerald-400" },
-            {
-              label: t.evangelises,
-              val: stats.evangelisation.hommes + stats.evangelisation.femmes,
-              color: "bg-pink-400",
-            },
-            {
-              label: t.baptises,
-              val: stats.bapteme.hommes + stats.bapteme.femmes,
-              color: "bg-purple-400",
-            },
-            {
-              label: t.serviteurs,
-              val: stats.serviteurs.hommes + stats.serviteurs.femmes,
-              color: "bg-yellow-400",
-            },
+            { label: t.evangelises, val: stats.evangelisation.hommes + stats.evangelisation.femmes, color: "bg-pink-400" },
+            { label: t.baptises, val: stats.bapteme.hommes + stats.bapteme.femmes, color: "bg-purple-400" },
+            { label: t.serviteurs, val: stats.serviteurs.hommes + stats.serviteurs.femmes, color: "bg-yellow-400" },
           ].map(({ label, val, color }) => (
             <div key={label} className="flex items-center gap-3">
               <p className="text-xs text-white/50 w-28 flex-shrink-0">{label}</p>
-              <BarreProgression
-                pct={Math.round((val / totalCulteGlobal) * 100)}
-                color={color}
-              />
+              <BarreProgression pct={Math.round((val / totalCulteGlobal) * 100)} color={color} />
               <span className="text-xs text-white font-semibold w-8 text-right">{val}</span>
             </div>
           ))}
@@ -824,10 +720,8 @@ function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
             acc.evangelisation.hommes += child.stats.evangelisation.hommes;
             acc.evangelisation.femmes += child.stats.evangelisation.femmes;
             acc.evangelisation.priere += child.stats.evangelisation.priere;
-            acc.evangelisation.nouveau_converti +=
-              child.stats.evangelisation.nouveau_converti;
-            acc.evangelisation.reconciliation +=
-              child.stats.evangelisation.reconciliation;
+            acc.evangelisation.nouveau_converti += child.stats.evangelisation.nouveau_converti;
+            acc.evangelisation.reconciliation += child.stats.evangelisation.reconciliation;
             acc.evangelisation.moissonneurs += child.stats.evangelisation.moissonneurs;
             acc.serviteurs.hommes += child.stats.serviteurs.hommes;
             acc.serviteurs.femmes += child.stats.serviteurs.femmes;
@@ -844,14 +738,11 @@ function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
           }
         )
       : eglise.stats;
-  const totalCulte =
-    totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes;
+  const totalCulte = totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes;
   return (
     <div className="flex flex-col gap-2">
       <div
-        className={`bg-white/10 rounded-2xl overflow-hidden border-l-2 ${
-          hasChildren ? "border-amber-400" : "border-blue-400"
-        }`}
+        className={`bg-white/10 rounded-2xl overflow-hidden border-l-2 ${hasChildren ? "border-amber-400" : "border-blue-400"}`}
         style={{ marginLeft: level * 12 }}
       >
         <button
@@ -863,15 +754,11 @@ function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
               <span className={`font-semibold ${hasChildren ? "text-amber-300" : "text-white"}`}>
                 {eglise.nom}
               </span>
-              {hasChildren && (
-                <Badge color="amber">{t.egliseBadgeFn(eglise.enfants.length)}</Badge>
-              )}
+              {hasChildren && <Badge color="amber">{t.egliseBadgeFn(eglise.enfants.length)}</Badge>}
               {hasChildren && !isExpanded && <Badge color="gray">{t.totalGeneral}</Badge>}
             </div>
             <span className="text-[11px] text-white/40">
-              {t.culte} : {totalCulte} · {t.bapteme} :{" "}
-              {totalStats.bapteme.hommes + totalStats.bapteme.femmes} · {t.kpiCellules} :{" "}
-              {totalStats.cellules.total}
+              {t.culte} : {totalCulte} · {t.bapteme} : {totalStats.bapteme.hommes + totalStats.bapteme.femmes} · {t.kpiCellules} : {totalStats.cellules.total}
             </span>
           </div>
           <span className="text-white/30 text-xs flex-shrink-0">{isExpanded ? "▲" : "▼"}</span>
@@ -929,39 +816,41 @@ function StatGlobalPage() {
     );
   };
 
-  // ── Agréger les stats de plusieurs lignes ──
+  // ── CORRECTION #1 : Cellules actives = cellules avec au moins un membre
+  // (statut_suivis = 3, etat_contact != 'supprime'), sans filtre de date.
+  const getCellulesActives = async (egliseIds) => {
+    const { data: toutesCellules } = await supabase
+      .from("cellules")
+      .select("id, eglise_id")
+      .in("eglise_id", egliseIds);
+
+    if (!toutesCellules?.length) return [];
+
+    const celluleIds = toutesCellules.map((c) => c.id);
+
+    const { data: membresActifs } = await supabase
+      .from("membres_complets")
+      .select("cellule_id")
+      .in("cellule_id", celluleIds)
+      .eq("statut_suivis", 3)
+      .neq("etat_contact", "supprime");
+
+    const cellulesAvecMembres = new Set((membresActifs || []).map((m) => m.cellule_id));
+    return toutesCellules.filter((c) => cellulesAvecMembres.has(c.id));
+  };
+
+  // ── Agréger les stats ──
   const buildStatsFromData = (
-    egliseIds,
-    attendanceData,
-    formationData,
-    baptemeData,
-    evangeData,
-    cellulesData,
-    serviteurData
+    egliseIds, attendanceData, formationData, baptemeData,
+    evangeData, cellulesActivesData, serviteurData
   ) => {
     const statsMap = {};
     egliseIds.forEach((id) => {
       statsMap[id] = {
-        culte: {
-          hommes: 0,
-          femmes: 0,
-          jeunes: 0,
-          enfants: 0,
-          connectes: 0,
-          nouveaux_venus: 0,
-          nouveau_converti: 0,
-          moissonneurs: 0,
-        },
+        culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
         formation: { hommes: 0, femmes: 0 },
         bapteme: { hommes: 0, femmes: 0 },
-        evangelisation: {
-          hommes: 0,
-          femmes: 0,
-          priere: 0,
-          nouveau_converti: 0,
-          reconciliation: 0,
-          moissonneurs: 0,
-        },
+        evangelisation: { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
         serviteurs: { hommes: 0, femmes: 0 },
         cellules: { total: 0 },
       };
@@ -1020,7 +909,7 @@ function StatGlobalPage() {
       else if (sexe === "femme") serv.femmes += 1;
     });
 
-    cellulesData.forEach((c) => {
+    cellulesActivesData.forEach((c) => {
       if (c.eglise_id && statsMap[c.eglise_id]) statsMap[c.eglise_id].cellules.total++;
     });
 
@@ -1040,7 +929,6 @@ function StatGlobalPage() {
       fin = "";
     }
 
-    // Période précédente (même durée, juste avant)
     let prevDebut = null;
     let prevFin = null;
     if (!isPerso) {
@@ -1064,9 +952,7 @@ function StatGlobalPage() {
     }
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       const { data: profileData } = await supabase
         .from("profiles")
         .select("eglise_id")
@@ -1076,6 +962,8 @@ function StatGlobalPage() {
       const rootIdValue = profileData.eglise_id;
       setRootId(rootIdValue);
 
+      // La RPC retourne le root + ses descendants — on les garde tous pour les données.
+      // Le KPI "Églises supervisées" exclura le root dans BlocVueEnsemble.
       const { data: filteredEglisesData } = await supabase.rpc(
         "get_descendant_eglises",
         { root_id: rootIdValue }
@@ -1102,14 +990,9 @@ function StatGlobalPage() {
         .in("etat_contact", ["existant", "nouveau"]);
       setTotalMembresActifs(membresActifsData?.length || 0);
 
-      // ── Helper fetch avec gestion du format YYYY-MM pour attendance_stats ──
       const tableFetch = async (table, dateField, deb, fi) => {
         let query = supabase.from(table).select("*").in("eglise_id", egliseIds);
-
-        // attendance_stats stocke le mois au format YYYY-MM : on tronque les dates
-        const fmt = (d) =>
-          table === "attendance_stats" && d ? toYearMonth(d) : d;
-
+        const fmt = (d) => table === "attendance_stats" && d ? toYearMonth(d) : d;
         if (deb) query = query.gte(dateField, fmt(deb));
         if (fi) query = query.lte(dateField, fmt(fi));
         const { data } = await query;
@@ -1117,13 +1000,13 @@ function StatGlobalPage() {
       };
 
       // ── Fetch période courante ──
-      const [attendanceData, formationData, baptemeData, evangeData, cellulesData] =
+      const [attendanceData, formationData, baptemeData, evangeData, cellulesActivesData] =
         await Promise.all([
           tableFetch("attendance_stats", "mois", debut, fin),
           tableFetch("formations", "date_debut", debut, fin),
           tableFetch("baptemes", "date", debut, fin),
           tableFetch("rapport_evangelisation", "date", debut, fin),
-          tableFetch("cellules", "created_at", debut, fin),
+          getCellulesActives(egliseIds),
         ]);
 
       const { data: serviteurData } = await supabase
@@ -1132,45 +1015,24 @@ function StatGlobalPage() {
         .in("eglise_id", egliseIds);
 
       const statsMap = buildStatsFromData(
-        egliseIds,
-        attendanceData,
-        formationData,
-        baptemeData,
-        evangeData,
-        cellulesData,
-        serviteurData
+        egliseIds, attendanceData, formationData, baptemeData,
+        evangeData, cellulesActivesData, serviteurData
       );
 
       // ── Fetch période précédente ──
       if (prevDebut && prevFin) {
-        const [pAtt, pForm, pBap, pEvang, pCell] = await Promise.all([
+        const [pAtt, pForm, pBap, pEvang] = await Promise.all([
           tableFetch("attendance_stats", "mois", prevDebut, prevFin),
           tableFetch("formations", "date_debut", prevDebut, prevFin),
           tableFetch("baptemes", "date", prevDebut, prevFin),
           tableFetch("rapport_evangelisation", "date", prevDebut, prevFin),
-          tableFetch("cellules", "created_at", prevDebut, prevFin),
         ]);
         const prevMap = buildStatsFromData(
-          egliseIds,
-          pAtt,
-          pForm,
-          pBap,
-          pEvang,
-          pCell,
-          serviteurData
+          egliseIds, pAtt, pForm, pBap, pEvang, [], serviteurData
         );
         const pt = {
-          culteHommes: 0,
-          culteFemmes: 0,
-          culteJeunes: 0,
-          culteEnfants: 0,
-          culteConnectes: 0,
-          baptemeH: 0,
-          baptemeF: 0,
-          evangH: 0,
-          evangF: 0,
-          servH: 0,
-          servF: 0,
+          culteHommes: 0, culteFemmes: 0, culteJeunes: 0, culteEnfants: 0, culteConnectes: 0,
+          baptemeH: 0, baptemeF: 0, evangH: 0, evangF: 0, servH: 0, servF: 0,
         };
         Object.values(prevMap).forEach((s) => {
           pt.culteHommes += s.culte.hommes;
@@ -1195,8 +1057,7 @@ function StatGlobalPage() {
         const membreIds = membresActifsData.map((m) => m.id);
         const sexeMap = {};
         membresActifsData.forEach((m) => {
-          sexeMap[m.id] =
-            m.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
+          sexeMap[m.id] = m.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
         });
         let suivisQuery = supabase
           .from("suivis")
@@ -1212,16 +1073,12 @@ function StatGlobalPage() {
           let items = [];
           try {
             items = Array.isArray(s.besoin) ? s.besoin : JSON.parse(s.besoin);
-          } catch {
-            return;
-          }
+          } catch { return; }
           items.forEach((item) => {
-            const label =
-              typeof item === "string" ? item.trim() : item?.label?.trim();
+            const label = typeof item === "string" ? item.trim() : item?.label?.trim();
             const statut = typeof item === "string" ? null : item?.statut;
             if (!label) return;
-            if (!count[label])
-              count[label] = { total: 0, hommes: 0, femmes: 0, enSuivi: 0, resolu: 0 };
+            if (!count[label]) count[label] = { total: 0, hommes: 0, femmes: 0, enSuivi: 0, resolu: 0 };
             count[label].total++;
             if (sexe === "hommes") count[label].hommes++;
             else count[label].femmes++;
@@ -1319,17 +1176,13 @@ function StatGlobalPage() {
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button
               onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                !modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
-              }`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
             >
               {t.periodeRapide}
             </button>
             <button
               onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
-                modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
-              }`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
             >
               {t.trancheDates}
             </button>
@@ -1344,9 +1197,7 @@ function StatGlobalPage() {
                     key={p.val}
                     onClick={() => handlePeriodeChange(p.val)}
                     className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                      filtrePeriode === p.val
-                        ? "bg-white text-[#333699]"
-                        : "bg-white/15 text-white/70 hover:bg-white/20"
+                      filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"
                     }`}
                   >
                     {p.label}
@@ -1362,9 +1213,7 @@ function StatGlobalPage() {
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     {t.generation}
                   </span>
-                ) : (
-                  t.generer
-                )}
+                ) : t.generer}
               </button>
             </div>
           )}
@@ -1374,21 +1223,13 @@ function StatGlobalPage() {
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-white/50">{t.dateDebut}</label>
-                  <input
-                    type="date"
-                    value={dateDebut}
-                    onChange={(e) => setDateDebut(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40"
-                  />
+                  <input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-white/50">{t.dateFin}</label>
-                  <input
-                    type="date"
-                    value={dateFin}
-                    onChange={(e) => setDateFin(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40"
-                  />
+                  <input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
               </div>
               <button
@@ -1400,9 +1241,7 @@ function StatGlobalPage() {
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     {t.generation}
                   </span>
-                ) : (
-                  t.generer
-                )}
+                ) : t.generer}
               </button>
             </div>
           )}
@@ -1416,9 +1255,7 @@ function StatGlobalPage() {
                 key={o.key}
                 onClick={() => setOnglet(o.key)}
                 className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition ${
-                  onglet === o.key
-                    ? "bg-white text-[#333699]"
-                    : "text-white/50 hover:text-white/80"
+                  onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
                 }`}
               >
                 {o.label}
@@ -1447,6 +1284,7 @@ function StatGlobalPage() {
               besoinsGlobaux={besoinsGlobaux}
               totalMembresActifs={totalMembresActifs}
               prevTotaux={prevTotaux}
+              rootId={rootId}
               t={t}
             />
           </div>
@@ -1460,13 +1298,9 @@ function StatGlobalPage() {
                   onChange={(e) => setParentFilter(e.target.value)}
                   className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer"
                 >
-                  <option value="" className="bg-[#2a2d80]">
-                    {t.toutesEglises}
-                  </option>
+                  <option value="" className="bg-[#2a2d80]">{t.toutesEglises}</option>
                   {parentOptions.map((e) => (
-                    <option key={e.id} value={e.id} className="bg-[#2a2d80]">
-                      {e.nom}
-                    </option>
+                    <option key={e.id} value={e.id} className="bg-[#2a2d80]">{e.nom}</option>
                   ))}
                 </select>
               </div>

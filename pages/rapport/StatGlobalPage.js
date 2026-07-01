@@ -64,8 +64,8 @@ const translations = {
     kpiTauxConversion: "Taux conversion",
     kpiTauxConversionSub: "conversions / présences culte",
     sectionConversions: "Conversions (prière du salut)",
-    conversionsSourceEglise: "Église (nouveaux membres)",
-    conversionsSourceEvang: "Évangélisation",
+    conversionsSourceEglise: "Âmes accueillies à l'église",
+    conversionsSourceEvang: "Âmes rencontrées en évangélisation",
     chipNouveauxConvertis: "Nouveaux convertis",
     chipReconciliations: "Réconciliations",
     conversionsTotal: "Total conversions",
@@ -169,8 +169,8 @@ const translations = {
     kpiTauxConversion: "Conversion rate",
     kpiTauxConversionSub: "conversions / worship attendance",
     sectionConversions: "Conversions (salvation prayer)",
-    conversionsSourceEglise: "Church (new members)",
-    conversionsSourceEvang: "Outreach",
+    conversionsSourceEglise: "Souls welcomed at church",
+    conversionsSourceEvang: "Souls reached through outreach",
     chipNouveauxConvertis: "New converts",
     chipReconciliations: "Reconciliations",
     conversionsTotal: "Total conversions",
@@ -528,29 +528,43 @@ function BlocVueEnsemble({
         
         {/* Conversions (salvation prayer) — carte KPI compacte, pleine largeur, même style que les autres KPI */}
         <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-white/65">{t.sectionConversions}</p>
-            <p className="text-2xl font-bold leading-none text-yellow-300">{cd.total}</p>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-lg font-bold leading-none text-yellow-300">{cd.egliseNC}</p>
-              <p className="text-[11px] text-white/65 mt-1">{t.chipNouveauxConvertis}</p>
-            </div>
-            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-lg font-bold leading-none text-blue-300">{cd.egliseRecon}</p>
-              <p className="text-[11px] text-white/65 mt-1">{t.chipReconciliations}</p>
-            </div>
-            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-lg font-bold leading-none text-yellow-300">{cd.evangNC}</p>
-              <p className="text-[11px] text-white/65 mt-1">{t.chipNouveauxConvertis}</p>
-            </div>
-            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-lg font-bold leading-none text-blue-300">{cd.evangRecon}</p>
-              <p className="text-[11px] text-white/65 mt-1">{t.chipReconciliations}</p>
-            </div>
-          </div>
-        </div>
+  <div className="flex items-center justify-between">
+    <p className="text-xs text-white/65">{t.sectionConversions}</p>
+    <p className="text-2xl font-bold leading-none text-yellow-300">{cd.total}</p>
+  </div>
+
+  <div className="flex flex-col gap-1.5">
+    <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+      {t.conversionsSourceEglise}
+    </p>
+    <div className="grid grid-cols-2 gap-2">
+      <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+        <p className="text-lg font-bold leading-none text-yellow-300">{cd.egliseNC}</p>
+        <p className="text-[11px] text-white/65 mt-1">{t.chipNouveauxConvertis}</p>
+      </div>
+      <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+        <p className="text-lg font-bold leading-none text-blue-300">{cd.egliseRecon}</p>
+        <p className="text-[11px] text-white/65 mt-1">{t.chipReconciliations}</p>
+      </div>
+    </div>
+  </div>
+
+  <div className="flex flex-col gap-1.5">
+    <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
+      {t.conversionsSourceEvang}
+    </p>
+    <div className="grid grid-cols-2 gap-2">
+      <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+        <p className="text-lg font-bold leading-none text-yellow-300">{cd.evangNC}</p>
+        <p className="text-[11px] text-white/65 mt-1">{t.chipNouveauxConvertis}</p>
+      </div>
+      <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+        <p className="text-lg font-bold leading-none text-blue-300">{cd.evangRecon}</p>
+        <p className="text-[11px] text-white/65 mt-1">{t.chipReconciliations}</p>
+      </div>
+    </div>
+  </div>
+</div>
 
       {/* Répartition H/F/J */}
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">

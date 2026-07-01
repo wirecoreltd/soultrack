@@ -242,7 +242,7 @@ function toYearMonth(dateStr) {
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">
+    <p className="text-[11px] font-semibold uppercase tracking-widest text-white mb-3">
       {children}
     </p>
   );
@@ -265,9 +265,9 @@ function KpiCard({ label, value, sub, accent, delta }) {
   };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-xs text-white/50">{label}</p>
+      <p className="text-xs text-white">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+      {sub && <p className="text-[11px] text-white mt-0.5">{sub}</p>}
       {delta !== null && delta !== undefined && (
         <p
           className={`text-[11px] font-semibold mt-0.5 ${
@@ -318,7 +318,7 @@ function BarreProgression({ pct, color }) {
 function StatRow({ label, color, children }) {
   return (
     <div className={`bg-white/10 rounded-xl px-4 py-3 border-l-2 ${color}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-2">
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-white/80 mb-2">
         {label}
       </p>
       <div className="flex flex-wrap gap-2">{children}</div>

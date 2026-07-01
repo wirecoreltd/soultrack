@@ -493,36 +493,21 @@ function BlocVueEnsemble({
   return (
     <div className="flex flex-col gap-4">
 
-      {/* Ligne 1 : Membres actifs + Taux de présence + Églises supervisées + Cellules */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard
-          label={t.kpiMembresActifs}
-          value={totalMembresActifs}
-          sub={t.kpiMembresActifsSub}
-          accent="white"
-        />
-        <KpiCard
-          label={t.kpiTauxPresence}
-          value={`${tauxPresence}%`}
-          sub={t.kpiTauxPresenceSub}
-          accent={tauxPresence >= 70 ? "green" : tauxPresence >= 40 ? "amber" : "red"}
-        />
-        <KpiCard
-          label={t.kpiEglisesSup}
-          value={nbEglisesSupervisees}
-          sub={t.kpiEglisesSubSup}
-          accent="amber"
-        />
-        <KpiCard
-          label={t.kpiCellules}
-          value={totaux.cellules}
-          sub={t.kpiCellulesSub}
-          accent="orange"
-        />
-      </div>
-
-      {/* Ligne 2 : Total culte + Évangélisés */}
-        <div className="grid grid-cols-2 gap-3">
+              {/* Ligne 1 : Membres actifs + Taux de présence + Églises supervisées + Cellules */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <KpiCard label={t.kpiMembresActifs} value={totalMembresActifs} sub={t.kpiMembresActifsSub} accent="white" />
+          <KpiCard
+            label={t.kpiTauxPresence}
+            value={`${tauxPresence}%`}
+            sub={t.kpiTauxPresenceSub}
+            accent={tauxPresence >= 70 ? "green" : tauxPresence >= 40 ? "amber" : "red"}
+          />
+          <KpiCard label={t.kpiEglisesSup} value={nbEglisesSupervisees} sub={t.kpiEglisesSubSup} accent="amber" />
+          <KpiCard label={t.kpiCellules} value={totaux.cellules} sub={t.kpiCellulesSub} accent="orange" />
+        </div>
+        
+        {/* Ligne 2 : Total culte + Évangélisés + Baptêmes + Serviteurs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <KpiCard
             label={t.kpiTotalCulte}
             value={totalCulteGlobal}
@@ -530,22 +515,8 @@ function BlocVueEnsemble({
             accent="green"
             delta={calcDelta(totalCulteGlobal, prevCulteGlobal)}
           />
-          <KpiCard
-            label={t.kpiEvangelises}
-            value={totalEvangelisation}
-            sub={t.kpiEvangelisesSub}
-            accent="pink"
-          />
-        </div>
-        
-        {/* Ligne 3 : Baptêmes + Serviteurs */}
-        <div className="grid grid-cols-2 gap-3">
-          <KpiCard
-            label={t.kpiBaptemes}
-            value={totalBapteme}
-            sub={t.kpiBaptemesSub}
-            accent="purple"
-          />
+          <KpiCard label={t.kpiEvangelises} value={totalEvangelisation} sub={t.kpiEvangelisesSub} accent="pink" />
+          <KpiCard label={t.kpiBaptemes} value={totalBapteme} sub={t.kpiBaptemesSub} accent="purple" />
           <KpiCard
             label={t.kpiServiteurs}
             value={totalServiteurs}
@@ -555,28 +526,28 @@ function BlocVueEnsemble({
           />
         </div>
         
-        {/* Ligne 4 : Conversions (remplace Taux de conversion) — carte KPI compacte, pleine largeur */}
-        <div className="bg-white/10 rounded-2xl px-4 py-3.5 flex flex-col gap-2.5">
-          <div className="flex items-baseline justify-between">
+        {/* Conversions (salvation prayer) — carte KPI compacte, pleine largeur, même style que les autres KPI */}
+        <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
             <p className="text-xs text-white/65">{t.sectionConversions}</p>
-            <p className="text-2xl font-bold text-yellow-300 leading-none">{cd.total}</p>
+            <p className="text-2xl font-bold leading-none text-yellow-300">{cd.total}</p>
           </div>
-          <div className="grid grid-cols-4 gap-1.5">
-            <div className="bg-white/5 rounded-lg px-1 py-1.5 text-center">
-              <p className="text-sm font-bold text-yellow-300 leading-none">{cd.egliseNC}</p>
-              <p className="text-[9px] text-white/40 mt-1 leading-tight">{t.eglise} NC</p>
+          <div className="grid grid-cols-4 gap-2">
+            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+              <p className="text-lg font-bold leading-none text-yellow-300">{cd.egliseNC}</p>
+              <p className="text-[11px] text-white/65 mt-1">{t.chipNouveauxConvertis}</p>
             </div>
-            <div className="bg-white/5 rounded-lg px-1 py-1.5 text-center">
-              <p className="text-sm font-bold text-blue-300 leading-none">{cd.egliseRecon}</p>
-              <p className="text-[9px] text-white/40 mt-1 leading-tight">{t.eglise} Réc.</p>
+            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+              <p className="text-lg font-bold leading-none text-blue-300">{cd.egliseRecon}</p>
+              <p className="text-[11px] text-white/65 mt-1">{t.chipReconciliations}</p>
             </div>
-            <div className="bg-white/5 rounded-lg px-1 py-1.5 text-center">
-              <p className="text-sm font-bold text-yellow-300 leading-none">{cd.evangNC}</p>
-              <p className="text-[9px] text-white/40 mt-1 leading-tight">Evang. NC</p>
+            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+              <p className="text-lg font-bold leading-none text-yellow-300">{cd.evangNC}</p>
+              <p className="text-[11px] text-white/65 mt-1">{t.chipNouveauxConvertis}</p>
             </div>
-            <div className="bg-white/5 rounded-lg px-1 py-1.5 text-center">
-              <p className="text-sm font-bold text-blue-300 leading-none">{cd.evangRecon}</p>
-              <p className="text-[9px] text-white/40 mt-1 leading-tight">Evang. Réc.</p>
+            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+              <p className="text-lg font-bold leading-none text-blue-300">{cd.evangRecon}</p>
+              <p className="text-[11px] text-white/65 mt-1">{t.chipReconciliations}</p>
             </div>
           </div>
         </div>
@@ -600,74 +571,7 @@ function BlocVueEnsemble({
             );
           })}
         </div>
-      </div>
-
-      {/* Conversions (prière du salut) */}
-      {cd.total > 0 && (
-        <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-4">
-          <p className="text-sm text-white/80 font-semibold">{t.sectionConversions}</p>
-
-          {/* Venu à l'église */}
-          <div className="flex flex-col gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-emerald-300">
-              {t.conversionsSourceEglise}
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white/5 rounded-xl px-3 py-2.5 flex flex-col gap-0.5">
-                <span className="text-[11px] text-white/65">{t.chipNouveauxConvertis}</span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-lg font-bold text-yellow-300">{cd.egliseNC}</span>
-                  <span className="text-[11px] text-white/50">
-                    {totalCulteGlobal > 0 ? Math.round((cd.egliseNC / totalCulteGlobal) * 100) : 0}%
-                  </span>
-                </div>
-              </div>
-              <div className="bg-white/5 rounded-xl px-3 py-2.5 flex flex-col gap-0.5">
-                <span className="text-[11px] text-white/65">{t.chipReconciliations}</span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-lg font-bold text-blue-300">{cd.egliseRecon}</span>
-                  <span className="text-[11px] text-white/50">
-                    {totalCulteGlobal > 0 ? Math.round((cd.egliseRecon / totalCulteGlobal) * 100) : 0}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Évangélisation */}
-          <div className="flex flex-col gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-pink-300">
-              {t.conversionsSourceEvang}
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white/5 rounded-xl px-3 py-2.5 flex flex-col gap-0.5">
-                <span className="text-[11px] text-white/65">{t.chipNouveauxConvertis}</span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-lg font-bold text-yellow-300">{cd.evangNC}</span>
-                  <span className="text-[11px] text-white/50">
-                    {totalCulteGlobal > 0 ? Math.round((cd.evangNC / totalCulteGlobal) * 100) : 0}%
-                  </span>
-                </div>
-              </div>
-              <div className="bg-white/5 rounded-xl px-3 py-2.5 flex flex-col gap-0.5">
-                <span className="text-[11px] text-white/65">{t.chipReconciliations}</span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-lg font-bold text-blue-300">{cd.evangRecon}</span>
-                  <span className="text-[11px] text-white/50">
-                    {totalCulteGlobal > 0 ? Math.round((cd.evangRecon / totalCulteGlobal) * 100) : 0}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Total */}
-          <div className="flex items-center justify-between border-t border-white/10 pt-2">
-            <span className="text-xs text-white font-semibold">{t.conversionsTotal}</span>
-            <Badge color="green">{cd.total}</Badge>
-          </div>
-        </div>
-      )}       
+      </div>     
 
       <CarteTop5Besoins besoinsGlobaux={besoinsGlobaux} t={t} />
       {/* Classement des églises */}

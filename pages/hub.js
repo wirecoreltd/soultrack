@@ -45,7 +45,7 @@ const translations = {
       rapport:        "Report",
       admin:          "Admin",
       presence:       "Attendance register",
-      enfants :       "Child management",
+      enfants:        "Child management",
       notifications:  "Notifications",
       superadmin:     "SoulTrack Admin",
     },
@@ -55,6 +55,7 @@ const translations = {
 const ROLES_WITH_NOTIF_IN_HUB = ["ResponsableFamilles", "ResponsableCellule", "Conseiller", "SuperviseurCellule"];
 
 // Les cards utilisent des clés pour récupérer le label traduit
+// Ordre global : Membres → Évangélisation → Cellule → Conseiller → Familles → Enfants → Présences → Rapport → Notifications → Admin
 const roleCards = {
   Administrateur: [
     { path: "/membres/membres-hub",               key: "membres",        emoji: "🧭", color: "#0E7490" },
@@ -62,11 +63,11 @@ const roleCards = {
     { path: "/cellule/cellules-hub",              key: "cellule",        emoji: "🏠", color: "#10B981" },
     { path: "/conseiller/conseiller-hub",         key: "conseiller",     emoji: "🤝", color: "#0EA5E9" },
     { path: "/famille/familles-hub",              key: "familles",       emoji: "👑", color: "#F59E0B" },
-    { path: "/rapport/rapport-hub",               key: "rapport",        emoji: "📈", color: "#FBBF24" },
-    { path: "/administrateur/administrateur",     key: "admin",          emoji: "⚙️", color: "#0EA5E9" },
-    { path: "/Presence",                          key: "presence",       emoji: "✍🏻", color: "#0EA5E9" },
     { path: "/enfants/enfants-hub",               key: "enfants",        emoji: "🦁", color: "#0EA5E9" },
+    { path: "/Presence",                          key: "presence",       emoji: "✍🏻", color: "#0EA5E9" },
+    { path: "/rapport/rapport-hub",               key: "rapport",        emoji: "📈", color: "#FBBF24" },
     { path: "/admin/notifications",               key: "notifications",  emoji: "🔔", color: "#ef4444" },
+    { path: "/administrateur/administrateur",     key: "admin",          emoji: "⚙️", color: "#0EA5E9" },
   ],
   Superadmin: [
     { path: "/membres/membres-hub",               key: "membres",        emoji: "🧭", color: "#0E7490" },
@@ -74,11 +75,11 @@ const roleCards = {
     { path: "/cellule/cellules-hub",              key: "cellule",        emoji: "🏠", color: "#10B981" },
     { path: "/conseiller/conseiller-hub",         key: "conseiller",     emoji: "🤝", color: "#0EA5E9" },
     { path: "/famille/familles-hub",              key: "familles",       emoji: "👑", color: "#F59E0B" },
-    { path: "/rapport/rapport-hub",               key: "rapport",        emoji: "📈", color: "#FBBF24" },
-    { path: "/administrateur/administrateur",     key: "admin",          emoji: "⚙️", color: "#0EA5E9" },
     { path: "/enfants/enfants-hub",               key: "enfants",        emoji: "🦁", color: "#0EA5E9" },
     { path: "/Presence",                          key: "presence",       emoji: "✍🏻", color: "#0EA5E9" },
+    { path: "/rapport/rapport-hub",               key: "rapport",        emoji: "📈", color: "#FBBF24" },
     { path: "/admin/notifications",               key: "notifications",  emoji: "🔔", color: "#ef4444" },
+    { path: "/administrateur/administrateur",     key: "admin",          emoji: "⚙️", color: "#0EA5E9" },
     { path: "/Superadmin/Superadmin-hub",         key: "superadmin",     emoji: "🔐", color: "#000000" },
   ],
   ResponsableIntegration: [
@@ -104,13 +105,13 @@ const roleCards = {
     { path: "/admin/notifications",  key: "notifications", emoji: "🔔", color: "#ef4444" },
   ],
   CheckInPresence: [
-    { path: "/Presence", key: "presence",      emoji: "✍🏻", color: "#0EA5E9" },    
+    { path: "/Presence", key: "presence", emoji: "✍🏻", color: "#0EA5E9" },
   ],
   ResponsableCheckIn: [
-    { path: "/Presence", key: "presence",      emoji: "✍🏻", color: "#0EA5E9" },    
+    { path: "/Presence", key: "presence", emoji: "✍🏻", color: "#0EA5E9" },
   ],
-   ResponsableEnfants: [
-    { path: "/enfants/enfants-hub", key: "enfants",      emoji: "🦁", color: "#0EA5E9" },    
+  ResponsableEnfants: [
+    { path: "/enfants/enfants-hub", key: "enfants", emoji: "🦁", color: "#0EA5E9" },
   ],
   Membre: [],
 };
@@ -139,11 +140,12 @@ export default function IndexPage() {
             parsedRoles = Array.isArray(parsed) ? parsed : [parsed];
           } catch { parsedRoles = [storedRoles]; }
         }
-       setRoles(parsedRoles);
+        setRoles(parsedRoles);
 
-      if (parsedRoles.length === 1 && parsedRoles[0] === "CheckInPresence") {
-        router.replace("/Presence");
-        return;}
+        if (parsedRoles.length === 1 && parsedRoles[0] === "CheckInPresence") {
+          router.replace("/Presence");
+          return;
+        }
 
         if (parsedRoles.includes("Administrateur") && !parsedRoles.includes("Superadmin")) {
           const { data: profile } = await supabase

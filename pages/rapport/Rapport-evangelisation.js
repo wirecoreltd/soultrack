@@ -348,8 +348,7 @@ function BlocKpiGlobaux({ filteredEvangelises, filteredSuivis, rapports, onKpiCl
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KpiCard label={t.kpiEnvoyes} value={totalEnvoyes} sub={`${pct(totalEnvoyes)}% ${t.desEvangelises}`} accent="purple" onClick={() => onKpiClick("Envoyé")} />
         <KpiCard label={t.kpiNonEnvoyes} value={totalNonEnvoyes} sub={`${pct(totalNonEnvoyes)}%`} accent="gray" onClick={() => onKpiClick("NonEnvoye")} />
-        <KpiCard label={t.kpiRefus} value={totalRefus} sub={`${pct(totalRefus)}%`} accent="red" onClick={() => onKpiClick("Refus")} />
-        <KpiCard label={t.kpiMoissonneurs} value={getTotals(rapports).moissonneurs} sub={t.impliques} accent="teal" />
+        <KpiCard label={t.kpiRefus} value={totalRefus} sub={`${pct(totalRefus)}%`} accent="red" onClick={() => onKpiClick("Refus")} />        
       </div>
       <div className="grid grid-cols-2 gap-3">
         <KpiCard label={t.kpiIntegreCellule} value={totalCellule} sub={filteredSuivis.length > 0 ? `${Math.round((totalCellule / filteredSuivis.length) * 100)}% ${t.desSuivis}` : "—"} accent="blue" onClick={onCelluleClick} />

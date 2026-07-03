@@ -1,4 +1,22 @@
-// pages/api/create-user.js
+// ═══════════════════════════════════════════════════════════════
+// API : Création d'un Utilisateur (create-user)
+// ═══════════════════════════════════════════════════════════════
+// Description : Crée un compte utilisateur complet (auth + profil +
+// membre) avec gestion des rôles spécifiques : création de cellule
+// (ResponsableCellule), assignation superviseur (SuperviseurCellule),
+// création de famille (ResponsableFamilles), mise à jour ou création
+// du membre associé, et insertion des stats de ministère.
+//
+// Tables Supabase utilisées :
+// - profiles                (lecture + écriture) → profil admin + nouvel utilisateur
+// - cellules                (lecture + écriture) → création/màj cellule, superviseur
+// - familles                (écriture)           → création famille
+// - membres_complets        (lecture + écriture) → membre lié au compte
+// - stats_ministere_besoin  (écriture)           → statistiques ministère
+//
+// Auth Supabase : création via supabaseAdmin.auth.admin.createUser
+// ═══════════════════════════════════════════════════════════════
+
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseAdmin = createClient(

@@ -1,3 +1,19 @@
+// ═══════════════════════════════════════════════════════════════
+// API : Création d'un Conseiller (create-conseiller)
+// ═══════════════════════════════════════════════════════════════
+// Description : Crée le compte auth et le profil d'un Conseiller à
+// partir d'un membre existant, rattaché à un responsable (église +
+// branche). Enregistre également une statistique de ministère
+// "Conseiller" si un membre_id est fourni.
+//
+// Tables Supabase utilisées :
+// - profiles                (lecture + écriture) → profil responsable + nouveau conseiller
+// - membres_complets        (lecture)             → sexe du membre (pour stats)
+// - stats_ministere_besoin  (écriture)            → statistique ministère "Conseiller"
+//
+// Auth Supabase : création via supabaseAdmin.auth.admin.createUser
+// ═══════════════════════════════════════════════════════════════
+
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";

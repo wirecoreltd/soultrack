@@ -1,3 +1,22 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Gestion des Contacts Évangélisés (Evangelisation)
+// ═══════════════════════════════════════════════════════════════
+// Description : Centralise les contacts issus de l'évangélisation.
+// Permet de consulter/modifier/supprimer chaque contact, de l'intégrer
+// comme membre de l'église, et de le transmettre (avec détection de
+// doublons) à un Conseiller, une Cellule ou une Famille via un message
+// WhatsApp pré-rempli.
+//
+// Tables Supabase utilisées :
+// - evangelises                 (lecture + écriture) → contacts évangélisés (statut, suppression)
+// - cellules                    (lecture)             → cellules pour l'envoi (si feature active)
+// - familles                    (lecture)             → familles pour l'envoi (si feature active)
+// - profiles                    (lecture)             → conseillers pour l'envoi (si feature active)
+// - membres_complets            (écriture)            → intégration d'un évangélisé comme membre
+// - suivis_des_evangelises      (lecture + écriture)  → détection doublons + création du suivi assigné
+// - suivi_assignments_evangelises (écriture)          → assignation du suivi à un conseiller
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";

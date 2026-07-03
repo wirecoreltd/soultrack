@@ -1,3 +1,28 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Notifications (NotificationsPage)
+// ═══════════════════════════════════════════════════════════════
+// Description : Centralise et affiche toutes les notifications de
+// l'utilisateur connecté selon son rôle : nouveaux membres, évangélisés
+// non envoyés, membres ajoutés en cellule/famille, membres et
+// évangélisés assignés à un responsable, et invitations de supervision
+// en attente. Chaque notification redirige vers la page correspondante
+// et marque l'élément comme vu/traité. Mise à jour en temps réel via
+// Supabase Realtime.
+//
+// Tables Supabase utilisées :
+// - profiles                (lecture)             → profil utilisateur (rôles, eglise_id)
+// - membres_complets        (lecture + écriture)  → nouveaux membres, ajouts en cellule, assignations
+// - suivi_assignments       (lecture)             → membres assignés à un Conseiller
+// - cellules                (lecture)             → cellules gérées (filtrage des notifications)
+// - familles                (lecture)             → familles gérées (filtrage des notifications)
+// - evangelises             (lecture + écriture)  → évangélisés non envoyés / vus
+// - suivis_des_evangelises  (lecture + écriture)  → évangélisés assignés à un responsable
+// - eglise_supervisions     (lecture)             → invitations de supervision en attente
+//
+// Realtime : membres_complets, evangelises, suivis_des_evangelises,
+// eglise_supervisions (INSERT/UPDATE)
+// ═══════════════════════════════════════════════════════════════
+
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";

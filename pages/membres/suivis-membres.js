@@ -1,3 +1,24 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Suivis des Membres (SuivisMembres)
+// ═══════════════════════════════════════════════════════════════
+// Description : Affiche les membres actuellement "en suivi" (statut
+// En attente / En Suivis) ou "Refus" selon le toggle. Permet de mettre
+// à jour le commentaire et le statut de suivi, réactiver un contact
+// refusé, consulter les détails complets (identité, vie spirituelle,
+// parcours, besoins pastoraux), et modifier le contact. La liste est
+// filtrée selon le rôle : Conseiller (assignations), ResponsableCellule
+// (cellules directes + filles), ResponsableFamilles (familles).
+//
+// Tables Supabase utilisées :
+// - membres_complets   (lecture + écriture) → données des membres et suivi
+// - suivi_assignments  (lecture)            → mapping conseiller ↔ membre
+// - cellules           (lecture)            → liste des cellules + cellules filles
+// - familles           (lecture)            → liste des familles
+// - profiles           (lecture)            → profil utilisateur + liste conseillers
+//
+// Realtime : suivi_assignments
+// ═══════════════════════════════════════════════════════════════
+
 import { useEffect, useState, useRef, useCallback } from "react";
 import React from "react";
 import supabase from "../../lib/supabaseClient";
@@ -450,7 +471,15 @@ function SuivisMembresContent() {
         setConseillers(conseillersData || []);
 
         let query = supabase
-          .from("membres_complets").select("*")
+          .from("membres_complets")
+          .select(`
+            id, prenom, nom, telephone, sexe, age, is_whatsapp,
+            cellule_id, famille_id, date_venu, date_envoi_suivi,
+            commentaire_suivis, statut_suivis, suivi_statut, statut,
+            etat_contact, bapteme_eau, bapteme_esprit, priere_salut,
+            type_conversion, Formation, Ministere, venu, statut_initial,
+            infos_supplementaires, besoin
+          `)
           .eq("eglise_id", profileData.eglise_id)
           .order("created_at", { ascending: false });
 
@@ -576,7 +605,18 @@ function SuivisMembresContent() {
       if ([2, 3, 4].includes(statusNum)) payload.date_statut_Def = new Date().toISOString().split("T")[0];
 
       const { data: updatedMember, error } = await supabase
-        .from("membres_complets").update(payload).eq("id", id).select("*").single();
+      .from("membres_complets")
+      .update(payload)
+      .eq("id", id)
+      .select(`
+        id, prenom, nom, telephone, sexe, age, is_whatsapp,
+        cellule_id, famille_id, date_venu, date_envoi_suivi,
+        commentaire_suivis, statut_suivis, suivi_statut, statut,
+        etat_contact, bapteme_eau, bapteme_esprit, priere_salut,
+        type_conversion, Formation, Ministere, venu, statut_initial,
+        infos_supplementaires, besoin
+      `)
+      .single();
       if (error) throw error;
 
       setAllMembers(prev => prev.map(m => (m.id === id ? updatedMember : m)));
@@ -591,8 +631,18 @@ function SuivisMembresContent() {
     setUpdating(prev => ({ ...prev, [id]: true }));
     try {
       const { data: updatedMember, error } = await supabase
-        .from("membres_complets").update({ statut_suivis: 2, updated_at: new Date() })
-        .eq("id", id).select("*").single();
+      .from("membres_complets")
+      .update({ statut_suivis: 2, updated_at: new Date() })
+      .eq("id", id)
+      .select(`
+        id, prenom, nom, telephone, sexe, age, is_whatsapp,
+        cellule_id, famille_id, date_venu, date_envoi_suivi,
+        commentaire_suivis, statut_suivis, suivi_statut, statut,
+        etat_contact, bapteme_eau, bapteme_esprit, priere_salut,
+        type_conversion, Formation, Ministere, venu, statut_initial,
+        infos_supplementaires, besoin
+      `)
+      .single();
       if (error) throw error;
       setAllMembers(prev => prev.map(m => m.id === id ? updatedMember : m));
     } catch (err) {

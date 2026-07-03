@@ -1,3 +1,32 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Suivis des Évangélisés (SuivisEvangelisation)
+// ═══════════════════════════════════════════════════════════════
+// Description : Affiche, sous forme de cartes, les contacts en cours
+// d'évangélisation (statut "En cours" / "Envoyé") ainsi que les
+// refus (bascule "Voir les refus"). Permet de consulter les détails
+// d'un contact (identité, vie spirituelle, parcours, besoins
+// pastoraux), d'appeler/envoyer un SMS/WhatsApp, de mettre à jour le
+// commentaire et le statut de suivi, de réactiver un contact refusé,
+// de l'intégrer comme membre (upsert dans membres_complets avec
+// vérification de limite de plan), d'ajouter un suivi pastoral
+// (SuiviEvanPopup) et de modifier le contact (EditEvangeliseSuiviPopup).
+// L'affichage est filtré selon le rôle de l'utilisateur (Conseiller,
+// ResponsableCellule, ResponsableFamilles, etc.).
+//
+// Tables Supabase utilisées :
+// - profiles                     (lecture)            → profil utilisateur connecté + liste des conseillers
+// - suivis_des_evangelises       (lecture + écriture) → contacts évangélisés et leur suivi
+// - suivi_assignments_evangelises(lecture)            → mapping conseiller ↔ suivi évangélisé
+// - cellules                     (lecture)            → liste des cellules (si feature active) + cellules filles
+// - familles                     (lecture)            → liste des familles (si feature active)
+// - membres_complets             (écriture / upsert)  → création du membre lors de l'intégration
+// - suivi_assignments            (écriture)           → assignation conseiller ↔ membre intégré
+//
+// Realtime : aucun
+//
+// Edge Function : aucune
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -310,7 +339,7 @@ function SuivisEvangelisationContent() {
     if (!session?.session?.user) return null;
     const { data } = await supabase
       .from("profiles")
-      .select("*")
+      .select("id, prenom, nom, role, roles, eglise_id") // ✅ select("*") remplacé par des colonnes explicites
       .eq("id", session.session.user.id)
       .single();
     setUser(data);
@@ -422,7 +451,9 @@ function SuivisEvangelisationContent() {
 
       const { data, error } = await supabase
         .from("suivis_des_evangelises")
-        .select("*")
+        .select(
+          "id, eglise_id, nom, prenom, telephone, ville, sexe, age, is_whatsapp, priere_salut, type_conversion, date_evangelise, type_evangelisation, besoin, infos_supplementaires, commentaire_evangelises, status_suivis_evangelises, date_suivi, date_statut, cellule_id, famille_id, conseiller_id, evangelise_id"
+        ) // ✅ select("*") remplacé par des colonnes explicites
         .eq("eglise_id", userData.eglise_id)
         .order("id", { ascending: false });
 

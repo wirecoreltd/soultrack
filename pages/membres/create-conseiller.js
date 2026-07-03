@@ -1,3 +1,19 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Création d'un Conseiller (CreateConseillerPage)
+// ═══════════════════════════════════════════════════════════════
+// Description : Permet à un Administrateur ou Responsable Intégration
+// de transformer un membre "star" (serviteur disponible) en Conseiller.
+// Sélection du membre, saisie email/mot de passe, et création du
+// compte via l'API interne /api/create-conseiller.
+//
+// Tables Supabase utilisées :
+// - profiles           (lecture)  → profil du responsable connecté
+// - membres_complets   (lecture)  → membres "star" disponibles
+// - profiles           (lecture)  → conseillers existants (filtrage)
+//
+// API interne : /api/create-conseiller (POST) → création du compte
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 
 import { useState, useEffect } from "react";

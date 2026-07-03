@@ -1,3 +1,18 @@
+// ═══════════════════════════════════════════════════════════════
+// COMPOSANT : En-tête des pages internes (HeaderPages)
+// ═══════════════════════════════════════════════════════════════
+// Description : Affiche l'en-tête commun aux pages protégées :
+// bouton retour, déconnexion, notifications, invitations en attente,
+// informations utilisateur connecté, logo/nom/ville/pays de l'église,
+// et éventuel bandeau "Supervisé par" si l'église est sous supervision.
+//
+// Tables Supabase utilisées :
+// - profiles             (lecture) → prénom, rôles, eglise_id
+// - eglises               (lecture) → nom, logo_url, denomination, ville, pays
+// - eglise_supervisions   (lecture) → lien de supervision accepté
+// - eglises (superviseur) (lecture) → infos de l'église superviseure
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 
 import { useEffect, useState } from "react";

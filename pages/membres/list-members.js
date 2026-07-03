@@ -1374,27 +1374,6 @@ const getYesNo = (value) => {
                 <p>{t.sentDate} {formatDateFr(m.date_envoi_suivi)}</p>
                 <p>{t.comment} {m.commentaire_suivis || "—"}</p>
                 <p>{t.evangComment} {m.Commentaire_Suivi_Evangelisation || "—"}</p>
-
-                {conseillerActive && (
-                  <div className="mt-1">
-                    <span className="font-semibold">{t.conseiller} </span>
-                    {assignmentsMap[m.id]?.length > 0 ? (
-                      <span>
-                        {assignmentsMap[m.id].map((c, i) => (
-                          <span key={c.id}>
-                            {c.prenom} {c.nom}
-                            {i === 0 && assignmentsMap[m.id].length > 1
-                              ? " (principal)"
-                              : ""}
-                            {i < assignmentsMap[m.id].length - 1 ? ", " : ""}
-                          </span>
-                        ))}
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </div>
-                )}
               </div>
               <hr />
 

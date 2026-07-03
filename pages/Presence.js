@@ -1,3 +1,27 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Prise de Présence (PresencePage)
+// ═══════════════════════════════════════════════════════════════
+// Description : Gère la prise de présence en temps réel pour les
+// sessions (cultes, prières, etc.) : création/rejoint d'une session
+// du jour, marquage présent/absent des membres, vue groupée par
+// cellule/famille pour les responsables, consultation en lecture
+// seule des sessions archivées (>7 jours), gestion de la visibilité
+// de la liste, et prise en compte des cellules filles. Le contenu
+// affiché est filtré selon le rôle de l'utilisateur (Administrateur,
+// Conseiller, Responsable/Superviseur Cellule ou Famille, CheckIn).
+//
+// Tables Supabase utilisées :
+// - profiles             (lecture + écriture) → profil, rôles, préférence cellules filles
+// - attendance           (lecture + écriture) → sessions (création, modification, types de temps)
+// - presences            (lecture + écriture) → statut présent/absent par membre et session
+// - membres_complets     (lecture)             → liste des membres (filtrée par rôle/rattachement)
+// - cellules              (lecture)             → cellules gérées/supervisées + cellules filles
+// - familles              (lecture)             → familles gérées
+// - suivi_assignments    (lecture)             → membres assignés à un Conseiller
+//
+// Realtime : attendance (nouvelles sessions), presences (mises à jour live)
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 import { useEffect, useState, useCallback, useRef } from "react";
 import supabase from "../lib/supabaseClient";

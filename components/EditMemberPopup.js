@@ -65,7 +65,7 @@ const translations = {
     evangelisation: "Évangélisation",
     autre: "Autre",
     // Statut arrivée options
-    veutRejoindre: "Veut rejoindre ICC",
+    veutRejoindre: "Veut rejoindre l'église",
     aDejaEglise: "A déjà son église",
     visiteur: "Visiteur",
     // Conversion types
@@ -143,7 +143,7 @@ const translations = {
     reseaux: "Social networks",
     evangelisation: "Evangelisation",
     autre: "Other",
-    veutRejoindre: "Wants to join ICC",
+    veutRejoindre: "Wants to join church",
     aDejaEglise: "Already has a church",
     visiteur: "Visitor",
     nouveauConverti: "New convert",
@@ -986,7 +986,7 @@ export default function EditMemberPopup({
                   className="inp"
                 >
                   <option value="">{t.chooseSelect}</option>
-                  <option value="veut rejoindre ICC">{t.veutRejoindre}</option>
+                  <option value="veut rejoindre L'église">{t.veutRejoindre}</option>
                   <option value="a déjà son église">{t.aDejaEglise}</option>
                   <option value="visiteur">{t.visiteur}</option>
                 </select>

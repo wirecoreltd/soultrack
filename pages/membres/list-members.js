@@ -1,3 +1,26 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Liste des Membres (ListMembers)
+// ═══════════════════════════════════════════════════════════════
+// Description : Affiche la liste des membres de l'église (nouveaux,
+// existants, inactifs). Permet de filtrer/rechercher, consulter les
+// détails, envoyer un contact en suivi (cellule/famille/conseiller),
+// marquer comme membre existant, modifier, supprimer (soft delete),
+// exporter en PDF, et gérer les suivis pastoraux.
+//
+// Tables Supabase utilisées :
+// - membres_complets   (lecture + écriture) → données des membres
+// - suivi_assignments  (lecture)            → mapping conseiller ↔ membre
+// - suivis             (lecture)            → besoins exprimés (filtre ?besoin=)
+// - cellules           (lecture)            → liste des cellules (si feature active)
+// - familles           (lecture)            → liste des familles (si feature active)
+// - profiles           (lecture)            → profil utilisateur + liste conseillers
+// - eglises            (lecture)            → infos église (logo, nom) pour export PDF
+//
+// Realtime : membres_complets, cellules, profiles, suivi_assignments
+//
+// Edge Function : dynamic-worker (invoquée lors de la suppression d'un membre)
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";

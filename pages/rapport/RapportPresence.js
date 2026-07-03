@@ -1,3 +1,26 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Rapport de Présences & Suivi Pastoral (RapportPresencePage)
+// ═══════════════════════════════════════════════════════════════
+// Description : Fournit des indicateurs de fidélité et de suivi
+// pastoral à partir de l'historique des présences : vue d'ensemble
+// (KPI, segmentation par fidélité, alertes pour absences consécutives,
+// taux par type de session, tendance hebdomadaire, top fidèles,
+// répartition par genre), comparaison entre cellules, comparaison
+// entre familles, et détail par session. Les données affichées sont
+// filtrées selon le rôle de l'utilisateur (Administrateur, Conseiller,
+// Responsable Cellule ou Familles). Les onglets Cellules/Familles
+// sont conditionnés par les features activées de l'église.
+//
+// Tables Supabase utilisées :
+// - profiles             (lecture) → profil, rôle(s), eglise_id
+// - attendance           (lecture) → sessions (filtrées par période et type)
+// - presences            (lecture) → statut présent/absent par membre et session
+// - membres_complets     (lecture) → membres visibles (filtrés par rôle/rattachement)
+// - cellules              (lecture) → cellules gérées/de l'église (si feature active)
+// - familles              (lecture) → familles gérées/de l'église (si feature active)
+// - suivi_assignments    (lecture) → membres assignés à un Conseiller
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 import { useEffect, useState, useCallback, useRef } from "react";
 import supabase from "../../lib/supabaseClient";

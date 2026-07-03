@@ -1,3 +1,28 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Tableau de Bord Évangélisation (RapportEvangelisation)
+// ═══════════════════════════════════════════════════════════════
+// Description : Affiche un dashboard d'analyse des activités
+// d'évangélisation de l'église : KPIs globaux (évangélisés,
+// convertis, intégrés, en cours, envoyés/non envoyés au suivi,
+// refus, moissonneurs, intégrés en cellule/à l'église), entonnoir
+// de conversion, tendance mensuelle (évangélisés vs convertis), et
+// résultats détaillés par type d'évangélisation (avec sessions/
+// rapports modifiables). Les données sont filtrables par période
+// rapide (7j/30j/90j/6 mois/1 an), tranche de dates personnalisée,
+// et type d'évangélisation. Un clic sur un KPI redirige vers la
+// page de suivi des âmes avec les filtres correspondants.
+//
+// Tables Supabase utilisées :
+// - profiles                (lecture)            → eglise_id de l'utilisateur connecté
+// - evangelises              (lecture)            → contacts évangélisés (filtrés par période/type)
+// - rapport_evangelisation   (lecture + écriture) → sessions/rapports d'évangélisation détaillés
+// - suivis_des_evangelises   (lecture)            → statut de suivi (cellule, conseiller, intégration)
+//
+// Realtime : aucun
+//
+// Edge Function : aucune
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -605,7 +630,8 @@ export default function RapportEvangelisation() {
 
     try {
       const { data: evangelisesData } = await supabase
-        .from("evangelises").select("*")
+        .from("evangelises")
+        .select("id, eglise_id, date_evangelise, type_evangelisation, status_suivi, priere_salut") // ✅ select("*") remplacé par des colonnes explicites
         .eq("eglise_id", egliseId).neq("status_suivi", "supprime");
       setAllEvangelises(evangelisesData || []);
 
@@ -618,7 +644,11 @@ export default function RapportEvangelisation() {
       });
       setFilteredEvangelises(filtered);
 
-      let query = supabase.from("rapport_evangelisation").select("*")
+      let query = supabase
+        .from("rapport_evangelisation")
+        .select(
+          "id, eglise_id, evangelise_member_id, date_evangelise, type_evangelisation, hommes, femmes, priere, nouveau_converti, reconciliation, moissonneurs"
+        ) // ✅ select("*") remplacé par des colonnes explicites
         .eq("eglise_id", egliseId)
         .in("evangelise_member_id", filtered.map(e => e.id))
         .order("date_evangelise", { ascending: false });
@@ -627,7 +657,10 @@ export default function RapportEvangelisation() {
       const { data: rapportsData } = await query;
       setRapports(rapportsData || []);
 
-      const { data: suivisData } = await supabase.from("suivis_des_evangelises").select("*").eq("eglise_id", egliseId);
+      const { data: suivisData } = await supabase
+        .from("suivis_des_evangelises")
+        .select("id, eglise_id, evangelise_id, date_suivi, type_evangelisation, status_suivis_evangelises, cellule_id, conseiller_id") // ✅ select("*") remplacé par des colonnes explicites
+        .eq("eglise_id", egliseId);
       const evangeliseIds = new Set(filtered.map(e => e.id));
       const filteredSuivisFinal = (suivisData || []).filter(s => {
         const d = s.date_suivi ? new Date(s.date_suivi) : null;

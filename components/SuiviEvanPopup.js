@@ -3,69 +3,128 @@
 import { useEffect, useState, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import PastoralAssistant from "../components/PastoralAssistant";
+import { useLang } from "../hooks/useLang";
 
-const INTERVIEW_QUESTIONS = [
-  {
-    key: "etat_actuel",
-    emoji: "❤️",
-    section: "1. État actuel",
-    question: "Comment vas-tu vraiment en ce moment ?"
+const translations = {
+  fr: {
+    headerTitle: (prenom, nom) => `🌍 Suivi évangélisation — ${prenom} ${nom}`,
+    headerSub: "Ajouter ou modifier un suivi",
+    notFoundWarning: "⚠️ Ce membre n'est pas encore enregistré dans la liste des évangélisés. Les suivis d'évangélisation ne peuvent pas être ajoutés.",
+    checkingProfile: "🔄 Vérification du profil évangélisé...",
+    editingSuiviLabel: (date) => `✏️ Modification du suivi du ${date}`,
+    cancel: "Annuler",
+    newOrEditTitle: (isEditing) => (isEditing ? "Modifier le suivi" : "Nouveau suivi"),
+    dateLabel: "Date",
+    typeLabel: "Type d'action",
+    typeDefault: "-- Type d'action --",
+    typeAppel: "Appel",
+    typeVisite: "Visite",
+    typeEntretien: "Entretien",
+    typeMessage: "Message",
+    sectionBesoins: "🙏 Besoins",
+    besoinsOptions: [
+      "Finances", "Santé", "Travail / Études", "Famille / Enfants",
+      "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
+      "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
+    ],
+    statutResolu: "✓ Résolu",
+    statutEnSuivi: "En suivi",
+    sectionHistorique: "📅 Historique",
+    noHistorique: "Aucun suivi pour le moment",
+    editButton: "✏️ Modifier",
+    editingButton: "✏️ En cours...",
+    besoinsLabel: "Besoins :",
+    commentaireLabel: "Commentaire : ",
+    voirMoins: "▲ Voir moins",
+    voirEntretien: "▼ Voir les réponses d'entretien",
+    sectionEntretien: "🗣️ Questions d'entretien",
+    commentaireField: "Commentaire",
+    commentairePlaceholder: "Commentaire...",
+    close: "Fermer",
+    updating: "Mise à jour...",
+    adding: "Ajout...",
+    saveChanges: "💾 Enregistrer les modifications",
+    addSuivi: "Ajouter suivi",
+    alertDateType: "Date et type sont obligatoires",
+    alertNoSession: "Session introuvable. Veuillez vous déconnecter et vous reconnecter.",
+    alertNoEvangelise: "Ce membre ne possède pas encore d'entrée dans la table des évangélisés.\nVeuillez d'abord l'enregistrer comme évangélisé avant d'ajouter un suivi.",
+    errorPrefix: "Erreur : ",
+    successMessage: "✅ Suivi enregistré avec succès !",
+    notesPlaceholder: "Notes...",
+    questions: [
+      { key: "etat_actuel", emoji: "❤️", section: "1. État actuel", question: "Comment vas-tu vraiment en ce moment ?" },
+      { key: "situation_actuelle", emoji: "🧭", section: "1. État actuel", question: "Qu'est-ce que tu traverses actuellement dans ta vie ?" },
+      { key: "relation_avec_dieu", emoji: "🔍", section: "2. Vie spirituelle", question: "Est-ce que tu as déjà réfléchi à ta relation avec Dieu après notre échange ?" },
+      { key: "perception_spirituelle", emoji: "🌿", section: "2. Vie spirituelle", question: "Qu'est-ce que Dieu représente pour toi aujourd'hui ?" },
+      { key: "besoins_principaux", emoji: "💔", section: "3. Besoins & situation", question: "Y a-t-il un domaine où tu ressens un besoin ou une difficulté en ce moment ?" },
+      { key: "preoccupations", emoji: "🧠", section: "3. Besoins & situation", question: "Qu'est-ce qui te préoccupe le plus actuellement ?" },
+      { key: "ouverture_spirituelle", emoji: "✝️", section: "4. Ouverture à Dieu", question: "Est-ce que tu aimerais que Dieu intervienne dans une situation de ta vie ?" },
+      { key: "ouverture_priere", emoji: "🙏", section: "4. Ouverture à Dieu", question: "Est-ce que tu serais ouvert à prier ensemble pour cela ?" },
+      { key: "accompagnement_suivi", emoji: "🌱", section: "5. Suivi", question: "Est-ce que tu serais d'accord pour qu'on continue à avancer ensemble dans ce cheminement ?" },
+      { key: "etudes_parole", emoji: "📖", section: "5. Suivi", question: "Est-ce que tu aimerais découvrir davantage la Parole de Dieu avec nous ?" },
+    ],
+    months: ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"],
   },
-  {
-    key: "situation_actuelle",
-    emoji: "🧭",
-    section: "1. État actuel",
-    question: "Qu'est-ce que tu traverses actuellement dans ta vie ?"
+  en: {
+    headerTitle: (prenom, nom) => `🌍 Evangelism follow-up — ${prenom} ${nom}`,
+    headerSub: "Add or edit a follow-up",
+    notFoundWarning: "⚠️ This member is not yet registered in the evangelised list. Evangelism follow-ups cannot be added.",
+    checkingProfile: "🔄 Checking evangelised profile...",
+    editingSuiviLabel: (date) => `✏️ Editing the follow-up from ${date}`,
+    cancel: "Cancel",
+    newOrEditTitle: (isEditing) => (isEditing ? "Edit follow-up" : "New follow-up"),
+    dateLabel: "Date",
+    typeLabel: "Action type",
+    typeDefault: "-- Action type --",
+    typeAppel: "Call",
+    typeVisite: "Visit",
+    typeEntretien: "Interview",
+    typeMessage: "Message",
+    sectionBesoins: "🙏 Needs",
+    besoinsOptions: [
+      "Finances", "Health", "Work / Studies", "Family / Children",
+      "Relationships / Conflicts", "Addictions / Dependencies", "Spiritual guidance",
+      "Housing / Safety", "Community / Isolation", "Depression / Mental health",
+    ],
+    statutResolu: "✓ Resolved",
+    statutEnSuivi: "In follow-up",
+    sectionHistorique: "📅 History",
+    noHistorique: "No follow-up yet",
+    editButton: "✏️ Edit",
+    editingButton: "✏️ In progress...",
+    besoinsLabel: "Needs:",
+    commentaireLabel: "Comment: ",
+    voirMoins: "▲ See less",
+    voirEntretien: "▼ View interview answers",
+    sectionEntretien: "🗣️ Interview questions",
+    commentaireField: "Comment",
+    commentairePlaceholder: "Comment...",
+    close: "Close",
+    updating: "Updating...",
+    adding: "Adding...",
+    saveChanges: "💾 Save changes",
+    addSuivi: "Add follow-up",
+    alertDateType: "Date and type are required",
+    alertNoSession: "Session not found. Please log out and log back in.",
+    alertNoEvangelise: "This member does not yet have an entry in the evangelised table.\nPlease register them as evangelised first before adding a follow-up.",
+    errorPrefix: "Error: ",
+    successMessage: "✅ Follow-up saved successfully!",
+    notesPlaceholder: "Notes...",
+    questions: [
+      { key: "etat_actuel", emoji: "❤️", section: "1. Current state", question: "How are you really doing right now?" },
+      { key: "situation_actuelle", emoji: "🧭", section: "1. Current state", question: "What are you currently going through in your life?" },
+      { key: "relation_avec_dieu", emoji: "🔍", section: "2. Spiritual life", question: "Have you thought about your relationship with God since our last conversation?" },
+      { key: "perception_spirituelle", emoji: "🌿", section: "2. Spiritual life", question: "What does God represent to you today?" },
+      { key: "besoins_principaux", emoji: "💔", section: "3. Needs & situation", question: "Is there an area where you feel a need or difficulty right now?" },
+      { key: "preoccupations", emoji: "🧠", section: "3. Needs & situation", question: "What concerns you the most right now?" },
+      { key: "ouverture_spirituelle", emoji: "✝️", section: "4. Openness to God", question: "Would you like God to intervene in a situation in your life?" },
+      { key: "ouverture_priere", emoji: "🙏", section: "4. Openness to God", question: "Would you be open to praying together about this?" },
+      { key: "accompagnement_suivi", emoji: "🌱", section: "5. Follow-up", question: "Would you be willing to continue this journey together with us?" },
+      { key: "etudes_parole", emoji: "📖", section: "5. Follow-up", question: "Would you like to discover more of God's Word with us?" },
+    ],
+    months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
   },
-  {
-    key: "relation_avec_dieu",
-    emoji: "🔍",
-    section: "2. Vie spirituelle",
-    question: "Est-ce que tu as déjà réfléchi à ta relation avec Dieu après notre échange ?"
-  },
-  {
-    key: "perception_spirituelle",
-    emoji: "🌿",
-    section: "2. Vie spirituelle",
-    question: "Qu'est-ce que Dieu représente pour toi aujourd'hui ?"
-  },
-  {
-    key: "besoins_principaux",
-    emoji: "💔",
-    section: "3. Besoins & situation",
-    question: "Y a-t-il un domaine où tu ressens un besoin ou une difficulté en ce moment ?"
-  },
-  {
-    key: "preoccupations",
-    emoji: "🧠",
-    section: "3. Besoins & situation",
-    question: "Qu'est-ce qui te préoccupe le plus actuellement ?"
-  },
-  {
-    key: "ouverture_spirituelle",
-    emoji: "✝️",
-    section: "4. Ouverture à Dieu",
-    question: "Est-ce que tu aimerais que Dieu intervienne dans une situation de ta vie ?"
-  },
-  {
-    key: "ouverture_priere",
-    emoji: "🙏",
-    section: "4. Ouverture à Dieu",
-    question: "Est-ce que tu serais ouvert à prier ensemble pour cela ?"
-  },
-  {
-    key: "accompagnement_suivi",
-    emoji: "🌱",
-    section: "5. Suivi",
-    question: "Est-ce que tu serais d'accord pour qu'on continue à avancer ensemble dans ce cheminement ?"
-  },
-  {
-    key: "etudes_parole",
-    emoji: "📖",
-    section: "5. Suivi",
-    question: "Est-ce que tu aimerais découvrir davantage la Parole de Dieu avec nous ?"
-  }
-];
+};
 
 const EMPTY_INTERVIEW = {
   etat_actuel: "",
@@ -81,12 +140,16 @@ const EMPTY_INTERVIEW = {
 };
 
 export default function SuiviEvanPopup({ member, onClose, user }) {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [loading, setLoading] = useState(false);
   const [suivis, setSuivis] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentUserName, setCurrentUserName] = useState("");
   const [editingSuivi, setEditingSuivi] = useState(null);
   const [expandedSuivis, setExpandedSuivis] = useState({});
+  const [successMessage, setSuccessMessage] = useState("");
 
   const [evangeliseId, setEvangeliseId] = useState(null);
   const [evangeliseNotFound, setEvangeliseNotFound] = useState(false);
@@ -121,11 +184,7 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
   const [form, setForm] = useState(emptyForm);
   const [resolvedBesoins, setResolvedBesoins] = useState([]);
 
-  const besoinsOptions = [
-    "Finances", "Santé", "Travail / Études", "Famille / Enfants",
-    "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
-    "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
-  ];
+  const besoinsOptions = t.besoinsOptions;
 
   // ─── Résolution evangelise_id ───
   useEffect(() => {
@@ -274,10 +333,10 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
   };
 
   const handleSubmit = async () => {
-    if (!form.date_action || !form.type) { alert("Date et type sont obligatoires"); return; }
-    if (!currentUserId) { alert("Session introuvable. Veuillez vous déconnecter et vous reconnecter."); return; }
+    if (!form.date_action || !form.type) { alert(t.alertDateType); return; }
+    if (!currentUserId) { alert(t.alertNoSession); return; }
     if (!evangeliseId) {
-      alert("Ce membre ne possède pas encore d'entrée dans la table des évangélisés.\nVeuillez d'abord l'enregistrer comme évangélisé avant d'ajouter un suivi.");
+      alert(t.alertNoEvangelise);
       return;
     }
     setLoading(true);
@@ -318,22 +377,23 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
 
     if (editingSuivi) {
       const { error } = await supabase.from("suivis_evangelises").update(payload).eq("id", editingSuivi.id);
-      if (error) { setLoading(false); alert("Erreur : " + error.message); return; }
+      if (error) { setLoading(false); alert(t.errorPrefix + error.message); return; }
       setSuivis((prev) => prev.map((s) => s.id === editingSuivi.id ? { ...s, ...payload } : s));
     } else {
       const { error } = await supabase.from("suivis_evangelises").insert({ ...payload, evangelise_id: evangeliseId, created_by: currentUserId });
-      if (error) { setLoading(false); alert("Erreur : " + error.message); return; }
+      if (error) { setLoading(false); alert(t.errorPrefix + error.message); return; }
       await fetchSuivis();
     }
 
+    // ── Synchronisation avec evangelises (source des besoins du profil) ──
     await supabase.from("evangelises").update({ besoin: JSON.stringify(newMemberBesoins) }).eq("id", evangeliseId);
 
+    // ── Synchronisation avec suivis_des_evangelises (affichage carte principale) ──
     await supabase
-  .from("suivis_des_evangelises")
-  .update({ besoin: JSON.stringify(newMemberBesoins) })
-  .eq("evangelise_id", evangeliseId);
+      .from("suivis_des_evangelises")
+      .update({ besoin: JSON.stringify(newMemberBesoins) })
+      .eq("evangelise_id", evangeliseId);
 
-    
     setMemberBesoins(newMemberBesoins);
     setResolvedBesoins([]);
     setEditingSuivi(null);
@@ -341,6 +401,9 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
     const newStatuts = {};
     newMemberBesoins.forEach((b) => { newStatuts[b] = "En suivi"; });
     setForm({ date_action: "", type: "", besoin: newMemberBesoins, besoinStatuts: newStatuts, commentaire: "", ...EMPTY_INTERVIEW });
+
+    setSuccessMessage(t.successMessage);
+    setTimeout(() => setSuccessMessage(""), 3000);
   };
 
   const formatDateForInput = (date) => (!date ? "" : date.split("T")[0]);
@@ -349,8 +412,7 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
     if (!dateStr) return "";
     try {
       const d = new Date(dateStr);
-      const months = ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"];
-      return `${d.getDate().toString().padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
+      return `${d.getDate().toString().padStart(2, "0")} ${t.months[d.getMonth()]} ${d.getFullYear()}`;
     } catch { return dateStr; }
   };
 
@@ -360,8 +422,14 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
     return "text-orange-500 font-semibold";
   };
 
+  const statutLabel = (statut) => {
+    if (statut === "Résolu") return t.statutResolu.replace("✓ ", "");
+    if (statut === "En suivi") return t.statutEnSuivi;
+    return statut;
+  };
+
   const toggleExpand = (id) => setExpandedSuivis((prev) => ({ ...prev, [id]: !prev[id] }));
-  const hasInterviewData = (s) => INTERVIEW_QUESTIONS.some((q) => s[q.key]);
+  const hasInterviewData = (s) => t.questions.some((q) => s[q.key]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[60] p-4" style={{ background: "rgba(30,35,90,0.45)", backdropFilter: "blur(6px)" }}>
@@ -370,8 +438,8 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
         {/* HEADER */}
         <div ref={formTopRef} className="px-6 pt-6 pb-4" style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}>
           <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm" style={{ background: "rgba(255,255,255,0.2)" }}>✕</button>
-          <h2 className="text-xl font-bold text-white pr-10">🌍 Suivi évangélisation — {member.prenom} {member.nom}</h2>
-          <p className="text-blue-100 text-sm mt-1 opacity-80">Ajouter ou modifier un suivi</p>
+          <h2 className="text-xl font-bold text-white pr-10">{t.headerTitle(member.prenom, member.nom)}</h2>
+          <p className="text-blue-100 text-sm mt-1 opacity-80">{t.headerSub}</p>
         </div>
 
         {/* BODY */}
@@ -379,43 +447,49 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
 
           {evangeliseNotFound && (
             <div className="bg-red-50 border border-red-300 rounded-xl px-4 py-3 text-sm text-red-700">
-              ⚠️ Ce membre n'est pas encore enregistré dans la liste des évangélisés. Les suivis d'évangélisation ne peuvent pas être ajoutés.
+              {t.notFoundWarning}
             </div>
           )}
 
           {!evangeliseId && !evangeliseNotFound && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-600">
-              🔄 Vérification du profil évangélisé...
+              {t.checkingProfile}
             </div>
           )}
 
           {editingSuivi && (
             <div className="flex items-center justify-between bg-orange-50 border border-orange-300 rounded-xl px-4 py-2">
-              <p className="text-orange-700 text-sm font-semibold">✏️ Modification du suivi du {formatDate(editingSuivi.date_action)}</p>
-              <button onClick={handleCancelEdit} className="text-xs text-gray-500 underline hover:text-gray-700">Annuler</button>
+              <p className="text-orange-700 text-sm font-semibold">{t.editingSuiviLabel(formatDate(editingSuivi.date_action))}</p>
+              <button onClick={handleCancelEdit} className="text-xs text-gray-500 underline hover:text-gray-700">{t.cancel}</button>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="bg-green-50 border border-green-300 rounded-xl px-4 py-3 text-sm text-green-700 font-semibold text-center animate-pulse">
+              {successMessage}
             </div>
           )}
 
           {/* FORMULAIRE */}
           {!evangeliseNotFound && (
             <>
-              <SectionTitle>📋 {editingSuivi ? "Modifier le suivi" : "Nouveau suivi"}</SectionTitle>
+              <SectionTitle>📋 {t.newOrEditTitle(!!editingSuivi)}</SectionTitle>
 
-              <Field label="Date">
+              <Field label={t.dateLabel}>
                 <input type="date" value={formatDateForInput(form.date_action)} onChange={(e) => setForm((p) => ({ ...p, date_action: e.target.value }))} className="inp" />
               </Field>
 
-              <Field label="Type d'action">
+              <Field label={t.typeLabel}>
                 <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="inp">
-                  <option value="">-- Type d'action --</option>
-                  <option value="Appel">Appel</option>
-                  <option value="Visite">Visite</option>
-                  <option value="Entretien">Entretien</option>
-                  <option value="Message">Message</option>
+                  <option value="">{t.typeDefault}</option>
+                  <option value="Appel">{t.typeAppel}</option>
+                  <option value="Visite">{t.typeVisite}</option>
+                  <option value="Entretien">{t.typeEntretien}</option>
+                  <option value="Message">{t.typeMessage}</option>
                 </select>
               </Field>
 
-              <SectionTitle>🙏 Besoins</SectionTitle>
+              <SectionTitle>{t.sectionBesoins}</SectionTitle>
               <div className="flex flex-col gap-2">
                 {besoinsOptions.map((b) => {
                   const isChecked = form.besoin.includes(b);
@@ -435,10 +509,10 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
                       </label>
                       {isChecked && (
                         <button type="button" onClick={() => toggleStatutBesoin(b)} className={`text-xs px-2 py-0.5 rounded-full border font-semibold transition-colors whitespace-nowrap ${statut === "Résolu" ? "bg-green-100 border-green-400 text-green-700" : "bg-blue-50 border-blue-300 text-blue-600"}`}>
-                          {statut === "Résolu" ? "✓ Résolu" : "En suivi"}
+                          {statut === "Résolu" ? t.statutResolu : t.statutEnSuivi}
                         </button>
                       )}
-                      {isResolved && <span className="text-xs px-2 py-0.5 rounded-full border bg-green-100 border-green-400 text-green-700 font-semibold whitespace-nowrap">✓ Résolu</span>}
+                      {isResolved && <span className="text-xs px-2 py-0.5 rounded-full border bg-green-100 border-green-400 text-green-700 font-semibold whitespace-nowrap">{t.statutResolu}</span>}
                     </div>
                   );
                 })}
@@ -452,9 +526,9 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
           <PastoralAssistant membre={member} suivis={suivis} />
 
           {/* HISTORIQUE */}
-          <SectionTitle>📅 Historique</SectionTitle>
+          <SectionTitle>{t.sectionHistorique}</SectionTitle>
 
-          {suivis.length === 0 && <p className="text-sm text-gray-400 text-center py-2">Aucun suivi pour le moment</p>}
+          {suivis.length === 0 && <p className="text-sm text-gray-400 text-center py-2">{t.noHistorique}</p>}
 
           <div className="flex flex-col gap-3">
             {suivis.map((s) => {
@@ -468,20 +542,20 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
                   <div className="flex items-center justify-between">
                     <p className="font-semibold text-gray-800">📅 {formatDate(s.date_action)} — {s.action_type}</p>
                     <button onClick={() => handleEditSuivi(s)} className={`text-xs px-2 py-1 rounded-lg font-semibold border transition-colors ${isBeingEdited ? "bg-orange-100 border-orange-400 text-orange-700" : "bg-white border-gray-300 text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600"}`}>
-                      {isBeingEdited ? "✏️ En cours..." : "✏️ Modifier"}
+                      {isBeingEdited ? t.editingButton : t.editButton}
                     </button>
                   </div>
 
                   {besoinsArr.length > 0 && (
                     <div>
-                      <p className="text-gray-400 text-xs mb-0.5">Besoins :</p>
+                      <p className="text-gray-400 text-xs mb-0.5">{t.besoinsLabel}</p>
                       {besoinsArr.map((item, i) => (
-                        <p key={i} className="text-gray-700">{item.label} — <span className={statutColor(item.statut)}>{item.statut}</span></p>
+                        <p key={i} className="text-gray-700">{item.label} — <span className={statutColor(item.statut)}>{statutLabel(item.statut)}</span></p>
                       ))}
                     </div>
                   )}
 
-                  {s.commentaire && <p className="text-gray-600">Commentaire : {s.commentaire}</p>}
+                  {s.commentaire && <p className="text-gray-600">{t.commentaireLabel}{s.commentaire}</p>}
 
                   {/* VOIR PLUS / MOINS */}
                   {hasInterview && (
@@ -491,12 +565,12 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
                         className="text-xs font-semibold mt-1 flex items-center gap-1"
                         style={{ color: "#2E3192", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                       >
-                        {isExpanded ? "▲ Voir moins" : "▼ Voir les réponses d'entretien"}
+                        {isExpanded ? t.voirMoins : t.voirEntretien}
                       </button>
 
                       {isExpanded && (
                         <div className="mt-2 space-y-2 pt-2 border-t border-gray-200">
-                          {INTERVIEW_QUESTIONS.filter((q) => s[q.key]).map((q) => (
+                          {t.questions.filter((q) => s[q.key]).map((q) => (
                             <div key={q.key} style={{ paddingLeft: q.indent ? 12 : 0 }}>
                               {q.section && (
                                 <p style={{ fontSize: 10, fontWeight: 700, color: "#2E3192", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 1 }}>
@@ -521,9 +595,9 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
           {/* QUESTIONS D'ENTRETIEN */}
           {!evangeliseNotFound && (
             <>
-              <SectionTitle>🗣️ Questions d'entretien</SectionTitle>
-              {INTERVIEW_QUESTIONS.map((q, i) => {
-                const isFirstInSection = i === 0 || INTERVIEW_QUESTIONS[i - 1].section !== q.section;
+              <SectionTitle>{t.sectionEntretien}</SectionTitle>
+              {t.questions.map((q, i) => {
+                const isFirstInSection = i === 0 || t.questions[i - 1].section !== q.section;
                 return (
                   <InterviewField
                     key={q.key}
@@ -533,12 +607,13 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
                     indent={q.indent}
                     value={form[q.key]}
                     onChange={(v) => setForm((p) => ({ ...p, [q.key]: v }))}
+                    notesPlaceholder={t.notesPlaceholder}
                   />
                 );
               })}
 
-              <Field label="Commentaire">
-                <textarea placeholder="Commentaire..." value={form.commentaire} onChange={(e) => setForm({ ...form, commentaire: e.target.value })} className="inp" rows={3} />
+              <Field label={t.commentaireField}>
+                <textarea placeholder={t.commentairePlaceholder} value={form.commentaire} onChange={(e) => setForm({ ...form, commentaire: e.target.value })} className="inp" rows={3} />
               </Field>
             </>
           )}
@@ -547,10 +622,10 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
 
         {/* FOOTER */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex flex-col sm:flex-row gap-3">
-          <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all">Fermer</button>
+          <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-gray-600 bg-white border border-gray-200 hover:bg-gray-100 transition-all">{t.close}</button>
           <button type="button" onClick={handleSubmit} disabled={loading || !evangeliseId} className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
             style={{ background: loading ? "#a0a0c0" : editingSuivi ? "linear-gradient(135deg, #f97316 0%, #ea580c 100%)" : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}>
-            {loading ? (editingSuivi ? "Mise à jour..." : "Ajout...") : editingSuivi ? "💾 Enregistrer les modifications" : "Ajouter suivi"}
+            {loading ? (editingSuivi ? t.updating : t.adding) : editingSuivi ? t.saveChanges : t.addSuivi}
           </button>
         </div>
 
@@ -564,7 +639,7 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
   );
 }
 
-function InterviewField({ emoji, section, question, value, onChange, indent = false }) {
+function InterviewField({ emoji, section, question, value, onChange, indent = false, notesPlaceholder }) {
   return (
     <div style={{ background: indent ? "#fafafa" : "#f0f4ff", borderRadius: 10, padding: "10px 12px", border: `1px solid ${indent ? "#e8eaf6" : "#c7cef5"}`, marginLeft: indent ? 16 : 0 }}>
       {section && (
@@ -574,7 +649,7 @@ function InterviewField({ emoji, section, question, value, onChange, indent = fa
       )}
       <p style={{ fontSize: 13, color: "#4b5563", marginBottom: 6, fontStyle: "italic" }}>{question}</p>
       <textarea
-        placeholder="Notes..."
+        placeholder={notesPlaceholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={2}

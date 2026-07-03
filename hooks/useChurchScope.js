@@ -1,3 +1,23 @@
+// ═══════════════════════════════════════════════════════════════
+// HOOK : useChurchScope
+// ═══════════════════════════════════════════════════════════════
+// Description : Hook React (client) qui initialise le contexte
+// "église" de l'utilisateur connecté. Récupère la session Supabase,
+// charge le profil utilisateur associé (id, role, eglise_id), et
+// expose une fonction utilitaire `scopedQuery` permettant de
+// requêter n'importe quelle table Supabase en filtrant
+// AUTOMATIQUEMENT sur l'église de l'utilisateur (eglise_id).
+//
+// Tables Supabase utilisées :
+// - profiles   (lecture)  → id, role, eglise_id de l'utilisateur connecté
+// - <table>    (lecture)  → toute table passée à scopedQuery(table, columns),
+//                            filtrée par eglise_id
+//
+// Realtime : aucun (pas d'abonnement realtime dans ce hook)
+//
+// Edge Function : aucune
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../lib/supabaseClient";

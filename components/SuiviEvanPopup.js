@@ -328,6 +328,12 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
 
     await supabase.from("evangelises").update({ besoin: JSON.stringify(newMemberBesoins) }).eq("id", evangeliseId);
 
+    await supabase
+  .from("suivis_des_evangelises")
+  .update({ besoin: JSON.stringify(newMemberBesoins) })
+  .eq("evangelise_id", evangeliseId);
+
+    
     setMemberBesoins(newMemberBesoins);
     setResolvedBesoins([]);
     setEditingSuivi(null);

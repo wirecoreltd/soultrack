@@ -1,3 +1,23 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Liste des Conseillers (ListConseillersPage)
+// ═══════════════════════════════════════════════════════════════
+// Description : Affiche la liste des Conseillers de l'église de
+// l'utilisateur connecté, avec recherche par nom/prénom, affichage
+// de leur responsable et du nombre de contacts (membres) qui leur
+// sont assignés via les suivis pastoraux. Permet de naviguer vers
+// la création d'un conseiller ou vers la liste de ses contacts.
+//
+// Tables Supabase utilisées :
+// - profiles             (lecture) → profil utilisateur connecté
+// - profiles             (lecture) → conseillers de l'église (rôle "Conseiller")
+// - suivi_assignments    (lecture) → mapping conseiller ↔ membres assignés
+// - profiles             (lecture) → responsables des conseillers
+//
+// Navigation :
+// - /membres/create-conseiller           → création d'un conseiller
+// - /membres/list-members?conseiller_id  → contacts assignés à un conseiller
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 
 import { useEffect, useState } from "react";

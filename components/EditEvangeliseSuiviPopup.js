@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
+import { besoinTranslationMap, translateBesoin } from "./SuiviEvanPopup";
 
 const translations = {
   fr: {
@@ -36,6 +37,11 @@ const translations = {
     nouveauConverti: "Nouveau converti",
     reconciliation: "Réconciliation",
     sectionBesoins: "🙏 Besoins",
+    besoinsOptions: [
+      "Finances", "Santé", "Travail / Études", "Famille / Enfants",
+      "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
+      "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
+    ],
     autre: "Autre",
     preciser: "Précisez...",
     sectionSuivi: "📝 Suivi",
@@ -78,6 +84,11 @@ const translations = {
     nouveauConverti: "New convert",
     reconciliation: "Reconciliation",
     sectionBesoins: "🙏 Needs",
+    besoinsOptions: [
+      "Finances", "Health", "Work / Studies", "Family / Children",
+      "Relationships / Conflicts", "Addictions / Dependencies", "Spiritual guidance",
+      "Housing / Safety", "Community / Isolation", "Depression / Mental health",
+    ],
     autre: "Other",
     preciser: "Specify...",
     sectionSuivi: "📝 Follow-up",
@@ -118,16 +129,27 @@ const isPrivileged = rolesArray.some((r) =>
   const showFamilles = Array.isArray(familles) && familles.length > 0;
   const showConseillers = Array.isArray(conseillers) && conseillers.length > 0;
 
-  const initialBesoin =
+  // Normalisation : le besoin peut avoir été stocké en FR ou EN selon la langue
+  // active au moment de la saisie précédente (bug historique). On ramène tout
+  // à la valeur canonique FR pour un état interne cohérent.
+  const normalizeBesoinList = (list) =>
+    (Array.isArray(list) ? list : []).map((b) => translateBesoin(b, "fr"));
+
+  const initialBesoinRaw =
     typeof member.besoin === "string" ? JSON.parse(member.besoin || "[]") : member.besoin || [];
+  const initialBesoin = normalizeBesoinList(initialBesoinRaw);
+
+  // Les valeurs "Autre" (non répertoriées dans la liste canonique) sont conservées telles quelles
+  const besoinsOptionsFr = translations.fr.besoinsOptions;
+  const initialAutreBesoin = initialBesoin.find((b) => !besoinsOptionsFr.includes(b)) || "";
 
   const [formData, setFormData] = useState({
     prenom: member.prenom || "",
     nom: member.nom || "",
     telephone: member.telephone || "",
     ville: member.ville || "",
-    besoin: initialBesoin,
-    autreBesoin: "",
+    besoin: initialBesoin.filter((b) => besoinsOptionsFr.includes(b)),
+    autreBesoin: initialAutreBesoin,
     infos_supplementaires: member.infos_supplementaires || "",
     priere_salut: member.priere_salut || false,
     type_conversion: member.type_conversion || "",
@@ -142,7 +164,7 @@ const isPrivileged = rolesArray.some((r) =>
     sexe: member.sexe || "",
   });
 
-  const [showAutre, setShowAutre] = useState(initialBesoin.includes("Autre"));
+  const [showAutre, setShowAutre] = useState(!!initialAutreBesoin);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -176,8 +198,8 @@ const isPrivileged = rolesArray.some((r) =>
     `${c.prenom} ${c.nom}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleBesoinChange = (e) => {
-    const { value, checked } = e.target;
+  // value reçu ici est TOUJOURS la valeur canonique FR (voir rendu des checkboxes plus bas)
+  const handleBesoinChange = (value, checked) => {
     if (value === "Autre") {
       setShowAutre(checked);
       if (!checked) {
@@ -186,6 +208,7 @@ const isPrivileged = rolesArray.some((r) =>
           autreBesoin: "",
           besoin: prev.besoin.filter((b) => b !== "Autre"),
         }));
+        return;
       }
     }
     setFormData((prev) => {
@@ -209,6 +232,7 @@ const isPrivileged = rolesArray.some((r) =>
     setLoading(true);
 
     try {
+      // formData.besoin est déjà en valeurs canoniques FR (peu importe la langue de l'UI)
       const besoinsFinal =
         formData.autreBesoin && showAutre
           ? [...formData.besoin.filter((b) => b !== "Autre"), formData.autreBesoin]
@@ -472,6 +496,48 @@ const isPrivileged = rolesArray.some((r) =>
               </select>
             )}
           </Field>          
+
+          {/* Section: Besoins */}
+          <SectionTitle>{t.sectionBesoins}</SectionTitle>
+          <div className="flex flex-col gap-2">
+            {besoinsOptionsFr.map((bFr) => {
+              const checked = formData.besoin.includes(bFr);
+              return (
+                <label
+                  key={bFr}
+                  className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    value={bFr}
+                    checked={checked}
+                    onChange={(e) => handleBesoinChange(bFr, e.target.checked)}
+                    className="accent-[#2E3192]"
+                  />
+                  {translateBesoin(bFr, lang)}
+                </label>
+              );
+            })}
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                value="Autre"
+                checked={showAutre}
+                onChange={(e) => handleBesoinChange("Autre", e.target.checked)}
+                className="accent-[#2E3192]"
+              />
+              {t.autre}
+            </label>
+            {showAutre && (
+              <input
+                type="text"
+                placeholder={t.preciser}
+                value={formData.autreBesoin}
+                onChange={(e) => setFormData((prev) => ({ ...prev, autreBesoin: e.target.value }))}
+                className="inp"
+              />
+            )}
+          </div>
 
           {/* Section: Suivi */}
           <SectionTitle>{t.sectionSuivi}</SectionTitle>

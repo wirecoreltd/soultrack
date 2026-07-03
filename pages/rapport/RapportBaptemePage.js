@@ -1,3 +1,23 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Rapport des Baptêmes (RapportBaptemesPage)
+// ═══════════════════════════════════════════════════════════════
+// Description : Gère les rapports de baptêmes de l'église : saisie
+// des sessions (date, officiant, candidats baptisés), calcul auto
+// du nombre d'hommes/femmes, vue d'ensemble (KPI, tendance mensuelle,
+// répartition par officiant), et vue détaillée par session. Les
+// candidats affichés sont filtrés selon le rôle de l'utilisateur
+// connecté (Administrateur, Responsable/Superviseur de cellule ou
+// famille, Conseiller).
+//
+// Tables Supabase utilisées :
+// - profiles           (lecture)             → profil utilisateur (rôle, eglise_id)
+// - membres_complets   (lecture + écriture)  → candidats au baptême + mise à jour statut
+// - cellules           (lecture)             → cellules supervisées/gérées (filtrage candidats)
+// - familles           (lecture)             → familles gérées (filtrage candidats)
+// - baptemes           (lecture + écriture)  → rapports de baptêmes (création, modification)
+// ═══════════════════════════════════════════════════════════════
+
+
 "use client";
 import { useEffect, useState, useRef } from "react";
 import supabase from "../../lib/supabaseClient";
@@ -664,7 +684,7 @@ function RapportBaptemes() {
     const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
     let query = supabase
       .from("baptemes")
-      .select("*")
+      .select("id, date, hommes, femmes, baptise_par, eglise_id, evangelise_member_id")
       .eq("eglise_id", formData.eglise_id)
       .order("date", { ascending: false });
 

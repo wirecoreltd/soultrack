@@ -112,6 +112,11 @@ function CreateConseiller() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [egliseLogoUrl, setEgliseLogoUrl] = useState(null);
+  const [egliseNom, setEgliseNom] = useState("");
+  const [denomination, setDenomination] = useState("");
+  const [ville, setVille] = useState("");
+
   // ➤ Récupérer l'utilisateur connecté et ses membres disponibles
   useEffect(() => {
     async function fetchUserAndMembers() {
@@ -134,9 +139,25 @@ function CreateConseiller() {
           .select("id, eglise_id")
           .eq("id", session.user.id)
           .single();
-
+        
         if (profileError)
           return console.error(t.profileError, profileError);
+        
+        // 🔹 Récupération du logo / infos de l'église
+        if (profileData?.eglise_id) {
+          const { data: egliseData, error: egliseError } = await supabase
+            .from("eglises")
+            .select("nom, logo_url, denomination, ville")
+            .eq("id", profileData.eglise_id)
+            .single();
+        
+          if (!egliseError && egliseData) {
+            setEgliseNom(egliseData.nom || "");
+            setEgliseLogoUrl(egliseData.logo_url || null);
+            setDenomination(egliseData.denomination || "");
+            setVille(egliseData.ville || "");
+          }
+        }  
 
         // 🔹 Membres star de la même église
         const { data: membersData, error: membersError } = await supabase
@@ -265,8 +286,24 @@ function CreateConseiller() {
           {t.back}
         </button>
 
-        <div className="flex justify-center mb-6">
-          <Image src="/logo.png" alt="Logo" width={80} height={80} />
+        <div className="flex flex-col items-center mb-6">
+          {egliseLogoUrl && (
+            <img
+              src={egliseLogoUrl}
+              alt="Logo église"
+              className="w-20 h-20 object-contain mb-2"
+            />
+          )}
+        
+          {(denomination || egliseNom) && (
+            <p className="text-black font-semibold text-sm text-center">
+              {[denomination, egliseNom].filter(Boolean).join(" - ")}
+            </p>
+          )}
+        
+          {ville && (
+            <p className="text-gray-500 text-xs">{ville}</p>
+          )}
         </div>
 
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">

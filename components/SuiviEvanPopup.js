@@ -126,6 +126,21 @@ const translations = {
   },
 };
 
+// ─── Table canonique des besoins ───
+// Le FRANÇAIS est toujours la valeur stockée en base (colonne `besoin`),
+// quelle que soit la langue de l'interface au moment de la saisie.
+// Cela évite d'avoir des données mixtes FR/EN en base selon la langue active,
+// et permet de traduire correctement à l'affichage, y compris les anciennes
+// entrées qui auraient déjà été stockées en anglais.
+export const besoinTranslationMap = translations.fr.besoinsOptions.reduce((acc, frLabel, i) => {
+  const enLabel = translations.en.besoinsOptions[i];
+  acc[frLabel] = { fr: frLabel, en: enLabel };
+  acc[enLabel] = { fr: frLabel, en: enLabel };
+  return acc;
+}, {});
+
+export const translateBesoin = (label, lang) => besoinTranslationMap[label]?.[lang] || label;
+
 const EMPTY_INTERVIEW = {
   etat_actuel: "",
   situation_actuelle: "",
@@ -184,7 +199,9 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
   const [form, setForm] = useState(emptyForm);
   const [resolvedBesoins, setResolvedBesoins] = useState([]);
 
-  const besoinsOptions = t.besoinsOptions;
+  // Toujours utiliser la liste FR comme valeurs canoniques (clés stockées en base).
+  // On affiche la traduction via translateBesoin(b, lang) au rendu.
+  const besoinsOptions = translations.fr.besoinsOptions;
 
   // ─── Résolution evangelise_id ───
   useEffect(() => {
@@ -278,8 +295,10 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
     const besoinsArr = parseHistoriqueBesoin(s.besoin);
     const besoinChecked = [], besoinStatuts = {}, resolved = [];
     besoinsArr.forEach(({ label, statut }) => {
-      if (statut === "Résolu") resolved.push(label);
-      else { besoinChecked.push(label); besoinStatuts[label] = statut || "En suivi"; }
+      // Normalisation : quelle que soit la langue déjà stockée, on retombe sur le FR canonique
+      const canonicalLabel = translateBesoin(label, "fr");
+      if (statut === "Résolu") resolved.push(canonicalLabel);
+      else { besoinChecked.push(canonicalLabel); besoinStatuts[canonicalLabel] = statut || "En suivi"; }
     });
     setEditingSuivi(s);
     setResolvedBesoins(resolved);
@@ -505,7 +524,7 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
                         <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${boxStyle}`}>
                           {showTick && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                         </div>
-                        <span className={isResolved ? "line-through text-gray-400" : ""}>{b}</span>
+                        <span className={isResolved ? "line-through text-gray-400" : ""}>{translateBesoin(b, lang)}</span>
                       </label>
                       {isChecked && (
                         <button type="button" onClick={() => toggleStatutBesoin(b)} className={`text-xs px-2 py-0.5 rounded-full border font-semibold transition-colors whitespace-nowrap ${statut === "Résolu" ? "bg-green-100 border-green-400 text-green-700" : "bg-blue-50 border-blue-300 text-blue-600"}`}>
@@ -550,7 +569,7 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
                     <div>
                       <p className="text-gray-400 text-xs mb-0.5">{t.besoinsLabel}</p>
                       {besoinsArr.map((item, i) => (
-                        <p key={i} className="text-gray-700">{item.label} — <span className={statutColor(item.statut)}>{statutLabel(item.statut)}</span></p>
+                        <p key={i} className="text-gray-700">{translateBesoin(item.label, lang)} — <span className={statutColor(item.statut)}>{statutLabel(item.statut)}</span></p>
                       ))}
                     </div>
                   )}

@@ -1,3 +1,20 @@
+// ═══════════════════════════════════════════════════════════════
+// PAGE : Rapport de Présences & Statistiques (AttendancePage)
+// ═══════════════════════════════════════════════════════════════
+// Description : Gère les rapports de présence aux rassemblements
+// (cultes, prières, etc.) : saisie des effectifs (hommes, femmes,
+// jeunes, enfants, connectés), suivi des nouveaux venus et convertis,
+// gestion dynamique des types de temps, et vue d'ensemble (KPI,
+// répartition H/F/J, tendance hebdomadaire, fréquentation par type,
+// évangélisation). Permet aussi la modification et la suppression
+// des rapports existants.
+//
+// Tables Supabase utilisées :
+// - profiles     (lecture)             → eglise_id de l'utilisateur connecté
+// - attendance   (lecture + écriture)  → rapports de présence (création, modification, suppression)
+//                                         et liste des types de temps existants
+// ═══════════════════════════════════════════════════════════════
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -838,8 +855,11 @@ function Attendance() {
     if (!egliseId) return;
     setLoading(true);
     const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
-    let query = supabase.from("attendance").select("*").eq("eglise_id", egliseId)
-      .order("date", { ascending: false });
+    let query = supabase
+    .from("attendance")
+    .select("id, date, typeTemps, numero_culte, eglise_id, hommes, femmes, jeunes, enfants, connectes, nouveauxVenus, nouveauxConvertis")
+    .eq("eglise_id", egliseId)
+    .order("date", { ascending: false });
     if (isPerso) {
       if (dateDebut) query = query.gte("date", dateDebut);
       if (dateFin)   query = query.lte("date", dateFin);

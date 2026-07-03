@@ -648,7 +648,15 @@ const getYesNo = (value) => {
 
         let query = supabase
           .from("membres_complets")
-          .select("*")
+          .select(`
+              id, prenom, nom, telephone, ville, sexe, age, star, etat_contact,
+              date_venu, created_at, cellule_id, famille_id, is_whatsapp,
+              statut_suivis, suivi_statut, date_envoi_suivi, commentaire_suivis,
+              Commentaire_Suivi_Evangelisation, bapteme_eau, veut_se_faire_baptiser,
+              bapteme_esprit, priere_salut, type_conversion, Formation, Ministere,
+              Autre_Ministere, venu, statut_initial, infos_supplementaires, besoin,
+              integration_fini
+            `)  
           .eq("eglise_id", userProfile.eglise_id);
 
         if (conseillerIdFromUrl) {

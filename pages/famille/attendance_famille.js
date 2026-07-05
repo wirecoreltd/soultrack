@@ -146,8 +146,7 @@ const NUMERIC_FIELDS = ["hommes", "femmes", "jeunes", "enfants", "nouveauxVenus"
 
 export default function AttendanceFamillePage() {
   return (
-    <ProtectedRoute
-      <ProtectedRoute
+    <ProtectedRoute      
       allowedRoles={["Administrateur", "Superadmin", "ResponsableFamilles"]}
       requiredFeature="familles"
     >

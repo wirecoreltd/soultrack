@@ -68,7 +68,7 @@ const translations = {
 export default function FamillesHub() {
   return (
     <ProtectedRoute
-  allowedRoles={["Administrateur", "ResponsableFamilles"]}
+  allowedRoles={["Administrateur", "Superadmin", "ResponsableFamilles"]}
   requiredFeature="familles"
 >
       <FamillesHubContent />

@@ -261,8 +261,9 @@ function FamilleRow({ f, router, canEdit, onEdit, t }) {
 ========================= */
 export default function ListFamilles() {
   return (
-    <ProtectedRoute
+     <ProtectedRoute
       allowedRoles={["Administrateur", "ResponsableFamilles", "SuperviseurFamilles"]}
+      requiredFeature="familles"
     >
       <ListFamillesContent />
     </ProtectedRoute>

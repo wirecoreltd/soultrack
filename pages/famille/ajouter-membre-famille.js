@@ -232,7 +232,21 @@ function getIsoCode(countryName) {
 }
 
 export default function AjouterMembreFamille() {
-  return <AjouterMembreFamilleContent />;
+  const router = useRouter();
+  const isFromLink = !!router.query.eglise_id && !!router.query.famille_id;
+
+  // Lien public (SendLinkPopup) → pas de vérification feature
+  if (isFromLink) return <AjouterMembreFamilleContent />;
+
+  // Accès connecté → vérification feature
+  return (
+    <ProtectedRoute
+      allowedRoles={["Administrateur", "Superadmin","ResponsableFamilles"]}
+      requiredFeature="familles"
+    >
+      <AjouterMembreFamilleContent />
+    </ProtectedRoute>
+  );
 }
 
 function AjouterMembreFamilleContent() {

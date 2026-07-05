@@ -148,9 +148,7 @@ export default function AttendanceFamillePage() {
   return (
     <ProtectedRoute      
       allowedRoles={["Administrateur", "Superadmin", "ResponsableFamilles"]}
-      requiredFeature="familles"
-    >
-      requiredFeature="familles"
+      requiredFeature="familles"    
     >
       <AttendanceFamille />
     </ProtectedRoute>

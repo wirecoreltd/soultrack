@@ -8,7 +8,11 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import Footer from "../../components/Footer";
 import { useLang } from "../../hooks/useLang";
 
-// ─── PAYS (code ISO → { fr, en }) ────────────────────────────────────────────
+// ─── PAYS (code interne unique → { fr, en, flagCode }) ───────────────────────
+// ⚠️ "code" doit être UNIQUE pour chaque entrée (utilisé pour retrouver le pays
+// sélectionné). "flagCode" est le code ISO utilisé pour l'image du drapeau —
+// Maurice et Rodrigues partagent le même drapeau (mu) mais ont des codes
+// internes différents pour rester distincts dans le sélecteur.
 const PAYS_DATA = [
   { code: "af", fr: "Afghanistan",                en: "Afghanistan"              },
   { code: "za", fr: "Afrique du Sud",             en: "South Africa"             },
@@ -65,7 +69,7 @@ const PAYS_DATA = [
   { code: "ml", fr: "Mali",                       en: "Mali"                     },
   { code: "ma", fr: "Maroc",                      en: "Morocco"                  },
   { code: "mq", fr: "Martinique",                 en: "Martinique"               },
-  { code: "mu", fr: "Maurice",                    en: "Mauritius"                },
+  { code: "mu", fr: "Maurice",                    en: "Mauritius",  flagCode: "mu" },
   { code: "mr", fr: "Mauritanie",                 en: "Mauritania"               },
   { code: "mx", fr: "Mexique",                    en: "Mexico"                   },
   { code: "mz", fr: "Mozambique",                 en: "Mozambique"               },
@@ -83,7 +87,9 @@ const PAYS_DATA = [
   { code: "pt", fr: "Portugal",                   en: "Portugal"                 },
   { code: "cd", fr: "RDC",                        en: "DR Congo"                 },
   { code: "do", fr: "République Dominicaine",     en: "Dominican Republic"       },
-  { code: "mu", fr: "Rodrigues",                  en: "Rodrigues"                },
+  // ✅ FIX : code interne unique "rod" (au lieu de "mu" dupliqué avec Maurice),
+  // mais flagCode reste "mu" pour afficher le même drapeau que Maurice.
+  { code: "rod", fr: "Rodrigues",                 en: "Rodrigues",  flagCode: "mu" },
   { code: "ro", fr: "Roumanie",                   en: "Romania"                  },
   { code: "gb", fr: "Royaume-Uni",                en: "United Kingdom"           },
   { code: "rw", fr: "Rwanda",                     en: "Rwanda"                   },
@@ -184,8 +190,8 @@ function EditEgliseContent() {
   const [egliseId, setEgliseId] = useState(null);
 
   // Dropdown pays
-  // formData.pays stocke le CODE ISO (ex: "mu") en interne
-  // mais on sauvegarde le NOM FR en base (ex: "Maurice") — identique à signup
+  // formData.pays stocke le CODE INTERNE (ex: "mu", "rod") en interne
+  // mais on sauvegarde le NOM FR en base (ex: "Maurice", "Rodrigues") — identique à signup
   const [paysOpen, setPaysOpen]     = useState(false);
   const [paysSearch, setPaysSearch] = useState("");
 
@@ -194,7 +200,7 @@ function EditEgliseContent() {
     nom: "",
     branche: "",
     ville: "",
-    pays: "", // code ISO en interne (ex: "mu")
+    pays: "", // code interne (ex: "mu", "rod")
   });
 
   const [logoUrl, setLogoUrl]         = useState(null);
@@ -211,7 +217,7 @@ function EditEgliseContent() {
     p.en.toLowerCase().includes(paysSearch.toLowerCase())
   );
 
-  // Objet pays actuellement sélectionné
+  // Objet pays actuellement sélectionné (recherche par code UNIQUE)
   const paysSelectionne = PAYS_DATA.find((p) => p.code === formData.pays) || null;
 
   useEffect(() => {
@@ -236,15 +242,16 @@ function EditEgliseContent() {
         .single();
 
       if (eglise) {
-        // La BDD stocke le nom FR (ex: "Maurice") → on cherche le code ISO correspondant
-        const codeISO = PAYS_DATA.find((p) => p.fr === eglise.pays)?.code || "";
+        // La BDD stocke le nom FR (ex: "Maurice" ou "Rodrigues") → on cherche
+        // le code interne correspondant via le nom FR (fiable, car unique).
+        const codeInterne = PAYS_DATA.find((p) => p.fr === eglise.pays)?.code || "";
 
         setFormData({
           denomination: eglise.denomination || "",
           nom:          eglise.nom          || "",
           branche:      eglise.branche      || "",
           ville:        eglise.ville        || "",
-          pays:         codeISO,            // code ISO pour le dropdown
+          pays:         codeInterne,        // code interne pour le dropdown
         });
         setLogoUrl(eglise.logo_url || null);
         setLogoPreview(eglise.logo_url || null);
@@ -311,9 +318,11 @@ function EditEgliseContent() {
         newLogoUrl = uploadData.url;
       }
 
-      // On convertit le code ISO → nom FR avant de sauvegarder en base
+      // On convertit le code interne → nom FR avant de sauvegarder en base
       // (cohérent avec signup qui stocke toujours le nom FR)
       const nomFRpays = PAYS_DATA.find((p) => p.code === formData.pays)?.fr || formData.pays;
+      // Code ISO du drapeau (Maurice et Rodrigues partagent "mu")
+      const flagCode = PAYS_DATA.find((p) => p.code === formData.pays)?.flagCode || formData.pays;
 
       const { error } = await supabase
         .from("eglises")
@@ -343,10 +352,10 @@ function EditEgliseContent() {
           ville:        formData.ville,
           pays:         nomFRpays,
           logo_url:     newLogoUrl,
-          // On passe aussi le code ISO et le drapeau pour que le header
+          // On passe aussi le code interne et le drapeau pour que le header
           // puisse afficher le pavillon directement sans re-fetch
           pays_code:    formData.pays,
-          pays_flag:    `https://flagcdn.com/w40/${formData.pays}.png`,
+          pays_flag:    `https://flagcdn.com/w40/${flagCode}.png`,
         },
       }));
 
@@ -450,13 +459,13 @@ function EditEgliseContent() {
             >
               {paysSelectionne && (
                 <img
-                  src={`https://flagcdn.com/w40/${paysSelectionne.code}.png`}
+                  src={`https://flagcdn.com/w40/${paysSelectionne.flagCode || paysSelectionne.code}.png`}
                   alt={paysSelectionne[lang]}
                   style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
                 />
               )}
               <span style={{ flex: 1, fontSize: "14px" }}>
-                {paysSelectionne ? paysSelectionne[lang] : t.fields.localisation}
+                {paysSelectionne ? paysSelectionne[lang] : t.country}
               </span>
               <span style={{ color: "#9ca3af", fontSize: "12px" }}>{paysOpen ? "▲" : "▼"}</span>
             </div>
@@ -485,23 +494,26 @@ function EditEgliseContent() {
                 <div style={{ overflowY: "auto", flex: 1 }}>
                   {paysFiltres.map((pays) => (
                     <div
-                      key={`${pays.fr}-${pays.code}`}
+                      key={pays.code}
                       onClick={() => {
-                        setFormData({ ...formData, localisation: pays.fr }); // toujours stocké en FR en base
+                        // ✅ FIX : on écrit bien dans "pays" (et non "localisation"),
+                        // et on stocke le code interne unique (pays.code),
+                        // cohérent avec paysSelectionne qui recherche par code.
+                        setFormData({ ...formData, pays: pays.code });
                         setPaysOpen(false);
                         setPaysSearch("");
                       }}
                       style={{
                         display: "flex", alignItems: "center", gap: "10px",
                         padding: "9px 12px", cursor: "pointer", color: "black",
-                        background: paysSelectionne?.fr === pays.fr ? "#eff6ff" : "transparent",
+                        background: paysSelectionne?.code === pays.code ? "#eff6ff" : "transparent",
                         fontSize: "14px",
                       }}
                       onMouseEnter={(e) => e.currentTarget.style.background = "#f9fafb"}
-                      onMouseLeave={(e) => e.currentTarget.style.background = paysSelectionne?.fr === pays.fr ? "#eff6ff" : "transparent"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = paysSelectionne?.code === pays.code ? "#eff6ff" : "transparent"}
                     >
                       <img
-                        src={`https://flagcdn.com/w40/${pays.code}.png`}
+                        src={`https://flagcdn.com/w40/${pays.flagCode || pays.code}.png`}
                         alt={pays[lang]}
                         style={{ width: "24px", height: "16px", borderRadius: "2px", flexShrink: 0 }}
                       />

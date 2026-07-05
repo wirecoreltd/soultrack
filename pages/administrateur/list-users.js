@@ -472,7 +472,6 @@ function UserRow({ u, roleColors, roleLabels, hiddenRoles, setSelectedUser, setD
           </div>
           {rolesDisplay && (
             <div className="flex justify-center items-center gap-1 text-orange-400 font-semibold mt-1">
-              <span>🎖️</span>
               <span>{rolesDisplay}</span>
             </div>
           )}

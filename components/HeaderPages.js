@@ -36,34 +36,118 @@ const translations = {
   },
 };
 
-function getIsoCode(countryName) {
-  const isoMap = {
-    "Afghanistan": "af", "Afrique du Sud": "za", "Albanie": "al", "Algérie": "dz",
-    "Allemagne": "de", "Angola": "ao", "Arabie Saoudite": "sa", "Argentine": "ar",
-    "Australie": "au", "Autriche": "at", "Belgique": "be", "Bénin": "bj",
-    "Birmanie": "mm", "Bolivie": "bo", "Brésil": "br", "Burkina Faso": "bf",
-    "Burundi": "bi", "Cameroun": "cm", "Canada": "ca", "Chili": "cl",
-    "Chine": "cn", "Colombie": "co", "Congo": "cg", "Corée du Sud": "kr",
-    "Côte d'Ivoire": "ci", "Cuba": "cu", "Danemark": "dk", "Egypte": "eg",
-    "Espagne": "es", "États-Unis": "us", "USA": "us", "Ethiopie": "et",
-    "Finlande": "fi", "France": "fr", "Gabon": "ga", "Ghana": "gh", "Martinique": "mq",
-    "Rodrigues": "mu", "Grèce": "gr", "Guinée": "gn", "Haïti": "ht", "Hongrie": "hu",
-    "Inde": "in", "Indonésie": "id", "Iran": "ir", "Irlande": "ie",
-    "Israël": "il", "Italie": "it", "Jamaïque": "jm", "Japon": "jp",
-    "Kenya": "ke", "Liban": "lb", "Luxembourg": "lu", "Madagascar": "mg",
-    "Mali": "ml", "Maroc": "ma", "Maurice": "mu", "Mauritanie": "mr",
-    "Mexique": "mx", "Mozambique": "mz", "Namibie": "na", "Niger": "ne",
-    "Nigeria": "ng", "Norvège": "no", "Nouvelle-Zélande": "nz", "Ouganda": "ug",
-    "Pakistan": "pk", "Pays-Bas": "nl", "Pérou": "pe", "Philippines": "ph",
-    "Pologne": "pl", "Portugal": "pt", "RDC": "cd",
-    "République Démocratique du Congo": "cd", "République Dominicaine": "do",
-    "Roumanie": "ro", "Royaume-Uni": "gb", "Rwanda": "rw", "Sénégal": "sn",
-    "Sierra Leone": "sl", "Singapour": "sg", "Somalie": "so", "Soudan": "sd",
-    "Suède": "se", "Suisse": "ch", "Tanzanie": "tz", "Tchad": "td",
-    "Togo": "tg", "Tunisie": "tn", "Turquie": "tr", "Ukraine": "ua",
-    "Uruguay": "uy", "Venezuela": "ve", "Vietnam": "vn", "Zimbabwe": "zw",
-  };
-  return isoMap[countryName] || "un";
+// ─── PAYS : nom FR (stocké en base) → { code ISO drapeau, traduction EN } ────
+// ⚠️ Rodrigues n'a pas de code ISO propre : elle utilise le drapeau "mu"
+// (comme Maurice) mais garde son propre nom, y compris traduit.
+const PAYS_MAP = {
+  "Afghanistan":               { flag: "af", en: "Afghanistan" },
+  "Afrique du Sud":            { flag: "za", en: "South Africa" },
+  "Albanie":                   { flag: "al", en: "Albania" },
+  "Algérie":                   { flag: "dz", en: "Algeria" },
+  "Allemagne":                 { flag: "de", en: "Germany" },
+  "Angola":                    { flag: "ao", en: "Angola" },
+  "Arabie Saoudite":           { flag: "sa", en: "Saudi Arabia" },
+  "Émirats Arabes Unis":       { flag: "ae", en: "United Arab Emirates" },
+  "Argentine":                 { flag: "ar", en: "Argentina" },
+  "Australie":                 { flag: "au", en: "Australia" },
+  "Autriche":                  { flag: "at", en: "Austria" },
+  "Belgique":                  { flag: "be", en: "Belgium" },
+  "Bénin":                     { flag: "bj", en: "Benin" },
+  "Birmanie":                  { flag: "mm", en: "Myanmar" },
+  "Bolivie":                   { flag: "bo", en: "Bolivia" },
+  "Brésil":                    { flag: "br", en: "Brazil" },
+  "Burkina Faso":              { flag: "bf", en: "Burkina Faso" },
+  "Burundi":                   { flag: "bi", en: "Burundi" },
+  "Cameroun":                  { flag: "cm", en: "Cameroon" },
+  "Canada":                    { flag: "ca", en: "Canada" },
+  "Chili":                     { flag: "cl", en: "Chile" },
+  "Chine":                     { flag: "cn", en: "China" },
+  "Colombie":                  { flag: "co", en: "Colombia" },
+  "Congo":                     { flag: "cg", en: "Congo" },
+  "Corée du Sud":              { flag: "kr", en: "South Korea" },
+  "Côte d'Ivoire":             { flag: "ci", en: "Ivory Coast" },
+  "Cuba":                      { flag: "cu", en: "Cuba" },
+  "Danemark":                  { flag: "dk", en: "Denmark" },
+  "Egypte":                    { flag: "eg", en: "Egypt" },
+  "Espagne":                   { flag: "es", en: "Spain" },
+  "États-Unis":                { flag: "us", en: "United States" },
+  "USA":                       { flag: "us", en: "United States" },
+  "Ethiopie":                  { flag: "et", en: "Ethiopia" },
+  "Finlande":                  { flag: "fi", en: "Finland" },
+  "France":                    { flag: "fr", en: "France" },
+  "Gabon":                     { flag: "ga", en: "Gabon" },
+  "Ghana":                     { flag: "gh", en: "Ghana" },
+  "Martinique":                { flag: "mq", en: "Martinique" },
+  "Rodrigues":                 { flag: "mu", en: "Rodrigues" },
+  "Grèce":                     { flag: "gr", en: "Greece" },
+  "Guinée":                    { flag: "gn", en: "Guinea" },
+  "Haïti":                     { flag: "ht", en: "Haiti" },
+  "Hongrie":                   { flag: "hu", en: "Hungary" },
+  "Inde":                      { flag: "in", en: "India" },
+  "Indonésie":                 { flag: "id", en: "Indonesia" },
+  "Iran":                      { flag: "ir", en: "Iran" },
+  "Irlande":                   { flag: "ie", en: "Ireland" },
+  "Israël":                    { flag: "il", en: "Israel" },
+  "Italie":                    { flag: "it", en: "Italy" },
+  "Jamaïque":                  { flag: "jm", en: "Jamaica" },
+  "Japon":                     { flag: "jp", en: "Japan" },
+  "Kenya":                     { flag: "ke", en: "Kenya" },
+  "Liban":                     { flag: "lb", en: "Lebanon" },
+  "Luxembourg":                { flag: "lu", en: "Luxembourg" },
+  "Madagascar":                { flag: "mg", en: "Madagascar" },
+  "Mali":                      { flag: "ml", en: "Mali" },
+  "Maroc":                     { flag: "ma", en: "Morocco" },
+  "Maurice":                   { flag: "mu", en: "Mauritius" },
+  "Mauritanie":                { flag: "mr", en: "Mauritania" },
+  "Mexique":                   { flag: "mx", en: "Mexico" },
+  "Mozambique":                { flag: "mz", en: "Mozambique" },
+  "Namibie":                   { flag: "na", en: "Namibia" },
+  "Niger":                     { flag: "ne", en: "Niger" },
+  "Nigeria":                   { flag: "ng", en: "Nigeria" },
+  "Norvège":                   { flag: "no", en: "Norway" },
+  "Nouvelle-Zélande":          { flag: "nz", en: "New Zealand" },
+  "Ouganda":                   { flag: "ug", en: "Uganda" },
+  "Pakistan":                  { flag: "pk", en: "Pakistan" },
+  "Pays-Bas":                  { flag: "nl", en: "Netherlands" },
+  "Pérou":                     { flag: "pe", en: "Peru" },
+  "Philippines":               { flag: "ph", en: "Philippines" },
+  "Pologne":                   { flag: "pl", en: "Poland" },
+  "Portugal":                  { flag: "pt", en: "Portugal" },
+  "RDC":                       { flag: "cd", en: "DR Congo" },
+  "République Démocratique du Congo": { flag: "cd", en: "DR Congo" },
+  "République Dominicaine":    { flag: "do", en: "Dominican Republic" },
+  "Roumanie":                  { flag: "ro", en: "Romania" },
+  "Royaume-Uni":               { flag: "gb", en: "United Kingdom" },
+  "Rwanda":                    { flag: "rw", en: "Rwanda" },
+  "Sénégal":                   { flag: "sn", en: "Senegal" },
+  "Sierra Leone":              { flag: "sl", en: "Sierra Leone" },
+  "Singapour":                 { flag: "sg", en: "Singapore" },
+  "Somalie":                   { flag: "so", en: "Somalia" },
+  "Soudan":                    { flag: "sd", en: "Sudan" },
+  "Suède":                     { flag: "se", en: "Sweden" },
+  "Suisse":                    { flag: "ch", en: "Switzerland" },
+  "Tanzanie":                  { flag: "tz", en: "Tanzania" },
+  "Tchad":                     { flag: "td", en: "Chad" },
+  "Togo":                      { flag: "tg", en: "Togo" },
+  "Tunisie":                   { flag: "tn", en: "Tunisia" },
+  "Turquie":                   { flag: "tr", en: "Turkey" },
+  "Ukraine":                   { flag: "ua", en: "Ukraine" },
+  "Uruguay":                   { flag: "uy", en: "Uruguay" },
+  "Venezuela":                 { flag: "ve", en: "Venezuela" },
+  "Vietnam":                   { flag: "vn", en: "Vietnam" },
+  "Zimbabwe":                  { flag: "zw", en: "Zimbabwe" },
+};
+
+// Code ISO du drapeau à partir du nom FR stocké en base
+function getIsoCode(countryNameFr) {
+  return PAYS_MAP[countryNameFr]?.flag || "un";
+}
+
+// Nom du pays traduit selon la langue active (fallback : nom FR d'origine)
+function getPaysLabel(countryNameFr, lang) {
+  if (!countryNameFr) return "";
+  if (lang === "en") return PAYS_MAP[countryNameFr]?.en || countryNameFr;
+  return countryNameFr;
 }
 
 function abbrevDenomination(str) {
@@ -192,6 +276,20 @@ export default function HeaderPages() {
     fetchProfile();
   }, []);
 
+  // ✅ Écoute les mises à jour émises par EditEglise (drapeau/pays instantanés)
+  useEffect(() => {
+    const handleEgliseUpdated = (e) => {
+      const detail = e.detail || {};
+      if (detail.denomination !== undefined) setDenomination(detail.denomination);
+      if (detail.nom !== undefined) setEglise(detail.nom);
+      if (detail.ville !== undefined) setVille(detail.ville);
+      if (detail.pays !== undefined) setPays(detail.pays);
+      if (detail.logo_url !== undefined) setLogoUrl(detail.logo_url);
+    };
+    window.addEventListener("eglise-updated", handleEgliseUpdated);
+    return () => window.removeEventListener("eglise-updated", handleEgliseUpdated);
+  }, []);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -295,7 +393,7 @@ export default function HeaderPages() {
               height="14"
               alt={pays}
             />
-            {pays}
+            {getPaysLabel(pays, lang)}
           </p>
         )}
       </div>

@@ -83,6 +83,7 @@ const PAYS_DATA = [
   { code: "pt", fr: "Portugal",                   en: "Portugal"                 },
   { code: "cd", fr: "RDC",                        en: "DR Congo"                 },
   { code: "do", fr: "République Dominicaine",     en: "Dominican Republic"       },
+  { code: "mu", fr: "Rodrigues",                  en: "Rodrigues"                },
   { code: "ro", fr: "Roumanie",                   en: "Romania"                  },
   { code: "gb", fr: "Royaume-Uni",                en: "United Kingdom"           },
   { code: "rw", fr: "Rwanda",                     en: "Rwanda"                   },

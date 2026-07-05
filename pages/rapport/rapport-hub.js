@@ -26,7 +26,7 @@ const translations = {
     intro6: "qui marquent l'engagement et les",
     highlight6: "formations",
     intro7:
-      "qui font mûrir. Avec patience, écoute et foi, nous construisons ensemble et célébrons chaque progrès. 🌱",
+      "qui font mûrir. Avec patience, écoute et foi, nous construisons ensemble et célébrons chaque progrès.",
     cards: {
       presences: "Saisie et suivi des présences par réunion",
       evangelisation: "Évangélisation",
@@ -59,7 +59,7 @@ const translations = {
     intro6: "that mark commitment and the",
     highlight6: "training",
     intro7:
-      "that brings maturity. With patience, listening and faith, we build together and celebrate every step. 🌱",
+      "that brings maturity. With patience, listening and faith, we build together and celebrate every step.",
     cards: {
       presences: "Meeting Attendance Entry & Tracking",
       evangelisation: "Evangelism",
@@ -144,7 +144,7 @@ function RapportHubContent() {
               className={cardClass}
               style={{ borderTopColor: "#0D9488" }}
             >
-              <div className="text-4xl mb-2">⛪</div>
+              <div className="text-4xl mb-2">🛐</div>
               <div className="text-lg font-bold text-gray-800 text-center">
                 {t.cards.presences}
               </div>

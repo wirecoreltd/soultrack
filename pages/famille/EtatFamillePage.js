@@ -198,6 +198,7 @@ export default function EtatFamillePage() {
   return (
     <ProtectedRoute
       allowedRoles={["Administrateur", "SuperviseurFamilles", "ResponsableFamilles","Superadmin"]}
+      requiredFeature="familles"
     >
       <EtatFamille />
     </ProtectedRoute>

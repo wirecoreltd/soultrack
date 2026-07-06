@@ -435,30 +435,11 @@ function BlocVueEnsemble({
   conversionsDetail,
   prevTotaux,
   rootId,
-  totalFamillesActives,   // ← ajouté
-  totalPiliers,           // ← ajouté
-  famillesFeatureActive, 
+  totalFamillesActives,
+  totalPiliers,
+  famillesFeatureActive,
   t,
 }) {
-
-  {famillesFeatureActive && (
-  <div className="grid grid-cols-2 gap-3">
-    <KpiCard
-      label={t.kpiFamillesActives}
-      value={totalFamillesActives}
-      sub={t.kpiFamillesActivesSub}
-      accent="blue"
-    />
-    <KpiCard
-      label={t.kpiPiliers}
-      value={totalPiliers}
-      sub={t.kpiPiliersSub}
-      accent="indigo"
-    />
-  </div>
-)}
-
-
   const totaux = allEglises.reduce(
     (acc, e) => {
       const s = e.stats;
@@ -555,6 +536,24 @@ function BlocVueEnsemble({
             delta={calcDelta(totalServiteurs, prevServiteurs)}
           />
         </div>
+
+        {/* Ligne 3 : Familles actives + Piliers (uniquement si le module "familles" est activé) */}
+        {famillesFeatureActive && (
+          <div className="grid grid-cols-2 gap-3">
+            <KpiCard
+              label={t.kpiFamillesActives}
+              value={totalFamillesActives}
+              sub={t.kpiFamillesActivesSub}
+              accent="blue"
+            />
+            <KpiCard
+              label={t.kpiPiliers}
+              value={totalPiliers}
+              sub={t.kpiPiliersSub}
+              accent="indigo"
+            />
+          </div>
+        )}
         
         {/* Conversions (salvation prayer) — carte KPI compacte, pleine largeur, même style que les autres KPI */}
         <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
@@ -1101,7 +1100,7 @@ const getConversions = async (egliseIds, debut, fin) => {
         const { data } = await query;
         return data || [];
       };
-      
+
       // ── Feature "familles" : seules les églises l'ayant explicitement activée comptent ──
       // (DEFAULT_FEATURES.familles = false → opt-in, pas de fallback à true)
       const { data: familleFeatureData } = await supabase
@@ -1112,7 +1111,7 @@ const getConversions = async (egliseIds, debut, fin) => {
         .eq("active", true);
       const egliseIdsAvecFamilles = (familleFeatureData || []).map((r) => r.eglise_id);
       setFamillesFeatureActive(egliseIdsAvecFamilles.length > 0);
-      
+
       let totalFamActives = 0;
       let totalPil = 0;
       if (egliseIdsAvecFamilles.length > 0) {
@@ -1124,7 +1123,7 @@ const getConversions = async (egliseIds, debut, fin) => {
         if (fin) famillesQuery = famillesQuery.lte("famille_created_at", fin);
         const { data: famillesData } = await famillesQuery;
         totalFamActives = (famillesData || []).filter((f) => Number(f.nb_actifs) > 0).length;
-      
+
         const { data: piliersData } = await supabase
           .from("membres_complets")
           .select("id, eglise_id, famille_id")

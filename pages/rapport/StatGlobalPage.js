@@ -1112,9 +1112,6 @@ const getConversions = async (egliseIds, debut, fin) => {
       let totalFamActives = 0;
         let totalPil = 0;
         if (egliseIdsAvecFamilles.length > 0) {
-          // Familles actives = familles ayant au moins un membre actif rattaché
-          // (même critère que "Membres actifs"), sans filtre de date —
-          // comme pour "Cellules actives".
           const { data: membresAvecFamille } = await supabase
             .from("membres_complets")
             .select("id, eglise_id, famille_id, etat_contact, pilier")
@@ -1122,15 +1119,17 @@ const getConversions = async (egliseIds, debut, fin) => {
             .not("famille_id", "is", null)
             .in("etat_contact", ["existant", "nouveau"]);
         
+          // Familles actives = familles distinctes ayant au moins un membre actif
           const famillesActivesSet = new Set(
             (membresAvecFamille || []).map((m) => m.famille_id)
           );
           totalFamActives = famillesActivesSet.size;
         
+          // Piliers = nombre de personnes marquées pilier = true (actives), par église
           totalPil = (membresAvecFamille || []).filter((m) => m.pilier === true).length;
         }
         setTotalFamillesActives(totalFamActives);
-        setTotalPiliers(totalPil);    
+        setTotalPiliers(totalPil);
       
       // ── Fetch période courante ──
       const [attendanceData, formationData, baptemeData, evangeData, cellulesActivesData, conversionsData] =

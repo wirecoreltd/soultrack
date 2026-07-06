@@ -22,7 +22,7 @@ const translations = {
     subtitle4: ", puis sont orientées vers les cellules pour grandir.",
     subtitle5: "Chaque donnée représente une vie précieuse",
     subtitle6: ", chaque progression témoigne de",
-    subtitle7: "l'œuvre de Dieu",
+    subtitle7: "l'œuvre de Dieu",    
     // Filtres
     quickPeriod: "Période rapide",
     dateRange: "Tranche de dates",
@@ -81,6 +81,8 @@ const translations = {
     dateEvolution: "Date évolution",
     bapteme: "Baptême",
     debutMinistere: "Début ministère",
+    piliersLabel: "Piliers",
+    pasDePilier: "Aucun pilier enregistré.",
     // OngletParMois
     noDataPeriod: "Aucune donnée sur cette période",
     persons: (n) => `${n} personne${n > 1 ? "s" : ""}`,
@@ -159,6 +161,8 @@ const translations = {
     dateEvolution: "Evolution date",
     bapteme: "Baptism",
     debutMinistere: "Ministry start",
+    piliersLabel: "Pillars",
+    pasDePilier: "No pillar registered.",
     noDataPeriod: "No data for this period",
     persons: (n) => `${n} person${n > 1 ? "s" : ""}`,
     noDataCellule: "No data",
@@ -325,6 +329,54 @@ function BlocParCellule({ displayedReports, t }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ─── BLOC PAR PILIER ─────────────────────────────────────────
+function BlocPiliers({ piliers, cellulesMap, filterCellule, t, open, setOpen }) {
+  const filtered = filterCellule
+    ? piliers.filter(p => cellulesMap[p.cellule_id] === filterCellule)
+    : piliers;
+
+  const grouped = {};
+  filtered.forEach(p => {
+    const c = cellulesMap[p.cellule_id] || "Non assignée";
+    if (!grouped[c]) grouped[c] = [];
+    grouped[c].push(p);
+  });
+  const lignes = Object.entries(grouped).sort((a, b) => b[1].length - a[1].length);
+
+  return (
+    <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/10">
+      <button onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left">
+        <span className="font-semibold text-white">{t.piliersLabel}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xl font-bold text-amber-300">{filtered.length}</span>
+          <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
+        </div>
+      </button>
+      {open && (
+        <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
+          {lignes.length === 0 ? (
+            <p className="text-white/30 text-sm text-center py-2">{t.pasDePilier}</p>
+          ) : (
+            lignes.map(([cellule, membres]) => (
+              <div key={cellule} className="bg-white/5 rounded-xl px-3 py-2">
+                <p className="text-xs text-white/50 mb-1">{cellule} · {membres.length}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {membres.map(m => (
+                    <span key={m.id} className="text-[11px] px-2 py-0.5 rounded-full bg-amber-900/40 text-amber-300">
+                      {m.prenom} {m.nom}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -520,6 +572,10 @@ function EtatCellule() {
   const [editMember, setEditMember] = useState(null);
   const [selectedEvangelise, setSelectedEvangelise] = useState(null);
 
+  const [piliers, setPiliers] = useState([]);
+  const [cellulesMap, setCellulesMap] = useState({});
+  const [openPiliers, setOpenPiliers] = useState(false);
+
   const [kpis, setKpis] = useState({
     totalEvangelises: 0, totalVenus: 0, totalIntegration: 0,
     totalBapteme: 0, totalMinistere: 0, totalRefus: 0,
@@ -545,6 +601,8 @@ function EtatCellule() {
   const isSuperviseur  = userProfile.roles?.includes("SuperviseurCellule");
   const isResponsable  = userProfile.roles?.includes("ResponsableCellule");
 
+  let scopeCelluleIds = null; // null = pas de restriction (admin/superviseur)
+
   try {
     let query = supabase
       .from("vue_flow_personnes")
@@ -552,50 +610,32 @@ function EtatCellule() {
       .eq("eglise_id", userProfile.eglise_id)
       .order("date_depart", { ascending: false });
 
-    // ── Administrateur / Superadmin → tout voir ──
     if (isAdmin) {
-      // pas de filtre supplémentaire
-    }
+      // pas de filtre
+    } else if (isSuperviseur) {
+      // pas de filtre
+    } else if (isResponsable) {
+      const { data: mesCellules } = await supabase
+        .from("cellules").select("id")
+        .eq("responsable_id", userProfile.id)
+        .eq("eglise_id", userProfile.eglise_id);
+      const mesIds = (mesCellules || []).map(c => c.id);
 
-    // ── SuperviseurCellule → tout voir dans son église ──
-    else if (isSuperviseur) {
-      // pas de filtre supplémentaire, eglise_id suffit
-    }
+      const { data: filles } = await supabase
+        .from("cellules").select("id")
+        .eq("cellule_mere_id", userProfile.id)
+        .eq("eglise_id", userProfile.eglise_id);
+      const fillesIds = (filles || []).map(c => c.id);
 
-    // ── ResponsableCellule → sa cellule + ses enfants ──
-   else if (isResponsable) {
-  // 1. Ma cellule directe
-  const { data: mesCellules } = await supabase
-    .from("cellules")
-    .select("id")
-    .eq("responsable_id", userProfile.id)
-    .eq("eglise_id", userProfile.eglise_id);
+      scopeCelluleIds = [...new Set([...mesIds, ...fillesIds])];
 
-  const mesIds = (mesCellules || []).map(c => c.id);
-
-  // 2. Cellules enfants — celles dont cellule_mere_id = mon profile_id
-  const { data: filles } = await supabase
-    .from("cellules")
-    .select("id")
-    .eq("cellule_mere_id", userProfile.id)
-    .eq("eglise_id", userProfile.eglise_id);
-
-  const fillesIds = (filles || []).map(c => c.id);
-
-  const tousLesIds = [...new Set([...mesIds, ...fillesIds])];
-
-      if (tousLesIds.length > 0) {
-        query = query.in("cellule_id", tousLesIds);
+      if (scopeCelluleIds.length > 0) {
+        query = query.in("cellule_id", scopeCelluleIds);
       } else {
-        // Aucune cellule trouvée → rien à afficher
         query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
       }
-    }
-
-    // ── Autres rôles → rien ──
-    else {
-      setReports([]);
-      setAllReports([]);
+    } else {
+      setReports([]); setAllReports([]); setPiliers([]);
       setLoading(false);
       return;
     }
@@ -604,8 +644,6 @@ function EtatCellule() {
     if (error) throw error;
 
     let filtered = data || [];
-
-    // ── Filtre dates ──
     if (isPerso) {
       if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
       if (filterFin)   filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
@@ -621,10 +659,31 @@ function EtatCellule() {
     setFilterCellule("");
     updateKpis(filtered);
 
+    // ── Piliers (indépendant de la période, état actuel) ──
+    let pilierQuery = supabase
+      .from("membres_complets")
+      .select("id, nom, prenom, cellule_id")
+      .eq("eglise_id", userProfile.eglise_id)
+      .eq("pilier", true);
+
+    if (scopeCelluleIds !== null) {
+      if (scopeCelluleIds.length > 0) pilierQuery = pilierQuery.in("cellule_id", scopeCelluleIds);
+      else pilierQuery = pilierQuery.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
+    }
+
+    const [{ data: pilierData }, { data: cellulesData }] = await Promise.all([
+      pilierQuery,
+      supabase.from("cellules").select("id, nom").eq("eglise_id", userProfile.eglise_id),
+    ]);
+
+    const cMap = {};
+    (cellulesData || []).forEach(c => { cMap[c.id] = c.nom; });
+    setCellulesMap(cMap);
+    setPiliers(pilierData || []);
+
   } catch (err) {
     console.error("Erreur fetch:", err);
-    setReports([]);
-    setAllReports([]);
+    setReports([]); setAllReports([]); setPiliers([]);
   }
 
   setLoading(false);
@@ -790,6 +849,17 @@ function EtatCellule() {
               <SectionTitle>{t.sectionPerformance}</SectionTitle>
               <BlocParCellule displayedReports={displayedReports} t={t} />
             </div>
+          <div>
+            <SectionTitle>{t.piliersLabel}</SectionTitle>
+            <BlocPiliers
+              piliers={piliers}
+              cellulesMap={cellulesMap}
+              filterCellule={filterCellule}
+              t={t}
+              open={openPiliers}
+              setOpen={setOpenPiliers}
+            />
+          </div>
           </div>
         ) : onglet === "cellules" ? (
           <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />

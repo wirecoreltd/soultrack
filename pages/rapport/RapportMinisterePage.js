@@ -589,7 +589,7 @@ function RapportMinistere() {
           <div className="bg-white/8 rounded-2xl p-8 text-center border border-white/10">
             <p className="text-white/60 text-sm">{!egliseId ? t.chargementUser : "Sélectionnez une période pour générer le rapport."}</p>
           </div>
-        ) : rapports.lignes.length === 0 && onglet !== "berger" ? (
+       ) : rapports.lignes.length === 0 && rapports.piliers.length === 0 && onglet !== "berger" ? (
           <div className="bg-white/8 rounded-2xl p-8 text-center border border-white/10">
             <p className="text-white/60 text-sm">{t.aucunServiteur}</p>
           </div>

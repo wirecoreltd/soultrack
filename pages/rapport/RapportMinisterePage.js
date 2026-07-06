@@ -776,6 +776,7 @@ function RapportMinistere() {
                     )}
                   </div>
                 </div>
+              </div>
 
           /* ══════════════════════════════════════════
              ONGLET 2 — VUE BERGER

@@ -31,6 +31,7 @@ import useChurchScope from "../../hooks/useChurchScope";
 import Footer from "../../components/Footer";
 import SuiviPopup from "../../components/SuiviPopup";
 import { useLang } from "../../hooks/useLang";
+import { useFeature } from "../../components/FeaturesContext";
 
 const translations = {
   fr: {
@@ -378,6 +379,9 @@ function SuivisMembresContent() {
   const phoneMenuRef = useRef(null);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
   const [assignmentsMap, setAssignmentsMap] = useState({});
+  const famillesActive = useFeature("familles");
+  const cellulesActive = useFeature("cellules");
+  const conseillerActive = useFeature("conseiller");
 
   const [view, setView] = useState(() => {
     if (typeof window !== "undefined") return localStorage.getItem("members_view") || "card";
@@ -734,15 +738,21 @@ function SuivisMembresContent() {
                   </div>
                 )}
 
-                <p className="text-sm text-black-700 mb-1">
-                  {t.cellule} {m.cellule_id ? (cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—") : "—"}
-                </p>
-                <p className="text-sm text-black-700 mb-1">
-                  {t.famille} {m.famille_id ? (familles.find(f => f.id === m.famille_id)?.famille_full || "—") : "—"}
-                </p>
-                <p className="text-sm text-black-700 mb-1">
-                  {t.conseiller} {getConseillersForMember(m.id)}
-                </p>
+                {cellulesActive && m.cellule_id && (
+                  <p className="text-sm text-black-700 mb-1">
+                    {t.cellule} {cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}
+                  </p>
+                )}
+                {famillesActive && m.famille_id && (
+                  <p className="text-sm text-black-700 mb-1">
+                    {t.famille} {familles.find(f => f.id === m.famille_id)?.famille_full || "—"}
+                  </p>
+                )}
+                {conseillerActive && assignmentsMap[m.id]?.length > 0 && (
+                  <p className="text-sm text-black-700 mb-1">
+                    {t.conseiller} {getConseillersForMember(m.id)}
+                  </p>
+                )}
 
                 <p className="self-end text-[11px] text-gray-400 mt-3">{t.creeeLe} {formatDate(m.date_envoi_suivi)}</p>
 

@@ -294,6 +294,7 @@ function RapportMinistere() {
   const [dateFin, setDateFin]       = useState("");
   const [onglet, setOnglet]         = useState("vision");
   const [openMinistere, setOpenMinistere] = useState(null);
+  const [openPiliers, setOpenPiliers] = useState(false);
 
   // Données brutes
   const [totalMembres, setTotalMembres] = useState(0);
@@ -743,24 +744,38 @@ function RapportMinistere() {
                 </div>
               </div>
 
-                  {/* ── Piliers ── */}
-              <div>
-                <SectionTitle icon="🎖️">{t.listePiliers}</SectionTitle>
-                {rapports.piliers.length === 0 ? (
-                  <p className="text-sm text-white/40 italic px-1">{t.pasDePilier}</p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {rapports.piliers.map((m, idx) => (
-                      <ServiteurCard
-                        key={m.id}
-                        idx={idx}
-                        membre={m}
-                      />
-                    ))}
+                 {/* ── Piliers ── */}
+                <div>
+                  <SectionTitle icon="🎖️">{t.listePiliers}</SectionTitle>
+                  <div className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
+                    <div
+                      onClick={() => setOpenPiliers(!openPiliers)}
+                      className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors"
+                    >
+                      <span className="text-sm font-semibold text-white flex-1">{t.piliers}</span>
+                      <span className="text-xl font-bold text-white">{rapports.piliers.length}</span>
+                      <svg
+                        className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${openPiliers ? "rotate-180" : ""}`}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                    {openPiliers && (
+                      <div className="px-4 pb-3 border-t border-white/10 pt-2">
+                        {rapports.piliers.length === 0 ? (
+                          <p className="text-sm text-white/40 italic px-1">{t.pasDePilier}</p>
+                        ) : (
+                          <div className="flex flex-col gap-2">
+                            {rapports.piliers.map((m, idx) => (
+                              <ServiteurCard key={m.id} idx={idx} membre={m} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>      
-            </div>
+                </div>
 
           /* ══════════════════════════════════════════
              ONGLET 2 — VUE BERGER

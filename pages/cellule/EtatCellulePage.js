@@ -257,6 +257,14 @@ function statutConfig(statutNorm, t) {
   }
 }
 
+const AVATAR_COLORS = [
+  { bg: "#dbeafe", color: "#1e40af" }, { bg: "#fce7f3", color: "#9d174d" },
+  { bg: "#d1fae5", color: "#065f46" }, { bg: "#fef3c7", color: "#92400e" },
+  { bg: "#ede9fe", color: "#5b21b6" }, { bg: "#fee2e2", color: "#991b1b" },
+  { bg: "#e0f2fe", color: "#0c4a6e" }, { bg: "#fdf4ff", color: "#701a75" },
+  { bg: "#f0fdf4", color: "#14532d" }, { bg: "#fff7ed", color: "#7c2d12" },
+];
+
 // ─── BLOC KPI ─────────────────────────────────────────────────
 function BlocKpi({ kpis, totalAmes, t }) {
   const pct = (n) => totalAmes > 0 ? Math.round((n / totalAmes) * 100) : 0;
@@ -334,46 +342,49 @@ function BlocParCellule({ displayedReports, t }) {
 }
 
 // ─── BLOC PAR PILIER ─────────────────────────────────────────
+function PilierCard({ membre, celluleNom, idx }) {
+  const ac = AVATAR_COLORS[idx % AVATAR_COLORS.length];
+  const initiales = `${(membre.prenom || "")[0] || ""}${(membre.nom || "")[0] || ""}`.toUpperCase();
+  return (
+    <div className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-white/15 transition-colors">
+      <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0"
+        style={{ background: ac.bg, color: ac.color }}>
+        {initiales}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-white truncate">{membre.prenom} {membre.nom}</p>
+        <p className="text-[11px] text-white/50 truncate">{celluleNom}</p>
+      </div>
+    </div>
+  );
+}
+
 function BlocPiliers({ piliers, cellulesMap, filterCellule, t, open, setOpen }) {
   const filtered = filterCellule
     ? piliers.filter(p => cellulesMap[p.cellule_id] === filterCellule)
     : piliers;
 
-  const grouped = {};
-  filtered.forEach(p => {
-    const c = cellulesMap[p.cellule_id] || "Non assignée";
-    if (!grouped[c]) grouped[c] = [];
-    grouped[c].push(p);
-  });
-  const lignes = Object.entries(grouped).sort((a, b) => b[1].length - a[1].length);
-
   return (
-    <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/10">
-      <button onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left">
-        <span className="font-semibold text-white">{t.piliersLabel}</span>
-        <div className="flex items-center gap-2">
-          <span className="text-xl font-bold text-amber-300">{filtered.length}</span>
-          <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
-        </div>
-      </button>
+    <div className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
+      <div onClick={() => setOpen(!open)}
+        className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors">
+        <span className="text-sm font-semibold text-white flex-1">{t.piliersLabel}</span>
+        <span className="text-xl font-bold text-white">{filtered.length}</span>
+        <svg className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${open ? "rotate-180" : ""}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
       {open && (
-        <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
-          {lignes.length === 0 ? (
-            <p className="text-white/30 text-sm text-center py-2">{t.pasDePilier}</p>
+        <div className="px-4 pb-3 border-t border-white/10 pt-2">
+          {filtered.length === 0 ? (
+            <p className="text-sm text-white/40 italic px-1">{t.pasDePilier}</p>
           ) : (
-            lignes.map(([cellule, membres]) => (
-              <div key={cellule} className="bg-white/5 rounded-xl px-3 py-2">
-                <p className="text-xs text-white/50 mb-1">{cellule} · {membres.length}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {membres.map(m => (
-                    <span key={m.id} className="text-[11px] px-2 py-0.5 rounded-full bg-amber-900/40 text-amber-300">
-                      {m.prenom} {m.nom}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))
+            <div className="flex flex-col gap-2">
+              {filtered.map((m, idx) => (
+                <PilierCard key={m.id} idx={idx} membre={m} celluleNom={cellulesMap[m.cellule_id] || "—"} />
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -659,17 +670,18 @@ function EtatCellule() {
     setFilterCellule("");
     updateKpis(filtered);
 
-    // ── Piliers (indépendant de la période, état actuel) ──
-    let pilierQuery = supabase
-      .from("membres_complets")
-      .select("id, nom, prenom, cellule_id")
-      .eq("eglise_id", userProfile.eglise_id)
-      .eq("pilier", true);
-
-    if (scopeCelluleIds !== null) {
-      if (scopeCelluleIds.length > 0) pilierQuery = pilierQuery.in("cellule_id", scopeCelluleIds);
-      else pilierQuery = pilierQuery.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
-    }
+    // ── Piliers (indépendant de la période, état actuel) ──  
+      let pilierQuery = supabase
+        .from("membres_complets")
+        .select("id, nom, prenom, cellule_id")
+        .eq("eglise_id", userProfile.eglise_id)
+        .eq("pilier", true)
+        .not("cellule_id", "is", null); // ← uniquement les piliers rattachés à une cellule
+      
+      if (scopeCelluleIds !== null) {
+        if (scopeCelluleIds.length > 0) pilierQuery = pilierQuery.in("cellule_id", scopeCelluleIds);
+        else pilierQuery = pilierQuery.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
+      }
 
     const [{ data: pilierData }, { data: cellulesData }] = await Promise.all([
       pilierQuery,
@@ -850,16 +862,16 @@ function EtatCellule() {
               <BlocParCellule displayedReports={displayedReports} t={t} />
             </div>
           <div>
-            <SectionTitle>{t.piliersLabel}</SectionTitle>
-            <BlocPiliers
-              piliers={piliers}
-              cellulesMap={cellulesMap}
-              filterCellule={filterCellule}
-              t={t}
-              open={openPiliers}
-              setOpen={setOpenPiliers}
-            />
-          </div>
+          <SectionTitle>{t.piliersLabel}</SectionTitle>
+          <BlocPiliers
+            piliers={piliers}
+            cellulesMap={cellulesMap}
+            filterCellule={filterCellule}
+            t={t}
+            open={openPiliers}
+            setOpen={setOpenPiliers}
+          />
+        </div>
           </div>
         ) : onglet === "cellules" ? (
           <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />

@@ -63,6 +63,10 @@ const translations = {
     kpiBaptemesSub: "cette période",
     kpiTauxConversion: "Taux conversion",
     kpiTauxConversionSub: "conversions / présences culte",
+    kpiFamillesActives: "Familles actives",
+    kpiFamillesActivesSub: "avec ≥1 membre actif",
+    kpiPiliers: "Piliers",
+    kpiPiliersSub: "familles supervisées",
     sectionConversions: "Conversions (prière du salut)",
     conversionsSourceEglise: "Âmes accueillies à l'église",
     conversionsSourceEvang: "Âmes rencontrées en évangélisation",
@@ -176,6 +180,10 @@ const translations = {
     conversionsTotal: "Total conversions",
     kpiServiteurs: "Servants",
     kpiServiteursSubFn: (pct) => `${pct}% of attendees`,
+    kpiFamillesActives: "Active families",
+    kpiFamillesActivesSub: "with ≥1 active member",
+    kpiPiliers: "Pillars",
+    kpiPiliersSub: "supervised families",
     vsPeriodePrecedente: "vs prev. period",
     repartitionTitle: "M / F / Y Attendance Breakdown",
     hommes: "Men",
@@ -427,8 +435,30 @@ function BlocVueEnsemble({
   conversionsDetail,
   prevTotaux,
   rootId,
+  totalFamillesActives,   // ← ajouté
+  totalPiliers,           // ← ajouté
+  famillesFeatureActive, 
   t,
 }) {
+
+  {famillesFeatureActive && (
+  <div className="grid grid-cols-2 gap-3">
+    <KpiCard
+      label={t.kpiFamillesActives}
+      value={totalFamillesActives}
+      sub={t.kpiFamillesActivesSub}
+      accent="blue"
+    />
+    <KpiCard
+      label={t.kpiPiliers}
+      value={totalPiliers}
+      sub={t.kpiPiliersSub}
+      accent="indigo"
+    />
+  </div>
+)}
+
+
   const totaux = allEglises.reduce(
     (acc, e) => {
       const s = e.stats;
@@ -798,6 +828,10 @@ function StatGlobalPage() {
   // ── Détail des conversions (prière du salut) : église vs évangélisation, dédupliqué
   const [conversionsDetail, setConversionsDetail] = useState(null);
 
+  const [totalFamillesActives, setTotalFamillesActives] = useState(0);
+  const [totalPiliers, setTotalPiliers] = useState(0);
+  const [famillesFeatureActive, setFamillesFeatureActive] = useState(false);
+
   useEffect(() => {
     fetchStats(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1043,6 +1077,9 @@ const getConversions = async (egliseIds, debut, fin) => {
         setConversionsDetail(null);
         setHasData(false);
         setLoading(false);
+        setTotalFamillesActives(0);
+        setTotalPiliers(0);
+        setFamillesFeatureActive(false);
         return;
       }
 
@@ -1064,6 +1101,40 @@ const getConversions = async (egliseIds, debut, fin) => {
         const { data } = await query;
         return data || [];
       };
+      
+      // ── Feature "familles" : seules les églises l'ayant explicitement activée comptent ──
+      // (DEFAULT_FEATURES.familles = false → opt-in, pas de fallback à true)
+      const { data: familleFeatureData } = await supabase
+        .from("eglise_features")
+        .select("eglise_id")
+        .in("eglise_id", egliseIds)
+        .eq("feature", "familles")
+        .eq("active", true);
+      const egliseIdsAvecFamilles = (familleFeatureData || []).map((r) => r.eglise_id);
+      setFamillesFeatureActive(egliseIdsAvecFamilles.length > 0);
+      
+      let totalFamActives = 0;
+      let totalPil = 0;
+      if (egliseIdsAvecFamilles.length > 0) {
+        let famillesQuery = supabase
+          .from("vue_flow_familles")
+          .select("famille_id, eglise_id, nb_actifs, famille_created_at")
+          .in("eglise_id", egliseIdsAvecFamilles);
+        if (debut) famillesQuery = famillesQuery.gte("famille_created_at", debut);
+        if (fin) famillesQuery = famillesQuery.lte("famille_created_at", fin);
+        const { data: famillesData } = await famillesQuery;
+        totalFamActives = (famillesData || []).filter((f) => Number(f.nb_actifs) > 0).length;
+      
+        const { data: piliersData } = await supabase
+          .from("membres_complets")
+          .select("id, eglise_id, famille_id")
+          .in("eglise_id", egliseIdsAvecFamilles)
+          .eq("pilier", true)
+          .not("famille_id", "is", null);
+        totalPil = piliersData?.length || 0;
+      }
+      setTotalFamillesActives(totalFamActives);
+      setTotalPiliers(totalPil);
 
       // ── Fetch période courante ──
       const [attendanceData, formationData, baptemeData, evangeData, cellulesActivesData, conversionsData] =
@@ -1379,15 +1450,18 @@ const getConversions = async (egliseIds, debut, fin) => {
 </p>
             </SectionTitle>
             <BlocVueEnsemble
-              allEglises={allEglises}
-              besoinsGlobaux={besoinsGlobaux}
-              totalMembresActifs={totalMembresActifs}
-              tauxPresenceMoyen={tauxPresenceMoyen}
-              conversionsDetail={conversionsDetail}
-              prevTotaux={prevTotaux}
-              rootId={rootId}
-              t={t}
-            />
+            allEglises={allEglises}
+            besoinsGlobaux={besoinsGlobaux}
+            totalMembresActifs={totalMembresActifs}
+            tauxPresenceMoyen={tauxPresenceMoyen}
+            conversionsDetail={conversionsDetail}
+            prevTotaux={prevTotaux}
+            rootId={rootId}
+            totalFamillesActives={totalFamillesActives}
+            totalPiliers={totalPiliers}
+            famillesFeatureActive={famillesFeatureActive}
+            t={t}
+          />
           </div>
         ) : (
           <div className="flex flex-col gap-3">

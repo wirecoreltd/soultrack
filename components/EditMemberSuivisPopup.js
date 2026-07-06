@@ -52,6 +52,7 @@ const translations = {
     veutRejoindre: "Veut rejoindre ICC",
     aDejaEglise: "A déjà son église",
     visiteur: "Visiteur",
+    pilier: "🎖️ Définir en tant que Pilier",
 
     // Footer
     annuler: "Annuler",
@@ -118,6 +119,7 @@ const translations = {
     veutRejoindre: "Wants to join ICC",
     aDejaEglise: "Already has a church",
     visiteur: "Visitor",
+    pilier: "🎖️ Define as a Pillar",
 
     // Footer
     annuler: "Cancel",
@@ -171,6 +173,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
     sexe: member?.sexe || "",
     age: member?.age || "",
     star: !!member?.star,
+    pilier: !!member?.pilier,
     etat_contact: member?.etat_contact || "Nouveau",
     bapteme_eau: member?.bapteme_eau ?? null,
     bapteme_esprit: member?.bapteme_esprit ?? null,
@@ -320,6 +323,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
         sexe: formData.sexe || null,
         age: formData.age || null,
         star: isPrivileged ? !!formData.star : !!member.star,
+        pilier: isPrivileged ? !!formData.pilier : !!member.pilier,
         etat_contact: formData.etat_contact || "Nouveau",
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
@@ -496,6 +500,21 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
           <Field label={t.formation}>
             <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
           </Field>
+          
+          {isPrivileged && (
+            <div className="flex items-center gap-3 py-2">
+              <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
+                <input
+                  type="checkbox"
+                  name="pilier"
+                  checked={formData.pilier}
+                  onChange={handleChange}
+                  className="accent-[#2E3192] w-4 h-4"
+                />
+                {t.pilier}
+              </label>
+            </div>
+          )}
 
           <Field label={t.commentVenu}>
             <select name="venu" value={formData.venu} onChange={handleChange} className="inp">

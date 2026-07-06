@@ -828,6 +828,7 @@ useEffect(() => {
       {editMember && (
         <EditMemberSuivisPopup
           member={editMember}
+          currentUserRoles={userRole ? [userRole] : []}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updated) => {
             handleUpdateMember(updated);

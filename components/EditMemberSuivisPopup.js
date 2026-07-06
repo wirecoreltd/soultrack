@@ -344,6 +344,11 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
         Commentaire_Suivi_Evangelisation: formData.Commentaire_Suivi_Evangelisation || null,
         Ministere: (isPrivileged && formData.star) ? JSON.stringify(finalMinistere) : member.Ministere,
       };
+      // ── Auto-intégration : dès qu'une cellule ou famille est attribuée ──
+        const celluleOuFamilleAttribuee = !!(payload.cellule_id || payload.famille_id);
+        if (celluleOuFamilleAttribuee) {
+          payload.statut_suivis = 3;
+        }  
 
       const { error } = await supabase.from("membres_complets").update(payload).eq("id", member.id);
       if (error) throw error;

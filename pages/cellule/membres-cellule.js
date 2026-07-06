@@ -611,6 +611,7 @@ useEffect(() => {
                       style={{ borderLeftColor: getBorderColor(m) }}
                     >
                       <h2 className="relative w-full text-center font-bold text-lg flex items-center justify-center gap-1">
+                      {m.pilier === true && <span title="Pilier">🎖️</span>}
                         <span>{m.prenom} {m.nom}</span>
                         {m.star === true &&
                           m.etat_contact?.trim().toLowerCase() === "existant" && (

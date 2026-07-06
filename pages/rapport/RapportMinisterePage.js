@@ -759,10 +759,7 @@ function RapportMinistere() {
                     ))}
                   </div>
                 )}
-              </div>
-
-            </div>
-
+              </div>      
             </div>
 
           /* ══════════════════════════════════════════

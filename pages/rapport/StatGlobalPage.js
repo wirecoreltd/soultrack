@@ -504,56 +504,53 @@ function BlocVueEnsemble({
   return (
     <div className="flex flex-col gap-4">
 
-              {/* Ligne 1 : Membres actifs + Taux de présence + Églises supervisées + Cellules */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard label={t.kpiMembresActifs} value={totalMembresActifs} sub={t.kpiMembresActifsSub} accent="white" />
-          <KpiCard
-            label={t.kpiTauxPresence}
-            value={`${tauxPresence}%`}
-            sub={t.kpiTauxPresenceSub}
-            accent={tauxPresence >= 70 ? "green" : tauxPresence >= 40 ? "amber" : "red"}
-          />
-          <KpiCard label={t.kpiEglisesSup} value={nbEglisesSupervisees} sub={t.kpiEglisesSubSup} accent="amber" />
-          <KpiCard label={t.kpiCellules} value={totaux.cellules} sub={t.kpiCellulesSub} accent="orange" />
-        </div>
-        
-        {/* Ligne 2 : Total culte + Évangélisés + Baptêmes + Serviteurs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard
-            label={t.kpiTotalCulte}
-            value={totalCulteGlobal}
-            sub={t.kpiTotalCulteSub}
-            accent="green"
-            delta={calcDelta(totalCulteGlobal, prevCulteGlobal)}
-          />
-          <KpiCard label={t.kpiEvangelises} value={totalEvangelisation} sub={t.kpiEvangelisesSub} accent="pink" />
-          <KpiCard label={t.kpiBaptemes} value={totalBapteme} sub={t.kpiBaptemesSub} accent="purple" />
-          <KpiCard
-            label={t.kpiServiteurs}
-            value={totalServiteurs}
-            sub={t.kpiServiteursSubFn(tauxEngagement)}
-            accent="teal"
-            delta={calcDelta(totalServiteurs, prevServiteurs)}
-          />
-        </div>
-
-        {/* Ligne 3 : Familles actives + Piliers (uniquement si le module "familles" est activé) */}
-        {famillesFeatureActive && (
-          <div className="grid grid-cols-2 gap-3">
-            <KpiCard
-              label={t.kpiFamillesActives}
-              value={totalFamillesActives}
-              sub={t.kpiFamillesActivesSub}
-              accent="blue"
-            />
-            <KpiCard
-              label={t.kpiPiliers}
-              value={totalPiliers}
-              sub={t.kpiPiliersSub}
-              accent="indigo"
-            />
-          </div>
-        )}
+             {/* Ligne 1 : Membres actifs + Taux de présence + Cellules + Familles actives */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <KpiCard label={t.kpiMembresActifs} value={totalMembresActifs} sub={t.kpiMembresActifsSub} accent="white" />
+                <KpiCard
+                  label={t.kpiTauxPresence}
+                  value={`${tauxPresence}%`}
+                  sub={t.kpiTauxPresenceSub}
+                  accent={tauxPresence >= 70 ? "green" : tauxPresence >= 40 ? "amber" : "red"}
+                />
+                <KpiCard label={t.kpiCellules} value={totaux.cellules} sub={t.kpiCellulesSub} accent="orange" />
+                {famillesFeatureActive && (
+                  <KpiCard label={t.kpiFamillesActives} value={totalFamillesActives} sub={t.kpiFamillesActivesSub} accent="blue" />
+                )}
+              </div>
+              
+              {/* Ligne 2 : Églises supervisées + Participation totale + Évangélisés + Baptêmes */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <KpiCard label={t.kpiEglisesSup} value={nbEglisesSupervisees} sub={t.kpiEglisesSubSup} accent="amber" />
+                <KpiCard
+                  label={t.kpiTotalCulte}
+                  value={totalCulteGlobal}
+                  sub={t.kpiTotalCulteSub}
+                  accent="green"
+                  delta={calcDelta(totalCulteGlobal, prevCulteGlobal)}
+                />
+                <KpiCard label={t.kpiEvangelises} value={totalEvangelisation} sub={t.kpiEvangelisesSub} accent="pink" />
+                <KpiCard label={t.kpiBaptemes} value={totalBapteme} sub={t.kpiBaptemesSub} accent="purple" />
+              </div>
+              
+              {/* Ligne 3 : Serviteurs + Piliers (toujours affiché, Piliers seulement si le module familles est actif) */}
+              <div className="grid grid-cols-2 gap-3">
+                <KpiCard
+                  label={t.kpiServiteurs}
+                  value={totalServiteurs}
+                  sub={t.kpiServiteursSubFn(tauxEngagement)}
+                  accent="teal"
+                  delta={calcDelta(totalServiteurs, prevServiteurs)}
+                />
+                {famillesFeatureActive && (
+                  <KpiCard
+                    label={t.kpiPiliers}
+                    value={totalPiliers}
+                    sub={t.kpiPiliersSub}
+                    accent="indigo"
+                  />
+                )}
+              </div>
         
         {/* Conversions (salvation prayer) — carte KPI compacte, pleine largeur, même style que les autres KPI */}
         <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">

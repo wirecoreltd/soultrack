@@ -45,6 +45,9 @@ const translations = {
     stableRecents: "Serviteurs stables",
     polyvalentsSurchages: "Polyvalents à risque",
     pasDeServiteur: "Aucun serviteur dans cette catégorie.",
+    piliers: "Piliers",
+    listePiliers: "Liste des piliers",
+    pasDePilier: "Aucun pilier enregistré.",
     actionAppeler: "📞 Appeler",
     actionEncourager: "💬 Encourager",
     actionReassigner: "🔀 Réassigner",
@@ -99,6 +102,9 @@ const translations = {
     stableRecents: "Stable servants",
     polyvalentsSurchages: "Overloaded polyvalents",
     pasDeServiteur: "No servants in this category.",
+    piliers: "Pillars",
+    listePiliers: "Pillars list",
+    pasDePilier: "No pillar registered.",
     actionAppeler: "📞 Call",
     actionEncourager: "💬 Encourage",
     actionReassigner: "🔀 Reassign",
@@ -294,6 +300,7 @@ function RapportMinistere() {
   const [rapports, setRapports] = useState({
     lignes: [], serviteursCount: 0, hommes: 0, femmes: 0, polyvalents: [],
     serviteursData: [], // [{membre, ministeres:[], derniereDate, nombreActivites}]
+    piliers: [],
   });
 
   // ─── CHARGEMENT UTILISATEUR ──────────────────────────────────
@@ -318,8 +325,10 @@ function RapportMinistere() {
       // Membres
       const { data: membresData } = await supabase
         .from("membres_complets")
-        .select("id, etat_contact, star, sexe, prenom, nom")
+        .select("id, etat_contact, star, pilier, sexe, prenom, nom")
         .eq("eglise_id", egliseId);
+      
+      const piliers = (membresData || []).filter(m => m.pilier === true);
 
       const actifs = (membresData || []).filter(m =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
@@ -433,6 +442,7 @@ function RapportMinistere() {
         femmes: totalFemmes,
         polyvalents,
         serviteursData,
+        piliers,
       });
       setHasData(true);
       setMessage("");
@@ -594,11 +604,18 @@ function RapportMinistere() {
               {/* KPIs principaux */}
               <div>
                 <SectionTitle icon="📈">Vue d'ensemble</SectionTitle>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   <KpiCard colorClass="blue"   label={t.serviteursActifs} value={rapports.serviteursCount} sub={`${pctEngages}% ${t.pctMembres}`} />
                   <KpiCard colorClass="teal"   label={t.totalMembres}     value={totalMembres}             sub="existants + nouveaux" />
                   <KpiCard colorClass="purple" label={t.hommes}           value={rapports.hommes}          sub={`${pctH}%`} />
                   <KpiCard colorClass="pink"   label={t.femmes}           value={rapports.femmes}          sub={`${pctF}%`} />
+                  <KpiCard
+                    colorClass="amber"
+                    label={t.piliers}
+                    value={rapports.piliers.length}
+                    sub={totalMembres > 0 ? `${Math.round((rapports.piliers.length / totalMembres) * 100)}% ${t.pctMembres}` : ""}
+                    icon="🎖️"
+                  />
                 </div>
               </div>
 

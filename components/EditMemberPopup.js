@@ -75,6 +75,7 @@ const translations = {
     whatsapp: "Numéro WhatsApp",
     wantsBaptism: "💦 Veut se faire baptiser",
     serviteur: "⭐ Définir en tant que serviteur",
+    pilier: "🎖️ Définir en tant que Pilier",
     // Conseiller search
     searchConseiller: "Rechercher un conseiller...",
     noResult: "Aucun résultat",
@@ -151,6 +152,7 @@ const translations = {
     whatsapp: "WhatsApp number",
     wantsBaptism: "💦 Wants to be baptised",
     serviteur: "⭐ Define as a servant",
+    pilier: "🎖️ Define as a Pillar",
     searchConseiller: "Search for a counsellor...",
     noResult: "No results",
     principal: "(main)",
@@ -272,6 +274,7 @@ export default function EditMemberPopup({
       sexe: data?.sexe || "",
       age: data?.age || "",
       star: !!data?.star,
+      pilier: !!data?.pilier,
       etat_contact: data?.etat_contact || "Nouveau",
       bapteme_eau: data?.bapteme_eau ?? null,
       bapteme_esprit: data?.bapteme_esprit ?? null,
@@ -413,6 +416,7 @@ export default function EditMemberPopup({
         sexe: formData.sexe || null,
         age: formData.age || null,
         star: isPrivileged ? !!formData.star : !!member.star,
+        pilier: isPrivileged ? !!formData.pilier : !!member.pilier,
         etat_contact: formData.etat_contact || "Nouveau",
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
@@ -879,6 +883,20 @@ export default function EditMemberPopup({
                       {t.serviteur}
                     </label>
                   </div>
+
+                  {/* ── Ajout Pilier ── */}
+                      <div className="flex items-center gap-3 py-2">
+                        <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
+                          <input
+                            type="checkbox"
+                            name="pilier"
+                            checked={formData.pilier}
+                            onChange={handleChange}
+                            className="accent-[#2E3192] w-4 h-4"
+                          />
+                          {t.pilier}
+                        </label>
+                      </div>
 
                   {formData.star && (
                     <Field label={t.ministere}>

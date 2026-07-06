@@ -139,7 +139,8 @@ function barColor(pct) {
 }
 
 function ProgressBar({ value, max, height = 8 }) {
-  const pct = max ? Math.min(100, (value / max) * 100) : 0;
+  const isUnlimited = max === null || max === undefined;
+  const pct = isUnlimited ? 0 : Math.min(100, (value / max) * 100);
   return (
     <div style={{ width: "100%", height, background: "rgba(255,255,255,0.1)", borderRadius: 99, overflow: "hidden" }}>
       <div style={{ height: "100%", width: `${pct}%`, background: barColor(pct), borderRadius: 99, transition: "width 0.5s ease" }} />
@@ -563,7 +564,11 @@ function SubscriptionContent() {
                       <span>{nombreMembres} {t.membersUsed}</span>
                       <span>{planActuel.limite ? `${planActuel.limite} ${t.max}` : t.unlimited}</span>
                     </div>
-                    <ProgressBar value={nombreMembres} max={planActuel.limite ?? nombreMembres} height={8} />
+                    {planActuel.limite ? (
+                      <ProgressBar value={nombreMembres} max={plan.limite} height={4} />
+                    ) : (
+                      <ProgressBar value={0} max={1} height={8} /> // ou ne rien afficher du tout
+                    )}
                     {pctActuel >= 80 && (
                       <p className="text-xs text-amber-400 mt-1">{t.approachingLimit}</p>
                     )}
@@ -631,7 +636,11 @@ function SubscriptionContent() {
                             </div>
                             <div className="flex items-center gap-2 mt-1.5">
                               <div className="flex-1">
-                                <ProgressBar value={nombreMembres} max={plan.limite ?? nombreMembres} height={4} />
+                                {plan.limite ? (
+                                  <ProgressBar value={nombreMembres} max={plan.limite} height={4} />
+                                ) : (
+                                  <ProgressBar value={0} max={1} height={4} />
+                                )}
                               </div>
                               <span className="text-white/30 text-[11px] shrink-0">
                                 {plan.limite ? `${nombreMembres}/${plan.limite}` : t.unlimited}

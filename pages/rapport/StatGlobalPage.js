@@ -1110,28 +1110,28 @@ const getConversions = async (egliseIds, debut, fin) => {
       setFamillesFeatureActive(egliseIdsAvecFamilles.length > 0);
 
       let totalFamActives = 0;
-      let totalPil = 0;
-      if (egliseIdsAvecFamilles.length > 0) {
-        let famillesQuery = supabase
-          .from("vue_flow_familles")
-          .select("famille_id, eglise_id, nb_actifs, famille_created_at")
-          .in("eglise_id", egliseIdsAvecFamilles);
-        if (debut) famillesQuery = famillesQuery.gte("famille_created_at", debut);
-        if (fin) famillesQuery = famillesQuery.lte("famille_created_at", fin);
-        const { data: famillesData } = await famillesQuery;
-        totalFamActives = (famillesData || []).filter((f) => Number(f.nb_actifs) > 0).length;
-
-        const { data: piliersData } = await supabase
-        .from("membres_complets")
-        .select("id, eglise_id")
-        .in("eglise_id", egliseIdsAvecFamilles)
-        .eq("pilier", true);
-      totalPil = piliersData?.length || 0;
-      }
+        let totalPil = 0;
+        if (egliseIdsAvecFamilles.length > 0) {
+          // Familles actives = familles ayant au moins un membre actif rattaché
+          // (même critère que "Membres actifs"), sans filtre de date —
+          // comme pour "Cellules actives".
+          const { data: membresAvecFamille } = await supabase
+            .from("membres_complets")
+            .select("id, eglise_id, famille_id, etat_contact, pilier")
+            .in("eglise_id", egliseIdsAvecFamilles)
+            .not("famille_id", "is", null)
+            .in("etat_contact", ["existant", "nouveau"]);
+        
+          const famillesActivesSet = new Set(
+            (membresAvecFamille || []).map((m) => m.famille_id)
+          );
+          totalFamActives = famillesActivesSet.size;
+        
+          totalPil = (membresAvecFamille || []).filter((m) => m.pilier === true).length;
+        }
+        setTotalFamillesActives(totalFamActives);
+        setTotalPiliers(totalPil);    
       
-      setTotalFamillesActives(totalFamActives);
-      setTotalPiliers(totalPil);
-
       // ── Fetch période courante ──
       const [attendanceData, formationData, baptemeData, evangeData, cellulesActivesData, conversionsData] =
         await Promise.all([

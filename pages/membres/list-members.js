@@ -672,7 +672,7 @@ const getYesNo = (value) => {
         let query = supabase
           .from("membres_complets")
           .select(`
-              id, prenom, nom, telephone, ville, sexe, age, star, etat_contact,
+              id, prenom, nom, telephone, ville, sexe, age, star, pilier, etat_contact,
               date_venu, created_at, cellule_id, famille_id, is_whatsapp,
               statut_suivis, suivi_statut, date_envoi_suivi, commentaire_suivis,
               Commentaire_Suivi_Evangelisation, bapteme_eau, veut_se_faire_baptiser,
@@ -1059,6 +1059,7 @@ const getYesNo = (value) => {
 
         <div className="flex flex-col items-center mt-8">
           <h2 className="text-base font-bold text-center flex items-center justify-center gap-1">
+          {m.pilier === true && <span title="Pilier">🎖️</span>}
             <span>
               {m.prenom} {m.nom}
             </span>

@@ -1112,21 +1112,27 @@ const getConversions = async (egliseIds, debut, fin) => {
       let totalFamActives = 0;
         let totalPil = 0;
         if (egliseIdsAvecFamilles.length > 0) {
+          // Familles actives = familles distinctes ayant au moins un membre actif rattaché
           const { data: membresAvecFamille } = await supabase
             .from("membres_complets")
-            .select("id, eglise_id, famille_id, etat_contact, pilier")
+            .select("id, eglise_id, famille_id, etat_contact")
             .in("eglise_id", egliseIdsAvecFamilles)
             .not("famille_id", "is", null)
             .in("etat_contact", ["existant", "nouveau"]);
         
-          // Familles actives = familles distinctes ayant au moins un membre actif
           const famillesActivesSet = new Set(
             (membresAvecFamille || []).map((m) => m.famille_id)
           );
           totalFamActives = famillesActivesSet.size;
         
-          // Piliers = nombre de personnes marquées pilier = true (actives), par église
-          totalPil = (membresAvecFamille || []).filter((m) => m.pilier === true).length;
+          // Piliers = tous les membres actifs avec pilier = true, peu importe famille_id
+          const { data: piliersData } = await supabase
+            .from("membres_complets")
+            .select("id, eglise_id")
+            .in("eglise_id", egliseIdsAvecFamilles)
+            .eq("pilier", true)
+            .in("etat_contact", ["existant", "nouveau"]);
+          totalPil = piliersData?.length || 0;
         }
         setTotalFamillesActives(totalFamActives);
         setTotalPiliers(totalPil);

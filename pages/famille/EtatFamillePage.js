@@ -832,7 +832,12 @@ function EtatFamille() {
         } else {
           setPiliers([]);
         }
-
+    } catch (error) {
+      console.error("Erreur fetchFamilles:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   // ─── Fetch membres ────────────────────────────────
   const fetchTousMembres = async (fams) => {
     if (!fams.length) return;

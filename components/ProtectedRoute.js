@@ -60,14 +60,35 @@ export default function ProtectedRoute({
         return;
       }
 
-      // ── 3. Vérification feature via FeaturesContext ─────────────────────────
-      // Superadmin ignore la vérification feature (useFeature retourne true pour lui)
-      if (requiredFeature && !roles.includes("Superadmin")) {
-        if (!featureActive) {
-          setStatus("no_feature");
-          return;
-        }
-      }
+      // ── 3. Vérification feature — ancienne version localStorage ──
+if (requiredFeature && !roles.includes("Superadmin")) {
+  let activeFeatures = [];
+  const storedFeatures = localStorage.getItem("egliseFeatures");
+
+  if (storedFeatures) {
+    try {
+      activeFeatures = JSON.parse(storedFeatures);
+    } catch {
+      activeFeatures = [];
+    }
+  } else {
+    const storedEgliseId = localStorage.getItem("egliseId");
+    if (storedEgliseId) {
+      const { data: features } = await supabase
+        .from("eglise_features")
+        .select("feature")
+        .eq("eglise_id", storedEgliseId)
+        .eq("active", true);
+      activeFeatures = (features || []).map((f) => f.feature);
+      localStorage.setItem("egliseFeatures", JSON.stringify(activeFeatures));
+    }
+  }
+
+  if (!activeFeatures.includes(requiredFeature)) {
+    setStatus("no_feature");
+    return;
+  }
+}
 
       setStatus("ok");
     };

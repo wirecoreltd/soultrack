@@ -564,11 +564,7 @@ function SubscriptionContent() {
                       <span>{nombreMembres} {t.membersUsed}</span>
                       <span>{planActuel.limite ? `${planActuel.limite} ${t.max}` : t.unlimited}</span>
                     </div>
-                    {planActuel.limite ? (
-                      <ProgressBar value={nombreMembres} max={plan.limite} height={4} />
-                    ) : (
-                      <ProgressBar value={0} max={1} height={8} /> // ou ne rien afficher du tout
-                    )}
+                   <ProgressBar value={nombreMembres} max={planActuel.limite} height={8} />
                     {pctActuel >= 80 && (
                       <p className="text-xs text-amber-400 mt-1">{t.approachingLimit}</p>
                     )}

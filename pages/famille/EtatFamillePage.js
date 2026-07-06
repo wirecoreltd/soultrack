@@ -55,6 +55,8 @@ const translations = {
     kpiFormationSub: "en cours de formation",
     kpiActifs: "Actifs",
     kpiActifsSub: "membres actifs",
+    piliersLabel: "Piliers",
+    pasDePilier: "Aucun pilier enregistré.",
 
     // Entonnoir
     entonnoir: "Entonnoir de progression",
@@ -147,6 +149,8 @@ const translations = {
     kpiFormationSub: "currently in training",
     kpiActifs: "Active",
     kpiActifsSub: "active members",
+    piliersLabel: "Pillars",
+    pasDePilier: "No pillar registered.",
 
     // Entonnoir
     entonnoir: "Progress funnel",
@@ -332,6 +336,70 @@ function BlocKpi({ kpis, total, t }) {
               </span>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+//---------------
+const AVATAR_COLORS = [
+  { bg: "#dbeafe", color: "#1e40af" }, { bg: "#fce7f3", color: "#9d174d" },
+  { bg: "#d1fae5", color: "#065f46" }, { bg: "#fef3c7", color: "#92400e" },
+  { bg: "#ede9fe", color: "#5b21b6" }, { bg: "#fee2e2", color: "#991b1b" },
+  { bg: "#e0f2fe", color: "#0c4a6e" }, { bg: "#fdf4ff", color: "#701a75" },
+  { bg: "#f0fdf4", color: "#14532d" }, { bg: "#fff7ed", color: "#7c2d12" },
+];
+
+function PilierCard({ membre, familleNom, idx }) {
+  const ac = AVATAR_COLORS[idx % AVATAR_COLORS.length];
+  const initiales = `${(membre.prenom || "")[0] || ""}${(membre.nom || "")[0] || ""}`.toUpperCase();
+  return (
+    <div className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-white/15 transition-colors">
+      <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0"
+        style={{ background: ac.bg, color: ac.color }}>
+        {initiales}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-white truncate">{membre.prenom} {membre.nom}</p>
+        <p className="text-[11px] text-white/50 truncate">{familleNom}</p>
+      </div>
+    </div>
+  );
+}
+
+function BlocPiliers({ piliers, famillesMap, filterVille, familles, t, open, setOpen }) {
+  // Si un filtre ville est actif, on ne garde que les piliers des familles de cette ville
+  const idsVisibles = filterVille
+    ? new Set(familles.filter(f => f.ville === filterVille).map(f => f.famille_id))
+    : null;
+
+  const filtered = idsVisibles
+    ? piliers.filter(p => idsVisibles.has(p.famille_id))
+    : piliers;
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
+      <div onClick={() => setOpen(!open)}
+        className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors">
+        <span className="text-sm font-semibold text-white flex-1">{t.piliersLabel}</span>
+        <span className="text-xl font-bold text-white">{filtered.length}</span>
+        <svg className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${open ? "rotate-180" : ""}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+      {open && (
+        <div className="px-4 pb-3 border-t border-white/10 pt-2">
+          {filtered.length === 0 ? (
+            <p className="text-sm text-white/40 italic px-1">{t.pasDePilier}</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {filtered.map((m, idx) => (
+                <PilierCard key={m.id} idx={idx} membre={m} familleNom={famillesMap[m.famille_id] || "—"} />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -673,6 +741,10 @@ function EtatFamille() {
   const [filterVille, setFilterVille] = useState("");
   const [availableVilles, setAvailableVilles] = useState([]);
 
+  const [piliers, setPiliers] = useState([]);
+  const [famillesMap, setFamillesMap] = useState({});
+  const [openPiliers, setOpenPiliers] = useState(false);
+
   // Onglets
   const [onglet, setOnglet] = useState("kpi");
 
@@ -720,43 +792,46 @@ function EtatFamille() {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
-
-      let filtered = data || [];
-
-      if (isPerso) {
-        if (filterDebut)
-          filtered = filtered.filter(
-            (f) => new Date(f.famille_created_at) >= new Date(filterDebut)
-          );
-        if (filterFin)
-          filtered = filtered.filter(
-            (f) => new Date(f.famille_created_at) <= new Date(filterFin)
-          );
-      } else {
-        const depuis = new Date();
-        depuis.setDate(depuis.getDate() - Number(filtrePeriode));
-        filtered = filtered.filter(
-          (f) => new Date(f.famille_created_at) >= depuis
-        );
-      }
-
-      setAllFamilles(filtered);
-      setFamilles(filtered);
-      setAvailableVilles(
-        [...new Set(filtered.map((f) => f.ville).filter(Boolean))].sort()
-      );
-      setFilterVille("");
-      updateKpis(filtered);
-
-      await fetchTousMembres(filtered);
-    } catch (err) {
-      console.error("Erreur fetch familles:", err);
-      setAllFamilles([]);
-      setFamilles([]);
-    }
-    setLoading(false);
-  };
+        if (error) throw error;
+        
+        let filtered = data || [];
+        
+        if (isPerso) {
+          if (filterDebut) filtered = filtered.filter(f => new Date(f.famille_created_at) >= new Date(filterDebut));
+          if (filterFin)   filtered = filtered.filter(f => new Date(f.famille_created_at) <= new Date(filterFin));
+        } else {
+          const depuis = new Date();
+          depuis.setDate(depuis.getDate() - Number(filtrePeriode));
+          filtered = filtered.filter(f => new Date(f.famille_created_at) >= depuis);
+        }
+        
+        setAllFamilles(filtered);
+        setFamilles(filtered);
+        setAvailableVilles([...new Set(filtered.map(f => f.ville).filter(Boolean))].sort());
+        setFilterVille("");
+        updateKpis(filtered);
+        
+        await fetchTousMembres(filtered);
+        
+        // ── Piliers (indépendant de la période, état actuel) ──
+        // Scope = toutes les familles visibles pour ce rôle (data, pas filtered)
+        const scopeFamilleIds = (data || []).map(f => f.famille_id).filter(Boolean);
+        const fMap = {};
+        (data || []).forEach(f => { fMap[f.famille_id] = f.famille_full; });
+        setFamillesMap(fMap);
+        
+        if (scopeFamilleIds.length > 0) {
+          const { data: pilierData } = await supabase
+            .from("membres_complets")
+            .select("id, nom, prenom, famille_id")
+            .eq("eglise_id", userProfile.eglise_id)
+            .eq("pilier", true)
+            .not("famille_id", "is", null)
+            .in("famille_id", scopeFamilleIds);
+          setPiliers(pilierData || []);
+        } else {
+          setPiliers([]);
+        }
 
   // ─── Fetch membres ────────────────────────────────
   const fetchTousMembres = async (fams) => {
@@ -974,6 +1049,20 @@ function EtatFamille() {
               <SectionTitle>{t.sectionVille}</SectionTitle>
               <BlocParVille familles={displayedFamilles} t={t} />
             </div>
+
+          <div>
+          <SectionTitle>{t.piliersLabel}</SectionTitle>
+          <BlocPiliers
+            piliers={piliers}
+            famillesMap={famillesMap}
+            filterVille={filterVille}
+            familles={allFamilles}
+            t={t}
+            open={openPiliers}
+            setOpen={setOpenPiliers}
+          />
+        </div>
+              
           </div>
         ) : onglet === "familles" ? (
           <OngletParVilleDetail

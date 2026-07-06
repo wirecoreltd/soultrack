@@ -873,93 +873,88 @@ export default function EditMemberPopup({
                 <>
                   <div className="flex items-center gap-3 py-2">
                     <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
-                      <input{isPrivileged && (
-                        <>
-                          <div className="flex items-center gap-3 py-2">
-                            <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
-                              <input
-                                type="checkbox"
-                                name="star"
-                                checked={formData.star}
-                                onChange={handleChange}
-                                className="accent-[#2E3192] w-4 h-4"
-                              />
-                              {t.serviteur}
-                            </label>
-                          </div>
-                      
-                          {formData.star && (
-                            <Field label={t.ministere}>
-                              <div className="grid grid-cols-2 gap-1 mt-1">
-                                {ministereOptions.map((m) => (
-                                  <label
-                                    key={m}
-                                    className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      value={m}
-                                      checked={formData.Ministere.includes(m)}
-                                      onChange={(e) => {
-                                        const { value, checked } = e.target;
-                                        setFormData((prev) => ({
-                                          ...prev,
-                                          Ministere: checked
-                                            ? [...prev.Ministere, value]
-                                            : prev.Ministere.filter((v) => v !== value),
-                                        }));
-                                      }}
-                                      className="accent-[#2E3192]"
-                                    />
-                                    {m}
-                                  </label>
-                                ))}
-                                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1">
-                                  <input
-                                    type="checkbox"
-                                    checked={formData.Ministere.includes("Autre")}
-                                    onChange={(e) => {
-                                      const checked = e.target.checked;
-                                      setFormData((prev) => ({
-                                        ...prev,
-                                        Ministere: checked
-                                          ? [...prev.Ministere, "Autre"]
-                                          : prev.Ministere.filter((v) => v !== "Autre"),
-                                      }));
-                                      if (!checked) setAutreMinistere("");
-                                    }}
-                                    className="accent-[#2E3192]"
-                                  />
-                                  {t.autre}
-                                </label>
-                              </div>
-                              {formData.Ministere.includes("Autre") && (
-                                <input
-                                  type="text"
-                                  className="inp mt-2"
-                                  placeholder={t.autreMinistere}
-                                  value={autreMinistere}
-                                  onChange={(e) => setAutreMinistere(e.target.value)}
-                                />
-                              )}
-                            </Field>
-                          )}
-                      
-                          {/* ── Ajout Pilier (après le ministère) ── */}
-                          <div className="flex items-center gap-3 py-2">
-                            <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
-                              <input
-                                type="checkbox"
-                                name="pilier"
-                                checked={formData.pilier}
-                                onChange={handleChange}
-                                className="accent-[#2E3192] w-4 h-4"
-                              />
-                              {t.pilier}
-                            </label>
-                          </div>
-                        </>
+                      <input
+                        type="checkbox"
+                        name="star"
+                        checked={formData.star}
+                        onChange={handleChange}
+                        className="accent-[#2E3192] w-4 h-4"
+                      />
+                      {t.serviteur}
+                    </label>
+                  </div>
+              
+                  {formData.star && (
+                    <Field label={t.ministere}>
+                      <div className="grid grid-cols-2 gap-1 mt-1">
+                        {ministereOptions.map((m) => (
+                          <label
+                            key={m}
+                            className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1"
+                          >
+                            <input
+                              type="checkbox"
+                              value={m}
+                              checked={formData.Ministere.includes(m)}
+                              onChange={(e) => {
+                                const { value, checked } = e.target;
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  Ministere: checked
+                                    ? [...prev.Ministere, value]
+                                    : prev.Ministere.filter((v) => v !== value),
+                                }));
+                              }}
+                              className="accent-[#2E3192]"
+                            />
+                            {m}
+                          </label>
+                        ))}
+                        <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1">
+                          <input
+                            type="checkbox"
+                            checked={formData.Ministere.includes("Autre")}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setFormData((prev) => ({
+                                ...prev,
+                                Ministere: checked
+                                  ? [...prev.Ministere, "Autre"]
+                                  : prev.Ministere.filter((v) => v !== "Autre"),
+                              }));
+                              if (!checked) setAutreMinistere("");
+                            }}
+                            className="accent-[#2E3192]"
+                          />
+                          {t.autre}
+                        </label>
+                      </div>
+                      {formData.Ministere.includes("Autre") && (
+                        <input
+                          type="text"
+                          className="inp mt-2"
+                          placeholder={t.autreMinistere}
+                          value={autreMinistere}
+                          onChange={(e) => setAutreMinistere(e.target.value)}
+                        />
                       )}
+                    </Field>
+                  )}
+              
+                  <div className="flex items-center gap-3 py-2">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
+                      <input
+                        type="checkbox"
+                        name="pilier"
+                        checked={formData.pilier}
+                        onChange={handleChange}
+                        className="accent-[#2E3192] w-4 h-4"
+                      />
+                      {t.pilier}
+                    </label>
+                  </div>
+                </>
+              )}
                         type="checkbox"
                         name="star"
                         checked={formData.star}

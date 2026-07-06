@@ -1125,13 +1125,13 @@ const getConversions = async (egliseIds, debut, fin) => {
         totalFamActives = (famillesData || []).filter((f) => Number(f.nb_actifs) > 0).length;
 
         const { data: piliersData } = await supabase
-          .from("membres_complets")
-          .select("id, eglise_id, famille_id")
-          .in("eglise_id", egliseIdsAvecFamilles)
-          .eq("pilier", true)
-          .not("famille_id", "is", null);
-        totalPil = piliersData?.length || 0;
+        .from("membres_complets")
+        .select("id, eglise_id")
+        .in("eglise_id", egliseIdsAvecFamilles)
+        .eq("pilier", true);
+      totalPil = piliersData?.length || 0;
       }
+      
       setTotalFamillesActives(totalFamActives);
       setTotalPiliers(totalPil);
 

@@ -435,7 +435,6 @@ function BlocVueEnsemble({
   conversionsDetail,
   prevTotaux,
   rootId,
-  totalFamillesActives,
   totalPiliers,
   famillesFeatureActive,
   t,
@@ -504,8 +503,8 @@ function BlocVueEnsemble({
   return (
     <div className="flex flex-col gap-4">
 
-              {/* Ligne 1 : Membres actifs + Taux de présence + Églises supervisées + Cellules */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {/* Ligne 1 : Membres actifs + Taux de présence + Églises supervisées */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <KpiCard label={t.kpiMembresActifs} value={totalMembresActifs} sub={t.kpiMembresActifsSub} accent="white" />
           <KpiCard
             label={t.kpiTauxPresence}
@@ -514,7 +513,12 @@ function BlocVueEnsemble({
             accent={tauxPresence >= 70 ? "green" : tauxPresence >= 40 ? "amber" : "red"}
           />
           <KpiCard label={t.kpiEglisesSup} value={nbEglisesSupervisees} sub={t.kpiEglisesSubSup} accent="amber" />
+        </div>
+
+        {/* Ligne 1bis : Cellules actives + Familles actives (côte à côte) */}
+        <div className="grid grid-cols-2 gap-3">
           <KpiCard label={t.kpiCellules} value={totaux.cellules} sub={t.kpiCellulesSub} accent="orange" />
+          <KpiCard label={t.kpiFamillesActives} value={totaux.cellules} sub={t.kpiFamillesActivesSub} accent="blue" />
         </div>
         
         {/* Ligne 2 : Total culte + Évangélisés + Baptêmes + Serviteurs */}
@@ -537,15 +541,9 @@ function BlocVueEnsemble({
           />
         </div>
 
-        {/* Ligne 3 : Familles actives + Piliers (uniquement si le module "familles" est activé) */}
+        {/* Ligne 3 : Piliers (uniquement si le module "familles" est activé) */}
         {famillesFeatureActive && (
-          <div className="grid grid-cols-2 gap-3">
-            <KpiCard
-              label={t.kpiFamillesActives}
-              value={totalFamillesActives}
-              sub={t.kpiFamillesActivesSub}
-              accent="blue"
-            />
+          <div className="grid grid-cols-1 gap-3">
             <KpiCard
               label={t.kpiPiliers}
               value={totalPiliers}
@@ -646,7 +644,7 @@ function BlocVueEnsemble({
 }
 
 // ─── BLOC STATS EGLISE ────────────────────────────────────────
-function BlocStatsEglise({ stats, t }) {
+function BlocStatsEglise({ stats, famillesFeatureActive, t }) {
   const totalCulte = stats.culte.hommes + stats.culte.femmes + stats.culte.jeunes;
   const totalCulteGlobal = totalCulte + stats.culte.enfants + stats.culte.connectes;
   return (
@@ -657,6 +655,11 @@ function BlocStatsEglise({ stats, t }) {
         <KpiCard label={t.bapteme} value={stats.bapteme.hommes + stats.bapteme.femmes} sub={t.cettePeriode} accent="purple" />
         <KpiCard label={t.kpiCellules} value={stats.cellules.total} sub={t.cellulesActives} accent="orange" />
       </div>
+      {famillesFeatureActive && (
+        <div className="grid grid-cols-1 gap-2 mb-1">
+          <KpiCard label={t.kpiPiliers} value={stats.piliers || 0} sub={t.kpiPiliersSub} accent="indigo" />
+        </div>
+      )}
       <StatRow label={t.culte} color="border-emerald-500">
         <StatChip label={t.chipHommes} value={stats.culte.hommes} accent="blue" />
         <StatChip label={t.chipFemmes} value={stats.culte.femmes} accent="pink" />
@@ -715,7 +718,7 @@ function BlocStatsEglise({ stats, t }) {
 }
 
 // ─── CARTE EGLISE ─────────────────────────────────────────────
-function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
+function CarteEglise({ eglise, level, expandedEglises, toggleExpand, famillesFeatureActive, t }) {
   const isExpanded = expandedEglises.includes(eglise.id);
   const hasChildren = eglise.enfants?.length > 0;
   const totalStats =
@@ -743,6 +746,7 @@ function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
             acc.serviteurs.hommes += child.stats.serviteurs.hommes;
             acc.serviteurs.femmes += child.stats.serviteurs.femmes;
             acc.cellules.total += child.stats.cellules.total;
+            acc.piliers += child.stats.piliers || 0;
             return acc;
           },
           {
@@ -752,6 +756,7 @@ function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
             evangelisation: { ...eglise.stats.evangelisation },
             serviteurs: { ...eglise.stats.serviteurs },
             cellules: { ...eglise.stats.cellules },
+            piliers: eglise.stats.piliers || 0,
           }
         )
       : eglise.stats;
@@ -776,13 +781,14 @@ function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
             </div>
             <span className="text-[11px] text-white/40">
               {t.culte} : {totalCulte} · {t.bapteme} : {totalStats.bapteme.hommes + totalStats.bapteme.femmes} · {t.kpiCellules} : {totalStats.cellules.total}
+              {famillesFeatureActive ? ` · ${t.kpiPiliers} : ${totalStats.piliers || 0}` : ""}
             </span>
           </div>
           <span className="text-white/30 text-xs flex-shrink-0">{isExpanded ? "▲" : "▼"}</span>
         </button>
         {isExpanded && (
           <div className="border-t border-white/10 px-4 pb-4 pt-3">
-            <BlocStatsEglise stats={totalStats} t={t} />
+            <BlocStatsEglise stats={totalStats} famillesFeatureActive={famillesFeatureActive} t={t} />
           </div>
         )}
       </div>
@@ -794,6 +800,7 @@ function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
             level={level + 1}
             expandedEglises={expandedEglises}
             toggleExpand={toggleExpand}
+            famillesFeatureActive={famillesFeatureActive}
             t={t}
           />
         ))}
@@ -827,7 +834,6 @@ function StatGlobalPage() {
   // ── Détail des conversions (prière du salut) : église vs évangélisation, dédupliqué
   const [conversionsDetail, setConversionsDetail] = useState(null);
 
-  const [totalFamillesActives, setTotalFamillesActives] = useState(0);
   const [totalPiliers, setTotalPiliers] = useState(0);
   const [famillesFeatureActive, setFamillesFeatureActive] = useState(false);
 
@@ -844,6 +850,7 @@ function StatGlobalPage() {
 
   // ── CORRECTION #1 : Cellules actives = cellules avec au moins un membre
   // (statut_suivis = 3, etat_contact != 'supprime'), sans filtre de date.
+  // ── Cette même logique sert aussi de base au KPI "Familles actives".
   const getCellulesActives = async (egliseIds) => {
     const { data: toutesCellules } = await supabase
       .from("cellules")
@@ -950,6 +957,7 @@ const getConversions = async (egliseIds, debut, fin) => {
         evangelisation: { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
         serviteurs: { hommes: 0, femmes: 0 },
         cellules: { total: 0 },
+        piliers: 0,
       };
     });
 
@@ -1076,7 +1084,6 @@ const getConversions = async (egliseIds, debut, fin) => {
         setConversionsDetail(null);
         setHasData(false);
         setLoading(false);
-        setTotalFamillesActives(0);
         setTotalPiliers(0);
         setFamillesFeatureActive(false);
         return;
@@ -1112,27 +1119,25 @@ const getConversions = async (egliseIds, debut, fin) => {
       const egliseIdsAvecFamilles = (familleFeatureData || []).map((r) => r.eglise_id);
       setFamillesFeatureActive(egliseIdsAvecFamilles.length > 0);
 
-      let totalFamActives = 0;
+      // ── Piliers : comptés par église (membres_complets.pilier = true, rattachés à une famille) ──
+      // Le total réseau (totalPiliers) est la somme des totaux par église.
+      let piliersParEglise = {};
       let totalPil = 0;
       if (egliseIdsAvecFamilles.length > 0) {
-        let famillesQuery = supabase
-          .from("vue_flow_familles")
-          .select("famille_id, eglise_id, nb_actifs, famille_created_at")
-          .in("eglise_id", egliseIdsAvecFamilles);
-        if (debut) famillesQuery = famillesQuery.gte("famille_created_at", debut);
-        if (fin) famillesQuery = famillesQuery.lte("famille_created_at", fin);
-        const { data: famillesData } = await famillesQuery;
-        totalFamActives = (famillesData || []).filter((f) => Number(f.nb_actifs) > 0).length;
-
-        const { data: piliersData } = await supabase
+        let piliersQuery = supabase
           .from("membres_complets")
           .select("id, eglise_id, famille_id")
           .in("eglise_id", egliseIdsAvecFamilles)
           .eq("pilier", true)
           .not("famille_id", "is", null);
+        if (debut) piliersQuery = piliersQuery.gte("created_at", debut);
+        if (fin) piliersQuery = piliersQuery.lte("created_at", fin);
+        const { data: piliersData } = await piliersQuery;
+        (piliersData || []).forEach((p) => {
+          piliersParEglise[p.eglise_id] = (piliersParEglise[p.eglise_id] || 0) + 1;
+        });
         totalPil = piliersData?.length || 0;
       }
-      setTotalFamillesActives(totalFamActives);
       setTotalPiliers(totalPil);
 
       // ── Fetch période courante ──
@@ -1183,6 +1188,11 @@ const getConversions = async (egliseIds, debut, fin) => {
         egliseIds, attendanceData, formationData, baptemeData,
         evangeData, cellulesActivesData, serviteurData
       );
+
+      // ── Injection des piliers par église dans la statsMap ──
+      egliseIds.forEach((id) => {
+        if (statsMap[id]) statsMap[id].piliers = piliersParEglise[id] || 0;
+      });
 
       // ── Fetch période précédente ──
       if (prevDebut && prevFin) {
@@ -1456,7 +1466,6 @@ const getConversions = async (egliseIds, debut, fin) => {
             conversionsDetail={conversionsDetail}
             prevTotaux={prevTotaux}
             rootId={rootId}
-            totalFamillesActives={totalFamillesActives}
             totalPiliers={totalPiliers}
             famillesFeatureActive={famillesFeatureActive}
             t={t}
@@ -1491,6 +1500,7 @@ const getConversions = async (egliseIds, debut, fin) => {
                 level={0}
                 expandedEglises={expandedEglises}
                 toggleExpand={toggleExpand}
+                famillesFeatureActive={famillesFeatureActive}
                 t={t}
               />
             ))}

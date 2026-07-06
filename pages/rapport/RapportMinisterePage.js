@@ -609,12 +609,8 @@ function RapportMinistere() {
                   <KpiCard colorClass="teal"   label={t.totalMembres}     value={totalMembres}             sub="existants + nouveaux" />
                   <KpiCard colorClass="purple" label={t.hommes}           value={rapports.hommes}          sub={`${pctH}%`} />
                   <KpiCard colorClass="pink"   label={t.femmes}           value={rapports.femmes}          sub={`${pctF}%`} />
-                  <KpiCard
-                    colorClass="amber"
-                    label={t.piliers}
-                    value={rapports.piliers.length}
-                    sub={totalMembres > 0 ? `${Math.round((rapports.piliers.length / totalMembres) * 100)}% ${t.pctMembres}` : ""}
-                    icon="🎖️"
+                  <KpiCard colorClass="amber"  label={t.piliers}          value={rapports.piliers.length}
+                    sub={totalMembres > 0 ? `${Math.round((rapports.piliers.length / totalMembres) * 100)}% ${t.pctMembres}` : ""}                  
                   />
                 </div>
               </div>
@@ -746,6 +742,26 @@ function RapportMinistere() {
                   })}
                 </div>
               </div>
+
+                  {/* ── Piliers ── */}
+              <div>
+                <SectionTitle icon="🎖️">{t.listePiliers}</SectionTitle>
+                {rapports.piliers.length === 0 ? (
+                  <p className="text-sm text-white/40 italic px-1">{t.pasDePilier}</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {rapports.piliers.map((m, idx) => (
+                      <ServiteurCard
+                        key={m.id}
+                        idx={idx}
+                        membre={m}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+            </div>
 
             </div>
 

@@ -630,18 +630,9 @@ function SubscriptionContent() {
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 mt-1.5">
-                              <div className="flex-1">
-                                {plan.limite ? (
-                                  <ProgressBar value={nombreMembres} max={plan.limite} height={4} />
-                                ) : (
-                                  <ProgressBar value={0} max={1} height={4} />
-                                )}
-                              </div>
-                              <span className="text-white/30 text-[11px] shrink-0">
-                                {plan.limite ? `${nombreMembres}/${plan.limite}` : t.unlimited}
-                              </span>
-                            </div>
+                            <p className="text-white/30 text-[11px] mt-1.5">
+                              {plan.limite ? `${plan.limite} ${t.max}` : t.unlimited}
+                            </p>
                           </div>
                           <p className="text-sm font-semibold shrink-0" style={{ color: isUpgrade ? plan.color : "rgba(255,255,255,0.5)" }}>
                             {plan.prix[lang]}

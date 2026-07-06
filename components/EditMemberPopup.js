@@ -446,6 +446,11 @@ export default function EditMemberPopup({
             ? JSON.stringify(finalMinistere)
             : member.Ministere,
       };
+        // ── Auto-intégration : dès qu'une cellule ou famille est attribuée ──
+        const celluleOuFamilleAttribuee = !!(payload.cellule_id || payload.famille_id);
+        if (celluleOuFamilleAttribuee) {
+          payload.statut_suivis = 3;
+        }
 
       const { error } = await supabase
         .from("membres_complets")

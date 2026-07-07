@@ -561,6 +561,7 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
          {/* PARCOURS DE DEVELOPPEMENT - tout en haut */}
            <SectionTitle>{t.parcoursTitre}</SectionTitle>
            <ParcoursWidget
+console.log("selected:", selected); // remove after debugging
              stages={t.parcours}
              selected={form.parcours_etape}
              onSelect={(key) => setForm((p) => ({ ...p, parcours_etape: key }))}

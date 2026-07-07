@@ -164,10 +164,12 @@ function CellulesHubContent() {
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.presencesStats}</div>
         </Link>
 
-        <Link href="/admin/create-cellule" className={CARD_CLASS} style={{ borderTop: "4px solid #c8cf0e" }}>
-          <div className="text-5xl mb-2">➕</div>
-          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.ajouterCellule}</div>
-        </Link>          
+        {(role === "Administrateur" || role === "SuperviseurCellule") && (
+          <Link href="/admin/create-cellule" className={CARD_CLASS} style={{ borderTop: "4px solid #c8cf0e" }}>
+            <div className="text-5xl mb-2">➕</div>
+            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.ajouterCellule}</div>
+          </Link>
+        )}       
 
         <Link href="/cellule/EtatCellulePage" className={CARD_CLASS} style={{ borderTop: "4px solid #a855f7" }}>
           <div className="text-5xl mb-2">🌱</div>

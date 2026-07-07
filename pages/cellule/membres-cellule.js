@@ -8,7 +8,7 @@ import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
 import SuiviPopup from "../../components/SuiviPopup";
-import EvaluationLeaderPopup from "../../components/EvaluationLeaderPopup";
+import EvaluationLeaderPopup from "../../components/Evaluationleaderpopup";
 import PresenceDot from "../../components/PresenceDot";
 import { useLang } from "../../hooks/useLang";
 import ExportMembrePDF from "../../components/ExportMembrePDF";

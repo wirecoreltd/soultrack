@@ -76,6 +76,7 @@ const translations = {
     wantsBaptism: "💦 Veut se faire baptiser",
     serviteur: "⭐ Définir en tant que serviteur",
     pilier: "🎖️ Définir en tant que Pilier",
+    leaderDev: "🌱 Définir en tant que Leader en développement",
     // Conseiller search
     searchConseiller: "Rechercher un conseiller...",
     noResult: "Aucun résultat",
@@ -153,6 +154,7 @@ const translations = {
     wantsBaptism: "💦 Wants to be baptised",
     serviteur: "⭐ Define as a servant",
     pilier: "🎖️ Define as a Pillar",
+    leaderDev: "🌱 Define as a Development Leader",
     searchConseiller: "Search for a counsellor...",
     noResult: "No results",
     principal: "(main)",
@@ -183,6 +185,10 @@ export default function EditMemberPopup({
 
   const isPrivileged = (currentUserRoles || []).some((r) =>
     ["Administrateur", "ResponsableIntegration"].includes(r)
+  );
+
+  const canManageLeader = (currentUserRoles || []).some((r) =>
+    ["Administrateur", "ResponsableAdministration"].includes(r)
   );
 
   const showCellules = Array.isArray(cellules) && cellules.length > 0;
@@ -275,6 +281,7 @@ export default function EditMemberPopup({
       age: data?.age || "",
       star: !!data?.star,
       pilier: !!data?.pilier,
+      leader_developpement: !!data?.leader_developpement,
       etat_contact: data?.etat_contact || "Nouveau",
       bapteme_eau: data?.bapteme_eau ?? null,
       bapteme_esprit: data?.bapteme_esprit ?? null,
@@ -417,6 +424,9 @@ export default function EditMemberPopup({
         age: formData.age || null,
         star: isPrivileged ? !!formData.star : !!member.star,
         pilier: isPrivileged ? !!formData.pilier : !!member.pilier,
+        leader_developpement: canManageLeader
+          ? !!formData.leader_developpement
+          : !!member.leader_developpement,
         etat_contact: formData.etat_contact || "Nouveau",
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
@@ -959,6 +969,21 @@ export default function EditMemberPopup({
                     </label>
                   </div>
                 </>
+              )}
+
+              {canManageLeader && (
+                <div className="flex items-center gap-3 py-2">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="leader_developpement"
+                      checked={formData.leader_developpement}
+                      onChange={handleChange}
+                      className="accent-[#2E3192] w-4 h-4"
+                    />
+                    {t.leaderDev}
+                  </label>
+                </div>
               )}
 
               <Field label={t.etatContact}>

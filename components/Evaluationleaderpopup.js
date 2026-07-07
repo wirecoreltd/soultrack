@@ -558,10 +558,9 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
              </div>
            )}
 
-         {/* PARCOURS DE DEVELOPPEMENT - tout en haut */}
+         {/* PARCOURS DE DEVELOPPEMENT - tout en haut */}   
            <SectionTitle>{t.parcoursTitre}</SectionTitle>
            <ParcoursWidget
-console.log("selected:", selected); // remove after debugging
              stages={t.parcours}
              selected={form.parcours_etape}
              onSelect={(key) => setForm((p) => ({ ...p, parcours_etape: key }))}
@@ -827,6 +826,7 @@ function DetailBlock({ label, value }) {
 }
 
       function ParcoursWidget({ stages, selected, onSelect, hint }) {
+         console.log("PARCOURS selected:", selected);
         const activeStage = stages.find((s) => s.key === selected);
       
         return (

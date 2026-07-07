@@ -661,7 +661,7 @@ useEffect(() => {
                       </h2>                        
                         
                         {m.leader_developpement && leaderParcours[m.id] && t.parcoursStages[leaderParcours[m.id]] && (
-                          className="text-center font-semibold mt-1" style={{ color: "#333699" }}
+                          <p className="text-center text-sm font-semibold mt-0.5" style={{ color: "#333699" }}>
                             {t.parcoursStages[leaderParcours[m.id]].emoji} {t.parcoursStages[leaderParcours[m.id]].label}
                           </p>
                         )}

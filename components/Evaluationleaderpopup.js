@@ -18,6 +18,8 @@ const translations = {
     modificationDu: "✏️ Modification de l'évaluation du",
     annuler: "Annuler",
     date: "Date",
+    succesAjout: "✅ Évaluation ajoutée avec succès",
+    succesMaj: "✅ Évaluation mise à jour avec succès",
 
     // Section 1
     s1_titre: "1. Construction personnelle du leader",
@@ -172,6 +174,8 @@ const translations = {
     modifierEvalSection: "📋 Edit evaluation",
     modificationDu: "✏️ Editing evaluation from",
     annuler: "Cancel",
+    succesAjout: "✅ Evaluation added successfully",
+    succesMaj: "✅ Evaluation updated successfully", 
     date: "Date",
 
     s1_titre: "1. Leader's personal foundation",
@@ -373,6 +377,9 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
   const [editingEval, setEditingEval] = useState(null);
   const [expandedEvals, setExpandedEvals] = useState({});
   const [form, setForm] = useState(EMPTY_FORM);
+  const currentStageKey = evaluations[0]?.parcours_etape || form.parcours_etape;
+  const currentStageEmoji = t.parcours.find((s) => s.key === currentStageKey)?.emoji || "🌱";
+  const [successMsg, setSuccessMsg] = useState("");
 
   const formTopRef = useRef(null);
   const modalRef = useRef(null);
@@ -498,13 +505,19 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
       await fetchEvaluations();
     }
 
-     if (typeof onSaved === "function") {
-        onSaved(member.id, form.parcours_etape);
-      }
+    if (typeof onSaved === "function") {
+      onSaved(member.id, form.parcours_etape);
+    }
+
+    const wasEditing = !!editingEval;
 
     setEditingEval(null);
     setLoading(false);
     setForm(EMPTY_FORM);
+
+    setSuccessMsg(wasEditing ? t.succesMaj : t.succesAjout);
+    setTimeout(() => setSuccessMsg(""), 4000);
+    setTimeout(() => formTopRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   };
 
   const formatDateForInput = (date) => date ? date.split("T")[0] : "";
@@ -529,12 +542,21 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
         {/* HEADER */}
         <div ref={formTopRef} className="px-6 pt-6 pb-4 relative" style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}>
           <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm" style={{ background: "rgba(255,255,255,0.2)" }}>✕</button>
-          <h2 className="text-xl font-bold text-white pr-10">🌱 {member.prenom} {member.nom}</h2>
+          <h2 className="text-xl font-bold text-white pr-10">{currentStageEmoji} {member.prenom} {member.nom}</h2>
           <p className="text-blue-100 text-sm mt-1 opacity-80">{t.titre}</p>
         </div>
 
         {/* BODY */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
+
+           {successMsg && (
+             <div
+               className="rounded-xl px-4 py-2 text-sm font-semibold text-center"
+               style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac" }}
+             >
+               {successMsg}
+             </div>
+           )}
 
          {/* PARCOURS DE DEVELOPPEMENT - tout en haut */}
            <SectionTitle>{t.parcoursTitre}</SectionTitle>
@@ -803,56 +825,51 @@ function DetailBlock({ label, value }) {
   );
 }
 
-function ParcoursWidget({ stages, selected, onSelect, hint }) {
-  const selectedIdx = stages.findIndex((s) => s.key === selected);
-  const activeIdx = selectedIdx === -1 ? -1 : selectedIdx;
-  const activeStage = activeIdx >= 0 ? stages[activeIdx] : null;
-
-  return (
-    <div className="rounded-2xl p-4 border" style={{ background: "linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)", borderColor: "#c7cef5" }}>
-      {!activeStage && <p className="text-xs text-gray-400 italic mb-3">{hint}</p>}
-
-      <div className="flex items-stretch justify-between gap-2">
-        {stages.map((stage, idx) => {
-          const isPast = activeIdx >= 0 && idx < activeIdx;
-          const isActive = idx === activeIdx;
-          const isFuture = activeIdx === -1 || idx > activeIdx;
-
-          let icon = stage.emoji;
-          if (isPast) icon = "✓";
-          else if (isActive) icon = "⭐";
-          else if (isFuture && activeIdx !== -1) icon = "🔒";
-
-          return (
-            <button
-              key={stage.key}
-              type="button"
-              onClick={() => onSelect(stage.key)}
-              className="flex-1 flex flex-col items-center gap-1 rounded-xl px-2 py-3 transition-all"
-              style={{
-                background: isActive ? "#2E3192" : "#ffffff",
-                border: `2px solid ${isActive ? "#2E3192" : "#e2e8f0"}`,
-                opacity: isFuture && activeIdx !== -1 ? 0.45 : 1,
-              }}
-            >
-              <span className="text-2xl leading-none">{isActive || isPast ? icon : stage.emoji}</span>
-              <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: isActive ? "#ffffff" : "#475569" }}>
-                {isPast ? "✓" : isActive ? "⭐" : isFuture && activeIdx !== -1 ? "🔒" : ""}
-              </span>
-              <span className="text-xs font-semibold text-center leading-tight" style={{ color: isActive ? "#ffffff" : "#334155" }}>
-                {stage.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {activeStage && (
-        <p className="text-xs text-gray-600 mt-3 text-center leading-relaxed">{activeStage.desc}</p>
-      )}
-    </div>
-  );
-}
+      function ParcoursWidget({ stages, selected, onSelect, hint }) {
+        const activeStage = stages.find((s) => s.key === selected);
+      
+        return (
+          <div className="rounded-2xl p-4 border" style={{ background: "linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)", borderColor: "#c7cef5" }}>
+            {!activeStage && <p className="text-xs text-gray-400 italic mb-3">{hint}</p>}
+      
+            <div className="flex items-stretch justify-between gap-2">
+              {stages.map((stage) => {
+                const isActive = stage.key === selected;
+                const isDimmed = !!selected && !isActive;
+      
+                return (
+                  <button
+                    key={stage.key}
+                    type="button"
+                    onClick={() => onSelect(stage.key)}
+                    className="flex-1 flex flex-col items-center gap-1 rounded-xl px-2 py-3 transition-all active:scale-95"
+                    style={{
+                      background: isActive ? "#2E3192" : isDimmed ? "#f1f5f9" : "#ffffff",
+                      border: `2px solid ${isActive ? "#2E3192" : "#e2e8f0"}`,
+                      opacity: isDimmed ? 0.45 : 1,
+                      boxShadow: isActive
+                        ? "0 4px 10px rgba(46,49,146,0.35)"
+                        : "0 1px 3px rgba(0,0,0,0.10)",
+                    }}
+                  >
+                    <span className="text-2xl leading-none">{stage.emoji}</span>
+                    <span
+                      className="text-xs font-semibold text-center leading-tight"
+                      style={{ color: isActive ? "#ffffff" : isDimmed ? "#94a3b8" : "#334155" }}
+                    >
+                      {stage.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+      
+            {activeStage && (
+              <p className="text-xs text-gray-600 mt-3 text-center leading-relaxed">{activeStage.desc}</p>
+            )}
+          </div>
+        );
+      }
 
 function SectionTitle({ children }) {
   return (

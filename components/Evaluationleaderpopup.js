@@ -842,7 +842,11 @@ function DetailBlock({ label, value }) {
                   <button
                     key={stage.key}
                     type="button"
-                    onClick={() => onSelect(stage.key)}
+                    onClick={() => {
+                      console.log("CLIC sur:", stage.key); // 👈 nouveau log
+                      onSelect(stage.key);
+                    }}
+             
                     className="flex-1 flex flex-col items-center gap-1 rounded-xl px-2 py-3 transition-all active:scale-95"
                     style={{
                       background: isActive ? "#2E3192" : isDimmed ? "#f1f5f9" : "#ffffff",

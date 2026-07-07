@@ -40,6 +40,7 @@ import { useRouter } from "next/navigation";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import useChurchScope from "../../hooks/useChurchScope";
 import SuiviPopup from "../../components/SuiviPopup";
+import EvaluationLeaderPopup from "../../components/Evaluationleaderpopup";
 import PresenceDot from "../../components/PresenceDot";
 import ImportMembresCSV from "../../components/ImportMembresCSV";
 import { useFeature } from "../../components/FeaturesContext";
@@ -168,6 +169,13 @@ const translations = {
     { value: "Nouveau converti", label: "Nouveau converti" },
     { value: "Réconciliation",   label: "Réconciliation" },
   ],
+    btnEvalLeader: "🌱 Leader en développement",
+    parcoursStages: {
+      potentiel: { emoji: "🌱", label: "Potentiel identifié" },
+      croissance: { emoji: "🌿", label: "Leader en croissance" },
+      developpement: { emoji: "🌳", label: "Leader en développement" },
+      mature: { emoji: "🌲", label: "Leader mature" },
+    },
   },
   en: {
     pageTitle: "Members",
@@ -290,6 +298,13 @@ const translations = {
     { value: "Nouveau converti", label: "New convert" },
     { value: "Réconciliation",   label: "Reconciliation" },
   ],
+    btnEvalLeader: "🌱 Development Leader",
+    parcoursStages: {
+      potentiel: { emoji: "🌱", label: "Potential identified" },
+      croissance: { emoji: "🌿", label: "Growing leader" },
+      developpement: { emoji: "🌳", label: "Developing leader" },
+      mature: { emoji: "🌲", label: "Mature leader" },
+    },
   },
 };
 
@@ -366,6 +381,8 @@ function ListMembersContent() {
   const [userProfile, setUserProfile] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
+  const [openEvalLeaderMemberId, setOpenEvalLeaderMemberId] = useState(null);
+  const [leaderParcours, setLeaderParcours] = useState({});
   const [egliseData, setEgliseData] = useState(null);
   const [logoBase64, setLogoBase64] = useState(null);
 
@@ -678,7 +695,7 @@ const getYesNo = (value) => {
               Commentaire_Suivi_Evangelisation, bapteme_eau, veut_se_faire_baptiser,
               bapteme_esprit, priere_salut, type_conversion, Formation, Ministere,
               Autre_Ministere, venu, statut_initial, infos_supplementaires, besoin,
-              integration_fini
+              integration_fini, leader_developpement
             `)  
           .eq("eglise_id", userProfile.eglise_id);
 
@@ -770,6 +787,39 @@ const getYesNo = (value) => {
     );
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  // -------------------- Fetch parcours leaders --------------------
+useEffect(() => {
+  const leaderIds = members
+    .filter((m) => m.leader_developpement)
+    .map((m) => m.id);
+
+  if (!leaderIds.length) {
+    setLeaderParcours({});
+    return;
+  }
+
+  const fetchParcours = async () => {
+    const { data: evals, error } = await supabase
+      .from("evaluations_leader")
+      .select("membre_id, parcours_etape, date_action")
+      .in("membre_id", leaderIds)
+      .order("date_action", { ascending: false });
+
+    if (error) {
+      console.error("fetchParcours error:", error);
+      return;
+    }
+
+    const map = {};
+    (evals || []).forEach((e) => {
+      if (!map[e.membre_id] && e.parcours_etape) map[e.membre_id] = e.parcours_etape;
+    });
+    setLeaderParcours(map);
+  };
+
+  fetchParcours();
+}, [members]);
 
   // -------------------- Fetch cellules, familles, conseillers, profile --------------------
   useEffect(() => {
@@ -1059,22 +1109,28 @@ const getYesNo = (value) => {
 
         <div className="flex flex-col items-center mt-8">
           <h2 className="text-base font-bold text-center flex items-center justify-center gap-1">
-          {m.pilier === true && <span title="Pilier">🎖️</span>}
-            <span>
-              {m.prenom} {m.nom}
-            </span>
-            {m.star === true &&
-              m.etat_contact?.trim().toLowerCase() === "existant" && (
-                <span className="text-yellow-400">⭐</span>
-              )}
-            <div className="absolute right-8">
-              <PresenceDot
-                memberId={m.id}
-                egliseId={userProfile?.eglise_id}
-                dateVenu={m.date_venu}
-              />
-            </div>
-          </h2>
+            {m.pilier === true && <span title="Pilier">🎖️</span>}
+              <span>
+                {m.prenom} {m.nom}
+              </span>
+              {m.star === true &&
+                m.etat_contact?.trim().toLowerCase() === "existant" && (
+                  <span className="text-yellow-400">⭐</span>
+                )}
+              <div className="absolute right-8">
+                <PresenceDot
+                  memberId={m.id}
+                  egliseId={userProfile?.eglise_id}
+                  dateVenu={m.date_venu}
+                />
+              </div>
+            </h2>
+            
+            {m.leader_developpement && leaderParcours[m.id] && t.parcoursStages[leaderParcours[m.id]] && (
+              <p className="text-center text-sm font-semibold mt-1" style={{ color: "#333699" }}>
+                {t.parcoursStages[leaderParcours[m.id]].emoji} {t.parcoursStages[leaderParcours[m.id]].label}
+              </p>
+            )}
 
           {/* Téléphone */}
           <div className="relative text-center mt-2 phone-menu-container">
@@ -1407,19 +1463,38 @@ const getYesNo = (value) => {
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">{t.pastoral}</p>
                 <p>{t.needs} {besoins}</p>
-                <div className="flex justify-center">
+                <div className="flex justify-center gap-2 flex-wrap">
                   <button
                     onClick={() => setOpenSuiviMemberId(m.id)}
                     className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
                   >
                     {t.addSuivi}
                   </button>
+                  {m.leader_developpement && (
+                    <button
+                      onClick={() => setOpenEvalLeaderMemberId(m.id)}
+                      className="mt-2 text-sm px-3 py-1 rounded text-white font-semibold"
+                      style={{ background: "linear-gradient(135deg, #2E3192 0%, #6366f1 100%)" }}
+                    >
+                      {t.btnEvalLeader}
+                    </button>
+                  )}
                 </div>
                 {openSuiviMemberId === m.id && (
                   <SuiviPopup
                     member={m}
                     onClose={() => setOpenSuiviMemberId(null)}
                     user={userProfile}
+                  />
+                )}
+                {openEvalLeaderMemberId === m.id && (
+                  <EvaluationLeaderPopup
+                    member={m}
+                    user={userProfile}
+                    onClose={() => setOpenEvalLeaderMemberId(null)}
+                    onSaved={(membreId, etape) =>
+                      setLeaderParcours((prev) => ({ ...prev, [membreId]: etape }))
+                    }
                   />
                 )}
               </div>

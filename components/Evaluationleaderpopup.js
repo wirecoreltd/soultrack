@@ -420,6 +420,12 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
 
   useEffect(() => { fetchEvaluations(); }, []);
 
+   useEffect(() => {
+  if (!editingEval && evaluations.length > 0) {
+    setForm((p) => ({ ...p, parcours_etape: evaluations[0].parcours_etape || "" }));
+  }
+}, [evaluations]);
+
   const fetchEvaluations = async () => {
     const { data } = await supabase
       .from("evaluations_leader")
@@ -825,8 +831,7 @@ function DetailBlock({ label, value }) {
   );
 }
 
-      function ParcoursWidget({ stages, selected, onSelect, hint }) {
-         console.log("PARCOURS selected:", selected);
+      function ParcoursWidget({ stages, selected, onSelect, hint }) {      
         const activeStage = stages.find((s) => s.key === selected);
       
         return (
@@ -842,8 +847,7 @@ function DetailBlock({ label, value }) {
                   <button
                     key={stage.key}
                     type="button"
-                    onClick={() => {
-                      console.log("CLIC sur:", stage.key); // 👈 nouveau log
+                    onClick={() => {                    
                       onSelect(stage.key);
                     }}
              

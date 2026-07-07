@@ -105,7 +105,7 @@ const translations = {
     pastoralLabel: "❤️‍🩹 Soin pastoral",
     besoinsDiff: "❓ Difficultés / Besoins",
     btnSuivis: "💡 Ajouter / Voir suivis",
-    btnEvalLeader: "🌱 Évaluation du leader",
+    btnEvalLeader: "🌱 Leader en développement",
     btnModifier: "✏️ Modifier le contact",
     statutLabels: {
       1: "En attente",
@@ -206,7 +206,7 @@ const translations = {
     pastoralLabel: "❤️‍🩹 Pastoral care",
     besoinsDiff: "❓ Difficulties / Needs",
     btnSuivis: "💡 Add / View follow-ups",
-    btnEvalLeader: "🌱 Leader evaluation",
+    btnEvalLeader: "🌱 Development Leader",
     btnModifier: "✏️ Edit contact",
     statutLabels: {
       1: "Pending",
@@ -300,6 +300,7 @@ function MembresCelluleContent() {
 };
 
   const getBorderColor = (member) => {
+    if (member?.leader_developpement) return "#6366f1";
     switch ((member?.etat_contact || "").toLowerCase().trim()) {
       case "nouveau":  return "#fb923c";
       case "existant": return "#4ade80";
@@ -800,12 +801,15 @@ useEffect(() => {
                               >
                                 {t.btnSuivis}
                               </button>
-                              <button
-                                onClick={() => setOpenEvalLeaderMemberId(m.id)}
-                                className="mt-2 text-sm bg-[#333699] text-emerald-300 px-3 py-1 rounded"
-                              >
-                                {t.btnEvalLeader}
-                              </button>
+                              {m.leader_developpement && (
+                                <button
+                                  onClick={() => setOpenEvalLeaderMemberId(m.id)}
+                                  className="mt-2 text-sm px-3 py-1 rounded text-white font-semibold"
+                                  style={{ background: "linear-gradient(135deg, #2E3192 0%, #6366f1 100%)" }}
+                                >
+                                  {t.btnEvalLeader}
+                                </button>
+                              )}
                             </div>
 
                             {openSuiviMemberId === m.id && (

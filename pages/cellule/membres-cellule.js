@@ -658,9 +658,7 @@ useEffect(() => {
                             dateVonu={m.date_venu}
                           />
                         </div>
-                      </h2>
-
-                        </h2>
+                      </h2>                        
                         
                         {m.leader_developpement && leaderParcours[m.id] && t.parcoursStages[leaderParcours[m.id]] && (
                           <p className="text-center text-xs font-semibold mt-0.5" style={{ color: "#4f54c9" }}>

@@ -1004,14 +1004,15 @@ useEffect(() => {
     setDetailsOpen((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const getBorderColor = (member) => {
-    const etat = (member?.etat_contact || "").toLowerCase().trim();
-    switch (etat) {
-      case "nouveau": return "#fb923c";
-      case "existant": return "#4ade80";
-      case "inactif": return "#9ca3af";
-      default: return "#9ca3af";
-    }
-  };
+  if (member?.leader_developpement) return "#b82e40";
+  const etat = (member?.etat_contact || "").toLowerCase().trim();
+  switch (etat) {
+    case "nouveau": return "#fb923c";
+    case "existant": return "#4ade80";
+    case "inactif": return "#9ca3af";
+    default: return "#9ca3af";
+  }
+};
 
   const formatDate = (dateStr) => {
     try {

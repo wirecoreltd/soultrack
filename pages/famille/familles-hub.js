@@ -28,6 +28,7 @@ const translations = {
       suivisMembres:    "Suivis des membres",
       baptemes:         "Baptêmes",
       presences:        "Saisie et suivi des présences par réunion",
+      ajouterfamille:   "Ajouter une Famille",
       etatFamille:      "Etat Famille",
       registre:         "Saisie des présences individuelles",
       rapportRegistres: "Statistiques des présences individuelles",
@@ -54,6 +55,7 @@ const translations = {
       suivisMembres:    "Member follow-up",
       baptemes:         "Baptisms",
       presences:        "Attendance & statistics",
+      ajouterfamille:   "Add a Family",
       etatFamille:      "Family status",
       registre:         "Attendance register",
       rapportRegistres: "Register report",
@@ -191,6 +193,13 @@ function FamillesHubContent() {
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.presences}</div>
         </Link>
 
+        {(role === "Administrateur" || role === "SuperviseurFamilles") && (  
+        <Link href="/admin/create-famille" className={cardClass} style={{ borderTopColor: "#d1c23d" }}>
+          <div className="text-5xl mb-2">➕</div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.ajouterfamille}</div>
+        </Link>
+          )}
+          
         <Link href="/famille/EtatFamillePage" className={cardClass} style={{ borderTopColor: "#14B8A6" }}>
           <div className="text-5xl mb-2">🌱</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.etatFamille}</div>

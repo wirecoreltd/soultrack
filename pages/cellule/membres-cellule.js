@@ -313,7 +313,7 @@ function MembresCelluleContent() {
 };
 
   const getBorderColor = (member) => {
-    if (member?.leader_developpement) return "#6366f1";
+    if (member?.leader_developpement) return "#b82e40";
     switch ((member?.etat_contact || "").toLowerCase().trim()) {
       case "nouveau":  return "#fb923c";
       case "existant": return "#4ade80";
@@ -661,7 +661,7 @@ useEffect(() => {
                       </h2>                        
                         
                         {m.leader_developpement && leaderParcours[m.id] && t.parcoursStages[leaderParcours[m.id]] && (
-                          <p className="text-center text-xs font-semibold mt-0.5" style={{ color: "#4f54c9" }}>
+                          <p className="text-center font-semibold mt-1 style={{ color: "#333699" }}>
                             {t.parcoursStages[leaderParcours[m.id]].emoji} {t.parcoursStages[leaderParcours[m.id]].label}
                           </p>
                         )}

@@ -19,19 +19,11 @@ const translations = {
     annuler: "Annuler",
     date: "Date",
     succesAjout: "✅ Évaluation ajoutée avec succès",
-    succesMaj: "✅ Évaluation mise à jour avec succès",
+    succesMaj: "✅ Évaluation mise à jour avec succès",    
 
     // Section 1
-    s1_titre: "1. Construction personnelle du leader",
-    s1_niveau: "Niveau",
-    niveau_dev: "En développement",
-    niveau_bon: "Bon niveau",
-    niveau_tresBon: "Très bon niveau",
-    observation: "Observation",
-
-    // Section 2
-    s2_titre: "2. Responsabilité et maturité",
-    s2_items: [
+    s1_titre: "1. Responsabilité et maturité",
+    s1_items: [
       "Assume ses responsabilités",
       "Tient ses engagements",
       "Accepte la correction",
@@ -42,9 +34,9 @@ const translations = {
       "Fait preuve de stabilité",
     ],
 
-    // Section 3
-    s3_titre: "3. Cœur de serviteur",
-    s3_items: [
+    // Section 2
+    s2_titre: "2. Cœur de serviteur",
+    s2_items: [
       "Sert avec humilité",
       "Aide les autres sans chercher la reconnaissance",
       "Est disponible pour aider",
@@ -52,9 +44,9 @@ const translations = {
       "Montre un esprit de sacrifice",
     ],
 
-    // Section 4
-    s4_titre: "4. Capacité à construire les autres",
-    s4_items: [
+    // Section 3
+    s3_titre: "3. Capacité à construire les autres",
+    s3_items: [
       "Encourage les autres à suivre Dieu",
       "Accompagne spirituellement les personnes",
       "Encourage les personnes découragées",
@@ -62,9 +54,9 @@ const translations = {
       "Influence positivement son entourage",
     ],
 
-    // Section 5
-    s5_titre: "5. Vision et engagement",
-    s5_items: [
+    // Section 4
+    s4_titre: "4. Vision et engagement",
+    s4_items: [
       "Comprend la vision de l'église",
       "Comprend la vision des cellules",
       "Porte la mission avec conviction",
@@ -72,9 +64,9 @@ const translations = {
       "Transmet la vision aux autres",
     ],
 
-    // Section 6
-    s6_titre: "6. Leadership relationnel",
-    s6_items: [
+    // Section 5
+    s5_titre: "5. Leadership relationnel",
+    s5_items: [
       "Écoute les autres",
       "Communique clairement",
       "Crée un climat de confiance",
@@ -82,9 +74,9 @@ const translations = {
       "Travaille bien en équipe",
     ],
 
-    // Section 7
-    s7_titre: "7. Fidélité et discipline",
-    s7_items: [
+    // Section 6
+    s6_titre: "6. Fidélité et discipline",
+    s6_items: [
       "Fidèle dans son engagement",
       "Respecte ses responsabilités",
       "Est ponctuel et organisé",
@@ -94,18 +86,18 @@ const translations = {
       "Est digne de confiance",
     ],
 
-    // Section 8
-    s8_titre: "8. Capacité d'apprentissage",
-    s8_items: [
+    // Section 7
+    s7_titre: "7. Capacité d'apprentissage",
+    s7_items: [
       "Reçoit les enseignements",
       "Accepte les conseils",
       "Applique les corrections",
       "Cherche continuellement à progresser",
     ],
 
-    // Section 9
-    s9_titre: "9. Domaine principal à développer",
-    s9_items: [
+    // Section 8
+    s8_titre: "8. Domaine principal à développer",
+    s8_items: [
       "Caractère",
       "Discipline personnelle",
       "Confiance en soi",
@@ -118,9 +110,9 @@ const translations = {
       "Gestion des émotions",
     ],
 
-    // Section 10
-    s10_titre: "10. Prochaine étape",
-    s10_items: [
+    // Section 9
+    s9_titre: "9. Prochaine étape",
+    s9_items: [
       "Diriger une partie de cellule",
       "Accompagner un nouveau membre",
       "Former quelqu'un",
@@ -176,17 +168,10 @@ const translations = {
     annuler: "Cancel",
     succesAjout: "✅ Evaluation added successfully",
     succesMaj: "✅ Evaluation updated successfully", 
-    date: "Date",
+    date: "Date",    
 
-    s1_titre: "1. Leader's personal foundation",
-    s1_niveau: "Level",
-    niveau_dev: "Developing",
-    niveau_bon: "Good level",
-    niveau_tresBon: "Very good level",
-    observation: "Observation",
-
-    s2_titre: "2. Responsibility and maturity",
-    s2_items: [
+    s1_titre: "1. Responsibility and maturity",
+    s1_items: [
       "Takes responsibility",
       "Honors commitments",
       "Accepts correction",
@@ -197,8 +182,8 @@ const translations = {
       "Shows stability",
     ],
 
-    s3_titre: "3. Servant's heart",
-    s3_items: [
+    s2_titre: "2. Servant's heart",
+    s2_items: [
       "Serves with humility",
       "Helps others without seeking recognition",
       "Is available to help",
@@ -206,8 +191,8 @@ const translations = {
       "Shows a spirit of sacrifice",
     ],
 
-    s4_titre: "4. Ability to build up others",
-    s4_items: [
+    s3_titre: "3. Ability to build up others",
+    s3_items: [
       "Encourages others to follow God",
       "Provides spiritual accompaniment",
       "Encourages discouraged people",
@@ -215,8 +200,8 @@ const translations = {
       "Positively influences those around them",
     ],
 
-    s5_titre: "5. Vision and commitment",
-    s5_items: [
+    s4_titre: "4. Vision and commitment",
+    s4_items: [
       "Understands the church's vision",
       "Understands the cell groups' vision",
       "Carries the mission with conviction",
@@ -224,8 +209,8 @@ const translations = {
       "Passes the vision on to others",
     ],
 
-    s6_titre: "6. Relational leadership",
-    s6_items: [
+    s5_titre: "5. Relational leadership",
+    s5_items: [
       "Listens to others",
       "Communicates clearly",
       "Creates an atmosphere of trust",
@@ -233,8 +218,8 @@ const translations = {
       "Works well in a team",
     ],
 
-    s7_titre: "7. Faithfulness and discipline",
-    s7_items: [
+    s6_titre: "6. Faithfulness and discipline",
+    s6_items: [
       "Faithful in commitment",
       "Honors responsibilities",
       "Punctual and organized",
@@ -244,16 +229,16 @@ const translations = {
       "Trustworthy",
     ],
 
-    s8_titre: "8. Ability to learn",
-    s8_items: [
+    s7_titre: "7. Ability to learn",
+    s7_items: [
       "Receives teaching well",
       "Accepts advice",
       "Applies corrections",
       "Continually seeks to grow",
     ],
 
-    s9_titre: "9. Main area to develop",
-    s9_items: [
+    s8_titre: "8. Main area to develop",
+    s8_items: [
       "Character",
       "Personal discipline",
       "Self-confidence",
@@ -266,8 +251,8 @@ const translations = {
       "Emotional management",
     ],
 
-    s10_titre: "10. Next step",
-    s10_items: [
+    s9_titre: "9. Next step",
+    s9_items: [
       "Lead part of a cell group",
       "Mentor a new member",
       "Train someone",
@@ -584,34 +569,9 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
 
           <Field label={t.date}>
             <input type="date" value={formatDateForInput(form.date_action)} onChange={(e) => setForm((p) => ({ ...p, date_action: e.target.value }))} className="inp" />
-          </Field>
+          </Field>         
 
-          {/* SECTION 1 */}
-          <SectionBlock title={t.s1_titre}>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold uppercase tracking-wide" style={{ color: "#64748b" }}>{t.s1_niveau}</label>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { value: t.niveau_dev, label: t.niveau_dev },
-                  { value: t.niveau_bon, label: t.niveau_bon },
-                  { value: t.niveau_tresBon, label: t.niveau_tresBon },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setForm((p) => ({ ...p, construction_niveau: opt.value }))}
-                    className={`text-xs px-3 py-1.5 rounded-full border font-semibold transition-colors ${form.construction_niveau === opt.value ? "text-white" : "bg-white border-gray-300 text-gray-600"}`}
-                    style={form.construction_niveau === opt.value ? { background: "#2E3192", borderColor: "#2E3192" } : {}}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <TextArea label={t.observation} value={form.construction_observation} onChange={(v) => setForm((p) => ({ ...p, construction_observation: v }))} />
-          </SectionBlock>
-
-          {/* SECTIONS 2 A 9 (checkboxes generiques) */}
+          {/* SECTIONS 1 A 8 (checkboxes generiques) */}
           {SECTION_CONFIG.map((cfg) => (
             <SectionBlock key={cfg.key} title={t[cfg.titleKey]}>
               <CheckboxGroup
@@ -645,10 +605,10 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
             </SectionBlock>
           ))}
 
-          {/* SECTION 10 */}
-          <SectionBlock title={t.s10_titre}>
+          {/* SECTION 9 */}
+          <SectionBlock title={t.s9_titre}>
             <CheckboxGroup
-              items={t.s10_items}
+              items={t.s9_items}
               selected={form.prochaine_etape}
               onToggle={(item) => {
                 setForm((prev) => {

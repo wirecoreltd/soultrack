@@ -28,6 +28,7 @@ const translations = {
       suivisMembres:    "Suivis des membres",
       baptemes:         "Baptêmes",
       presencesStats:   "Saisie et suivi des présences par réunion",
+      ajouterCellule:    "Ajouter une Cellule",
       etatCellule:      "État Cellule",
       registrePresences:"Saisie des présences individuelles",
       rapportRegistres: "Statistiques des présences individuelles",
@@ -47,13 +48,14 @@ const translations = {
     highlight3: "fully thrive in faith",
     cards: {
       listeCellules:    "Cell groups list",
-      ajouterMembre:    "Add a member",
+      :    "Add a member",
       import:           "Import member list",
       membresCellule:   "Cell group members",
       suivisEvang:      "Evangelism follow-up",
       suivisMembres:    "Member follow-up",
       baptemes:         "Baptisms",
       presencesStats:   "Meeting Attendance Entry & Tracking",
+      ajouterCellule:    "Add a Cell group",
       etatCellule:      "Cell group status",
       registrePresences:"Individual Attendance Entry",
       rapportRegistres: "Individual Attendance Statistics",
@@ -162,6 +164,11 @@ function CellulesHubContent() {
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.presencesStats}</div>
         </Link>
 
+        <Link href="/admin/create-cellule" className={CARD_CLASS} style={{ borderTop: "4px solid #c8cf0e" }}>
+          <div className="text-5xl mb-2">➕</div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.ajouterCellule}</div>
+        </Link>          
+
         <Link href="/cellule/EtatCellulePage" className={CARD_CLASS} style={{ borderTop: "4px solid #a855f7" }}>
           <div className="text-5xl mb-2">🌱</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.etatCellule}</div>
@@ -172,7 +179,7 @@ function CellulesHubContent() {
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.registrePresences}</div>
         </Link>
 
-        <Link href="/rapport/RapportPresence" className={CARD_CLASS} style={{ borderTop: "4px solid #06b6d4" }}>
+        <Link href="/rapport/RapportPresence" className={CARD_CLASS} style={{ borderTop: "4px solid #2a8496" }}>
           <div className="text-5xl mb-2">✅</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.rapportRegistres}</div>
         </Link>

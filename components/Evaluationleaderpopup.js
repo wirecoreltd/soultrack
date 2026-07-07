@@ -19,11 +19,13 @@ const translations = {
     annuler: "Annuler",
     date: "Date",
     succesAjout: "✅ Évaluation ajoutée avec succès",
-    succesMaj: "✅ Évaluation mise à jour avec succès",    
+    succesMaj: "✅ Évaluation mise à jour avec succès",
+   
+    observation: "Observation",
 
     // Section 1
-    s1_titre: "1. Responsabilité et maturité",
-    s1_items: [
+    s2_titre: "1. Responsabilité et maturité",
+    s2_items: [
       "Assume ses responsabilités",
       "Tient ses engagements",
       "Accepte la correction",
@@ -35,8 +37,8 @@ const translations = {
     ],
 
     // Section 2
-    s2_titre: "2. Cœur de serviteur",
-    s2_items: [
+    s3_titre: "2. Cœur de serviteur",
+    s3_items: [
       "Sert avec humilité",
       "Aide les autres sans chercher la reconnaissance",
       "Est disponible pour aider",
@@ -45,8 +47,8 @@ const translations = {
     ],
 
     // Section 3
-    s3_titre: "3. Capacité à construire les autres",
-    s3_items: [
+    s4_titre: "3. Capacité à construire les autres",
+    s4_items: [
       "Encourage les autres à suivre Dieu",
       "Accompagne spirituellement les personnes",
       "Encourage les personnes découragées",
@@ -55,8 +57,8 @@ const translations = {
     ],
 
     // Section 4
-    s4_titre: "4. Vision et engagement",
-    s4_items: [
+    s5_titre: "4. Vision et engagement",
+    s5_items: [
       "Comprend la vision de l'église",
       "Comprend la vision des cellules",
       "Porte la mission avec conviction",
@@ -65,8 +67,8 @@ const translations = {
     ],
 
     // Section 5
-    s5_titre: "5. Leadership relationnel",
-    s5_items: [
+    s6_titre: "5. Leadership relationnel",
+    s6_items: [
       "Écoute les autres",
       "Communique clairement",
       "Crée un climat de confiance",
@@ -75,8 +77,8 @@ const translations = {
     ],
 
     // Section 6
-    s6_titre: "6. Fidélité et discipline",
-    s6_items: [
+    s7_titre: "6. Fidélité et discipline",
+    s7_items: [
       "Fidèle dans son engagement",
       "Respecte ses responsabilités",
       "Est ponctuel et organisé",
@@ -87,8 +89,8 @@ const translations = {
     ],
 
     // Section 7
-    s7_titre: "7. Capacité d'apprentissage",
-    s7_items: [
+    s8_titre: "7. Capacité d'apprentissage",
+    s8_items: [
       "Reçoit les enseignements",
       "Accepte les conseils",
       "Applique les corrections",
@@ -96,8 +98,8 @@ const translations = {
     ],
 
     // Section 8
-    s8_titre: "8. Domaine principal à développer",
-    s8_items: [
+    s9_titre: "8. Domaine principal à développer",
+    s9_items: [
       "Caractère",
       "Discipline personnelle",
       "Confiance en soi",
@@ -111,8 +113,8 @@ const translations = {
     ],
 
     // Section 9
-    s9_titre: "9. Prochaine étape",
-    s9_items: [
+    s10_titre: "9. Prochaine étape",
+    s10_items: [
       "Diriger une partie de cellule",
       "Accompagner un nouveau membre",
       "Former quelqu'un",
@@ -168,10 +170,12 @@ const translations = {
     annuler: "Cancel",
     succesAjout: "✅ Evaluation added successfully",
     succesMaj: "✅ Evaluation updated successfully", 
-    date: "Date",    
+    date: "Date",
+     
+    observation: "Observation",
 
-    s1_titre: "1. Responsibility and maturity",
-    s1_items: [
+    s2_titre: "1. Responsibility and maturity",
+    s2_items: [
       "Takes responsibility",
       "Honors commitments",
       "Accepts correction",
@@ -182,8 +186,8 @@ const translations = {
       "Shows stability",
     ],
 
-    s2_titre: "2. Servant's heart",
-    s2_items: [
+    s3_titre: "2. Servant's heart",
+    s3_items: [
       "Serves with humility",
       "Helps others without seeking recognition",
       "Is available to help",
@@ -191,8 +195,8 @@ const translations = {
       "Shows a spirit of sacrifice",
     ],
 
-    s3_titre: "3. Ability to build up others",
-    s3_items: [
+    s4_titre: "3. Ability to build up others",
+    s4_items: [
       "Encourages others to follow God",
       "Provides spiritual accompaniment",
       "Encourages discouraged people",
@@ -200,8 +204,8 @@ const translations = {
       "Positively influences those around them",
     ],
 
-    s4_titre: "4. Vision and commitment",
-    s4_items: [
+    s5_titre: "4. Vision and commitment",
+    s5_items: [
       "Understands the church's vision",
       "Understands the cell groups' vision",
       "Carries the mission with conviction",
@@ -209,8 +213,8 @@ const translations = {
       "Passes the vision on to others",
     ],
 
-    s5_titre: "5. Relational leadership",
-    s5_items: [
+    s6_titre: "5. Relational leadership",
+    s6_items: [
       "Listens to others",
       "Communicates clearly",
       "Creates an atmosphere of trust",
@@ -218,8 +222,8 @@ const translations = {
       "Works well in a team",
     ],
 
-    s6_titre: "6. Faithfulness and discipline",
-    s6_items: [
+    s7_titre: "6. Faithfulness and discipline",
+    s7_items: [
       "Faithful in commitment",
       "Honors responsibilities",
       "Punctual and organized",
@@ -229,16 +233,16 @@ const translations = {
       "Trustworthy",
     ],
 
-    s7_titre: "7. Ability to learn",
-    s7_items: [
+    s8_titre: "7. Ability to learn",
+    s8_items: [
       "Receives teaching well",
       "Accepts advice",
       "Applies corrections",
       "Continually seeks to grow",
     ],
 
-    s8_titre: "8. Main area to develop",
-    s8_items: [
+    s9_titre: "8. Main area to develop",
+    s9_items: [
       "Character",
       "Personal discipline",
       "Self-confidence",
@@ -251,8 +255,8 @@ const translations = {
       "Emotional management",
     ],
 
-    s9_titre: "9. Next step",
-    s9_items: [
+    s10_titre: "9. Next step",
+    s10_items: [
       "Lead part of a cell group",
       "Mentor a new member",
       "Train someone",
@@ -313,9 +317,7 @@ const SECTION_CONFIG = [
 ];
 
 const EMPTY_FORM = {
-  date_action: "",
-  construction_niveau: "",
-  construction_observation: "",
+  date_action: "",  
   responsabilite: [],
   responsabilite_autres: "",
   coeur_serviteur: [],
@@ -423,9 +425,7 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
   const handleEditEval = (e) => {
     setEditingEval(e);
     setForm({
-      date_action: e.date_action || "",
-      construction_niveau: e.construction_niveau || "",
-      construction_observation: e.construction_observation || "",
+      date_action: e.date_action || "",     
       responsabilite: parseArr(e.responsabilite),
       responsabilite_autres: e.responsabilite_autres || "",
       coeur_serviteur: parseArr(e.coeur_serviteur),
@@ -461,9 +461,7 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
     setLoading(true);
 
     const payload = {
-      date_action: form.date_action,
-      construction_niveau: form.construction_niveau || null,
-      construction_observation: form.construction_observation || null,
+      date_action: form.date_action,    
       responsabilite: form.responsabilite.length ? JSON.stringify(form.responsabilite) : null,
       responsabilite_autres: form.responsabilite_autres || null,
       coeur_serviteur: form.coeur_serviteur.length ? JSON.stringify(form.coeur_serviteur) : null,
@@ -569,9 +567,9 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
 
           <Field label={t.date}>
             <input type="date" value={formatDateForInput(form.date_action)} onChange={(e) => setForm((p) => ({ ...p, date_action: e.target.value }))} className="inp" />
-          </Field>         
+          </Field>          
 
-          {/* SECTIONS 1 A 8 (checkboxes generiques) */}
+          {/* SECTIONS 2 A 9 (checkboxes generiques) */}
           {SECTION_CONFIG.map((cfg) => (
             <SectionBlock key={cfg.key} title={t[cfg.titleKey]}>
               <CheckboxGroup
@@ -605,10 +603,10 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
             </SectionBlock>
           ))}
 
-          {/* SECTION 9 */}
-          <SectionBlock title={t.s9_titre}>
+          {/* SECTION 10 */}
+          <SectionBlock title={t.s10_titre}>
             <CheckboxGroup
-              items={t.s9_items}
+              items={t.s10_items}
               selected={form.prochaine_etape}
               onToggle={(item) => {
                 setForm((prev) => {
@@ -659,11 +657,7 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
                     {stageInfo.emoji} <span className="font-semibold" style={{ color: "#2E3192" }}>{stageInfo.label}</span>
                   </p>
                 )}
-
-                {ev.construction_niveau && (
-                  <p className="text-gray-600">{t.s1_niveau} : <span className="font-semibold">{ev.construction_niveau}</span></p>
-                )}
-
+                
                 <button
                   onClick={() => toggleExpand(ev.id)}
                   className="text-xs font-semibold mt-1 flex items-center gap-1"
@@ -673,10 +667,7 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
                 </button>
 
                 {isExpanded && (
-                  <div className="mt-2 space-y-3 pt-2 border-t border-gray-200">
-                    {ev.construction_observation && (
-                      <DetailBlock label={t.observation} value={ev.construction_observation} />
-                    )}
+                  <div className="mt-2 space-y-3 pt-2 border-t border-gray-200">                   
                     {SECTION_CONFIG.map((cfg) => {
                       const items = parseArr(ev[cfg.key]);
                       const autres = ev[cfg.autresKey];

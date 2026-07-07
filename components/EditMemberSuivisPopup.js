@@ -53,6 +53,7 @@ const translations = {
     aDejaEglise: "A déjà son église",
     visiteur: "Visiteur",
     pilier: "🎖️ Définir en tant que Pilier",
+    leaderDeveloppement: "🌱 Définir en tant que Leader en développement",
 
     // Footer
     annuler: "Annuler",
@@ -120,6 +121,7 @@ const translations = {
     aDejaEglise: "Already has a church",
     visiteur: "Visitor",
     pilier: "🎖️ Define as a Pillar",
+    leaderDeveloppement: "🌱 Define as a Developing Leader",
 
     // Footer
     annuler: "Cancel",
@@ -148,6 +150,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
   const t = translations[lang];
 
   const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));
+  const isLeaderManager = (currentUserRoles || []).some(r => ["Administrateur", "SuperviseurCellule", "ResponsableFamille"].includes(r));
 
   const [autreMinistere, setAutreMinistere] = useState("");
   const [search, setSearch] = useState("");
@@ -174,6 +177,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
     age: member?.age || "",
     star: !!member?.star,
     pilier: !!member?.pilier,
+    leader_developpement: !!member?.leader_developpement,
     etat_contact: member?.etat_contact || "Nouveau",
     bapteme_eau: member?.bapteme_eau ?? null,
     bapteme_esprit: member?.bapteme_esprit ?? null,
@@ -324,6 +328,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
         age: formData.age || null,
         star: isPrivileged ? !!formData.star : !!member.star,
         pilier: isPrivileged ? !!formData.pilier : !!member.pilier,
+        leader_developpement: isLeaderManager ? !!formData.leader_developpement : !!member.leader_developpement,
         etat_contact: formData.etat_contact || "Nouveau",
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
@@ -507,7 +512,7 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
           </Field>
           
           {isPrivileged && (
-            <div className="flex items-center gap-3 py-2">
+            <div className="flex flex-col gap-2 py-2">
               <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
                 <input
                   type="checkbox"
@@ -517,6 +522,21 @@ export default function EditMemberSuivisPopup({ member, cellules, familles, cons
                   className="accent-[#2E3192] w-4 h-4"
                 />
                 {t.pilier}
+              </label>
+            </div>
+          )}
+
+          {isLeaderManager && (
+            <div className="flex flex-col gap-2 py-2">
+              <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
+                <input
+                  type="checkbox"
+                  name="leader_developpement"
+                  checked={formData.leader_developpement}
+                  onChange={handleChange}
+                  className="accent-[#6366f1] w-4 h-4"
+                />
+                {t.leaderDeveloppement}
               </label>
             </div>
           )}

@@ -48,7 +48,7 @@ const translations = {
     highlight3: "fully thrive in faith",
     cards: {
       listeCellules:    "Cell groups list",
-      :    "Add a member",
+      ajouterMembre:    "Add a member",
       import:           "Import member list",
       membresCellule:   "Cell group members",
       suivisEvang:      "Evangelism follow-up",

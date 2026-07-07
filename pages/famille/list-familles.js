@@ -430,7 +430,7 @@ function ListFamillesContent() {
       </div>
 
       {/* Bouton ajout */}
-      {userRole === "SuperviseurFamille" && (
+      {(role === "Administrateur" || role === "SuperviseurFamille") && (
         <div className="max-w-6xl mx-auto flex justify-end mb-3">
           <button
             onClick={() => router.push("/admin/create-famille")}

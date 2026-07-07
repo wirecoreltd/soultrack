@@ -8,6 +8,7 @@ import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
 import SuiviPopup from "../../components/SuiviPopup";
+import EvaluationLeaderPopup from "../../components/Evaluationleaderpopup";
 import PresenceDot from "../../components/PresenceDot";
 import { useLang } from "../../hooks/useLang";
 import ExportMembrePDF from "../../components/ExportMembrePDF";
@@ -71,6 +72,13 @@ const translations = {
       3: "Intégré",
       4: "Refus",
     },
+    btnEvalLeader: "🌱 Leader en développement",
+    parcoursStages: {
+      potentiel: { emoji: "🌱", label: "Potentiel identifié" },
+      croissance: { emoji: "🌿", label: "Leader en croissance" },
+      developpement: { emoji: "🌳", label: "Leader en développement" },
+      mature: { emoji: "🌲", label: "Leader mature" },
+    },
   },
   en: {
     titleMyFamilies: "Members of my",
@@ -130,6 +138,13 @@ const translations = {
       3: "Integrated",
       4: "Refusal",
     },
+    btnEvalLeader: "🌱 Development Leader",
+    parcoursStages: {
+      potentiel: { emoji: "🌱", label: "Potential identified" },
+      croissance: { emoji: "🌿", label: "Growing leader" },
+      developpement: { emoji: "🌳", label: "Developing leader" },
+      mature: { emoji: "🌲", label: "Mature leader" },
+    },
   },
 };
 
@@ -164,6 +179,8 @@ function MembresFamilleContent() {
   const highlightRef = useRef({});
   const highlightDoneRef = useRef(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
+  const [openEvalLeaderMemberId, setOpenEvalLeaderMemberId] = useState(null);
+  const [leaderParcours, setLeaderParcours] = useState({});
   const [userRole, setUserRole] = useState(null);
   const [logoBase64, setLogoBase64] = useState(null);
   const [egliseData, setEgliseData] = useState(null);
@@ -205,13 +222,14 @@ function MembresFamilleContent() {
   };
 
   const getBorderColor = (member) => {
-    switch ((member?.etat_contact || "").toLowerCase().trim()) {
-      case "nouveau":  return "#fb923c";
-      case "existant": return "#4ade80";
-      case "inactif":  return "#9ca3af";
-      default:         return "#9ca3af";
-    }
-  };
+  if (member?.leader_developpement) return "#b82e40";
+  switch ((member?.etat_contact || "").toLowerCase().trim()) {
+    case "nouveau":  return "#fb923c";
+    case "existant": return "#4ade80";
+    case "inactif":  return "#9ca3af";
+    default:         return "#9ca3af";
+  }
+};
 
   const handleUpdateMember = (updated) => {
     setMembres((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
@@ -390,6 +408,22 @@ function MembresFamilleContent() {
         const { data, error } = await query;
         if (error) throw error;
         setMembres(data || []);
+
+        const leaderIds = (data || []).filter((m) => m.leader_developpement).map((m) => m.id);
+        if (leaderIds.length) {
+          const { data: evals } = await supabase
+            .from("evaluations_leader")
+            .select("membre_id, parcours_etape, date_action")
+            .in("membre_id", leaderIds)
+            .order("date_action", { ascending: false });
+
+          const map = {};
+          (evals || []).forEach((e) => {
+            if (!map[e.membre_id] && e.parcours_etape) map[e.membre_id] = e.parcours_etape;
+          });
+          setLeaderParcours(map);
+        }
+
         if (!data || data.length === 0) setMessage(t.noMember);
 
       } catch (err) {
@@ -492,20 +526,26 @@ function MembresFamilleContent() {
                     style={{ borderLeftColor: getBorderColor(m) }}
                   >
                     <h2 className="relative w-full text-center font-bold text-lg flex items-center justify-center gap-1">
-                    {m.pilier === true && <span title="Pilier">🎖️</span>}  
-                      <span>{m.prenom} {m.nom}</span>
-                      {m.star === true &&
-                        m.etat_contact?.trim().toLowerCase() === "existant" && (
-                          <span className="text-yellow-400">⭐</span>
-                        )}
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                        <PresenceDot
-                          memberId={m.id}
-                          egliseId={m.eglise_id}
-                          dateVenu={m.date_venu}
-                        />
-                      </div>
-                    </h2>
+                      {m.pilier === true && <span title="Pilier">🎖️</span>}  
+                        <span>{m.prenom} {m.nom}</span>
+                        {m.star === true &&
+                          m.etat_contact?.trim().toLowerCase() === "existant" && (
+                            <span className="text-yellow-400">⭐</span>
+                          )}
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                          <PresenceDot
+                            memberId={m.id}
+                            egliseId={m.eglise_id}
+                            dateVenu={m.date_venu}
+                          />
+                        </div>
+                      </h2>
+                      
+                      {m.leader_developpement && leaderParcours[m.id] && t.parcoursStages[leaderParcours[m.id]] && (
+                        <p className="text-center text-sm font-semibold mt-1" style={{ color: "#333699" }}>
+                          {t.parcoursStages[leaderParcours[m.id]].emoji} {t.parcoursStages[leaderParcours[m.id]].label}
+                        </p>
+                      )}
 
                     {/* Téléphone */}
                     <div className="relative text-center mt-2 phone-menu-container">
@@ -629,20 +669,39 @@ function MembresFamilleContent() {
                         <div>
                           <p className="font-bold text-[#2E3192] mb-1">{t.pastoralTitle}</p>
                           <p>{t.besoins} : {besoins}</p>
-
-                          <div className="flex justify-center">
+                        
+                          <div className="flex justify-center gap-2 flex-wrap">
                             <button
                               onClick={() => setOpenSuiviMemberId(m.id)}
                               className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
                             >
                               {t.addSuivi}
                             </button>
+                            {m.leader_developpement && (
+                              <button
+                                onClick={() => setOpenEvalLeaderMemberId(m.id)}
+                                className="mt-2 text-sm px-3 py-1 rounded text-white font-semibold"
+                                style={{ background: "linear-gradient(135deg, #2E3192 0%, #6366f1 100%)" }}
+                              >
+                                {t.btnEvalLeader}
+                              </button>
+                            )}
                           </div>
-
+                        
                           {openSuiviMemberId === m.id && (
                             <SuiviPopup
                               member={m}
                               onClose={() => setOpenSuiviMemberId(null)}
+                            />
+                          )}
+                        
+                          {openEvalLeaderMemberId === m.id && (
+                            <EvaluationLeaderPopup
+                              member={m}
+                              onClose={() => setOpenEvalLeaderMemberId(null)}
+                              onSaved={(membreId, etape) =>
+                                setLeaderParcours((prev) => ({ ...prev, [membreId]: etape }))
+                              }
                             />
                           )}
                         </div>

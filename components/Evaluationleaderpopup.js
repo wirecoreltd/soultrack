@@ -362,7 +362,7 @@ function parseArr(val) {
 /* ============================================================
    COMPOSANT PRINCIPAL
    ============================================================ */
-export default function EvaluationLeaderPopup({ member, onClose, user }) {
+export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }) {
   const { lang } = useLang();
   const t = translations[lang];
 
@@ -498,6 +498,10 @@ export default function EvaluationLeaderPopup({ member, onClose, user }) {
       await fetchEvaluations();
     }
 
+     if (typeof onSaved === "function") {
+        onSaved(member.id, form.parcours_etape);
+      }
+
     setEditingEval(null);
     setLoading(false);
     setForm(EMPTY_FORM);
@@ -531,6 +535,15 @@ export default function EvaluationLeaderPopup({ member, onClose, user }) {
 
         {/* BODY */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
+
+         {/* PARCOURS DE DEVELOPPEMENT - tout en haut */}
+           <SectionTitle>{t.parcoursTitre}</SectionTitle>
+           <ParcoursWidget
+             stages={t.parcours}
+             selected={form.parcours_etape}
+             onSelect={(key) => setForm((p) => ({ ...p, parcours_etape: key }))}
+             hint={t.choisirEtape}
+           />
 
           {editingEval && (
             <div className="flex items-center justify-between bg-orange-50 border border-orange-300 rounded-xl px-4 py-2">
@@ -632,16 +645,7 @@ export default function EvaluationLeaderPopup({ member, onClose, user }) {
             </Field>
           </SectionBlock>
 
-          {currentUserName && <p className="text-center text-sm text-gray-400">👤 {currentUserName}</p>}
-
-          {/* PARCOURS DE DEVELOPPEMENT */}
-          <SectionTitle>{t.parcoursTitre}</SectionTitle>
-          <ParcoursWidget
-            stages={t.parcours}
-            selected={form.parcours_etape}
-            onSelect={(key) => setForm((p) => ({ ...p, parcours_etape: key }))}
-            hint={t.choisirEtape}
-          />
+          {currentUserName && <p className="text-center text-sm text-gray-400">👤 {currentUserName}</p>}          
 
           {/* HISTORIQUE */}
           <SectionTitle>{t.historique}</SectionTitle>

@@ -41,6 +41,12 @@ const translations = {
     msgWhatsApp: "💬 Message WhatsApp",
     identiteLabel: "🫆 Identité",
     civilite: "🎗️ Civilité",
+    parcoursStages: {
+      potentiel: { emoji: "🌱", label: "Potentiel identifié" },
+      croissance: { emoji: "🌿", label: "Leader en croissance" },
+      developpement: { emoji: "🌳", label: "Leader en développement" },
+      mature: { emoji: "🌲", label: "Leader mature" },
+    },
     homme: "Homme",
     femme: "Femme",
     oui: "Oui",
@@ -142,6 +148,12 @@ const translations = {
     msgWhatsApp: "💬 WhatsApp message",
     identiteLabel: "🫆 Identity",
     civilite: "🎗️ Title",
+    parcoursStages: {
+      potentiel: { emoji: "🌱", label: "Potential identified" },
+      croissance: { emoji: "🌿", label: "Growing leader" },
+      developpement: { emoji: "🌳", label: "Developing leader" },
+      mature: { emoji: "🌲", label: "Mature leader" },
+    },
     homme: "Man",
     femme: "Woman",
     oui: "Yes",
@@ -250,6 +262,7 @@ function MembresCelluleContent() {
   const [userRole, setUserRole] = useState(null);
   const [logoBase64, setLogoBase64] = useState(null);
   const [egliseData, setEgliseData] = useState(null);
+  const [leaderParcours, setLeaderParcours] = useState({});
 
   const memberIdStr =
     typeof memberId === "string"
@@ -510,6 +523,22 @@ useEffect(() => {
         const { data, error } = await query;
         if (error) throw error;
         setMembres(data || []);
+
+        const leaderIds = (data || []).filter((m) => m.leader_developpement).map((m) => m.id);
+          if (leaderIds.length) {
+            const { data: evals } = await supabase
+              .from("evaluations_leader")
+              .select("membre_id, parcours_etape, date_action")
+              .in("membre_id", leaderIds)
+              .order("date_action", { ascending: false });
+          
+            const map = {};
+            (evals || []).forEach((e) => {
+              if (!map[e.membre_id] && e.parcours_etape) map[e.membre_id] = e.parcours_etape;
+            });
+            setLeaderParcours(map);
+          }
+                  
         if (!data || data.length === 0) setMessage(t.aucunMembre);
 
       } catch (err) {
@@ -630,6 +659,14 @@ useEffect(() => {
                           />
                         </div>
                       </h2>
+
+                        </h2>
+                        
+                        {m.leader_developpement && leaderParcours[m.id] && t.parcoursStages[leaderParcours[m.id]] && (
+                          <p className="text-center text-xs font-semibold mt-0.5" style={{ color: "#4f54c9" }}>
+                            {t.parcoursStages[leaderParcours[m.id]].emoji} {t.parcoursStages[leaderParcours[m.id]].label}
+                          </p>
+                        )}
 
                       {/* Téléphone */}
                       <div className="relative text-center mt-2 phone-menu-container">
@@ -823,6 +860,9 @@ useEffect(() => {
                               <EvaluationLeaderPopup
                                 member={m}
                                 onClose={() => setOpenEvalLeaderMemberId(null)}
+                                onSaved={(membreId, etape) =>
+                                  setLeaderParcours((prev) => ({ ...prev, [membreId]: etape }))
+                                }
                               />
                             )}
                           </div>

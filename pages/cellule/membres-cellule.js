@@ -8,6 +8,7 @@ import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import EditMemberSuivisPopup from "../../components/EditMemberSuivisPopup";
 import SuiviPopup from "../../components/SuiviPopup";
+import EvaluationLeaderPopup from "../../components/EvaluationLeaderPopup";
 import PresenceDot from "../../components/PresenceDot";
 import { useLang } from "../../hooks/useLang";
 import ExportMembrePDF from "../../components/ExportMembrePDF";
@@ -104,6 +105,7 @@ const translations = {
     pastoralLabel: "❤️‍🩹 Soin pastoral",
     besoinsDiff: "❓ Difficultés / Besoins",
     btnSuivis: "💡 Ajouter / Voir suivis",
+    btnEvalLeader: "🌱 Évaluation du leader",
     btnModifier: "✏️ Modifier le contact",
     statutLabels: {
       1: "En attente",
@@ -204,6 +206,7 @@ const translations = {
     pastoralLabel: "❤️‍🩹 Pastoral care",
     besoinsDiff: "❓ Difficulties / Needs",
     btnSuivis: "💡 Add / View follow-ups",
+    btnEvalLeader: "🌱 Leader evaluation",
     btnModifier: "✏️ Edit contact",
     statutLabels: {
       1: "Pending",
@@ -243,6 +246,7 @@ function MembresCelluleContent() {
   const highlightRef = useRef({});
   const highlightDoneRef = useRef(false);
   const [openSuiviMemberId, setOpenSuiviMemberId] = useState(null);
+  const [openEvalLeaderMemberId, setOpenEvalLeaderMemberId] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [logoBase64, setLogoBase64] = useState(null);
   const [egliseData, setEgliseData] = useState(null);
@@ -789,12 +793,18 @@ useEffect(() => {
                             </p>
                             <p>{t.besoinsDiff} : {besoins}</p>
 
-                            <div className="flex justify-center">
+                            <div className="flex justify-center gap-2 flex-wrap">
                               <button
                                 onClick={() => setOpenSuiviMemberId(m.id)}
                                 className="mt-2 text-sm bg-[#333699] text-amber-300 px-3 py-1 rounded"
                               >
                                 {t.btnSuivis}
+                              </button>
+                              <button
+                                onClick={() => setOpenEvalLeaderMemberId(m.id)}
+                                className="mt-2 text-sm bg-[#333699] text-emerald-300 px-3 py-1 rounded"
+                              >
+                                {t.btnEvalLeader}
                               </button>
                             </div>
 
@@ -802,6 +812,13 @@ useEffect(() => {
                               <SuiviPopup
                                 member={m}
                                 onClose={() => setOpenSuiviMemberId(null)}
+                              />
+                            )}
+
+                            {openEvalLeaderMemberId === m.id && (
+                              <EvaluationLeaderPopup
+                                member={m}
+                                onClose={() => setOpenEvalLeaderMemberId(null)}
                               />
                             )}
                           </div>

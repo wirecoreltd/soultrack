@@ -198,9 +198,9 @@ const AVATAR_COLORS = [
 
 // ─── SOUS-COMPOSANTS ─────────────────────────────────────────────
 
-function SectionTitle({ children, icon, total }) {
+function SectionTitle({ children, icon, total, className = "" }) {
   return (
-    <div className="flex items-center justify-between gap-2 mb-3">
+    <div className={`flex items-center justify-between gap-2 mb-3 ${className}`}>
       <div className="flex items-center gap-2">
         {icon && <span className="text-base">{icon}</span>}
         <p className="text-[11px] font-bold tracking-widest text-white/40 uppercase">{children}</p>
@@ -1160,9 +1160,9 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
                   {/* Répartition par cellule */}
                   {cellulesActive && leadersParCellule.length > 0 && (
   <div>
-    <SectionTitle icon="🏠" total={leadersParCellule.reduce((a, x) => a + x.count, 0)}>
-      {t.repartitionParCellule}
-    </SectionTitle>
+    <SectionTitle icon="🏠" total={leadersParCellule.reduce((a, x) => a + x.count, 0)} className="px-4">
+  {t.repartitionParCellule}
+</SectionTitle>
     <div className="flex flex-col gap-2">
       {leadersParCellule.map(({ id, nom, count }) => {
         const maxC = Math.max(...leadersParCellule.map((x) => x.count), 1);
@@ -1181,16 +1181,16 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
                   {/* Répartition par famille */}
                   {famillesActive && leadersParFamille.length > 0 && (
   <div>
-    <SectionTitle icon="👑" total={leadersParFamille.reduce((a, x) => a + x.count, 0)}>
-      {t.repartitionParFamille}
-    </SectionTitle>
+    <SectionTitle icon="👑" total={leadersParFamille.reduce((a, x) => a + x.count, 0)} className="px-4">
+  {t.repartitionParFamille}
+</SectionTitle>
     <div className="flex flex-col gap-2">
                         {leadersParFamille.map(({ id, nom, count }) => {
                           const maxF = Math.max(...leadersParFamille.map((x) => x.count), 1);
                           return (
                             <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
                               <span className="text-sm text-white truncate flex-1">
-                                {id === "none" ? "🛐" : "👑"} {nom}
+                                {id === "none" ? "🛐"} {nom}
                               </span>
                               <BarreProgression pct={(count / maxF) * 100} color="bg-purple-400" />
                               <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
@@ -1204,9 +1204,9 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
              
 {(cellulesActive || famillesActive) && leadersRattachesEglise > 0 && (
   <div>
-    <SectionTitle icon="🛐" total={leadersRattachesEglise}>
-      {t.repartitionParEglise}
-    </SectionTitle>
+    <SectionTitle icon="🛐" total={leadersRattachesEglise} className="px-4">
+  {t.repartitionParEglise}
+</SectionTitle>
     <div className="bg-white/8 rounded-xl px-4 py-3 flex items-center border border-white/10">
       <span className="text-sm text-white flex-1">{t.totalRattachesEglise}</span>
     </div>

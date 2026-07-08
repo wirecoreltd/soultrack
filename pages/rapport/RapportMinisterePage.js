@@ -71,6 +71,19 @@ const translations = {
     pctMembres: "% membres",
     niveauFort: "Fort", niveauMoyen: "Moyen", niveauFaible: "Faible",
     engagementLabel: "Niveau d'engagement",
+    // Leaders en développement
+    ongletLeaders: "Leaders en développement",
+    leadersEnDeveloppement: "Leaders en développement",
+    totalLeaders: "Total leaders",
+    parcoursStages: {
+      potentiel:     { emoji: "🌱", label: "Potentiel identifié" },
+      croissance:    { emoji: "🌿", label: "Leader en croissance" },
+      developpement: { emoji: "🌳", label: "Leader en développement" },
+      mature:        { emoji: "🌲", label: "Leader mature" },
+    },
+    aucuneEvaluation: "Sans évaluation",
+    pasDeLeader: "Aucun leader dans cette catégorie.",
+    derniereEvaluation: "Dernière évaluation :",
   },
   en: {
     title: "Report", titleAccent: "Ministry",
@@ -126,6 +139,18 @@ const translations = {
     pctMembres: "% members",
     niveauFort: "Strong", niveauMoyen: "Medium", niveauFaible: "Weak",
     engagementLabel: "Engagement level",
+    ongletLeaders: "Development leaders",
+    leadersEnDeveloppement: "Development leaders",
+    totalLeaders: "Total leaders",
+    parcoursStages: {
+      potentiel:     { emoji: "🌱", label: "Potential identified" },
+      croissance:    { emoji: "🌿", label: "Growing leader" },
+      developpement: { emoji: "🌳", label: "Developing leader" },
+      mature:        { emoji: "🌲", label: "Mature leader" },
+    },
+    aucuneEvaluation: "No evaluation",
+    pasDeLeader: "No leader in this category.",
+    derniereEvaluation: "Last evaluation:",
   },
 };
 
@@ -295,13 +320,15 @@ function RapportMinistere() {
   const [onglet, setOnglet]         = useState("vision");
   const [openMinistere, setOpenMinistere] = useState(null);
   const [openPiliers, setOpenPiliers] = useState(false);
+  const [openLeaderStage, setOpenLeaderStage] = useState(null);
 
   // Données brutes
   const [totalMembres, setTotalMembres] = useState(0);
   const [rapports, setRapports] = useState({
     lignes: [], serviteursCount: 0, hommes: 0, femmes: 0, polyvalents: [],
-    serviteursData: [], // [{membre, ministeres:[], derniereDate, nombreActivites}]
+    serviteursData: [],
     piliers: [],
+    leadersDeveloppement: [],
   });
 
   // ─── CHARGEMENT UTILISATEUR ──────────────────────────────────
@@ -326,10 +353,39 @@ function RapportMinistere() {
       // Membres
       const { data: membresData } = await supabase
         .from("membres_complets")
-        .select("id, etat_contact, star, pilier, sexe, prenom, nom")
+        .select("id, etat_contact, star, pilier, sexe, prenom, nom, leader_developpement")
         .eq("eglise_id", egliseId);
       
       const piliers = (membresData || []).filter(m => m.pilier === true);
+      
+      // ── Leaders en développement ──
+      const leadersMembres = (membresData || []).filter(m => m.leader_developpement === true);
+      let leadersDeveloppement = [];
+      
+      if (leadersMembres.length > 0) {
+        const leaderIds = leadersMembres.map(m => m.id);
+        const { data: evalsLeader } = await supabase
+          .from("evaluations_leader")
+          .select("membre_id, parcours_etape, date_action")
+          .in("membre_id", leaderIds)
+          .order("date_action", { ascending: false });
+      
+        const leadersParcoursMap = {};
+        (evalsLeader || []).forEach(e => {
+          if (!leadersParcoursMap[e.membre_id]) {
+            leadersParcoursMap[e.membre_id] = {
+              etape: e.parcours_etape || null,
+              date: e.date_action,
+            };
+          }
+        });
+      
+        leadersDeveloppement = leadersMembres.map(m => ({
+          membre: m,
+          etape: leadersParcoursMap[m.id]?.etape || null,
+          derniereDate: leadersParcoursMap[m.id]?.date || null,
+        }));
+      }      
 
       const actifs = (membresData || []).filter(m =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
@@ -444,6 +500,7 @@ function RapportMinistere() {
         polyvalents,
         serviteursData,
         piliers,
+        leadersDeveloppement,
       });
       setHasData(true);
       setMessage("");
@@ -464,6 +521,19 @@ function RapportMinistere() {
     const in_ = rapports.serviteursData.filter(x => x.fidelite === "inactif");
     return { stables: s, irreguliers: ir, inactifs: in_ };
   }, [rapports.serviteursData]);
+
+  //─────────────────────────────────────────
+  const leadersParStage = useMemo(() => {
+  const stagesOrder = ["potentiel", "croissance", "developpement", "mature", "none"];
+  const groups = {};
+  stagesOrder.forEach(s => (groups[s] = []));
+  rapports.leadersDeveloppement.forEach(l => {
+    const key = l.etape && groups[l.etape] ? l.etape : "none";
+    groups[key].push(l);
+  });
+  return groups;
+}, [rapports.leadersDeveloppement]);
+  
 
   const alertes = useMemo(() => {
     const a = [];
@@ -573,6 +643,7 @@ function RapportMinistere() {
             { key: "vision",    label: t.ongletVision},
             { key: "berger",    label: t.ongletBerger},
             { key: "ministeres",label: t.ongletMinisteres},
+            { key: "leaders",   label: t.ongletLeaders},
           ].map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
               className={`flex-1 py-2 px-2 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center justify-center gap-1 ${onglet === o.key ? "bg-white text-[#1e1b4b]" : "text-white/70 hover:text-white"}`}>
@@ -590,7 +661,7 @@ function RapportMinistere() {
           <div className="bg-white/8 rounded-2xl p-8 text-center border border-white/10">
             <p className="text-white/60 text-sm">{!egliseId ? t.chargementUser : "Sélectionnez une période pour générer le rapport."}</p>
           </div>
-       ) : rapports.lignes.length === 0 && rapports.piliers.length === 0 && onglet !== "berger" ? (
+       ) : rapports.lignes.length === 0 && rapports.piliers.length === 0 && onglet !== "berger" && onglet !== "leaders" ? (
           <div className="bg-white/8 rounded-2xl p-8 text-center border border-white/10">
             <p className="text-white/60 text-sm">{t.aucunServiteur}</p>
           </div>
@@ -892,6 +963,95 @@ function RapportMinistere() {
                     )}
                   </div>
                 )}
+              </div>
+
+            </div>
+
+/* ══════════════════════════════════════════
+             ONGLET 3 — LEADERS EN DÉVELOPPEMENT
+          ══════════════════════════════════════════ */
+          ) : onglet === "leaders" ? (
+            <div className="flex flex-col gap-7">
+
+              {/* KPIs */}
+              <div>
+                <SectionTitle icon="🌱">{t.leadersEnDeveloppement}</SectionTitle>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  <KpiCard
+                    colorClass="green"
+                    label={t.totalLeaders}
+                    value={rapports.leadersDeveloppement.length}
+                    sub={totalMembres > 0 ? `${Math.round((rapports.leadersDeveloppement.length / totalMembres) * 100)}% ${t.pctMembres}` : ""}
+                  />
+                  {["potentiel", "croissance", "developpement", "mature"].map((stage) => {
+                    const colorMap = { potentiel: "teal", croissance: "green", developpement: "blue", mature: "purple" };
+                    return (
+                      <KpiCard
+                        key={stage}
+                        colorClass={colorMap[stage]}
+                        label={t.parcoursStages[stage].label}
+                        value={leadersParStage[stage].length}
+                        icon={t.parcoursStages[stage].emoji}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Répartition par étape — accordéons cliquables */}
+              <div>
+                <SectionTitle icon="📋">{t.sectionClassement}</SectionTitle>
+                <div className="flex flex-col gap-2">
+                  {["potentiel", "croissance", "developpement", "mature", "none"].map((stage) => {
+                    const list = leadersParStage[stage];
+                    if (stage === "none" && list.length === 0) return null;
+
+                    const isOpen = openLeaderStage === stage;
+                    const label = stage === "none" ? t.aucuneEvaluation : t.parcoursStages[stage].label;
+                    const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
+
+                    return (
+                      <div key={stage} className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
+                        <div
+                          onClick={() => setOpenLeaderStage(isOpen ? null : stage)}
+                          className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors"
+                        >
+                          <span className="text-base">{emoji}</span>
+                          <span className="text-sm font-semibold text-white flex-1">{label}</span>
+                          <span className="text-xl font-bold text-white">{list.length}</span>
+                          <svg
+                            className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`}
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                        {isOpen && (
+                          <div className="px-4 pb-3 border-t border-white/10 pt-2">
+                            {list.length === 0 ? (
+                              <p className="text-sm text-white/40 italic px-1">{t.pasDeLeader}</p>
+                            ) : (
+                              <div className="flex flex-col gap-2">
+                                {list.map((l, idx) => (
+                                  <ServiteurCard
+                                    key={l.membre.id}
+                                    idx={idx}
+                                    membre={l.membre}
+                                    sousTitre={
+                                      l.derniereDate
+                                        ? `${t.derniereEvaluation} ${formatDate(l.derniereDate)}`
+                                        : t.aucuneEvaluation
+                                    }
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
             </div>

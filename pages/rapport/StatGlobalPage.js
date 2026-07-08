@@ -286,9 +286,9 @@ function KpiCard({ label, value, sub, accent, delta }) {
   };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-sm text-white/70">{label}</p>
-      <p className={`text-sm font-bold leading-none ${c[accent] || "text-white/70"}`}>{value}</p>
-      {sub && <p className="text-sm text-white/70 mt-0.5">{sub}</p>}
+      <p className="text-sm text-white/80">{label}</p>
+      <p className={`text-lg font-bold leading-none ${c[accent] || "text-white/80"}`}>{value}</p>
+      {sub && <p className="text-sm text-white/80 mt-0.5">{sub}</p>}
       {delta !== null && delta !== undefined && (
         <p
           className={`text-sm font-semibold mt-0.5 ${
@@ -361,8 +361,8 @@ function StatChip({ label, value, accent }) {
   };
   return (
     <div className="bg-white/5 rounded-xl px-3 py-2 flex flex-col items-center min-w-[70px]">
-      <p className={`text-sm font-bold leading-none ${c[accent] || "text-white/70"}`}>{value}</p>
-      <p className="text-sm text-white/70 mt-0.5 text-center">{label}</p>
+      <p className={`text-lg font-bold leading-none ${c[accent] || "text-white/80"}`}>{value}</p>
+      <p className="text-sm text-white/80 mt-0.5 text-center">{label}</p>
     </div>
   );
 }
@@ -437,7 +437,6 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
   );
 }
 // ─── CARTE LEADERS EN DÉVELOPPEMENT ───────────────────────────
-// ─── CARTE LEADERS EN DÉVELOPPEMENT ────────────────────────────
 function CarteLeadersDeveloppement({ leadersStats, t }) {
   if (!leadersStats || leadersStats.total === 0) return null;
   const { total, potentiel, croissance, developpement, mature, sansEvaluation } = leadersStats;
@@ -451,14 +450,14 @@ function CarteLeadersDeveloppement({ leadersStats, t }) {
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-white/70">{t.leadersTitle}</p>
-        <p className="text-sm font-bold leading-none text-yellow-300">{total}</p>
+        <p className="text-sm text-white/80">{t.leadersTitle}</p>
+        <p className="text-lg font-bold leading-none text-yellow-300">{total}</p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
         {stages.map((s) => (
           <div key={s.label} className="bg-white/5 rounded-xl px-3 py-3 text-center">
-            <p className={`text-sm font-bold leading-none ${s.color}`}>{s.value}</p>
-            <p className="text-sm text-white/70 mt-1">{s.label}</p>
+            <p className={`text-lg font-bold leading-none ${s.color}`}>{s.value}</p>
+            <p className="text-sm text-white/80 mt-1">{s.label}</p>
           </div>
         ))}
       </div>
@@ -594,8 +593,8 @@ function BlocVueEnsemble({
       {/* Conversions (salvation prayer) */}
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-white/70">{t.sectionConversions}</p>
-          <p className="text-sm font-bold leading-none text-yellow-300">{cd.total}</p>
+          <p className="text-sm text-white/80">{t.sectionConversions}</p>
+          <p className="text-lg font-bold leading-none text-yellow-300">{cd.total}</p>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -604,28 +603,28 @@ function BlocVueEnsemble({
           </p>
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-sm font-bold leading-none text-yellow-300">{cd.egliseNC}</p>
-              <p className="text-sm text-white/70 mt-1">{t.chipNouveauxConvertis}</p>
+              <p className="text-lg font-bold leading-none text-yellow-300">{cd.egliseNC}</p>
+              <p className="text-sm text-white/80 mt-1">{t.chipNouveauxConvertis}</p>
             </div>
             <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-sm font-bold leading-none text-blue-300">{cd.egliseRecon}</p>
-              <p className="text-sm text-white/70 mt-1">{t.chipReconciliations}</p>
+              <p className="text-lg font-bold leading-none text-blue-300">{cd.egliseRecon}</p>
+              <p className="text-sm text-white/80 mt-1">{t.chipReconciliations}</p>
             </div>
           </div>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <p className="text-sm font-semibold uppercase tracking-wide text-white/70">
+          <p className="text-sm font-semibold uppercase tracking-wide text-white/80">
             {t.conversionsSourceEvang}
           </p>
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-sm font-bold leading-none text-yellow-300">{cd.evangNC}</p>
-              <p className="text-sm text-white/70 mt-1">{t.chipNouveauxConvertis}</p>
+              <p className="text-lg font-bold leading-none text-yellow-300">{cd.evangNC}</p>
+              <p className="text-sm text-white/80 mt-1">{t.chipNouveauxConvertis}</p>
             </div>
             <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-sm font-bold leading-none text-blue-300">{cd.evangRecon}</p>
-              <p className="text-sm text-white/70 mt-1">{t.chipReconciliations}</p>
+              <p className="text-lg font-bold leading-none text-blue-300">{cd.evangRecon}</p>
+              <p className="text-sm text-white/80 mt-1">{t.chipReconciliations}</p>
             </div>
           </div>
         </div>
@@ -633,7 +632,7 @@ function BlocVueEnsemble({
 
       {/* Répartition H/F/J */}
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-        <p className="text-sm text-white/70 font-semibold">{t.repartitionTitle}</p>
+        <p className="text-sm text-white/80 font-semibold">{t.repartitionTitle}</p>
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: t.hommes, val: totaux.culteHommes, color: "text-blue-300", bg: "bg-blue-900/40" },
@@ -643,9 +642,9 @@ function BlocVueEnsemble({
             const pct = totalCulte > 0 ? Math.round((val / totalCulte) * 100) : 0;
             return (
               <div key={label} className={`${bg} rounded-xl px-3 py-3 text-center`}>
-                <p className={`text-sm font-bold ${color}`}> {val}</p>
-                <p className="text-sm text-white/70 mt-1"> {label}</p>
-                <p className="text-sm text-white/70 mt-0.5"> {pct}%</p>
+                <p className={`text-lg font-bold ${color}`}> {val}</p>
+                <p className="text-sm text-white/80 mt-1"> {label}</p>
+                <p className="text-sm text-white/80 mt-0.5"> {pct}%</p>
               </div>
             );
           })}
@@ -669,10 +668,10 @@ function BlocVueEnsemble({
               const pct = totalCulteGlobal > 0 ? Math.round((tot / totalCulteGlobal) * 100) : 0;
               return (
                 <div key={e.id} className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-white/70 w-4 flex-shrink-0">#{index + 1}</span>
-                  <p className="text-sm text-white/70 w-32 flex-shrink-0 truncate">{e.nom}</p>
+                  <span className="text-sm font-bold text-white/80 w-4 flex-shrink-0">#{index + 1}</span>
+                  <p className="text-sm text-white/80 w-32 flex-shrink-0 truncate">{e.nom}</p>
                   <BarreProgression pct={pct} color="bg-blue-400" />
-                  <span className="text-sm text-white/70 font-semibold w-8 text-right">{tot}</span>
+                  <span className="text-lg text-white/80 font-semibold w-8 text-right">{tot}</span>
                 </div>
               );
             })}
@@ -740,9 +739,9 @@ function BlocStatsEglise({ stats, t }) {
             { label: t.serviteurs, val: stats.serviteurs.hommes + stats.serviteurs.femmes, color: "bg-yellow-400" },
           ].map(({ label, val, color }) => (
             <div key={label} className="flex items-center gap-3">
-              <p className="text-sm text-white/70 w-28 flex-shrink-0">{label}</p>
+              <p className="text-sm text-white/80 w-28 flex-shrink-0">{label}</p>
               <BarreProgression pct={Math.round((val / totalCulteGlobal) * 100)} color={color} />
-              <span className="text-sm text-white/70 font-semibold w-8 text-right">{val}</span>
+              <span className="text-lg text-white/80 font-semibold w-8 text-right">{val}</span>
             </div>
           ))}
         </div>

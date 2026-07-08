@@ -1168,9 +1168,9 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
         const maxC = Math.max(...leadersParCellule.map((x) => x.count), 1);
         return (
           <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
-            <span className="text-sm text-orange-400 truncate flex-1">{nom}</span>
+            <span className="text-sm text-white truncate flex-1">{nom}</span>
             <BarreProgression pct={(count / maxC) * 100} color="bg-emerald-400" />
-            <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
+            <p className="text-sm font-bold text-orange-400 w-6 text-right">{count}</p>
           </div>
         );
       })}

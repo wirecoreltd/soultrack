@@ -72,6 +72,7 @@ const translations = {
     leadersCroissance: "Leader en croissance",
     leadersDeveloppement: "Leader en développement",
     leadersMature: "Leader mature",
+    leadersSansEvaluation: "Sans évaluation",
     sectionConversions: "Conversions (prière du salut)",
     conversionsSourceEglise: "Âmes accueillies à l'église",
     conversionsSourceEvang: "Âmes rencontrées en évangélisation",
@@ -195,6 +196,7 @@ const translations = {
     leadersCroissance: "Growing leader",
     leadersDeveloppement: "Developing leader",
     leadersMature: "Mature leader",
+    leadersSansEvaluation: "No evaluation",
     vsPeriodePrecedente: "vs prev. period",
     repartitionTitle: "M / F / Y Attendance Breakdown",
     hommes: "Men",
@@ -261,7 +263,7 @@ function toYearMonth(dateStr) {
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-widest text-white mb-3">
+    <p className="text-sm font-semibold uppercase tracking-widest text-white mb-3">
       {children}
     </p>
   );
@@ -278,19 +280,19 @@ function KpiCard({ label, value, sub, accent, delta }) {
     purple: "text-purple-300",
     teal: "text-teal-300",
     orange: "text-orange-300",
-    gray: "text-white/40",
+    gray: "text-white/70",
     indigo: "text-indigo-300",
     yellow: "text-yellow-300",
   };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-xs text-white/65">{label}</p>
-      <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white/65"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-white/65 mt-0.5">{sub}</p>}
+      <p className="text-sm text-white/70">{label}</p>
+      <p className={`text-sm font-bold leading-none ${c[accent] || "text-white/70"}`}>{value}</p>
+      {sub && <p className="text-sm text-white/70 mt-0.5">{sub}</p>}
       {delta !== null && delta !== undefined && (
         <p
-          className={`text-[11px] font-semibold mt-0.5 ${
-            delta > 0 ? "text-emerald-400" : delta < 0 ? "text-red-400" : "text-white/30"
+          className={`text-sm font-semibold mt-0.5 ${
+            delta > 0 ? "text-emerald-400" : delta < 0 ? "text-red-400" : "text-white/70"
           }`}
         >
           {delta > 0 ? "▲" : delta < 0 ? "▼" : "→"} {Math.abs(delta)}%
@@ -307,14 +309,14 @@ function Badge({ children, color }) {
     amber: "bg-amber-900/60 text-amber-300",
     blue: "bg-blue-900/60 text-blue-300",
     purple: "bg-purple-900/60 text-purple-300",
-    gray: "bg-white/10 text-white/50",
+    gray: "bg-white/10 text-white/70",
     orange: "bg-orange-900/60 text-orange-300",
     yellow: "bg-yellow-900/60 text-yellow-300",
     indigo: "bg-indigo-900/60 text-indigo-300",
     pink: "bg-pink-900/60 text-pink-300",
   };
   return (
-    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${m[color] || m.gray}`}>
+    <span className={`text-sm font-semibold px-2 py-0.5 rounded-full ${m[color] || m.gray}`}>
       {children}
     </span>
   );
@@ -337,7 +339,7 @@ function BarreProgression({ pct, color }) {
 function StatRow({ label, color, children }) {
   return (
     <div className={`bg-white/10 rounded-xl px-4 py-3 border-l-2 ${color}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-white/80 mb-2">
+      <p className="text-sm font-semibold uppercase tracking-widest text-white/70 mb-2">
         {label}
       </p>
       <div className="flex flex-wrap gap-2">{children}</div>
@@ -355,12 +357,12 @@ function StatChip({ label, value, accent }) {
     orange: "text-orange-300",
     amber: "text-amber-300",
     indigo: "text-indigo-300",
-    white: "text-white",
+    white: "text-white/70",
   };
   return (
     <div className="bg-white/5 rounded-xl px-3 py-2 flex flex-col items-center min-w-[70px]">
-      <p className={`text-lg font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      <p className="text-[10px] text-white/40 mt-0.5 text-center">{label}</p>
+      <p className={`text-sm font-bold leading-none ${c[accent] || "text-white/70"}`}>{value}</p>
+      <p className="text-sm text-white/70 mt-0.5 text-center">{label}</p>
     </div>
   );
 }
@@ -398,7 +400,7 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-sm font-semibold text-white/80">{t.top5Title}</p>
+        <p className="text-sm font-semibold text-white/70">{t.top5Title}</p>
         <div className="flex items-center gap-2">
           <Badge color="orange">{t.top5Cas(totalTous)}</Badge>
           <Badge color={tauxGlobal >= 50 ? "green" : "amber"}>{t.top5Resolus(tauxGlobal)}</Badge>
@@ -413,11 +415,11 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
           return (
             <div key={besoin} className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
-                <span className="text-[11px] font-bold text-white/30 w-4 flex-shrink-0">
+                <span className="text-sm font-bold text-white/70 w-4 flex-shrink-0">
                   #{index + 1}
                 </span>
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
-                <p className="text-xs text-white flex-1 truncate">{besoin}</p>
+                <p className="text-sm text-white/70 flex-1 truncate">{besoin}</p>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <Badge color="orange">{data.total}</Badge>
                   <Badge color={pctResolu >= 50 ? "green" : "amber"}>{pctResolu}%✓</Badge>
@@ -430,35 +432,33 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
           );
         })}
       </div>
-      <p className="text-[10px] text-white/20 text-center mt-1">{t.top5Aggrege}</p>
+      <p className="text-sm text-white/70 text-center mt-1">{t.top5Aggrege}</p>
     </div>
   );
 }
-
 // ─── CARTE LEADERS EN DÉVELOPPEMENT ───────────────────────────
+// ─── CARTE LEADERS EN DÉVELOPPEMENT ────────────────────────────
 function CarteLeadersDeveloppement({ leadersStats, t }) {
   if (!leadersStats || leadersStats.total === 0) return null;
-  const { total, potentiel, croissance, developpement, mature } = leadersStats;
+  const { total, potentiel, croissance, developpement, mature, sansEvaluation } = leadersStats;
   const stages = [
-    { emoji: "🌱", value: potentiel, label: t.leadersPotentiel, color: "#5eead4" },
-    { emoji: "🌿", value: croissance, label: t.leadersCroissance, color: "#86efac" },
-    { emoji: "🌳", value: developpement, label: t.leadersDeveloppement, color: "#93c5fd" },
-    { emoji: "🌲", value: mature, label: t.leadersMature, color: "#d8b4fe" },
+    { value: potentiel, label: t.leadersPotentiel, color: "text-teal-300" },
+    { value: croissance, label: t.leadersCroissance, color: "text-emerald-300" },
+    { value: developpement, label: t.leadersDeveloppement, color: "text-blue-300" },
+    { value: mature, label: t.leadersMature, color: "text-purple-300" },
+    { value: sansEvaluation, label: t.leadersSansEvaluation, color: "text-white/70" },
   ];
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-white/65">{t.leadersTitle}</p>
-        <p className="text-2xl font-bold leading-none text-yellow-300">{total}</p>
+        <p className="text-sm text-white/70">{t.leadersTitle}</p>
+        <p className="text-sm font-bold leading-none text-yellow-300">{total}</p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
         {stages.map((s) => (
           <div key={s.label} className="bg-white/5 rounded-xl px-3 py-3 text-center">
-            <p className="text-xl mb-0.5">{s.emoji}</p>
-            <p className="text-lg font-bold leading-none" style={{ color: s.color }}>
-              {s.value}
-            </p>
-            <p className="text-[11px] text-white/65 mt-1">{s.label}</p>
+            <p className={`text-sm font-bold leading-none ${s.color}`}>{s.value}</p>
+            <p className="text-sm text-white/70 mt-1">{s.label}</p>
           </div>
         ))}
       </div>
@@ -518,14 +518,9 @@ function BlocVueEnsemble({
   const totalEvangelisation = totaux.evangH + totaux.evangF;
   const totalServiteurs = totaux.servH + totaux.servF;
 
-  // ── CORRECTION #5 : exclure le root du compte "Églises supervisées"
   const nbEglisesSupervisees = allEglises.filter((e) => e.id !== rootId).length;
-  // Toutes les églises (y compris root) pour les calculs de moyennes
   const nbEglisesTotal = allEglises.length;
 
-  // ── Conversions réelles : basées sur "priere_salut" dans membres_complets (nouveaux membres
-  // rejoignant l'église) et dans evangelises (personnes touchées lors de l'évangélisation).
-  // On distingue "Nouveau converti" (première fois) de "Réconciliation" (retour à la foi).
   const cd = conversionsDetail || { egliseNC: 0, egliseRecon: 0, evangNC: 0, evangRecon: 0, total: 0 };
   const totalConversionsEglise = cd.egliseNC + cd.egliseRecon;
   const totalConversionsEvang = cd.evangNC + cd.evangRecon;
@@ -534,8 +529,6 @@ function BlocVueEnsemble({
   const tauxEngagement =
     totalMembresActifs > 0 ? Math.round((totalServiteurs / totalMembresActifs) * 100) : 0;
 
-  // ── Taux de présence : calculé en amont dans fetchStats à partir de la table `presences`
-  // (moyenne, sur chaque culte, du % de membres actifs réellement présents)
   const tauxPresence = tauxPresenceMoyen || 0;
 
   const d = prevTotaux;
@@ -547,99 +540,100 @@ function BlocVueEnsemble({
   return (
     <div className="flex flex-col gap-4">
 
-             {/* Ligne 1 : Membres actifs + Taux de présence + Cellules + Familles actives */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <KpiCard label={t.kpiMembresActifs} value={totalMembresActifs} sub={t.kpiMembresActifsSub} accent="white" />
-                <KpiCard
-                  label={t.kpiTauxPresence}
-                  value={`${tauxPresence}%`}
-                  sub={t.kpiTauxPresenceSub}
-                  accent={tauxPresence >= 70 ? "green" : tauxPresence >= 40 ? "amber" : "red"}
-                />
-                <KpiCard label={t.kpiCellules} value={totaux.cellules} sub={t.kpiCellulesSub} accent="orange" />
-                {famillesFeatureActive && (
-                  <KpiCard label={t.kpiFamillesActives} value={totalFamillesActives} sub={t.kpiFamillesActivesSub} accent="blue" />
-                )}
-              </div>
-              
-              {/* Ligne 2 : Églises supervisées + Participation totale + Évangélisés + Baptêmes */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <KpiCard label={t.kpiEglisesSup} value={nbEglisesSupervisees} sub={t.kpiEglisesSubSup} accent="amber" />
-                <KpiCard
-                  label={t.kpiTotalCulte}
-                  value={totalCulteGlobal}
-                  sub={t.kpiTotalCulteSub}
-                  accent="green"
-                  delta={calcDelta(totalCulteGlobal, prevCulteGlobal)}
-                />
-                <KpiCard label={t.kpiEvangelises} value={totalEvangelisation} sub={t.kpiEvangelisesSub} accent="pink" />
-                <KpiCard label={t.kpiBaptemes} value={totalBapteme} sub={t.kpiBaptemesSub} accent="purple" />
-              </div>
-              
-              {/* Ligne 3 : Serviteurs + Piliers (toujours affiché, Piliers seulement si le module familles est actif) */}
-              <div className="grid grid-cols-2 gap-3">
-                <KpiCard
-                  label={t.kpiServiteurs}
-                  value={totalServiteurs}
-                  sub={t.kpiServiteursSubFn(tauxEngagement)}
-                  accent="teal"
-                  delta={calcDelta(totalServiteurs, prevServiteurs)}
-                />
-                {famillesFeatureActive && (
-                  <KpiCard
-                    label={t.kpiPiliers}
-                    value={totalPiliers}
-                    sub={t.kpiPiliersSub}
-                    accent="indigo"
-                  />
-                )}
-              </div>
-        
-        {/* Conversions (salvation prayer) — carte KPI compacte, pleine largeur, même style que les autres KPI */}
-        <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-  <div className="flex items-center justify-between">
-    <p className="text-xs text-white/65">{t.sectionConversions}</p>
-    <p className="text-2xl font-bold leading-none text-yellow-300">{cd.total}</p>
-  </div>
+      {/* Ligne 1 : Membres actifs + Taux de présence + Cellules + Familles actives */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KpiCard label={t.kpiMembresActifs} value={totalMembresActifs} sub={t.kpiMembresActifsSub} accent="white" />
+        <KpiCard
+          label={t.kpiTauxPresence}
+          value={`${tauxPresence}%`}
+          sub={t.kpiTauxPresenceSub}
+          accent={tauxPresence >= 70 ? "green" : tauxPresence >= 40 ? "amber" : "red"}
+        />
+        <KpiCard label={t.kpiCellules} value={totaux.cellules} sub={t.kpiCellulesSub} accent="orange" />
+        {famillesFeatureActive && (
+          <KpiCard label={t.kpiFamillesActives} value={totalFamillesActives} sub={t.kpiFamillesActivesSub} accent="blue" />
+        )}
+      </div>
 
-  <div className="flex flex-col gap-1.5">
-    <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
-      {t.conversionsSourceEglise}
-    </p>
-    <div className="grid grid-cols-2 gap-2">
-      <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-        <p className="text-lg font-bold leading-none text-yellow-300">{cd.egliseNC}</p>
-        <p className="text-[11px] text-white/65 mt-1">{t.chipNouveauxConvertis}</p>
+      {/* Ligne 2 : Églises supervisées + Participation totale + Évangélisés + Baptêmes */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KpiCard label={t.kpiEglisesSup} value={nbEglisesSupervisees} sub={t.kpiEglisesSubSup} accent="amber" />
+        <KpiCard
+          label={t.kpiTotalCulte}
+          value={totalCulteGlobal}
+          sub={t.kpiTotalCulteSub}
+          accent="green"
+          delta={calcDelta(totalCulteGlobal, prevCulteGlobal)}
+        />
+        <KpiCard label={t.kpiEvangelises} value={totalEvangelisation} sub={t.kpiEvangelisesSub} accent="pink" />
+        <KpiCard label={t.kpiBaptemes} value={totalBapteme} sub={t.kpiBaptemesSub} accent="purple" />
       </div>
-      <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-        <p className="text-lg font-bold leading-none text-blue-300">{cd.egliseRecon}</p>
-        <p className="text-[11px] text-white/65 mt-1">{t.chipReconciliations}</p>
-      </div>
-    </div>
-  </div>
 
-  <div className="flex flex-col gap-1.5">
-    <p className="text-[10px] font-semibold uppercase tracking-wide text-white/40">
-      {t.conversionsSourceEvang}
-    </p>
-    <div className="grid grid-cols-2 gap-2">
-      <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-        <p className="text-lg font-bold leading-none text-yellow-300">{cd.evangNC}</p>
-        <p className="text-[11px] text-white/65 mt-1">{t.chipNouveauxConvertis}</p>
+      {/* Ligne 3 : Serviteurs + Piliers */}
+      <div className="grid grid-cols-2 gap-3">
+        <KpiCard
+          label={t.kpiServiteurs}
+          value={totalServiteurs}
+          sub={t.kpiServiteursSubFn(tauxEngagement)}
+          accent="teal"
+          delta={calcDelta(totalServiteurs, prevServiteurs)}
+        />
+        {famillesFeatureActive && (
+          <KpiCard
+            label={t.kpiPiliers}
+            value={totalPiliers}
+            sub={t.kpiPiliersSub}
+            accent="indigo"
+          />
+        )}
       </div>
-      <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-        <p className="text-lg font-bold leading-none text-blue-300">{cd.evangRecon}</p>
-        <p className="text-[11px] text-white/65 mt-1">{t.chipReconciliations}</p>
+
+      {/* Leaders en développement */}
+      <CarteLeadersDeveloppement leadersStats={leadersStats} t={t} />
+
+      {/* Conversions (salvation prayer) */}
+      <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-white/70">{t.sectionConversions}</p>
+          <p className="text-sm font-bold leading-none text-yellow-300">{cd.total}</p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <p className="text-sm font-semibold uppercase tracking-wide text-white/70">
+            {t.conversionsSourceEglise}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+              <p className="text-sm font-bold leading-none text-yellow-300">{cd.egliseNC}</p>
+              <p className="text-sm text-white/70 mt-1">{t.chipNouveauxConvertis}</p>
+            </div>
+            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+              <p className="text-sm font-bold leading-none text-blue-300">{cd.egliseRecon}</p>
+              <p className="text-sm text-white/70 mt-1">{t.chipReconciliations}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <p className="text-sm font-semibold uppercase tracking-wide text-white/70">
+            {t.conversionsSourceEvang}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+              <p className="text-sm font-bold leading-none text-yellow-300">{cd.evangNC}</p>
+              <p className="text-sm text-white/70 mt-1">{t.chipNouveauxConvertis}</p>
+            </div>
+            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+              <p className="text-sm font-bold leading-none text-blue-300">{cd.evangRecon}</p>
+              <p className="text-sm text-white/70 mt-1">{t.chipReconciliations}</p>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</div>
-          
-<CarteLeadersDeveloppement leadersStats={leadersStats} t={t} />
 
       {/* Répartition H/F/J */}
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-        <p className="text-sm text-white/80 font-semibold">{t.repartitionTitle}</p>
+        <p className="text-sm text-white/70 font-semibold">{t.repartitionTitle}</p>
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: t.hommes, val: totaux.culteHommes, color: "text-blue-300", bg: "bg-blue-900/40" },
@@ -648,21 +642,22 @@ function BlocVueEnsemble({
           ].map(({ label, val, color, bg }) => {
             const pct = totalCulte > 0 ? Math.round((val / totalCulte) * 100) : 0;
             return (
-              <div key={label} className={`${bg} rounded-xl px-3 py-3 text-center`}>  
-                <p className={`text-xl font-bold ${color}`}> {val}</p>              
-                <p className="text-sm font-medium text-white mt-1"> {label}</p>              
-                <p className="text-sm text-white/65 mt-0.5"> {pct}%</p>              
+              <div key={label} className={`${bg} rounded-xl px-3 py-3 text-center`}>
+                <p className={`text-sm font-bold ${color}`}> {val}</p>
+                <p className="text-sm text-white/70 mt-1"> {label}</p>
+                <p className="text-sm text-white/70 mt-0.5"> {pct}%</p>
               </div>
             );
           })}
         </div>
-      </div>     
+      </div>
 
       <CarteTop5Besoins besoinsGlobaux={besoinsGlobaux} t={t} />
+
       {/* Classement des églises */}
       {allEglises.length > 1 && (
         <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-2">
-          <p className="text-xs text-white/50 font-semibold mb-1">{t.classementTitle}</p>
+          <p className="text-sm text-white/70 font-semibold mb-1">{t.classementTitle}</p>
           {[...allEglises]
             .sort((a, b) => {
               const totA = a.stats.culte.hommes + a.stats.culte.femmes + a.stats.culte.jeunes + a.stats.culte.enfants + a.stats.culte.connectes;
@@ -674,10 +669,10 @@ function BlocVueEnsemble({
               const pct = totalCulteGlobal > 0 ? Math.round((tot / totalCulteGlobal) * 100) : 0;
               return (
                 <div key={e.id} className="flex items-center gap-3">
-                  <span className="text-[11px] font-bold text-white/30 w-4 flex-shrink-0">#{index + 1}</span>
-                  <p className="text-xs text-white w-32 flex-shrink-0 truncate">{e.nom}</p>
+                  <span className="text-sm font-bold text-white/70 w-4 flex-shrink-0">#{index + 1}</span>
+                  <p className="text-sm text-white/70 w-32 flex-shrink-0 truncate">{e.nom}</p>
                   <BarreProgression pct={pct} color="bg-blue-400" />
-                  <span className="text-xs text-white font-semibold w-8 text-right">{tot}</span>
+                  <span className="text-sm text-white/70 font-semibold w-8 text-right">{tot}</span>
                 </div>
               );
             })}
@@ -745,9 +740,9 @@ function BlocStatsEglise({ stats, t }) {
             { label: t.serviteurs, val: stats.serviteurs.hommes + stats.serviteurs.femmes, color: "bg-yellow-400" },
           ].map(({ label, val, color }) => (
             <div key={label} className="flex items-center gap-3">
-              <p className="text-xs text-white/50 w-28 flex-shrink-0">{label}</p>
+              <p className="text-sm text-white/70 w-28 flex-shrink-0">{label}</p>
               <BarreProgression pct={Math.round((val / totalCulteGlobal) * 100)} color={color} />
-              <span className="text-xs text-white font-semibold w-8 text-right">{val}</span>
+              <span className="text-sm text-white/70 font-semibold w-8 text-right">{val}</span>
             </div>
           ))}
         </div>
@@ -810,17 +805,17 @@ function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
         >
           <div className="flex flex-col gap-0.5 flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className={`font-semibold ${hasChildren ? "text-amber-300" : "text-white"}`}>
+              <span className={`text-sm font-semibold ${hasChildren ? "text-amber-300" : "text-white"}`}>
                 {eglise.nom}
               </span>
               {hasChildren && <Badge color="amber">{t.egliseBadgeFn(eglise.enfants.length)}</Badge>}
               {hasChildren && !isExpanded && <Badge color="gray">{t.totalGeneral}</Badge>}
             </div>
-            <span className="text-[11px] text-white/40">
+            <span className="text-sm text-white/70">
               {t.culte} : {totalCulte} · {t.bapteme} : {totalStats.bapteme.hommes + totalStats.bapteme.femmes} · {t.kpiCellules} : {totalStats.cellules.total}
             </span>
           </div>
-          <span className="text-white/30 text-xs flex-shrink-0">{isExpanded ? "▲" : "▼"}</span>
+          <span className="text-sm text-white/70 flex-shrink-0">{isExpanded ? "▲" : "▼"}</span>
         </button>
         {isExpanded && (
           <div className="border-t border-white/10 px-4 pb-4 pt-3">
@@ -872,6 +867,7 @@ function StatGlobalPage() {
   const [totalFamillesActives, setTotalFamillesActives] = useState(0);
   const [totalPiliers, setTotalPiliers] = useState(0);
   const [famillesFeatureActive, setFamillesFeatureActive] = useState(false);
+  const [leadersStats, setLeadersStats] = useState(null);
   const [leadersStats, setLeadersStats] = useState(null);
 
   useEffect(() => {
@@ -1194,6 +1190,38 @@ const getConversions = async (egliseIds, debut, fin) => {
           getConversions(egliseIds, debut, fin),
         ]);
       setConversionsDetail(conversionsData);
+
+        // ── Leaders en développement (agrégé sur le réseau) ──
+        const { data: leadersMembresData } = await supabase
+          .from("membres_complets")
+          .select("id, eglise_id")
+          .in("eglise_id", egliseIds)
+          .eq("leader_developpement", true);
+        
+        let leadersStatsValue = { total: 0, potentiel: 0, croissance: 0, developpement: 0, mature: 0, sansEvaluation: 0 };
+        if (leadersMembresData?.length) {
+          const leaderIds = leadersMembresData.map((m) => m.id);
+          const { data: evalsLeaderData } = await supabase
+            .from("evaluations_leader")
+            .select("membre_id, parcours_etape, date_action")
+            .in("membre_id", leaderIds)
+            .order("date_action", { ascending: false });
+        
+          const etapeMap = {};
+          (evalsLeaderData || []).forEach((e) => {
+            if (!etapeMap[e.membre_id]) etapeMap[e.membre_id] = e.parcours_etape || null;
+          });
+        
+          const counts = { potentiel: 0, croissance: 0, developpement: 0, mature: 0, sansEvaluation: 0 };
+          leadersMembresData.forEach((m) => {
+            const etape = etapeMap[m.id];
+            if (etape && counts[etape] !== undefined) counts[etape]++;
+            else counts.sansEvaluation++;
+          });
+        
+          leadersStatsValue = { total: leadersMembresData.length, ...counts };
+        }
+        setLeadersStats(leadersStatsValue);
 
         // ── Leaders en développement (agrégé sur le réseau) ──
         const { data: leadersMembresData } = await supabase

@@ -148,8 +148,8 @@ const translations = {
     pctMembres: "% members",
     niveauFort: "Strong", niveauMoyen: "Medium", niveauFaible: "Weak",
     engagementLabel: "Engagement level",
-    ongletLeaders: "Development leaders",
-    leadersEnDeveloppement: "Development leaders",
+    ongletLeaders: "Emerging Leaders",
+    leadersEnDeveloppement: "Emerging Leaders",
     totalLeaders: "Total leaders",
     parcoursStages: {
       potentiel:     { emoji: "🌱", label: "Potential identified" },

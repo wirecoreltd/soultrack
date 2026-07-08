@@ -440,7 +440,7 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
 function CarteLeadersDeveloppement({ leadersStats, t }) {
   if (!leadersStats || leadersStats.total === 0) return null;
   const { total, potentiel, croissance, developpement, mature, sansEvaluation } = leadersStats;
-  const stages = [
+    const stages = [
     { value: potentiel, label: t.leadersPotentiel, color: "text-teal-300" },
     { value: croissance, label: t.leadersCroissance, color: "text-emerald-300" },
     { value: developpement, label: t.leadersDeveloppement, color: "text-blue-300" },
@@ -457,7 +457,7 @@ function CarteLeadersDeveloppement({ leadersStats, t }) {
         {stages.map((s) => (
           <div key={s.label} className="bg-white/5 rounded-xl px-3 py-3 text-center">
             <p className={`text-lg font-bold leading-none ${s.color}`}>{s.value}</p>
-            <p className="text-sm text-white/80 mt-1">{s.label}</p>
+            <p className="text-xs text-white/80 mt-1">{s.label}</p>
           </div>
         ))}
       </div>

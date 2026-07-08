@@ -40,6 +40,8 @@ const translations = {
     alerteSousDote: (m) => `${m} sous-doté (< 3 serviteurs)`,
     alertePolyvalent: (n) => `${n} serviteur${n > 1 ? "s" : ""} sur 5+ ministères`,
     // vue berger
+    repartitionParEglise: "Répartition des leaders par église",
+    totalRattachesEglise: "Rattachés directement à l'église",
     aSuivreAujourdhui: "À suivre aujourd'hui",
     inactifsRecents: "Inactifs récents",
     irreguliersSuivi: "Irréguliers à encourager",
@@ -114,6 +116,8 @@ const translations = {
     alerteSurcharge: (m) => `${m} potentially overloaded`,
     alerteSousDote: (m) => `${m} understaffed (< 3 servants)`,
     alertePolyvalent: (n) => `${n} servant${n > 1 ? "s" : ""} in 5+ ministries`,
+    repartitionParEglise: "Leaders distribution by church",
+    totalRattachesEglise: "Directly attached to the church",
     aSuivreAujourdhui: "To follow today",
     inactifsRecents: "Recent inactive servants",
     irreguliersSuivi: "Irregular servants to encourage",
@@ -266,7 +270,7 @@ function ServiteurCard({ membre, sousTitre, actions, ministeres, derniereDate, i
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{membre.prenom} {membre.nom}</p>
-        <p className="text-[11px] text-white/50 truncate">{sousTitre}</p>
+        <p className="text-[11px] text-white/80 truncate">{sousTitre}</p>
         {ministeres && ministeres.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {ministeres.slice(0, 3).map(m => {
@@ -578,37 +582,43 @@ useEffect(() => {
   const map = {};
   rapports.leadersDeveloppement.forEach((l) => {
     const cid = l.membre.cellule_id;
-    const key = cid || "none";
-    if (!map[key]) map[key] = 0;
-    map[key]++;
+    if (!cid) return; // compté dans "Répartition par église"
+    if (!map[cid]) map[cid] = 0;
+    map[cid]++;
   });
   return Object.entries(map)
     .map(([id, count]) => ({
       id,
-      nom: id === "none" ? t.sansCellule : (cellules.find((c) => c.id === id)?.cellule_full || "—"),
+      nom: cellules.find((c) => c.id === id)?.cellule_full || "—",
       count,
     }))
     .sort((a, b) => b.count - a.count);
-}, [rapports.leadersDeveloppement, cellules, cellulesActive, t]);
+}, [rapports.leadersDeveloppement, cellules, cellulesActive]);
 
 const leadersParFamille = useMemo(() => {
   if (!famillesActive) return [];
   const map = {};
   rapports.leadersDeveloppement.forEach((l) => {
     const fid = l.membre.famille_id;
-    const key = fid || "none";
-    if (!map[key]) map[key] = 0;
-    map[key]++;
+    if (!fid) return; // compté dans "Répartition par église"
+    if (!map[fid]) map[fid] = 0;
+    map[fid]++;
   });
   return Object.entries(map)
     .map(([id, count]) => ({
       id,
-      nom: id === "none" ? t.sansFamille : (familles.find((f) => f.id === id)?.famille_full || "—"),
+      nom: familles.find((f) => f.id === id)?.famille_full || "—",
       count,
     }))
     .sort((a, b) => b.count - a.count);
-}, [rapports.leadersDeveloppement, familles, famillesActive, t]);
-  
+}, [rapports.leadersDeveloppement, familles, famillesActive]);
+
+  const leadersRattachesEglise = useMemo(() => {
+  if (!cellulesActive && !famillesActive) return 0;
+  return rapports.leadersDeveloppement.filter(
+    (l) => !l.membre.cellule_id && !l.membre.famille_id
+  ).length;
+}, [rapports.leadersDeveloppement, cellulesActive, famillesActive]);
 
   const alertes = useMemo(() => {
     const a = [];
@@ -1152,7 +1162,7 @@ const leadersParFamille = useMemo(() => {
                           return (
                             <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
                               <span className="text-sm text-white truncate flex-1">
-                                {id === "none" ? "🛐" : "🏠"} {nom}
+                                🏠 {nom}
                               </span>
                               <BarreProgression pct={(count / maxC) * 100} color="bg-emerald-400" />
                               <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
@@ -1184,6 +1194,17 @@ const leadersParFamille = useMemo(() => {
                     </div>
                   )}              
                 </div>
+
+                {/* Répartition par église */}
+                {(cellulesActive || famillesActive) && leadersRattachesEglise > 0 && (
+                  <div>
+                    <SectionTitle icon="🛐">{t.repartitionParEglise}</SectionTitle>
+                    <div className="bg-white/8 rounded-xl px-4 py-4 flex items-center justify-between border border-white/10">
+                      <span className="text-sm text-white">{t.totalRattachesEglise}</span>
+                      <span className="text-2xl font-bold text-white">{leadersRattachesEglise}</span>
+                    </div>
+                  </div>
+                )}
           /* ══════════════════════════════════════════
              ONGLET 3 — MINISTÈRES
           ══════════════════════════════════════════ */

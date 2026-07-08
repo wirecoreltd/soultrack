@@ -740,14 +740,14 @@ const leadersParFamille = useMemo(() => {
         {/* Onglets */}
         <div className="flex gap-1 bg-white/8 rounded-xl p-1 border border-white/10">
           {[
-            { key: "vision",    label: t.ongletVision},
-            { key: "berger",    label: t.ongletBerger},
-            { key: "ministeres",label: t.ongletMinisteres},
-            { key: "leaders",   label: t.ongletLeaders},
+            { key: "vision",     label: t.ongletVision},
+            { key: "berger",     label: t.ongletBerger},
+            { key: "ministeres", label: t.ongletMinisteres},
+            { key: "leaders",    label: t.ongletLeaders},
           ].map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-2 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center justify-center gap-1 ${onglet === o.key ? "bg-white text-[#1e1b4b]" : "text-white/70 hover:text-white"}`}>
-              <span>{o.icon}</span><span className="hidden sm:inline">{o.label}</span>
+              className={`flex-1 py-2 px-2 rounded-lg text-[10px] sm:text-sm font-semibold transition whitespace-nowrap flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 ${onglet === o.key ? "bg-white text-[#1e1b4b]" : "text-white/70 hover:text-white"}`}>
+              <span>{o.icon}</span><span className="leading-tight text-center">{o.label}</span>
             </button>
           ))}
         </div>

@@ -1054,139 +1054,136 @@ const leadersParFamille = useMemo(() => {
                   </div>
                 )}
               </div>
-
             </div>
 
-/* ══════════════════════════════════════════
-             ONGLET 3 — LEADERS EN DÉVELOPPEMENT
-          ══════════════════════════════════════════ */
-          ) : onglet === "leaders" ? (
-            <div className="flex flex-col gap-7">
-
-              {/* KPIs */}
-              <div>
-                <SectionTitle icon="🌱">{t.leadersEnDeveloppement}</SectionTitle>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  <KpiCard
-                    colorClass="green"
-                    label={t.totalLeaders}
-                    value={rapports.leadersDeveloppement.length}
-                    sub={totalMembres > 0 ? `${Math.round((rapports.leadersDeveloppement.length / totalMembres) * 100)}% ${t.pctMembres}` : ""}
-                  />
-                  {["potentiel", "croissance", "developpement", "mature"].map((stage) => {
-                    const colorMap = { potentiel: "teal", croissance: "green", developpement: "blue", mature: "purple" };
-                    return (
+              /* ══════════════════════════════════════════
+                 ONGLET 3 — LEADERS EN DÉVELOPPEMENT
+              ══════════════════════════════════════════ */
+              ) : onglet === "leaders" ? (
+                <div className="flex flex-col gap-7">
+              
+                  {/* KPIs */}
+                  <div>
+                    <SectionTitle icon="🌱">{t.leadersEnDeveloppement}</SectionTitle>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                       <KpiCard
-                        key={stage}
-                        colorClass={colorMap[stage]}
-                        label={t.parcoursStages[stage].label}
-                        value={leadersParStage[stage].length}
-                        icon={t.parcoursStages[stage].emoji}
+                        colorClass="green"
+                        label={t.totalLeaders}
+                        value={rapports.leadersDeveloppement.length}
+                        sub={totalMembres > 0 ? `${Math.round((rapports.leadersDeveloppement.length / totalMembres) * 100)}% ${t.pctMembres}` : ""}
                       />
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Répartition par étape — accordéons cliquables */}
-              <div>
-                <SectionTitle icon="📋">{t.sectionClassement}</SectionTitle>
-                <div className="flex flex-col gap-2">
-                  {["potentiel", "croissance", "developpement", "mature", "none"].map((stage) => {
-                    const list = leadersParStage[stage];
-                    if (stage === "none" && list.length === 0) return null;
-
-                    const isOpen = openLeaderStage === stage;
-                    const label = stage === "none" ? t.aucuneEvaluation : t.parcoursStages[stage].label;
-                    const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
-
-                    return (
-                      <div key={stage} className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
-                        <div
-                          onClick={() => setOpenLeaderStage(isOpen ? null : stage)}
-                          className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors"
-                        >
-                          <span className="text-base">{emoji}</span>
-                          <span className="text-sm font-semibold text-white flex-1">{label}</span>
-                          <span className="text-xl font-bold text-white">{list.length}</span>
-                          <svg
-                            className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`}
-                            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-                        {isOpen && (
-                          <div className="px-4 pb-3 border-t border-white/10 pt-2">
-                            {list.length === 0 ? (
-                              <p className="text-sm text-white/40 italic px-1">{t.pasDeLeader}</p>
-                            ) : (
-                              <div className="flex flex-col gap-2">
-                                {list.map((l, idx) => {
-                                  const attach = getLeaderAttachment(l.membre);
-                                  return (
-                                    <ServiteurCard
-                                      key={l.membre.id}
-                                      idx={idx}
-                                      membre={l.membre}
-                                      sousTitre={attach ? `${attach.emoji} ${attach.label}` : undefined}
-                                    />
-                                  );
-                                })}
+                      {["potentiel", "croissance", "developpement", "mature"].map((stage) => {
+                        const colorMap = { potentiel: "teal", croissance: "green", developpement: "blue", mature: "purple" };
+                        return (
+                          <KpiCard
+                            key={stage}
+                            colorClass={colorMap[stage]}
+                            label={t.parcoursStages[stage].label}
+                            value={leadersParStage[stage].length}
+                            icon={t.parcoursStages[stage].emoji}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+              
+                  {/* Répartition par étape — accordéons cliquables */}
+                  <div>
+                    <SectionTitle icon="📋">{t.sectionClassement}</SectionTitle>
+                    <div className="flex flex-col gap-2">
+                      {["potentiel", "croissance", "developpement", "mature", "none"].map((stage) => {
+                        const list = leadersParStage[stage];
+                        if (stage === "none" && list.length === 0) return null;
+              
+                        const isOpen = openLeaderStage === stage;
+                        const label = stage === "none" ? t.aucuneEvaluation : t.parcoursStages[stage].label;
+                        const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
+              
+                        return (
+                          <div key={stage} className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
+                            <div
+                              onClick={() => setOpenLeaderStage(isOpen ? null : stage)}
+                              className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors"
+                            >
+                              <span className="text-base">{emoji}</span>
+                              <span className="text-sm font-semibold text-white flex-1">{label}</span>
+                              <span className="text-xl font-bold text-white">{list.length}</span>
+                              <svg
+                                className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`}
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                            {isOpen && (
+                              <div className="px-4 pb-3 border-t border-white/10 pt-2">
+                                {list.length === 0 ? (
+                                  <p className="text-sm text-white/40 italic px-1">{t.pasDeLeader}</p>
+                                ) : (
+                                  <div className="flex flex-col gap-2">
+                                    {list.map((l, idx) => {
+                                      const attach = getLeaderAttachment(l.membre);
+                                      return (
+                                        <ServiteurCard
+                                          key={l.membre.id}
+                                          idx={idx}
+                                          membre={l.membre}
+                                          sousTitre={attach ? `${attach.emoji} ${attach.label}` : undefined}
+                                        />
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
-                        )}
+                        );
+                      })}
+                    </div>
+                  </div>
+              
+                  {/* Répartition par cellule */}
+                  {cellulesActive && leadersParCellule.length > 0 && (
+                    <div>
+                      <SectionTitle icon="🏠">{t.repartitionParCellule}</SectionTitle>
+                      <div className="flex flex-col gap-2">
+                        {leadersParCellule.map(({ id, nom, count }) => {
+                          const maxC = Math.max(...leadersParCellule.map((x) => x.count), 1);
+                          return (
+                            <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
+                              <span className="text-sm text-white truncate flex-1">
+                                {id === "none" ? "🛐" : "🏠"} {nom}
+                              </span>
+                              <BarreProgression pct={(count / maxC) * 100} color="bg-emerald-400" />
+                              <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    </div>
+                  )}
+              
+                  {/* Répartition par famille */}
+                  {famillesActive && leadersParFamille.length > 0 && (
+                    <div>
+                      <SectionTitle icon="👑">{t.repartitionParFamille}</SectionTitle>
+                      <div className="flex flex-col gap-2">
+                        {leadersParFamille.map(({ id, nom, count }) => {
+                          const maxF = Math.max(...leadersParFamille.map((x) => x.count), 1);
+                          return (
+                            <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
+                              <span className="text-sm text-white truncate flex-1">
+                                {id === "none" ? "🛐" : "👑"} {nom}
+                              </span>
+                              <BarreProgression pct={(count / maxF) * 100} color="bg-purple-400" />
+                              <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}              
                 </div>
-              </div>
-
-            </div>
-
-{/* Répartition par cellule */}
-{cellulesActive && leadersParCellule.length > 0 && (
-  <div>
-    <SectionTitle icon="🏠">{t.repartitionParCellule}</SectionTitle>
-    <div className="flex flex-col gap-2">
-      {leadersParCellule.map(({ id, nom, count }) => {
-        const maxC = Math.max(...leadersParCellule.map((x) => x.count), 1);
-        return (
-          <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
-            <span className="text-sm text-white truncate flex-1">
-              {id === "none" ? "🛐" : "🏠"} {nom}
-            </span>
-            <BarreProgression pct={(count / maxC) * 100} color="bg-emerald-400" />
-            <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
-          </div>
-        );
-      })}
-    </div>
-  </div>
-)}
-
-{/* Répartition par famille */}
-{famillesActive && leadersParFamille.length > 0 && (
-  <div>
-    <SectionTitle icon="👑">{t.repartitionParFamille}</SectionTitle>
-    <div className="flex flex-col gap-2">
-      {leadersParFamille.map(({ id, nom, count }) => {
-        const maxF = Math.max(...leadersParFamille.map((x) => x.count), 1);
-        return (
-          <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
-            <span className="text-sm text-white truncate flex-1">
-              {id === "none" ? "🛐" : "👑"} {nom}
-            </span>
-            <BarreProgression pct={(count / maxF) * 100} color="bg-purple-400" />
-            <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
-          </div>
-        );
-      })}
-    </div>
-  </div>
-)}
-
           /* ══════════════════════════════════════════
              ONGLET 3 — MINISTÈRES
           ══════════════════════════════════════════ */

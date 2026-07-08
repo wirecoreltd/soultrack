@@ -10,6 +10,7 @@ import DetailsEtatConsEvangePopup from "../../components/DetailsEtatConsEvangePo
 import EditMemberCellulePopup from "../../components/EditMemberCellulePopup";
 import DetailsEtatConseillerPopup from "../../components/DetailsEtatConseillerPopup";
 import { useLang } from "../../hooks/useLang";
+import { useFeature } from "../../context/FeaturesContext";
 
 const translations = {
   fr: {
@@ -71,6 +72,23 @@ const translations = {
     // Section titles
     sectionOverview: "Vue d'ensemble",
     sectionPerformance: "Performance par cellule",
+    //leaders
+    tabLeaders: "Leaders",
+ongletLeaders: "Classement par étape",
+totalLeaders: "Total leaders",
+parcoursStages: {
+  potentiel: { emoji: "🌱", label: "Potentiel" },
+  croissance: { emoji: "🌿", label: "Croissance" },
+  developpement: { emoji: "🌳", label: "Développement" },
+  mature: { emoji: "🌲", label: "Mature" },
+},
+aucuneEvaluation: "Sans évaluation",
+pasDeLeader: "Aucun leader",
+rattacheEglise: "Rattaché à l'église",
+repartitionParCellule: "Répartition par cellule",
+repartitionParFamille: "Répartition par famille",
+repartitionParEglise: "Répartition par église",
+totalRattachesEglise: "Rattachés directement à l'église",
     // BlocParCellule
     noData: "Aucune donnée",
     // CarteLigne
@@ -153,6 +171,22 @@ const translations = {
     funnelMinistere: "In ministry",
     sectionOverview: "Overview",
     sectionPerformance: "Performance by cell",
+    tabLeaders: "Leaders",
+ongletLeaders: "Ranking by stage",
+totalLeaders: "Total leaders",
+parcoursStages: {
+  potentiel: { emoji: "🌱", label: "Potential" },
+  croissance: { emoji: "🌿", label: "Growth" },
+  developpement: { emoji: "🌳", label: "Development" },
+  mature: { emoji: "🌲", label: "Mature" },
+},
+aucuneEvaluation: "No evaluation",
+pasDeLeader: "No leaders",
+rattacheEglise: "Attached to church",
+repartitionParCellule: "By cell",
+repartitionParFamille: "By family",
+repartitionParEglise: "By church",
+totalRattachesEglise: "Directly attached to church",
     noData: "No data",
     seeDetails: "See details",
     cellule: "Cell",
@@ -207,9 +241,20 @@ function formatStatut(statut) {
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
-function SectionTitle({ children }) {
-  return <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">{children}</p>;
+function SectionTitle({ children, icon, total, className = "" }) {
+  return (
+    <div className={`flex items-center justify-between mb-3 ${className}`}>
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+        {icon && <span className="text-sm">{icon}</span>}
+        {children}
+      </p>
+      {total !== undefined && (
+        <span className="text-sm font-bold text-white">{total}</span>
+      )}
+    </div>
+  );
 }
+
 function KpiCard({ label, value, sub, accent }) {
   const c = {
     green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400",
@@ -388,6 +433,131 @@ function BlocPiliers({ piliers, cellulesMap, filterCellule, t, open, setOpen }) 
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+    //-------------------------------
+// ─── STAGES CONFIG ──────────────────────────────────────────
+const STAGES_ORDER = ["potentiel", "croissance", "developpement", "mature", "none"];
+const STAGE_COLOR = { potentiel: "teal", croissance: "green", developpement: "blue", mature: "purple", none: "gray" };
+
+// ─── SERVITEUR CARD ─────────────────────────────────────────
+function ServiteurCard({ membre, sousTitre, idx = 0 }) {
+  const ac = AVATAR_COLORS[idx % AVATAR_COLORS.length];
+  const initiales = `${(membre.prenom || "")[0] || ""}${(membre.nom || "")[0] || ""}`.toUpperCase();
+  return (
+    <div className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-white/15 transition-colors">
+      <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0"
+        style={{ background: ac.bg, color: ac.color }}>
+        {initiales}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-white truncate">{membre.prenom} {membre.nom}</p>
+        <p className="text-[11px] text-white/80 truncate">{sousTitre}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── BLOC KPI LEADERS ───────────────────────────────────────
+function BlocLeadersKpi({ leadersDeveloppement, t }) {
+  const counts = { potentiel: 0, croissance: 0, developpement: 0, mature: 0, none: 0 };
+  leadersDeveloppement.forEach(l => { counts[l.etape || "none"]++; });
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <KpiCard label={t.totalLeaders} value={leadersDeveloppement.length} accent="white" />
+      {STAGES_ORDER.filter(s => s !== "none").map(stage => (
+        <KpiCard
+          key={stage}
+          label={t.parcoursStages[stage].label}
+          value={counts[stage]}
+          sub={t.parcoursStages[stage].emoji}
+          accent={STAGE_COLOR[stage]}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── CLASSEMENT PAR ÉTAPE (accordéon) ────────────────────────
+function BlocClassementLeaders({ leadersDeveloppement, openStages, setOpenStages, t }) {
+  const grouped = {};
+  STAGES_ORDER.forEach(s => { grouped[s] = []; });
+  leadersDeveloppement.forEach(l => { grouped[l.etape || "none"].push(l); });
+
+  return (
+    <div className="flex flex-col gap-2">
+      {STAGES_ORDER.map(stage => {
+        const list = grouped[stage];
+        const isOpen = openStages[stage];
+        const label = stage === "none" ? t.aucuneEvaluation : t.parcoursStages[stage].label;
+        const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
+        return (
+          <div key={stage} className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
+            <button onClick={() => setOpenStages(p => ({ ...p, [stage]: !p[stage] }))}
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left">
+              <span className="text-sm font-semibold text-white flex items-center gap-2">
+                <span>{emoji}</span>{label}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-white">{list.length}</span>
+                <svg className={`w-4 h-4 text-white/50 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
+            {isOpen && (
+              <div className="px-4 pb-3 border-t border-white/10 pt-2 flex flex-col gap-2">
+                {list.length === 0 ? (
+                  <p className="text-sm text-white/40 italic px-1">{t.pasDeLeader}</p>
+                ) : (
+                  list.map((l, idx) => (
+                    <ServiteurCard
+                      key={l.id}
+                      idx={idx}
+                      membre={l}
+                      sousTitre={
+                        l.cellule_full ? `🏠 ${l.cellule_full}`
+                        : l.famille_full ? `👑 ${l.famille_full}`
+                        : `🛐 ${t.rattacheEglise}`
+                      }
+                    />
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── RÉPARTITION (cellule / famille) ─────────────────────────
+function BlocRepartitionLeaders({ leadersDeveloppement, groupLabelKey, t }) {
+  const parGroupe = {};
+  leadersDeveloppement.forEach(l => {
+    const key = l[groupLabelKey];
+    if (!key) return;
+    parGroupe[key] = (parGroupe[key] || 0) + 1;
+  });
+  const max = Math.max(...Object.values(parGroupe), 1);
+  const lignes = Object.entries(parGroupe).sort((a, b) => b[1] - a[1]);
+
+  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4 px-4">{t.noData}</p>;
+
+  return (
+    <div className="flex flex-col gap-2 px-4">
+      {lignes.map(([nom, total]) => (
+        <div key={nom} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
+          <p className="text-sm text-white w-36 flex-shrink-0 truncate">{nom}</p>
+          <BarreProgression pct={(total / max) * 100} color="bg-blue-400" />
+          <span className="text-sm font-bold text-white w-6 text-right">{total}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -587,6 +757,12 @@ function EtatCellule() {
   const [cellulesMap, setCellulesMap] = useState({});
   const [openPiliers, setOpenPiliers] = useState(false);
 
+  const [leadersDeveloppement, setLeadersDeveloppement] = useState([]);
+  const [openStages, setOpenStages] = useState({});
+
+  const cellulesActive = useFeature("cellules");
+  const famillesActive = useFeature("familles");
+
   const [kpis, setKpis] = useState({
     totalEvangelises: 0, totalVenus: 0, totalIntegration: 0,
     totalBapteme: 0, totalMinistere: 0, totalRefus: 0,
@@ -746,7 +922,46 @@ function EtatCellule() {
     { key: "kpi", label: t.tabOverview },
     { key: "cellules", label: t.tabCellules },
     { key: "mois", label: t.tabMois },
+    { key: "leaders", label: t.tabLeaders },
   ];
+
+  const fetchLeadersDeveloppement = async () => {
+    if (!userProfile) return;
+    try {
+      const { data: membresData } = await supabase
+        .from("membres_complets")
+        .select("id, nom, prenom, leader_developpement, cellule_id, famille_id, cellule_full, famille_full")
+        .eq("eglise_id", userProfile.eglise_id)
+        .eq("leader_developpement", true);
+
+      const leadersMembres = membresData || [];
+      const leaderIds = leadersMembres.map(m => m.id);
+
+      const evalsMap = {};
+      if (leaderIds.length > 0) {
+        const { data: evalsLeader } = await supabase
+          .from("evaluations_leader")
+          .select("membre_id, parcours_etape, date_action")
+          .in("membre_id", leaderIds)
+          .order("date_action", { ascending: false });
+
+        (evalsLeader || []).forEach(e => {
+          if (!evalsMap[e.membre_id]) evalsMap[e.membre_id] = e.parcours_etape;
+        });
+      }
+
+      setLeadersDeveloppement(
+        leadersMembres.map(m => ({ ...m, etape: evalsMap[m.id] || "none" }))
+      );
+    } catch (err) {
+      console.error("Erreur fetch leaders développement:", err);
+      setLeadersDeveloppement([]);
+    }
+  };
+
+  useEffect(() => {
+    if (userProfile) fetchLeadersDeveloppement();
+  }, [userProfile]);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
@@ -875,8 +1090,67 @@ function EtatCellule() {
           </div>
         ) : onglet === "cellules" ? (
           <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
-        ) : (
+        ) : onglet === "mois" ? (
           <OngletParMois displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
+        ) : (
+          <div className="flex flex-col gap-7">
+            <div>
+              <SectionTitle>{t.leadersEnDeveloppement}</SectionTitle>
+              <BlocLeadersKpi leadersDeveloppement={leadersDeveloppement} t={t} />
+            </div>
+
+            <div>
+              <SectionTitle>{t.ongletLeaders}</SectionTitle>
+              <BlocClassementLeaders
+                leadersDeveloppement={leadersDeveloppement}
+                openStages={openStages}
+                setOpenStages={setOpenStages}
+                t={t}
+              />
+            </div>
+
+            {cellulesActive && (
+              <div>
+                <SectionTitle
+                  total={leadersDeveloppement.filter(l => l.cellule_id).length}
+                  className="px-4"
+                >
+                  {t.repartitionParCellule}
+                </SectionTitle>
+                <BlocRepartitionLeaders
+                  leadersDeveloppement={leadersDeveloppement.filter(l => l.cellule_id)}
+                  groupLabelKey="cellule_full"
+                  t={t}
+                />
+              </div>
+            )}
+
+            {famillesActive && (
+              <div>
+                <SectionTitle
+                  total={leadersDeveloppement.filter(l => l.famille_id).length}
+                  className="px-4"
+                >
+                  {t.repartitionParFamille}
+                </SectionTitle>
+                <BlocRepartitionLeaders
+                  leadersDeveloppement={leadersDeveloppement.filter(l => l.famille_id)}
+                  groupLabelKey="famille_full"
+                  t={t}
+                />
+              </div>
+            )}
+
+            <div>
+              <SectionTitle
+                total={leadersDeveloppement.filter(l => !l.cellule_id && !l.famille_id).length}
+                className="px-4"
+              >
+                {t.repartitionParEglise}
+              </SectionTitle>
+              <p className="text-sm text-white/70 px-4">{t.totalRattachesEglise}</p>
+            </div>
+          </div>
         )}
 
       </div>

@@ -67,6 +67,11 @@ const translations = {
     kpiFamillesActivesSub: "avec ≥1 membre actif",
     kpiPiliers: "Piliers",
     kpiPiliersSub: "Église",
+    leadersTitle: "Leaders en développement",
+    leadersPotentiel: "Potentiel identifié",
+    leadersCroissance: "Leader en croissance",
+    leadersDeveloppement: "Leader en développement",
+    leadersMature: "Leader mature",
     sectionConversions: "Conversions (prière du salut)",
     conversionsSourceEglise: "Âmes accueillies à l'église",
     conversionsSourceEvang: "Âmes rencontrées en évangélisation",
@@ -184,6 +189,12 @@ const translations = {
     kpiFamillesActivesSub: "with ≥1 active member",
     kpiPiliers: "Pillars",
     kpiPiliersSub: "Chruch",
+    kpiPiliersSub: "Chruch",
+    leadersTitle: "Emerging leaders",
+    leadersPotentiel: "Potential identified",
+    leadersCroissance: "Growing leader",
+    leadersDeveloppement: "Developing leader",
+    leadersMature: "Mature leader",
     vsPeriodePrecedente: "vs prev. period",
     repartitionTitle: "M / F / Y Attendance Breakdown",
     hommes: "Men",
@@ -424,6 +435,37 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
   );
 }
 
+// ─── CARTE LEADERS EN DÉVELOPPEMENT ───────────────────────────
+function CarteLeadersDeveloppement({ leadersStats, t }) {
+  if (!leadersStats || leadersStats.total === 0) return null;
+  const { total, potentiel, croissance, developpement, mature } = leadersStats;
+  const stages = [
+    { emoji: "🌱", value: potentiel, label: t.leadersPotentiel, color: "#5eead4" },
+    { emoji: "🌿", value: croissance, label: t.leadersCroissance, color: "#86efac" },
+    { emoji: "🌳", value: developpement, label: t.leadersDeveloppement, color: "#93c5fd" },
+    { emoji: "🌲", value: mature, label: t.leadersMature, color: "#d8b4fe" },
+  ];
+  return (
+    <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-white/65">{t.leadersTitle}</p>
+        <p className="text-2xl font-bold leading-none text-yellow-300">{total}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {stages.map((s) => (
+          <div key={s.label} className="bg-white/5 rounded-xl px-3 py-3 text-center">
+            <p className="text-xl mb-0.5">{s.emoji}</p>
+            <p className="text-lg font-bold leading-none" style={{ color: s.color }}>
+              {s.value}
+            </p>
+            <p className="text-[11px] text-white/65 mt-1">{s.label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── BLOC VUE D'ENSEMBLE ─────────────────────────────────────
 // rootId est passé pour exclure l'église du superviseur du KPI "Supervised churches"
 // tauxPresenceMoyen est calculé en amont (dans fetchStats) à partir de la table `presences`
@@ -438,6 +480,7 @@ function BlocVueEnsemble({
   totalFamillesActives,
   totalPiliers,
   famillesFeatureActive,
+  leadersStats,
   t,
 }) {
   const totaux = allEglises.reduce(
@@ -591,6 +634,8 @@ function BlocVueEnsemble({
     </div>
   </div>
 </div>
+          
+<CarteLeadersDeveloppement leadersStats={leadersStats} t={t} />
 
       {/* Répartition H/F/J */}
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
@@ -827,6 +872,7 @@ function StatGlobalPage() {
   const [totalFamillesActives, setTotalFamillesActives] = useState(0);
   const [totalPiliers, setTotalPiliers] = useState(0);
   const [famillesFeatureActive, setFamillesFeatureActive] = useState(false);
+  const [leadersStats, setLeadersStats] = useState(null);
 
   useEffect(() => {
     fetchStats(false);
@@ -1149,6 +1195,37 @@ const getConversions = async (egliseIds, debut, fin) => {
         ]);
       setConversionsDetail(conversionsData);
 
+        // ── Leaders en développement (agrégé sur le réseau) ──
+        const { data: leadersMembresData } = await supabase
+          .from("membres_complets")
+          .select("id, eglise_id")
+          .in("eglise_id", egliseIds)
+          .eq("leader_developpement", true);
+        
+        let leadersStatsValue = { total: 0, potentiel: 0, croissance: 0, developpement: 0, mature: 0 };
+        if (leadersMembresData?.length) {
+          const leaderIds = leadersMembresData.map((m) => m.id);
+          const { data: evalsLeaderData } = await supabase
+            .from("evaluations_leader")
+            .select("membre_id, parcours_etape, date_action")
+            .in("membre_id", leaderIds)
+            .order("date_action", { ascending: false });
+        
+          const etapeMap = {};
+          (evalsLeaderData || []).forEach((e) => {
+            if (!etapeMap[e.membre_id]) etapeMap[e.membre_id] = e.parcours_etape || null;
+          });
+        
+          const counts = { potentiel: 0, croissance: 0, developpement: 0, mature: 0 };
+          leadersMembresData.forEach((m) => {
+            const etape = etapeMap[m.id];
+            if (etape && counts[etape] !== undefined) counts[etape]++;
+          });
+        
+          leadersStatsValue = { total: leadersMembresData.length, ...counts };
+        }
+        setLeadersStats(leadersStatsValue);
+
       // ── Taux de présence réel : basé sur la table `presences` ──
       // (une ligne par membre par session de culte, avec statut "present"/"absent")
       const { data: sessionsData } = await supabase
@@ -1280,6 +1357,7 @@ const getConversions = async (egliseIds, debut, fin) => {
       setPrevTotaux(null);
       setTauxPresenceMoyen(0);
       setConversionsDetail(null);
+      setLeadersStats(null);
       setHasData(false);
     }
     setLoading(false);
@@ -1461,6 +1539,7 @@ const getConversions = async (egliseIds, debut, fin) => {
             totalFamillesActives={totalFamillesActives}
             totalPiliers={totalPiliers}
             famillesFeatureActive={famillesFeatureActive}
+            leadersStats={leadersStats}
             t={t}
           />
           </div>

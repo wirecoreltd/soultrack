@@ -868,7 +868,7 @@ function StatGlobalPage() {
   const [totalPiliers, setTotalPiliers] = useState(0);
   const [famillesFeatureActive, setFamillesFeatureActive] = useState(false);
   const [leadersStats, setLeadersStats] = useState(null);
-  const [leadersStats, setLeadersStats] = useState(null);
+  
 
   useEffect(() => {
     fetchStats(false);
@@ -1221,38 +1221,7 @@ const getConversions = async (egliseIds, debut, fin) => {
         
           leadersStatsValue = { total: leadersMembresData.length, ...counts };
         }
-        setLeadersStats(leadersStatsValue);
-
-        // ── Leaders en développement (agrégé sur le réseau) ──
-        const { data: leadersMembresData } = await supabase
-          .from("membres_complets")
-          .select("id, eglise_id")
-          .in("eglise_id", egliseIds)
-          .eq("leader_developpement", true);
-        
-        let leadersStatsValue = { total: 0, potentiel: 0, croissance: 0, developpement: 0, mature: 0 };
-        if (leadersMembresData?.length) {
-          const leaderIds = leadersMembresData.map((m) => m.id);
-          const { data: evalsLeaderData } = await supabase
-            .from("evaluations_leader")
-            .select("membre_id, parcours_etape, date_action")
-            .in("membre_id", leaderIds)
-            .order("date_action", { ascending: false });
-        
-          const etapeMap = {};
-          (evalsLeaderData || []).forEach((e) => {
-            if (!etapeMap[e.membre_id]) etapeMap[e.membre_id] = e.parcours_etape || null;
-          });
-        
-          const counts = { potentiel: 0, croissance: 0, developpement: 0, mature: 0 };
-          leadersMembresData.forEach((m) => {
-            const etape = etapeMap[m.id];
-            if (etape && counts[etape] !== undefined) counts[etape]++;
-          });
-        
-          leadersStatsValue = { total: leadersMembresData.length, ...counts };
-        }
-        setLeadersStats(leadersStatsValue);
+        setLeadersStats(leadersStatsValue);       
 
       // ── Taux de présence réel : basé sur la table `presences` ──
       // (une ligne par membre par session de culte, avec statut "present"/"absent")

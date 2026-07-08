@@ -85,11 +85,8 @@ const translations = {
     },
     aucuneEvaluation: "Sans évaluation",
     pasDeLeader: "Aucun leader",
-    rattacheEglise: "Rattaché à l'église",
+    sansCellule: "Sans cellule",
     repartitionParCellule: "Répartition par cellule",
-    repartitionParFamille: "Répartition par famille",
-    repartitionParEglise: "Répartition par église",
-    totalRattachesEglise: "Rattachés directement à l'église",
     // BlocParCellule
     noData: "Aucune donnée",
     // CarteLigne
@@ -184,11 +181,8 @@ const translations = {
     },
     aucuneEvaluation: "No evaluation",
     pasDeLeader: "No leaders",
-    rattacheEglise: "Attached to church",
+    sansCellule: "No cell group",
     repartitionParCellule: "By cell",
-    repartitionParFamille: "By family",
-    repartitionParEglise: "By church",
-    totalRattachesEglise: "Directly attached to church",
     noData: "No data",
     seeDetails: "See details",
     cellule: "Cell",
@@ -992,20 +986,11 @@ function EtatCellule() {
     if (userProfile) fetchLeadersDeveloppement();
   }, [userProfile]);
 
-  // ─── Leaders en développement — attachement (cellule > famille > église) ───
+  // ─── Leaders en développement — attachement (uniquement cellule sur cette page) ───
   const getLeaderAttachment = (membre) => {
-    if (cellulesActive && membre.cellule_id) {
-      const c = cellules.find(c => c.id === membre.cellule_id);
-      return { emoji: "🏠", label: c?.cellule_full || "—" };
-    }
-    if (famillesActive && membre.famille_id) {
-      const f = familles.find(f => f.id === membre.famille_id);
-      return { emoji: "👑", label: f?.famille_full || "—" };
-    }
-    if (cellulesActive || famillesActive) {
-      return { emoji: "🛐", label: t.rattacheEglise };
-    }
-    return null;
+    if (!membre.cellule_id) return { emoji: "🏠", label: t.sansCellule };
+    const c = cellules.find(c => c.id === membre.cellule_id);
+    return { emoji: "🏠", label: c?.cellule_full || "—" };
   };
 
   const hasData = allReports.length > 0;
@@ -1155,38 +1140,6 @@ function EtatCellule() {
                   labelKey="cellule_full"
                   t={t}
                 />
-              </div>
-            )}
-
-            {famillesActive && (
-              <div>
-                <SectionTitle
-                  icon="👑"
-                  total={leadersDeveloppement.filter(l => l.membre.famille_id).length}
-                  className="px-4"
-                >
-                  {t.repartitionParFamille}
-                </SectionTitle>
-                <BlocRepartitionLeaders
-                  leadersDeveloppement={leadersDeveloppement.filter(l => l.membre.famille_id)}
-                  refList={familles}
-                  idKey="famille_id"
-                  labelKey="famille_full"
-                  t={t}
-                />
-              </div>
-            )}
-
-            {(cellulesActive || famillesActive) && (
-              <div>
-                <SectionTitle
-                  icon="🛐"
-                  total={leadersDeveloppement.filter(l => !l.membre.cellule_id && !l.membre.famille_id).length}
-                  className="px-4"
-                >
-                  {t.repartitionParEglise}
-                </SectionTitle>
-                <p className="text-sm text-white/70 px-4">{t.totalRattachesEglise}</p>
               </div>
             )}
           </div>

@@ -10,7 +10,7 @@ import DetailsEtatConsEvangePopup from "../../components/DetailsEtatConsEvangePo
 import EditMemberCellulePopup from "../../components/EditMemberCellulePopup";
 import DetailsEtatConseillerPopup from "../../components/DetailsEtatConseillerPopup";
 import { useLang } from "../../hooks/useLang";
-import { useFeature } from "../../context/FeaturesContext";
+import { useFeature } from "../../components/FeaturesContext";
 
 const translations = {
   fr: {

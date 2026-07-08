@@ -6,6 +6,7 @@ import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useLang } from "../../hooks/useLang";
+import { useFeature } from "../../components/FeaturesContext";
 
 // ─── TRANSLATIONS ───────────────────────────────────────────────
 const translations = {
@@ -81,9 +82,13 @@ const translations = {
       developpement: { emoji: "🌳", label: "Leader en développement" },
       mature:        { emoji: "🌲", label: "Leader mature" },
     },
-    aucuneEvaluation: "Sans évaluation",
+    aaucuneEvaluation: "Sans évaluation",
     pasDeLeader: "Aucun leader dans cette catégorie.",
-    derniereEvaluation: "Dernière évaluation :",
+    rattacheEglise: "Rattaché directement à l'église",
+    sansCellule: "Sans cellule",
+    sansFamille: "Sans famille",
+    repartitionParCellule: "Répartition des leaders par cellule",
+    repartitionParFamille: "Répartition des leaders par famille",
   },
   en: {
     title: "Report", titleAccent: "Ministry",
@@ -150,7 +155,11 @@ const translations = {
     },
     aucuneEvaluation: "No evaluation",
     pasDeLeader: "No leader in this category.",
-    derniereEvaluation: "Last evaluation:",
+    rattacheEglise: "Directly attached to the church",
+    sansCellule: "No cell group",
+    sansFamille: "No family",
+    repartitionParCellule: "Leaders distribution by cell group",
+    repartitionParFamille: "Leaders distribution by family",
   },
 };
 
@@ -309,6 +318,12 @@ function RapportMinistere() {
   const { lang } = useLang();
   const t = translations[lang];
 
+  const cellulesActive = useFeature("cellules");
+  const famillesActive = useFeature("familles");
+
+  const [cellules, setCellules] = useState([]);
+  const [familles, setFamilles] = useState([]);
+
   const [egliseId, setEgliseId]     = useState(null);
   const [loading, setLoading]       = useState(false);
   const [hasData, setHasData]       = useState(false);
@@ -342,6 +357,30 @@ function RapportMinistere() {
     loadUser();
   }, []);
 
+  // ─── CHARGEMENT CELLULES / FAMILLES (selon features actives) ──
+useEffect(() => {
+  if (!egliseId) return;
+
+  const loadCellulesFamilles = async () => {
+    if (cellulesActive) {
+      const { data } = await supabase
+        .from("cellules")
+        .select("id, cellule_full")
+        .eq("eglise_id", egliseId);
+      setCellules(data || []);
+    }
+    if (famillesActive) {
+      const { data } = await supabase
+        .from("familles")
+        .select("id, famille_full")
+        .eq("eglise_id", egliseId);
+      setFamilles(data || []);
+    }
+  };
+
+  loadCellulesFamilles();
+}, [egliseId, cellulesActive, famillesActive]);
+  
   // ─── FETCH RAPPORT ───────────────────────────────────────────
   const fetchRapport = async (overrideModePerso = null) => {
     if (!egliseId) return;
@@ -352,9 +391,9 @@ function RapportMinistere() {
     try {
       // Membres
       const { data: membresData } = await supabase
-        .from("membres_complets")
-        .select("id, etat_contact, star, pilier, sexe, prenom, nom, leader_developpement")
-        .eq("eglise_id", egliseId);
+  .from("membres_complets")
+  .select("id, etat_contact, star, pilier, sexe, prenom, nom, leader_developpement, cellule_id, famille_id")
+  .eq("eglise_id", egliseId);
       
       const piliers = (membresData || []).filter(m => m.pilier === true);
       
@@ -533,6 +572,42 @@ function RapportMinistere() {
   });
   return groups;
 }, [rapports.leadersDeveloppement]);
+
+  const leadersParCellule = useMemo(() => {
+  if (!cellulesActive) return [];
+  const map = {};
+  rapports.leadersDeveloppement.forEach((l) => {
+    const cid = l.membre.cellule_id;
+    const key = cid || "none";
+    if (!map[key]) map[key] = 0;
+    map[key]++;
+  });
+  return Object.entries(map)
+    .map(([id, count]) => ({
+      id,
+      nom: id === "none" ? t.sansCellule : (cellules.find((c) => c.id === id)?.cellule_full || "—"),
+      count,
+    }))
+    .sort((a, b) => b.count - a.count);
+}, [rapports.leadersDeveloppement, cellules, cellulesActive, t]);
+
+const leadersParFamille = useMemo(() => {
+  if (!famillesActive) return [];
+  const map = {};
+  rapports.leadersDeveloppement.forEach((l) => {
+    const fid = l.membre.famille_id;
+    const key = fid || "none";
+    if (!map[key]) map[key] = 0;
+    map[key]++;
+  });
+  return Object.entries(map)
+    .map(([id, count]) => ({
+      id,
+      nom: id === "none" ? t.sansFamille : (familles.find((f) => f.id === id)?.famille_full || "—"),
+      count,
+    }))
+    .sort((a, b) => b.count - a.count);
+}, [rapports.leadersDeveloppement, familles, famillesActive, t]);
   
 
   const alertes = useMemo(() => {
@@ -569,6 +644,21 @@ function RapportMinistere() {
     const dt = new Date(d);
     return dt.toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB", { day: "numeric", month: "short" });
   };
+
+  const getLeaderAttachment = (membre) => {
+  if (cellulesActive && membre.cellule_id) {
+    const c = cellules.find((c) => c.id === membre.cellule_id);
+    return { emoji: "🏠", label: c?.cellule_full || "—" };
+  }
+  if (famillesActive && membre.famille_id) {
+    const f = familles.find((f) => f.id === membre.famille_id);
+    return { emoji: "👑", label: f?.famille_full || "—" };
+  }
+  if (cellulesActive || famillesActive) {
+    return { emoji: "🛐", label: t.rattacheEglise };
+  }
+  return null; // aucune feature active → pas de ligne affichée
+};
 
   const actionsBerger = (type) => {
     if (type === "inactif") return [{ label: t.actionAppeler }, { label: t.actionEncourager }];
@@ -1032,18 +1122,17 @@ function RapportMinistere() {
                               <p className="text-sm text-white/40 italic px-1">{t.pasDeLeader}</p>
                             ) : (
                               <div className="flex flex-col gap-2">
-                                {list.map((l, idx) => (
-                                  <ServiteurCard
-                                    key={l.membre.id}
-                                    idx={idx}
-                                    membre={l.membre}
-                                    sousTitre={
-                                      l.derniereDate
-                                        ? `${t.derniereEvaluation} ${formatDate(l.derniereDate)}`
-                                        : t.aucuneEvaluation
-                                    }
-                                  />
-                                ))}
+                                {list.map((l, idx) => {
+                                  const attach = getLeaderAttachment(l.membre);
+                                  return (
+                                    <ServiteurCard
+                                      key={l.membre.id}
+                                      idx={idx}
+                                      membre={l.membre}
+                                      sousTitre={attach ? `${attach.emoji} ${attach.label}` : undefined}
+                                    />
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
@@ -1055,6 +1144,48 @@ function RapportMinistere() {
               </div>
 
             </div>
+
+{/* Répartition par cellule */}
+{cellulesActive && leadersParCellule.length > 0 && (
+  <div>
+    <SectionTitle icon="🏠">{t.repartitionParCellule}</SectionTitle>
+    <div className="flex flex-col gap-2">
+      {leadersParCellule.map(({ id, nom, count }) => {
+        const maxC = Math.max(...leadersParCellule.map((x) => x.count), 1);
+        return (
+          <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
+            <span className="text-sm text-white truncate flex-1">
+              {id === "none" ? "🛐" : "🏠"} {nom}
+            </span>
+            <BarreProgression pct={(count / maxC) * 100} color="bg-emerald-400" />
+            <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
+
+{/* Répartition par famille */}
+{famillesActive && leadersParFamille.length > 0 && (
+  <div>
+    <SectionTitle icon="👑">{t.repartitionParFamille}</SectionTitle>
+    <div className="flex flex-col gap-2">
+      {leadersParFamille.map(({ id, nom, count }) => {
+        const maxF = Math.max(...leadersParFamille.map((x) => x.count), 1);
+        return (
+          <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
+            <span className="text-sm text-white truncate flex-1">
+              {id === "none" ? "🛐" : "👑"} {nom}
+            </span>
+            <BarreProgression pct={(count / maxF) * 100} color="bg-purple-400" />
+            <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
 
           /* ══════════════════════════════════════════
              ONGLET 3 — MINISTÈRES

@@ -23,7 +23,7 @@ const translations = {
     subtitle4: ", puis sont orientées vers les cellules pour grandir.",
     subtitle5: "Chaque donnée représente une vie précieuse",
     subtitle6: ", chaque progression témoigne de",
-    subtitle7: "l'œuvre de Dieu",    
+    subtitle7: "l'œuvre de Dieu",
     // Filtres
     quickPeriod: "Période rapide",
     dateRange: "Tranche de dates",
@@ -72,23 +72,24 @@ const translations = {
     // Section titles
     sectionOverview: "Vue d'ensemble",
     sectionPerformance: "Performance par cellule",
-    //leaders
+    // Leaders en développement
     tabLeaders: "Leaders",
-ongletLeaders: "Classement par étape",
-totalLeaders: "Total leaders",
-parcoursStages: {
-  potentiel: { emoji: "🌱", label: "Potentiel" },
-  croissance: { emoji: "🌿", label: "Croissance" },
-  developpement: { emoji: "🌳", label: "Développement" },
-  mature: { emoji: "🌲", label: "Mature" },
-},
-aucuneEvaluation: "Sans évaluation",
-pasDeLeader: "Aucun leader",
-rattacheEglise: "Rattaché à l'église",
-repartitionParCellule: "Répartition par cellule",
-repartitionParFamille: "Répartition par famille",
-repartitionParEglise: "Répartition par église",
-totalRattachesEglise: "Rattachés directement à l'église",
+    ongletLeaders: "Classement par étape",
+    leadersEnDeveloppement: "Leaders en développement",
+    totalLeaders: "Total leaders",
+    parcoursStages: {
+      potentiel: { emoji: "🌱", label: "Potentiel" },
+      croissance: { emoji: "🌿", label: "Croissance" },
+      developpement: { emoji: "🌳", label: "Développement" },
+      mature: { emoji: "🌲", label: "Mature" },
+    },
+    aucuneEvaluation: "Sans évaluation",
+    pasDeLeader: "Aucun leader",
+    rattacheEglise: "Rattaché à l'église",
+    repartitionParCellule: "Répartition par cellule",
+    repartitionParFamille: "Répartition par famille",
+    repartitionParEglise: "Répartition par église",
+    totalRattachesEglise: "Rattachés directement à l'église",
     // BlocParCellule
     noData: "Aucune donnée",
     // CarteLigne
@@ -172,21 +173,22 @@ totalRattachesEglise: "Rattachés directement à l'église",
     sectionOverview: "Overview",
     sectionPerformance: "Performance by cell",
     tabLeaders: "Leaders",
-ongletLeaders: "Ranking by stage",
-totalLeaders: "Total leaders",
-parcoursStages: {
-  potentiel: { emoji: "🌱", label: "Potential" },
-  croissance: { emoji: "🌿", label: "Growth" },
-  developpement: { emoji: "🌳", label: "Development" },
-  mature: { emoji: "🌲", label: "Mature" },
-},
-aucuneEvaluation: "No evaluation",
-pasDeLeader: "No leaders",
-rattacheEglise: "Attached to church",
-repartitionParCellule: "By cell",
-repartitionParFamille: "By family",
-repartitionParEglise: "By church",
-totalRattachesEglise: "Directly attached to church",
+    ongletLeaders: "Ranking by stage",
+    leadersEnDeveloppement: "Development leaders",
+    totalLeaders: "Total leaders",
+    parcoursStages: {
+      potentiel: { emoji: "🌱", label: "Potential" },
+      croissance: { emoji: "🌿", label: "Growth" },
+      developpement: { emoji: "🌳", label: "Development" },
+      mature: { emoji: "🌲", label: "Mature" },
+    },
+    aucuneEvaluation: "No evaluation",
+    pasDeLeader: "No leaders",
+    rattacheEglise: "Attached to church",
+    repartitionParCellule: "By cell",
+    repartitionParFamille: "By family",
+    repartitionParEglise: "By church",
+    totalRattachesEglise: "Directly attached to church",
     noData: "No data",
     seeDetails: "See details",
     cellule: "Cell",
@@ -437,7 +439,6 @@ function BlocPiliers({ piliers, cellulesMap, filterCellule, t, open, setOpen }) 
   );
 }
 
-    //-------------------------------
 // ─── STAGES CONFIG ──────────────────────────────────────────
 const STAGES_ORDER = ["potentiel", "croissance", "developpement", "mature", "none"];
 const STAGE_COLOR = { potentiel: "teal", croissance: "green", developpement: "blue", mature: "purple", none: "gray" };
@@ -482,7 +483,7 @@ function BlocLeadersKpi({ leadersDeveloppement, t }) {
 }
 
 // ─── CLASSEMENT PAR ÉTAPE (accordéon) ────────────────────────
-function BlocClassementLeaders({ leadersDeveloppement, openStages, setOpenStages, t }) {
+function BlocClassementLeaders({ leadersDeveloppement, openStages, setOpenStages, getAttachment, t }) {
   const grouped = {};
   STAGES_ORDER.forEach(s => { grouped[s] = []; });
   leadersDeveloppement.forEach(l => { grouped[l.etape || "none"].push(l); });
@@ -514,18 +515,17 @@ function BlocClassementLeaders({ leadersDeveloppement, openStages, setOpenStages
                 {list.length === 0 ? (
                   <p className="text-sm text-white/40 italic px-1">{t.pasDeLeader}</p>
                 ) : (
-                  list.map((l, idx) => (
-                    <ServiteurCard
-                      key={l.id}
-                      idx={idx}
-                      membre={l}
-                      sousTitre={
-                        l.cellule_full ? `🏠 ${l.cellule_full}`
-                        : l.famille_full ? `👑 ${l.famille_full}`
-                        : `🛐 ${t.rattacheEglise}`
-                      }
-                    />
-                  ))
+                  list.map((l, idx) => {
+                    const attach = getAttachment(l.membre);
+                    return (
+                      <ServiteurCard
+                        key={l.membre.id}
+                        idx={idx}
+                        membre={l.membre}
+                        sousTitre={attach ? `${attach.emoji} ${attach.label}` : undefined}
+                      />
+                    );
+                  })
                 )}
               </div>
             )}
@@ -537,25 +537,31 @@ function BlocClassementLeaders({ leadersDeveloppement, openStages, setOpenStages
 }
 
 // ─── RÉPARTITION (cellule / famille) ─────────────────────────
-function BlocRepartitionLeaders({ leadersDeveloppement, groupLabelKey, t }) {
-  const parGroupe = {};
+function BlocRepartitionLeaders({ leadersDeveloppement, refList, idKey, labelKey, t }) {
+  const map = {};
   leadersDeveloppement.forEach(l => {
-    const key = l[groupLabelKey];
-    if (!key) return;
-    parGroupe[key] = (parGroupe[key] || 0) + 1;
+    const fid = l.membre[idKey];
+    if (!fid) return;
+    map[fid] = (map[fid] || 0) + 1;
   });
-  const max = Math.max(...Object.values(parGroupe), 1);
-  const lignes = Object.entries(parGroupe).sort((a, b) => b[1] - a[1]);
+  const lignes = Object.entries(map)
+    .map(([id, count]) => ({
+      id,
+      nom: refList.find(x => x.id === id)?.[labelKey] || "—",
+      count,
+    }))
+    .sort((a, b) => b.count - a.count);
 
   if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4 px-4">{t.noData}</p>;
+  const max = Math.max(...lignes.map(l => l.count), 1);
 
   return (
     <div className="flex flex-col gap-2 px-4">
-      {lignes.map(([nom, total]) => (
-        <div key={nom} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
+      {lignes.map(({ id, nom, count }) => (
+        <div key={id} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
           <p className="text-sm text-white w-36 flex-shrink-0 truncate">{nom}</p>
-          <BarreProgression pct={(total / max) * 100} color="bg-blue-400" />
-          <span className="text-sm font-bold text-white w-6 text-right">{total}</span>
+          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" />
+          <span className="text-sm font-bold text-white w-6 text-right">{count}</span>
         </div>
       ))}
     </div>
@@ -757,8 +763,11 @@ function EtatCellule() {
   const [cellulesMap, setCellulesMap] = useState({});
   const [openPiliers, setOpenPiliers] = useState(false);
 
+  // ── Leaders en développement ──
   const [leadersDeveloppement, setLeadersDeveloppement] = useState([]);
   const [openStages, setOpenStages] = useState({});
+  const [cellules, setCellules] = useState([]);
+  const [familles, setFamilles] = useState([]);
 
   const cellulesActive = useFeature("cellules");
   const famillesActive = useFeature("familles");
@@ -769,6 +778,7 @@ function EtatCellule() {
     totalEncours: 0, totalAttente: 0,
   });
 
+  // ─── Utilisateur ───
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -779,103 +789,126 @@ function EtatCellule() {
     fetchProfile();
   }, []);
 
-  const fetchReports = async (overrideModePerso = null) => {
-  if (!userProfile) return;
-  setLoading(true);
-  const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
-
-  const isAdmin        = userProfile.roles?.includes("Administrateur") || userProfile.roles?.includes("Superadmin");
-  const isSuperviseur  = userProfile.roles?.includes("SuperviseurCellule");
-  const isResponsable  = userProfile.roles?.includes("ResponsableCellule");
-
-  let scopeCelluleIds = null; // null = pas de restriction (admin/superviseur)
-
-  try {
-    let query = supabase
-      .from("vue_flow_personnes")
-      .select("*")
-      .eq("eglise_id", userProfile.eglise_id)
-      .order("date_depart", { ascending: false });
-
-    if (isAdmin) {
-      // pas de filtre
-    } else if (isSuperviseur) {
-      // pas de filtre
-    } else if (isResponsable) {
-      const { data: mesCellules } = await supabase
-        .from("cellules").select("id")
-        .eq("responsable_id", userProfile.id)
-        .eq("eglise_id", userProfile.eglise_id);
-      const mesIds = (mesCellules || []).map(c => c.id);
-
-      const { data: filles } = await supabase
-        .from("cellules").select("id")
-        .eq("cellule_mere_id", userProfile.id)
-        .eq("eglise_id", userProfile.eglise_id);
-      const fillesIds = (filles || []).map(c => c.id);
-
-      scopeCelluleIds = [...new Set([...mesIds, ...fillesIds])];
-
-      if (scopeCelluleIds.length > 0) {
-        query = query.in("cellule_id", scopeCelluleIds);
-      } else {
-        query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
+  // ─── Cellules / Familles (pour affichage des noms des leaders) ───
+  useEffect(() => {
+    if (!userProfile) return;
+    const loadCellulesFamilles = async () => {
+      if (cellulesActive) {
+        const { data } = await supabase
+          .from("cellules")
+          .select("id, cellule_full")
+          .eq("eglise_id", userProfile.eglise_id);
+        setCellules(data || []);
       }
-    } else {
-      setReports([]); setAllReports([]); setPiliers([]);
-      setLoading(false);
-      return;
-    }
+      if (famillesActive) {
+        const { data } = await supabase
+          .from("familles")
+          .select("id, famille_full")
+          .eq("eglise_id", userProfile.eglise_id);
+        setFamilles(data || []);
+      }
+    };
+    loadCellulesFamilles();
+  }, [userProfile, cellulesActive, famillesActive]);
 
-    const { data, error } = await query;
-    if (error) throw error;
+  // ─── Rapports (évangélisation / cellules) ───
+  const fetchReports = async (overrideModePerso = null) => {
+    if (!userProfile) return;
+    setLoading(true);
+    const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
 
-    let filtered = data || [];
-    if (isPerso) {
-      if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
-      if (filterFin)   filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
-    } else {
-      const depuis = new Date();
-      depuis.setDate(depuis.getDate() - Number(filtrePeriode));
-      filtered = filtered.filter(r => new Date(r.date_depart) >= depuis);
-    }
+    const isAdmin        = userProfile.roles?.includes("Administrateur") || userProfile.roles?.includes("Superadmin");
+    const isSuperviseur  = userProfile.roles?.includes("SuperviseurCellule");
+    const isResponsable  = userProfile.roles?.includes("ResponsableCellule");
 
-    setAllReports(filtered);
-    setReports(filtered);
-    setAvailableCellules([...new Set(filtered.map(r => r.cellule_full).filter(Boolean))].sort());
-    setFilterCellule("");
-    updateKpis(filtered);
+    let scopeCelluleIds = null; // null = pas de restriction (admin/superviseur)
 
-    // ── Piliers (indépendant de la période, état actuel) ──  
+    try {
+      let query = supabase
+        .from("vue_flow_personnes")
+        .select("*")
+        .eq("eglise_id", userProfile.eglise_id)
+        .order("date_depart", { ascending: false });
+
+      if (isAdmin) {
+        // pas de filtre
+      } else if (isSuperviseur) {
+        // pas de filtre
+      } else if (isResponsable) {
+        const { data: mesCellules } = await supabase
+          .from("cellules").select("id")
+          .eq("responsable_id", userProfile.id)
+          .eq("eglise_id", userProfile.eglise_id);
+        const mesIds = (mesCellules || []).map(c => c.id);
+
+        const { data: filles } = await supabase
+          .from("cellules").select("id")
+          .eq("cellule_mere_id", userProfile.id)
+          .eq("eglise_id", userProfile.eglise_id);
+        const fillesIds = (filles || []).map(c => c.id);
+
+        scopeCelluleIds = [...new Set([...mesIds, ...fillesIds])];
+
+        if (scopeCelluleIds.length > 0) {
+          query = query.in("cellule_id", scopeCelluleIds);
+        } else {
+          query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
+        }
+      } else {
+        setReports([]); setAllReports([]); setPiliers([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      let filtered = data || [];
+      if (isPerso) {
+        if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
+        if (filterFin)   filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
+      } else {
+        const depuis = new Date();
+        depuis.setDate(depuis.getDate() - Number(filtrePeriode));
+        filtered = filtered.filter(r => new Date(r.date_depart) >= depuis);
+      }
+
+      setAllReports(filtered);
+      setReports(filtered);
+      setAvailableCellules([...new Set(filtered.map(r => r.cellule_full).filter(Boolean))].sort());
+      setFilterCellule("");
+      updateKpis(filtered);
+
+      // ── Piliers (indépendant de la période, état actuel) ──
       let pilierQuery = supabase
         .from("membres_complets")
         .select("id, nom, prenom, cellule_id")
         .eq("eglise_id", userProfile.eglise_id)
         .eq("pilier", true)
         .not("cellule_id", "is", null); // ← uniquement les piliers rattachés à une cellule
-      
+
       if (scopeCelluleIds !== null) {
         if (scopeCelluleIds.length > 0) pilierQuery = pilierQuery.in("cellule_id", scopeCelluleIds);
         else pilierQuery = pilierQuery.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
       }
 
-    const [{ data: pilierData }, { data: cellulesData }] = await Promise.all([
-      pilierQuery,
-      supabase.from("cellules").select("id, nom").eq("eglise_id", userProfile.eglise_id),
-    ]);
+      const [{ data: pilierData }, { data: cellulesData }] = await Promise.all([
+        pilierQuery,
+        supabase.from("cellules").select("id, nom").eq("eglise_id", userProfile.eglise_id),
+      ]);
 
-    const cMap = {};
-    (cellulesData || []).forEach(c => { cMap[c.id] = c.nom; });
-    setCellulesMap(cMap);
-    setPiliers(pilierData || []);
+      const cMap = {};
+      (cellulesData || []).forEach(c => { cMap[c.id] = c.nom; });
+      setCellulesMap(cMap);
+      setPiliers(pilierData || []);
 
-  } catch (err) {
-    console.error("Erreur fetch:", err);
-    setReports([]); setAllReports([]); setPiliers([]);
-  }
+    } catch (err) {
+      console.error("Erreur fetch:", err);
+      setReports([]); setAllReports([]); setPiliers([]);
+    }
 
-  setLoading(false);
-};
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (userProfile && !modePerso) fetchReports(false);
@@ -915,24 +948,17 @@ function EtatCellule() {
     setSelectedEvangelise(row);
   };
 
-  const hasData = allReports.length > 0;
-  const totalAmes = kpis.totalEvangelises + kpis.totalVenus;
-
-  const onglets = [
-    { key: "kpi", label: t.tabOverview },
-    { key: "cellules", label: t.tabCellules },
-    { key: "mois", label: t.tabMois },
-    { key: "leaders", label: t.tabLeaders },
-  ];
-
+  // ─── Leaders en développement — fetch ───
   const fetchLeadersDeveloppement = async () => {
     if (!userProfile) return;
     try {
-      const { data: membresData } = await supabase
+      const { data: membresData, error } = await supabase
         .from("membres_complets")
-        .select("id, nom, prenom, leader_developpement, cellule_id, famille_id, cellule_full, famille_full")
+        .select("id, nom, prenom, leader_developpement, cellule_id, famille_id")
         .eq("eglise_id", userProfile.eglise_id)
         .eq("leader_developpement", true);
+
+      if (error) throw error;
 
       const leadersMembres = membresData || [];
       const leaderIds = leadersMembres.map(m => m.id);
@@ -951,7 +977,10 @@ function EtatCellule() {
       }
 
       setLeadersDeveloppement(
-        leadersMembres.map(m => ({ ...m, etape: evalsMap[m.id] || "none" }))
+        leadersMembres.map(m => ({
+          membre: m,
+          etape: evalsMap[m.id] || null,
+        }))
       );
     } catch (err) {
       console.error("Erreur fetch leaders développement:", err);
@@ -962,6 +991,32 @@ function EtatCellule() {
   useEffect(() => {
     if (userProfile) fetchLeadersDeveloppement();
   }, [userProfile]);
+
+  // ─── Leaders en développement — attachement (cellule > famille > église) ───
+  const getLeaderAttachment = (membre) => {
+    if (cellulesActive && membre.cellule_id) {
+      const c = cellules.find(c => c.id === membre.cellule_id);
+      return { emoji: "🏠", label: c?.cellule_full || "—" };
+    }
+    if (famillesActive && membre.famille_id) {
+      const f = familles.find(f => f.id === membre.famille_id);
+      return { emoji: "👑", label: f?.famille_full || "—" };
+    }
+    if (cellulesActive || famillesActive) {
+      return { emoji: "🛐", label: t.rattacheEglise };
+    }
+    return null;
+  };
+
+  const hasData = allReports.length > 0;
+  const totalAmes = kpis.totalEvangelises + kpis.totalVenus;
+
+  const onglets = [
+    { key: "kpi", label: t.tabOverview },
+    { key: "cellules", label: t.tabCellules },
+    { key: "mois", label: t.tabMois },
+    { key: "leaders", label: t.tabLeaders },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
@@ -1062,6 +1117,79 @@ function EtatCellule() {
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
           </div>
+        ) : onglet === "leaders" ? (
+          /* ══════════════════════════════════════════
+             ONGLET — LEADERS EN DÉVELOPPEMENT
+             (indépendant de hasData : il a son propre fetch)
+          ══════════════════════════════════════════ */
+          <div className="flex flex-col gap-7">
+            <div>
+              <SectionTitle>{t.leadersEnDeveloppement}</SectionTitle>
+              <BlocLeadersKpi leadersDeveloppement={leadersDeveloppement} t={t} />
+            </div>
+
+            <div>
+              <SectionTitle>{t.ongletLeaders}</SectionTitle>
+              <BlocClassementLeaders
+                leadersDeveloppement={leadersDeveloppement}
+                openStages={openStages}
+                setOpenStages={setOpenStages}
+                getAttachment={getLeaderAttachment}
+                t={t}
+              />
+            </div>
+
+            {cellulesActive && (
+              <div>
+                <SectionTitle
+                  icon="🏠"
+                  total={leadersDeveloppement.filter(l => l.membre.cellule_id).length}
+                  className="px-4"
+                >
+                  {t.repartitionParCellule}
+                </SectionTitle>
+                <BlocRepartitionLeaders
+                  leadersDeveloppement={leadersDeveloppement.filter(l => l.membre.cellule_id)}
+                  refList={cellules}
+                  idKey="cellule_id"
+                  labelKey="cellule_full"
+                  t={t}
+                />
+              </div>
+            )}
+
+            {famillesActive && (
+              <div>
+                <SectionTitle
+                  icon="👑"
+                  total={leadersDeveloppement.filter(l => l.membre.famille_id).length}
+                  className="px-4"
+                >
+                  {t.repartitionParFamille}
+                </SectionTitle>
+                <BlocRepartitionLeaders
+                  leadersDeveloppement={leadersDeveloppement.filter(l => l.membre.famille_id)}
+                  refList={familles}
+                  idKey="famille_id"
+                  labelKey="famille_full"
+                  t={t}
+                />
+              </div>
+            )}
+
+            {(cellulesActive || famillesActive) && (
+              <div>
+                <SectionTitle
+                  icon="🛐"
+                  total={leadersDeveloppement.filter(l => !l.membre.cellule_id && !l.membre.famille_id).length}
+                  className="px-4"
+                >
+                  {t.repartitionParEglise}
+                </SectionTitle>
+                <p className="text-sm text-white/70 px-4">{t.totalRattachesEglise}</p>
+              </div>
+            )}
+          </div>
         ) : !hasData ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center text-white/40 text-sm">
             {modePerso ? t.emptyPerso : t.emptyPeriod}
@@ -1076,81 +1204,22 @@ function EtatCellule() {
               <SectionTitle>{t.sectionPerformance}</SectionTitle>
               <BlocParCellule displayedReports={displayedReports} t={t} />
             </div>
-          <div>
-          <SectionTitle>{t.piliersLabel}</SectionTitle>
-          <BlocPiliers
-            piliers={piliers}
-            cellulesMap={cellulesMap}
-            filterCellule={filterCellule}
-            t={t}
-            open={openPiliers}
-            setOpen={setOpenPiliers}
-          />
-        </div>
+            <div>
+              <SectionTitle>{t.piliersLabel}</SectionTitle>
+              <BlocPiliers
+                piliers={piliers}
+                cellulesMap={cellulesMap}
+                filterCellule={filterCellule}
+                t={t}
+                open={openPiliers}
+                setOpen={setOpenPiliers}
+              />
+            </div>
           </div>
         ) : onglet === "cellules" ? (
           <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
-        ) : onglet === "mois" ? (
-          <OngletParMois displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
         ) : (
-          <div className="flex flex-col gap-7">
-            <div>
-              <SectionTitle>{t.leadersEnDeveloppement}</SectionTitle>
-              <BlocLeadersKpi leadersDeveloppement={leadersDeveloppement} t={t} />
-            </div>
-
-            <div>
-              <SectionTitle>{t.ongletLeaders}</SectionTitle>
-              <BlocClassementLeaders
-                leadersDeveloppement={leadersDeveloppement}
-                openStages={openStages}
-                setOpenStages={setOpenStages}
-                t={t}
-              />
-            </div>
-
-            {cellulesActive && (
-              <div>
-                <SectionTitle
-                  total={leadersDeveloppement.filter(l => l.cellule_id).length}
-                  className="px-4"
-                >
-                  {t.repartitionParCellule}
-                </SectionTitle>
-                <BlocRepartitionLeaders
-                  leadersDeveloppement={leadersDeveloppement.filter(l => l.cellule_id)}
-                  groupLabelKey="cellule_full"
-                  t={t}
-                />
-              </div>
-            )}
-
-            {famillesActive && (
-              <div>
-                <SectionTitle
-                  total={leadersDeveloppement.filter(l => l.famille_id).length}
-                  className="px-4"
-                >
-                  {t.repartitionParFamille}
-                </SectionTitle>
-                <BlocRepartitionLeaders
-                  leadersDeveloppement={leadersDeveloppement.filter(l => l.famille_id)}
-                  groupLabelKey="famille_full"
-                  t={t}
-                />
-              </div>
-            )}
-
-            <div>
-              <SectionTitle
-                total={leadersDeveloppement.filter(l => !l.cellule_id && !l.famille_id).length}
-                className="px-4"
-              >
-                {t.repartitionParEglise}
-              </SectionTitle>
-              <p className="text-sm text-white/70 px-4">{t.totalRattachesEglise}</p>
-            </div>
-          </div>
+          <OngletParMois displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
         )}
 
       </div>

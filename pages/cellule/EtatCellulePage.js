@@ -169,7 +169,7 @@ const translations = {
     funnelMinistere: "In ministry",
     sectionOverview: "Overview",
     sectionPerformance: "Performance by cell",
-    tabLeaders: "Development leaders",
+    tabLeaders: "Emerging Leaders",
     ongletLeaders: "Ranking by stage",
     leadersEnDeveloppement: "Development leaders",
     totalLeaders: "Total leaders",

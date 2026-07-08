@@ -198,11 +198,16 @@ const AVATAR_COLORS = [
 
 // ─── SOUS-COMPOSANTS ─────────────────────────────────────────────
 
-function SectionTitle({ children, icon }) {
+function SectionTitle({ children, icon, total }) {
   return (
-    <div className="flex items-center gap-2 mb-3">
-      {icon && <span className="text-base">{icon}</span>}
-      <p className="text-[11px] font-bold tracking-widest text-white/40 uppercase">{children}</p>
+    <div className="flex items-center justify-between gap-2 mb-3">
+      <div className="flex items-center gap-2">
+        {icon && <span className="text-base">{icon}</span>}
+        <p className="text-[11px] font-bold tracking-widest text-white/40 uppercase">{children}</p>
+      </div>
+      {total !== undefined && (
+        <span className="text-sm font-bold text-white">{total}</span>
+      )}
     </div>
   );
 }
@@ -1107,7 +1112,7 @@ const leadersParFamille = useMemo(() => {
               
                         const isOpen = openLeaderStage === stage;
                         const label = stage === "none" ? t.aucuneEvaluation : t.parcoursStages[stage].label;
-                        const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
+const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
               
                         return (
                           <div key={stage} className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
@@ -1116,7 +1121,7 @@ const leadersParFamille = useMemo(() => {
                               className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors"
                             >
                               <span className="text-base">{emoji}</span>
-                              <span className="text-sm font-semibold text-white flex-1">{label}</span>
+<span className="text-sm font-semibold text-white flex-1">{label}</span>
                               <span className="text-xl font-bold text-white">{list.length}</span>
                               <svg
                                 className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`}
@@ -1154,9 +1159,16 @@ const leadersParFamille = useMemo(() => {
               
                   {/* Répartition par cellule */}
                   {cellulesActive && leadersParCellule.length > 0 && (
-                    <div>
-                      <SectionTitle icon="🏠">{t.repartitionParCellule}</SectionTitle>
-                      <div className="flex flex-col gap-2">
+  <div>
+    <div className="flex items-center justify-between mb-3">
+      <SectionTitle icon="🏠" total={leadersParCellule.reduce((a, x) => a + x.count, 0)}>
+  {t.repartitionParCellule}
+</SectionTitle>
+      <span className="text-sm font-bold text-white">
+        {leadersParCellule.reduce((a, x) => a + x.count, 0)}
+      </span>
+    </div>
+    <div className="flex flex-col gap-2">
                         {leadersParCellule.map(({ id, nom, count }) => {
                           const maxC = Math.max(...leadersParCellule.map((x) => x.count), 1);
                           return (
@@ -1175,9 +1187,16 @@ const leadersParFamille = useMemo(() => {
               
                   {/* Répartition par famille */}
                   {famillesActive && leadersParFamille.length > 0 && (
-                    <div>
-                      <SectionTitle icon="👑">{t.repartitionParFamille}</SectionTitle>
-                      <div className="flex flex-col gap-2">
+  <div>
+    <div className="flex items-center justify-between mb-3">
+      <SectionTitle icon="👑" total={leadersParFamille.reduce((a, x) => a + x.count, 0)}>
+  {t.repartitionParFamille}
+</SectionTitle>
+      <span className="text-sm font-bold text-white">
+        {leadersParFamille.reduce((a, x) => a + x.count, 0)}
+      </span>
+    </div>
+    <div className="flex flex-col gap-2">
                         {leadersParFamille.map(({ id, nom, count }) => {
                           const maxF = Math.max(...leadersParFamille.map((x) => x.count), 1);
                           return (

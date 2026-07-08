@@ -5,14 +5,16 @@
 // (cultes, prières, etc.) : saisie des effectifs (hommes, femmes,
 // jeunes, enfants, connectés), suivi des nouveaux venus et convertis,
 // gestion dynamique des types de temps, et vue d'ensemble (KPI,
-// répartition H/F/J, tendance hebdomadaire, fréquentation par type,
-// évangélisation). Permet aussi la modification et la suppression
-// des rapports existants.
+// répartition H/F/J, provenance des nouveaux venus, tendance
+// hebdomadaire, fréquentation par type, évangélisation). Permet
+// aussi la modification et la suppression des rapports existants.
 //
 // Tables Supabase utilisées :
-// - profiles     (lecture)             → eglise_id de l'utilisateur connecté
-// - attendance   (lecture + écriture)  → rapports de présence (création, modification, suppression)
-//                                         et liste des types de temps existants
+// - profiles          (lecture)             → eglise_id de l'utilisateur connecté
+// - attendance        (lecture + écriture)  → rapports de présence (création, modification, suppression)
+//                                              et liste des types de temps existants
+// - membres_complets  (lecture)             → champ "venu" des nouveaux venus, filtré sur date_premiere_visite,
+//                                              pour la section "Provenance des nouveaux venus"
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
@@ -72,6 +74,7 @@ const translations = {
     // Sections KPI
     sectionVueEnsemble: "Vue d'ensemble",
     sectionGenre: "Répartition H / F / J",
+    sectionProvenance: "Provenance des nouveaux venus",
     sectionEvang: "Évangélisation — nouveaux venus & convertis",
     sectionParType: "Fréquentation par type de temps",
     sectionTendance: "Tendance hebdomadaire (présents H+F+J)",
@@ -94,16 +97,16 @@ const translations = {
     kpiTotalSub: "H+F+J+Enfants+Connectés",
     kpiTotal2: "total",
 
-    sectionProvenance: "Provenance des nouveaux venus",
-    provInvite: "Invité",
-    provReseaux: "Réseaux",
-    provEvangelisation: "Évangélisation",
-    provAutre: "Autre",
-    
     // Genre bloc
     hommes: "Hommes",
     femmes: "Femmes",
     jeunes: "Jeunes",
+
+    // Provenance bloc
+    provInvite: "Invité",
+    provReseaux: "Réseaux",
+    provEvangelisation: "Évangélisation",
+    provAutre: "Autre",
 
     // Tendance
     tendanceVs: "vs sem. préc.",
@@ -205,6 +208,7 @@ const translations = {
     // Sections KPI
     sectionVueEnsemble: "Overview",
     sectionGenre: "M / F / Y breakdown",
+    sectionProvenance: "Newcomer source",
     sectionEvang: "Evangelism — newcomers & converts",
     sectionParType: "Attendance by service type",
     sectionTendance: "Weekly trend (M+F+Y present)",
@@ -227,16 +231,16 @@ const translations = {
     kpiTotalSub: "M+F+Y+Children+Online",
     kpiTotal2: "total",
 
-    sectionProvenance: "Newcomer source",
-    provInvite: "Invited",
-    provReseaux: "Social media",
-    provEvangelisation: "Evangelism",
-    provAutre: "Other",
-
     // Genre bloc
     hommes: "Men",
     femmes: "Women",
     jeunes: "Youth",
+
+    // Provenance bloc
+    provInvite: "Invited",
+    provReseaux: "Social media",
+    provEvangelisation: "Evangelism",
+    provAutre: "Other",
 
     // Tendance
     tendanceVs: "vs prev. week",
@@ -319,6 +323,9 @@ function getMonthNameFR(monthIndex) {
 function getMonthNameEN(monthIndex) {
   return ["January","February","March","April","May","June","July","August","September","October","November","December"][monthIndex] || "";
 }
+// Normalise le champ "venu" de membres_complets : les valeurs existantes en
+// base sont incohérentes en casse/accents ("Évangélisation", "evangélisation",
+// "réseaux", "autre"...). On regroupe par mot-clé plutôt que par égalité stricte.
 function normalizeVenu(v) {
   if (!v) return "autre";
   const s = v.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -439,6 +446,10 @@ function BlocGenre({ reports, t }) {
   );
 }
 
+// ─── BLOC PROVENANCE DES NOUVEAUX VENUS ────────────────────────
+// Source : membres_complets.venu, sur les membres dont date_premiere_visite
+// tombe dans la période/tranche sélectionnée. Regroupé via normalizeVenu()
+// pour absorber les variantes de casse/accents déjà présentes en base.
 function BlocProvenance({ membres, t }) {
   const categories = [
     { key: "invite", label: t.provInvite, bg: "bg-blue-900/40", txt: "text-blue-300", sub: "text-blue-400/70", bar: "bg-blue-400" },
@@ -457,7 +468,7 @@ function BlocProvenance({ membres, t }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {categories.map(({ key, label, bg, txt, sub }) => {
           const val = counts[key];
-          const pct = Math.round((val / total) * 100);
+          const pct = total > 0 ? Math.round((val / total) * 100) : 0;
           return (
             <div key={key} className={`${bg} rounded-xl px-3 py-3 text-center`}>
               <p className={`text-xl font-bold ${txt}`}>{val}</p>
@@ -469,7 +480,7 @@ function BlocProvenance({ membres, t }) {
       </div>
       <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
         {categories.map(({ key, bar }) => (
-          <div key={key} className={`${bar} transition-all`} style={{ width: `${(counts[key] / total) * 100}%` }} />
+          <div key={key} className={`${bar} transition-all`} style={{ width: `${total > 0 ? (counts[key] / total) * 100 : 0}%` }} />
         ))}
       </div>
     </div>
@@ -874,6 +885,7 @@ function Attendance() {
   const t = translations[lang];
 
   const [reports, setReports] = useState([]);
+  const [membresProvenance, setMembresProvenance] = useState([]);
   const [loading, setLoading] = useState(false);
   const [egliseId, setEgliseId] = useState(null);
   const [tempsOptions, setTempsOptions] = useState(["Culte"]);
@@ -931,31 +943,39 @@ function Attendance() {
     setLoading(false);
   };
 
-  useEffect(() => { if (!modePerso) { fetchReports(false); fetchProvenance(false); } }, [egliseId, filtrePeriode, filtreType, modePerso]);
+  // Récupère le champ "venu" des nouveaux venus (membres_complets) sur la même
+  // fenêtre temporelle que les rapports, filtré sur date_premiere_visite.
+  const fetchProvenance = async (overrideModePerso = null) => {
+    if (!egliseId) return;
+    const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
+    let query = supabase
+      .from("membres_complets")
+      .select("id, venu")
+      .eq("eglise_id", egliseId);
+    if (isPerso) {
+      if (dateDebut) query = query.gte("date_premiere_visite", dateDebut);
+      if (dateFin)   query = query.lte("date_premiere_visite", dateFin);
+    } else {
+      const depuis = new Date();
+      depuis.setDate(depuis.getDate() - Number(filtrePeriode));
+      query = query.gte("date_premiere_visite", depuis.toISOString().split("T")[0]);
+    }
+    const { data } = await query;
+    setMembresProvenance(data || []);
+  };
+
+  useEffect(() => {
+    if (!modePerso) {
+      fetchReports(false);
+      fetchProvenance(false);
+    }
+  }, [egliseId, filtrePeriode, filtreType, modePerso]);
 
   const handleDelete = async (id) => {
     if (!confirm(t.confirmSupprimer)) return;
     await supabase.from("attendance").delete().eq("id", id);
     fetchReports();
   };
-
-  const [membresProvenance, setMembresProvenance] = useState([]);
-
-const fetchProvenance = async (overrideModePerso = null) => {
-  if (!egliseId) return;
-  const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
-  let query = supabase.from("membres_complets").select("id, venu").eq("eglise_id", egliseId);
-  if (isPerso) {
-    if (dateDebut) query = query.gte("date_premiere_visite", dateDebut);
-    if (dateFin)   query = query.lte("date_premiere_visite", dateFin);
-  } else {
-    const depuis = new Date();
-    depuis.setDate(depuis.getDate() - Number(filtrePeriode));
-    query = query.gte("date_premiere_visite", depuis.toISOString().split("T")[0]);
-  }
-  const { data } = await query;
-  setMembresProvenance(data || []);
-};
 
   const handleEdit = (r) => {
     setEditData(r);
@@ -1127,17 +1147,14 @@ const fetchProvenance = async (overrideModePerso = null) => {
               <BlocKpiGlobaux reports={reports} t={t} />
             </div>
             <div>
+              <SectionTitle>{t.sectionProvenance}</SectionTitle>
+              <div className="bg-white/10 rounded-2xl px-4 py-4">
+                <BlocProvenance membres={membresProvenance} t={t} />
+              </div>
+            </div>
+            <div>
               <SectionTitle>{t.sectionGenre}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
-          <div>
-  <SectionTitle>{t.sectionProvenance}</SectionTitle>
-  <div className="bg-white/10 rounded-2xl px-4 py-4">
-    <BlocProvenance membres={membresProvenance} t={t} />
-  </div>
-</div>
-<div>
-  <SectionTitle>{t.sectionGenre}</SectionTitle>
-
                 <BlocGenre reports={reports} t={t} />
               </div>
             </div>

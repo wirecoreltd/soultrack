@@ -1158,10 +1158,10 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
                   </div>
               
                   {/* Répartition par cellule */}
-                  {cellulesActive && leadersParCellule.length > 0 && (
+                  {famillesActive && leadersParFamille.length > 0 && (
   <div>
-    <SectionTitle icon="🏠" total={leadersParCellule.reduce((a, x) => a + x.count, 0)}>
-      {t.repartitionParCellule}
+    <SectionTitle icon="👑" total={leadersParFamille.reduce((a, x) => a + x.count, 0)}>
+      {t.repartitionParFamille}
     </SectionTitle>
     <div className="flex flex-col gap-2">
                         {leadersParCellule.map(({ id, nom, count }) => {
@@ -1203,15 +1203,17 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
                     </div>
                   )}     
                 {/* Répartition par église */}
-                {(cellulesActive || famillesActive) && leadersRattachesEglise > 0 && (
-                  <div>
-                    <SectionTitle icon="🛐">{t.repartitionParEglise}</SectionTitle>
-                    <div className="bg-white/8 rounded-xl px-4 py-4 flex items-center justify-between border border-white/10">
-                      <span className="text-sm text-white">{t.totalRattachesEglise}</span>
-                      <span className="text-2xl font-bold text-white">{leadersRattachesEglise}</span>
-                    </div>
-                  </div>
-                )}
+                {/* Répartition par église */}
+{(cellulesActive || famillesActive) && leadersRattachesEglise > 0 && (
+  <div>
+    <SectionTitle icon="🛐" total={leadersRattachesEglise}>
+      {t.repartitionParEglise}
+    </SectionTitle>
+    <div className="bg-white/8 rounded-xl px-4 py-3 flex items-center border border-white/10">
+      <span className="text-sm text-white flex-1">{t.totalRattachesEglise}</span>
+    </div>
+  </div>
+)}
                 </div>
                 
           /* ══════════════════════════════════════════

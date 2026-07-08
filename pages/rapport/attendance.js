@@ -94,6 +94,12 @@ const translations = {
     kpiTotalSub: "H+F+J+Enfants+Connectés",
     kpiTotal2: "total",
 
+    sectionProvenance: "Provenance des nouveaux venus",
+    provInvite: "Invité",
+    provReseaux: "Réseaux",
+    provEvangelisation: "Évangélisation",
+    provAutre: "Autre",
+    
     // Genre bloc
     hommes: "Hommes",
     femmes: "Femmes",
@@ -221,6 +227,12 @@ const translations = {
     kpiTotalSub: "M+F+Y+Children+Online",
     kpiTotal2: "total",
 
+    sectionProvenance: "Newcomer source",
+    provInvite: "Invited",
+    provReseaux: "Social media",
+    provEvangelisation: "Evangelism",
+    provAutre: "Other",
+
     // Genre bloc
     hommes: "Men",
     femmes: "Women",
@@ -306,6 +318,14 @@ function getMonthNameFR(monthIndex) {
 }
 function getMonthNameEN(monthIndex) {
   return ["January","February","March","April","May","June","July","August","September","October","November","December"][monthIndex] || "";
+}
+function normalizeVenu(v) {
+  if (!v) return "autre";
+  const s = v.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (s.includes("invite")) return "invite";
+  if (s.includes("reseau")) return "reseaux";
+  if (s.includes("evangel")) return "evangelisation";
+  return "autre";
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
@@ -415,6 +435,43 @@ function BlocGenre({ reports, t }) {
           <div className="bg-amber-400 rounded-r-full transition-all" style={{ width: `${pctJ}%` }} />
         </div>
       )}
+    </div>
+  );
+}
+
+function BlocProvenance({ membres, t }) {
+  const categories = [
+    { key: "invite", label: t.provInvite, bg: "bg-blue-900/40", txt: "text-blue-300", sub: "text-blue-400/70", bar: "bg-blue-400" },
+    { key: "reseaux", label: t.provReseaux, bg: "bg-pink-900/40", txt: "text-pink-300", sub: "text-pink-400/70", bar: "bg-pink-400" },
+    { key: "evangelisation", label: t.provEvangelisation, bg: "bg-emerald-900/40", txt: "text-emerald-300", sub: "text-emerald-400/70", bar: "bg-emerald-400" },
+    { key: "autre", label: t.provAutre, bg: "bg-amber-900/40", txt: "text-amber-300", sub: "text-amber-400/70", bar: "bg-amber-400" },
+  ];
+  const counts = { invite: 0, reseaux: 0, evangelisation: 0, autre: 0 };
+  membres.forEach(m => { counts[normalizeVenu(m.venu)]++; });
+  const total = membres.length;
+
+  if (!total) return <p className="text-white/30 text-sm text-center py-4">{t.aucuneDonnee}</p>;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {categories.map(({ key, label, bg, txt, sub }) => {
+          const val = counts[key];
+          const pct = Math.round((val / total) * 100);
+          return (
+            <div key={key} className={`${bg} rounded-xl px-3 py-3 text-center`}>
+              <p className={`text-xl font-bold ${txt}`}>{val}</p>
+              <p className={`text-[11px] ${sub}`}>{label}</p>
+              <p className="text-[10px] text-white/40">{pct}%</p>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
+        {categories.map(({ key, bar }) => (
+          <div key={key} className={`${bar} transition-all`} style={{ width: `${(counts[key] / total) * 100}%` }} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -874,13 +931,31 @@ function Attendance() {
     setLoading(false);
   };
 
-  useEffect(() => { if (!modePerso) fetchReports(false); }, [egliseId, filtrePeriode, filtreType, modePerso]);
+  useEffect(() => { if (!modePerso) { fetchReports(false); fetchProvenance(false); } }, [egliseId, filtrePeriode, filtreType, modePerso]);
 
   const handleDelete = async (id) => {
     if (!confirm(t.confirmSupprimer)) return;
     await supabase.from("attendance").delete().eq("id", id);
     fetchReports();
   };
+
+  const [membresProvenance, setMembresProvenance] = useState([]);
+
+const fetchProvenance = async (overrideModePerso = null) => {
+  if (!egliseId) return;
+  const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
+  let query = supabase.from("membres_complets").select("id, venu").eq("eglise_id", egliseId);
+  if (isPerso) {
+    if (dateDebut) query = query.gte("date_premiere_visite", dateDebut);
+    if (dateFin)   query = query.lte("date_premiere_visite", dateFin);
+  } else {
+    const depuis = new Date();
+    depuis.setDate(depuis.getDate() - Number(filtrePeriode));
+    query = query.gte("date_premiere_visite", depuis.toISOString().split("T")[0]);
+  }
+  const { data } = await query;
+  setMembresProvenance(data || []);
+};
 
   const handleEdit = (r) => {
     setEditData(r);
@@ -974,7 +1049,7 @@ function Attendance() {
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
               </div>
-              <button onClick={() => fetchReports(true)}
+              <button onClick={() => { fetchReports(true); fetchProvenance(true); }}
                 className="w-full py-2 rounded-xl bg-amber-500/80 hover:bg-amber-500 text-white text-sm font-semibold transition active:scale-95">
                 {t.genererRapport}
               </button>
@@ -1054,6 +1129,15 @@ function Attendance() {
             <div>
               <SectionTitle>{t.sectionGenre}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
+          <div>
+  <SectionTitle>{t.sectionProvenance}</SectionTitle>
+  <div className="bg-white/10 rounded-2xl px-4 py-4">
+    <BlocProvenance membres={membresProvenance} t={t} />
+  </div>
+</div>
+<div>
+  <SectionTitle>{t.sectionGenre}</SectionTitle>
+
                 <BlocGenre reports={reports} t={t} />
               </div>
             </div>

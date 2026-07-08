@@ -73,7 +73,7 @@ const translations = {
     sectionOverview: "Vue d'ensemble",
     sectionPerformance: "Performance par cellule",
     // Leaders en développement
-    tabLeaders: "Leaders",
+    tabLeaders: "Leaders en développement",
     ongletLeaders: "Classement par étape",
     leadersEnDeveloppement: "Leaders en développement",
     totalLeaders: "Total leaders",
@@ -169,7 +169,7 @@ const translations = {
     funnelMinistere: "In ministry",
     sectionOverview: "Overview",
     sectionPerformance: "Performance by cell",
-    tabLeaders: "Leaders",
+    tabLeaders: "Development leaders",
     ongletLeaders: "Ranking by stage",
     leadersEnDeveloppement: "Development leaders",
     totalLeaders: "Total leaders",

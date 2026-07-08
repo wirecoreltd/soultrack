@@ -77,6 +77,9 @@ const translations = {
     ongletLeaders: "Classement par étape",
     leadersEnDeveloppement: "Leaders en développement",
     totalLeaders: "Total leaders",
+    tabDeveloppement: "Développement",
+    leadersEnDeveloppementFamille: "Leaders en développement (famille)",
+    sansFamille: "Sans famille",
     parcoursStages: {
       potentiel: { emoji: "🌱", label: "Potentiel" },
       croissance: { emoji: "🌿", label: "Croissance" },
@@ -174,6 +177,9 @@ const translations = {
     ongletLeaders: "Ranking by stage",
     leadersEnDeveloppement: "Development leaders",
     totalLeaders: "Total leaders",
+    tabDeveloppement: "Development",
+    leadersEnDeveloppementFamille: "Development leaders (family)",
+    sansFamille: "No family",
     parcoursStages: {
       potentiel: { emoji: "🌱", label: "Potential" },
       croissance: { emoji: "🌿", label: "Growth" },
@@ -762,6 +768,7 @@ function EtatCellule() {
   // ── Leaders en développement ──
   const [leadersDeveloppement, setLeadersDeveloppement] = useState([]);
   const [openStages, setOpenStages] = useState({});
+  const [openStagesFamille, setOpenStagesFamille] = useState({});
   const [cellules, setCellules] = useState([]);
   const [familles, setFamilles] = useState([]);
 
@@ -1001,6 +1008,13 @@ function EtatCellule() {
     return { emoji: "🏠", label: c?.cellule_full || "—" };
   };
 
+  // ─── Leaders en développement — attachement famille (onglet Développement) ───
+  const getFamilleAttachment = (membre) => {
+    if (!membre.famille_id) return { emoji: "👨‍👩‍👧‍👦", label: t.sansFamille };
+    const f = familles.find(f => f.id === membre.famille_id);
+    return { emoji: "👨‍👩‍👧‍👦", label: f?.famille_full || "—" };
+  };
+
   const hasData = allReports.length > 0;
   const totalAmes = kpis.totalEvangelises + kpis.totalVenus;
 
@@ -1009,6 +1023,7 @@ function EtatCellule() {
     { key: "cellules", label: t.tabCellules },
     { key: "mois", label: t.tabMois },
     { key: "leaders", label: t.tabLeaders },
+    { key: "developpement", label: t.tabDeveloppement },
   ];
 
   return (
@@ -1151,6 +1166,30 @@ function EtatCellule() {
                 />
               </div>
             )}
+          </div>
+        ) : onglet === "developpement" ? (
+          /* ══════════════════════════════════════════
+             ONGLET — DÉVELOPPEMENT (FAMILLE)
+             (indépendant de hasData : il a son propre fetch)
+             → n'affiche QUE les leaders rattachés à une famille
+             → aucune référence à la cellule ici
+          ══════════════════════════════════════════ */
+          <div className="flex flex-col gap-7">
+            <div>
+              <SectionTitle>{t.leadersEnDeveloppementFamille}</SectionTitle>
+              <BlocLeadersKpi leadersDeveloppement={leadersDeveloppementAvecFamille} t={t} />
+            </div>
+
+            <div>
+              <SectionTitle>{t.ongletLeaders}</SectionTitle>
+              <BlocClassementLeaders
+                leadersDeveloppement={leadersDeveloppementAvecFamille}
+                openStages={openStagesFamille}
+                setOpenStages={setOpenStagesFamille}
+                getAttachment={getFamilleAttachment}
+                t={t}
+              />
+            </div>
 
             {famillesActive && (
               <div>

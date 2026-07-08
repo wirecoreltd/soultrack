@@ -1022,7 +1022,6 @@ function EtatCellule() {
     { key: "kpi", label: t.tabOverview },
     { key: "cellules", label: t.tabCellules },
     { key: "mois", label: t.tabMois },
-    { key: "leaders", label: t.tabLeaders },
     { key: "developpement", label: t.tabDeveloppement },
   ];
 
@@ -1124,48 +1123,6 @@ function EtatCellule() {
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-          </div>
-        ) : onglet === "leaders" ? (
-          /* ══════════════════════════════════════════
-             ONGLET — LEADERS EN DÉVELOPPEMENT
-             (indépendant de hasData : il a son propre fetch)
-             → n'affiche que les leaders rattachés à une cellule
-          ══════════════════════════════════════════ */
-          <div className="flex flex-col gap-7">
-            <div>
-              <SectionTitle>{t.leadersEnDeveloppement}</SectionTitle>
-              <BlocLeadersKpi leadersDeveloppement={leadersDeveloppementAvecCellule} t={t} />
-            </div>
-
-            <div>
-              <SectionTitle>{t.ongletLeaders}</SectionTitle>
-              <BlocClassementLeaders
-                leadersDeveloppement={leadersDeveloppementAvecCellule}
-                openStages={openStages}
-                setOpenStages={setOpenStages}
-                getAttachment={getLeaderAttachment}
-                t={t}
-              />
-            </div>
-
-            {cellulesActive && (
-              <div>
-                <SectionTitle
-                  icon="🏠"
-                  total={leadersDeveloppementAvecCellule.length}
-                  className="px-8"
-                >
-                  {t.repartitionParCellule}
-                </SectionTitle>
-                <BlocRepartitionLeaders
-                  leadersDeveloppement={leadersDeveloppementAvecCellule}
-                  refList={cellules}
-                  idKey="cellule_id"
-                  labelKey="cellule_full"
-                  t={t}
-                />
-              </div>
-            )}
           </div>
         ) : onglet === "developpement" ? (
           /* ══════════════════════════════════════════

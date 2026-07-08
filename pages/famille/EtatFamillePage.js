@@ -77,7 +77,7 @@ const translations = {
     ongletLeaders: "Classement par étape",
     leadersEnDeveloppement: "Leaders en développement",
     totalLeaders: "Total leaders",
-    tabDeveloppement: "Développement",
+    tabDeveloppement: "Leaders en développement",
     leadersEnDeveloppementFamille: "Leaders en développement (famille)",
     sansFamille: "Sans famille",
     parcoursStages: {
@@ -177,7 +177,7 @@ const translations = {
     ongletLeaders: "Ranking by stage",
     leadersEnDeveloppement: "Development leaders",
     totalLeaders: "Total leaders",
-    tabDeveloppement: "Development",
+    tabDeveloppement: "Emerging Leaders",
     leadersEnDeveloppementFamille: "Development leaders (family)",
     sansFamille: "No family",
     parcoursStages: {

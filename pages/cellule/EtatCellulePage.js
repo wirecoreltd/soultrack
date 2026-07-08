@@ -986,6 +986,9 @@ function EtatCellule() {
     if (userProfile) fetchLeadersDeveloppement();
   }, [userProfile]);
 
+  // ─── Leaders en développement — uniquement ceux rattachés à une cellule ───
+  const leadersDeveloppementAvecCellule = leadersDeveloppement.filter(l => l.membre.cellule_id);
+
   // ─── Leaders en développement — attachement (uniquement cellule sur cette page) ───
   const getLeaderAttachment = (membre) => {
     if (!membre.cellule_id) return { emoji: "🏠", label: t.sansCellule };
@@ -1106,17 +1109,18 @@ function EtatCellule() {
           /* ══════════════════════════════════════════
              ONGLET — LEADERS EN DÉVELOPPEMENT
              (indépendant de hasData : il a son propre fetch)
+             → n'affiche que les leaders rattachés à une cellule
           ══════════════════════════════════════════ */
           <div className="flex flex-col gap-7">
             <div>
               <SectionTitle>{t.leadersEnDeveloppement}</SectionTitle>
-              <BlocLeadersKpi leadersDeveloppement={leadersDeveloppement} t={t} />
+              <BlocLeadersKpi leadersDeveloppement={leadersDeveloppementAvecCellule} t={t} />
             </div>
 
             <div>
               <SectionTitle>{t.ongletLeaders}</SectionTitle>
               <BlocClassementLeaders
-                leadersDeveloppement={leadersDeveloppement}
+                leadersDeveloppement={leadersDeveloppementAvecCellule}
                 openStages={openStages}
                 setOpenStages={setOpenStages}
                 getAttachment={getLeaderAttachment}
@@ -1128,13 +1132,13 @@ function EtatCellule() {
               <div>
                 <SectionTitle
                   icon="🏠"
-                  total={leadersDeveloppement.filter(l => l.membre.cellule_id).length}
+                  total={leadersDeveloppementAvecCellule.length}
                   className="px-4"
                 >
                   {t.repartitionParCellule}
                 </SectionTitle>
                 <BlocRepartitionLeaders
-                  leadersDeveloppement={leadersDeveloppement.filter(l => l.membre.cellule_id)}
+                  leadersDeveloppement={leadersDeveloppementAvecCellule}
                   refList={cellules}
                   idKey="cellule_id"
                   labelKey="cellule_full"

@@ -1121,8 +1121,8 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
                               className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors"
                             >
                               <span className="text-base">{emoji}</span>
-<span className="text-sm font-semibold text-white flex-1">{label}</span>
-                              <span className="text-xl font-bold text-white">{list.length}</span>
+                              <span className="text-sm font-semibold text-white flex-1">{label}</span>
+                              <span className="text-sm font-bold text-white">{list.length}</span>
                               <svg
                                 className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${isOpen ? "rotate-180" : ""}`}
                                 fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
@@ -1158,27 +1158,25 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
                   </div>
               
                   {/* Répartition par cellule */}
-                  {famillesActive && leadersParFamille.length > 0 && (
+                  {{cellulesActive && leadersParCellule.length > 0 && (
   <div>
-    <SectionTitle icon="👑" total={leadersParFamille.reduce((a, x) => a + x.count, 0)}>
-      {t.repartitionParFamille}
+    <SectionTitle icon="🏠" total={leadersParCellule.reduce((a, x) => a + x.count, 0)}>
+      {t.repartitionParCellule}
     </SectionTitle>
     <div className="flex flex-col gap-2">
-                        {leadersParCellule.map(({ id, nom, count }) => {
-                          const maxC = Math.max(...leadersParCellule.map((x) => x.count), 1);
-                          return (
-                            <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
-                              <span className="text-sm text-white truncate flex-1">
-                                👑 {nom}
-                              </span>
-                              <BarreProgression pct={(count / maxC) * 100} color="bg-emerald-400" />
-                              <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+      {leadersParCellule.map(({ id, nom, count }) => {
+        const maxC = Math.max(...leadersParCellule.map((x) => x.count), 1);
+        return (
+          <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
+            <span className="text-sm text-white truncate flex-1">{nom}</span>
+            <BarreProgression pct={(count / maxC) * 100} color="bg-emerald-400" />
+            <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+)}
               
                   {/* Répartition par famille */}
                   {famillesActive && leadersParFamille.length > 0 && (

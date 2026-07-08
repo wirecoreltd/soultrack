@@ -1133,7 +1133,7 @@ function EtatCellule() {
                 <SectionTitle
                   icon="🏠"
                   total={leadersDeveloppementAvecCellule.length}
-                  className="px-4"
+                  className="px-8"
                 >
                   {t.repartitionParCellule}
                 </SectionTitle>

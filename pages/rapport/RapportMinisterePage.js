@@ -1158,7 +1158,7 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
                   </div>
               
                   {/* Répartition par cellule */}
-                  {{cellulesActive && leadersParCellule.length > 0 && (
+                  {cellulesActive && leadersParCellule.length > 0 && (
   <div>
     <SectionTitle icon="🏠" total={leadersParCellule.reduce((a, x) => a + x.count, 0)}>
       {t.repartitionParCellule}
@@ -1201,7 +1201,7 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
                     </div>
                   )}     
                 {/* Répartition par église */}
-                {/* Répartition par église */}
+             
 {(cellulesActive || famillesActive) && leadersRattachesEglise > 0 && (
   <div>
     <SectionTitle icon="🛐" total={leadersRattachesEglise}>

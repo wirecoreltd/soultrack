@@ -1192,9 +1192,7 @@ const leadersParFamille = useMemo(() => {
                         })}
                       </div>
                     </div>
-                  )}              
-                </div>
-
+                  )}     
                 {/* Répartition par église */}
                 {(cellulesActive || famillesActive) && leadersRattachesEglise > 0 && (
                   <div>
@@ -1205,6 +1203,8 @@ const leadersParFamille = useMemo(() => {
                     </div>
                   </div>
                 )}
+                </div>
+                
           /* ══════════════════════════════════════════
              ONGLET 3 — MINISTÈRES
           ══════════════════════════════════════════ */

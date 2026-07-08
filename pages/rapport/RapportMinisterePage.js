@@ -84,7 +84,7 @@ const translations = {
       developpement: { emoji: "🌳", label: "Leader en développement" },
       mature:        { emoji: "🌲", label: "Leader mature" },
     },
-    aaucuneEvaluation: "Sans évaluation",
+    aucuneEvaluation: "Sans évaluation",
     pasDeLeader: "Aucun leader dans cette catégorie.",
     rattacheEglise: "Rattaché directement à l'église",
     sansCellule: "Sans cellule",
@@ -1160,21 +1160,16 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
                   {/* Répartition par cellule */}
                   {cellulesActive && leadersParCellule.length > 0 && (
   <div>
-    <div className="flex items-center justify-between mb-3">
-      <SectionTitle icon="🏠" total={leadersParCellule.reduce((a, x) => a + x.count, 0)}>
-  {t.repartitionParCellule}
-</SectionTitle>
-      <span className="text-sm font-bold text-white">
-        {leadersParCellule.reduce((a, x) => a + x.count, 0)}
-      </span>
-    </div>
+    <SectionTitle icon="🏠" total={leadersParCellule.reduce((a, x) => a + x.count, 0)}>
+      {t.repartitionParCellule}
+    </SectionTitle>
     <div className="flex flex-col gap-2">
                         {leadersParCellule.map(({ id, nom, count }) => {
                           const maxC = Math.max(...leadersParCellule.map((x) => x.count), 1);
                           return (
                             <div key={id} className="bg-white/8 rounded-xl px-4 py-3 flex items-center gap-3 border border-white/10">
                               <span className="text-sm text-white truncate flex-1">
-                                🏠 {nom}
+                                👑 {nom}
                               </span>
                               <BarreProgression pct={(count / maxC) * 100} color="bg-emerald-400" />
                               <p className="text-sm font-bold text-white w-6 text-right">{count}</p>
@@ -1188,14 +1183,9 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
                   {/* Répartition par famille */}
                   {famillesActive && leadersParFamille.length > 0 && (
   <div>
-    <div className="flex items-center justify-between mb-3">
-      <SectionTitle icon="👑" total={leadersParFamille.reduce((a, x) => a + x.count, 0)}>
-  {t.repartitionParFamille}
-</SectionTitle>
-      <span className="text-sm font-bold text-white">
-        {leadersParFamille.reduce((a, x) => a + x.count, 0)}
-      </span>
-    </div>
+    <SectionTitle icon="👑" total={leadersParFamille.reduce((a, x) => a + x.count, 0)}>
+      {t.repartitionParFamille}
+    </SectionTitle>
     <div className="flex flex-col gap-2">
                         {leadersParFamille.map(({ id, nom, count }) => {
                           const maxF = Math.max(...leadersParFamille.map((x) => x.count), 1);

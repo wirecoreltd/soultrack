@@ -288,7 +288,7 @@ function KpiCard({ label, value, sub, accent, delta }) {
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
       <p className="text-sm text-white/80">{label}</p>
       <p className={`text-lg font-bold leading-none ${c[accent] || "text-white/80"}`}>{value}</p>
-      {sub && <p className="text-sm text-white/80 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-white/80 mt-0.5">{sub}</p>}
       {delta !== null && delta !== undefined && (
         <p
           className={`text-sm font-semibold mt-0.5 ${
@@ -598,23 +598,23 @@ function BlocVueEnsemble({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <p className="text-sm font-semibold uppercase tracking-wide text-white/70">
+          <p className="text-sm tracking-wide text-orange-300">
             {t.conversionsSourceEglise}
           </p>
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
               <p className="text-lg font-bold leading-none text-yellow-300">{cd.egliseNC}</p>
-              <p className="text-sm text-white/80 mt-1">{t.chipNouveauxConvertis}</p>
+              <p className="text-xs text-white/80 mt-1">{t.chipNouveauxConvertis}</p>
             </div>
             <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
               <p className="text-lg font-bold leading-none text-blue-300">{cd.egliseRecon}</p>
-              <p className="text-sm text-white/80 mt-1">{t.chipReconciliations}</p>
+              <p className="text-xs text-white/80 mt-1">{t.chipReconciliations}</p>
             </div>
           </div>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <p className="text-sm font-semibold uppercase tracking-wide text-white/80">
+          <p className="text-sm tracking-wide text-orange-300">
             {t.conversionsSourceEvang}
           </p>
           <div className="grid grid-cols-2 gap-2">

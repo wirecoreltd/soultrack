@@ -45,6 +45,11 @@ const translations = {
     affichees: "affichées",
     filtrerEglise: "Filtrer par église",
     toutesEglises: "Toutes les églises",
+    rechercherEglise: "Rechercher une église…",
+    triAlphabetique: "Trier : Alphabétique",
+    triParticipation: "Trier : Participation",
+    voirDetail: "Voir le détail complet",
+    voirMoins: "Réduire",
     kpiEglisesSup: "Églises supervisées",
     kpiEglisesSubSup: "dans le réseau",
     kpiMembresActifs: "Membres actifs",
@@ -160,6 +165,11 @@ const translations = {
     affichees: "displayed",
     filtrerEglise: "Filter by church",
     toutesEglises: "All churches",
+    rechercherEglise: "Search a church…",
+    triAlphabetique: "Sort: Alphabetical",
+    triParticipation: "Sort: Attendance",
+    voirDetail: "View full detail",
+    voirMoins: "Collapse",
     kpiEglisesSup: "Supervised churches",
     kpiEglisesSubSup: "in the network",
     kpiMembresActifs: "Active members",
@@ -189,7 +199,6 @@ const translations = {
     kpiFamillesActives: "Active families",
     kpiFamillesActivesSub: "with ≥1 active member",
     kpiPiliers: "Pillars",
-    kpiPiliersSub: "Chruch",
     kpiPiliersSub: "Chruch",
     leadersTitle: "Emerging leaders",
     leadersPotentiel: "Potential identified",
@@ -395,7 +404,7 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
     .slice(0, 5);
   const maxTotal = Math.max(...top5.map(([, v]) => v.total), 1);
   const totalTous = top5.reduce((a, [, v]) => a + v.total, 0);
-  const totalResolus = top5.reduce((a, [, v]) => a + v.resolu, 0);
+  const totalResolus = top5.reduce((a, [, v]) => a + (v.resolu || 0), 0);
   const tauxGlobal = totalTous > 0 ? Math.round((totalResolus / totalTous) * 100) : 0;
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
@@ -411,7 +420,7 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
           const cfg = getCfg(besoin);
           const pct = Math.round((data.total / maxTotal) * 100);
           const pctResolu =
-            data.total > 0 ? Math.round((data.resolu / data.total) * 100) : 0;
+            data.total > 0 ? Math.round(((data.resolu || 0) / data.total) * 100) : 0;
           return (
             <div key={besoin} className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
@@ -436,11 +445,12 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
     </div>
   );
 }
+
 // ─── CARTE LEADERS EN DÉVELOPPEMENT ───────────────────────────
 function CarteLeadersDeveloppement({ leadersStats, t }) {
   if (!leadersStats || leadersStats.total === 0) return null;
   const { total, potentiel, croissance, developpement, mature, sansEvaluation } = leadersStats;
-    const stages = [
+  const stages = [
     { value: potentiel, label: t.leadersPotentiel, color: "text-teal-300" },
     { value: croissance, label: t.leadersCroissance, color: "text-emerald-300" },
     { value: developpement, label: t.leadersDeveloppement, color: "text-blue-300" },
@@ -465,9 +475,48 @@ function CarteLeadersDeveloppement({ leadersStats, t }) {
   );
 }
 
+// ─── CARTE CONVERSIONS (réutilisable : réseau ou par église) ──
+function CarteConversions({ cd, t }) {
+  if (!cd) return null;
+  return (
+    <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-white/80">{t.sectionConversions}</p>
+        <p className="text-lg font-bold leading-none text-yellow-300">{cd.total}</p>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <p className="text-sm tracking-wide text-orange-300">{t.conversionsSourceEglise}</p>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+            <p className="text-lg font-bold leading-none text-yellow-300">{cd.egliseNC}</p>
+            <p className="text-xs text-white/80 mt-1">{t.chipNouveauxConvertis}</p>
+          </div>
+          <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+            <p className="text-lg font-bold leading-none text-blue-300">{cd.egliseRecon}</p>
+            <p className="text-xs text-white/80 mt-1">{t.chipReconciliations}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <p className="text-sm tracking-wide text-orange-300">{t.conversionsSourceEvang}</p>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+            <p className="text-lg font-bold leading-none text-yellow-300">{cd.evangNC}</p>
+            <p className="text-sm text-white/80 mt-1">{t.chipNouveauxConvertis}</p>
+          </div>
+          <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
+            <p className="text-lg font-bold leading-none text-blue-300">{cd.evangRecon}</p>
+            <p className="text-sm text-white/80 mt-1">{t.chipReconciliations}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── BLOC VUE D'ENSEMBLE ─────────────────────────────────────
-// rootId est passé pour exclure l'église du superviseur du KPI "Supervised churches"
-// tauxPresenceMoyen est calculé en amont (dans fetchStats) à partir de la table `presences`
 function BlocVueEnsemble({
   allEglises,
   besoinsGlobaux,
@@ -518,13 +567,8 @@ function BlocVueEnsemble({
   const totalServiteurs = totaux.servH + totaux.servF;
 
   const nbEglisesSupervisees = allEglises.filter((e) => e.id !== rootId).length;
-  const nbEglisesTotal = allEglises.length;
 
   const cd = conversionsDetail || { egliseNC: 0, egliseRecon: 0, evangNC: 0, evangRecon: 0, total: 0 };
-  const totalConversionsEglise = cd.egliseNC + cd.egliseRecon;
-  const totalConversionsEvang = cd.evangNC + cd.evangRecon;
-  const tauxConversion =
-    totalCulteGlobal > 0 ? Math.round((cd.total / totalCulteGlobal) * 100) : 0;
   const tauxEngagement =
     totalMembresActifs > 0 ? Math.round((totalServiteurs / totalMembresActifs) * 100) : 0;
 
@@ -538,8 +582,6 @@ function BlocVueEnsemble({
 
   return (
     <div className="flex flex-col gap-4">
-
-      {/* Ligne 1 : Membres actifs + Taux de présence + Cellules + Familles actives */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KpiCard label={t.kpiMembresActifs} value={totalMembresActifs} sub={t.kpiMembresActifsSub} accent="white" />
         <KpiCard
@@ -554,7 +596,6 @@ function BlocVueEnsemble({
         )}
       </div>
 
-      {/* Ligne 2 : Églises supervisées + Participation totale + Évangélisés + Baptêmes */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KpiCard label={t.kpiEglisesSup} value={nbEglisesSupervisees} sub={t.kpiEglisesSubSup} accent="amber" />
         <KpiCard
@@ -568,7 +609,6 @@ function BlocVueEnsemble({
         <KpiCard label={t.kpiBaptemes} value={totalBapteme} sub={t.kpiBaptemesSub} accent="purple" />
       </div>
 
-      {/* Ligne 3 : Serviteurs + Piliers */}
       <div className="grid grid-cols-2 gap-3">
         <KpiCard
           label={t.kpiServiteurs}
@@ -578,59 +618,14 @@ function BlocVueEnsemble({
           delta={calcDelta(totalServiteurs, prevServiteurs)}
         />
         {famillesFeatureActive && (
-          <KpiCard
-            label={t.kpiPiliers}
-            value={totalPiliers}
-            sub={t.kpiPiliersSub}
-            accent="indigo"
-          />
+          <KpiCard label={t.kpiPiliers} value={totalPiliers} sub={t.kpiPiliersSub} accent="indigo" />
         )}
       </div>
 
-      {/* Leaders en développement */}
       <CarteLeadersDeveloppement leadersStats={leadersStats} t={t} />
 
-      {/* Conversions (salvation prayer) */}
-      <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-white/80">{t.sectionConversions}</p>
-          <p className="text-lg font-bold leading-none text-yellow-300">{cd.total}</p>
-        </div>
+      <CarteConversions cd={cd} t={t} />
 
-        <div className="flex flex-col gap-1.5">
-          <p className="text-sm tracking-wide text-orange-300">
-            {t.conversionsSourceEglise}
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-lg font-bold leading-none text-yellow-300">{cd.egliseNC}</p>
-              <p className="text-xs text-white/80 mt-1">{t.chipNouveauxConvertis}</p>
-            </div>
-            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-lg font-bold leading-none text-blue-300">{cd.egliseRecon}</p>
-              <p className="text-xs text-white/80 mt-1">{t.chipReconciliations}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <p className="text-sm tracking-wide text-orange-300">
-            {t.conversionsSourceEvang}
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-lg font-bold leading-none text-yellow-300">{cd.evangNC}</p>
-              <p className="text-sm text-white/80 mt-1">{t.chipNouveauxConvertis}</p>
-            </div>
-            <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
-              <p className="text-lg font-bold leading-none text-blue-300">{cd.evangRecon}</p>
-              <p className="text-sm text-white/80 mt-1">{t.chipReconciliations}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Répartition H/F/J */}
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
         <p className="text-sm text-white/80 font-semibold">{t.repartitionTitle}</p>
         <div className="grid grid-cols-3 gap-2">
@@ -653,7 +648,6 @@ function BlocVueEnsemble({
 
       <CarteTop5Besoins besoinsGlobaux={besoinsGlobaux} t={t} />
 
-      {/* Classement des églises */}
       {allEglises.length > 1 && (
         <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-2">
           <p className="text-sm text-white/70 font-semibold mb-1">{t.classementTitle}</p>
@@ -681,7 +675,7 @@ function BlocVueEnsemble({
   );
 }
 
-// ─── BLOC STATS EGLISE ────────────────────────────────────────
+// ─── BLOC STATS EGLISE (détail complet, réutilisé par église) ─
 function BlocStatsEglise({ stats, t }) {
   const totalCulte = stats.culte.hommes + stats.culte.femmes + stats.culte.jeunes;
   const totalCulteGlobal = totalCulte + stats.culte.enfants + stats.culte.connectes;
@@ -750,89 +744,47 @@ function BlocStatsEglise({ stats, t }) {
   );
 }
 
-// ─── CARTE EGLISE ─────────────────────────────────────────────
-function CarteEglise({ eglise, level, expandedEglises, toggleExpand, t }) {
-  const isExpanded = expandedEglises.includes(eglise.id);
-  const hasChildren = eglise.enfants?.length > 0;
-  const totalStats =
-    hasChildren && !isExpanded
-      ? eglise.enfants.reduce(
-          (acc, child) => {
-            acc.culte.hommes += child.stats.culte.hommes;
-            acc.culte.femmes += child.stats.culte.femmes;
-            acc.culte.jeunes += child.stats.culte.jeunes;
-            acc.culte.enfants += child.stats.culte.enfants;
-            acc.culte.connectes += child.stats.culte.connectes;
-            acc.culte.nouveaux_venus += child.stats.culte.nouveaux_venus;
-            acc.culte.nouveau_converti += child.stats.culte.nouveau_converti;
-            acc.culte.moissonneurs += child.stats.culte.moissonneurs;
-            acc.formation.hommes += child.stats.formation.hommes;
-            acc.formation.femmes += child.stats.formation.femmes;
-            acc.bapteme.hommes += child.stats.bapteme.hommes;
-            acc.bapteme.femmes += child.stats.bapteme.femmes;
-            acc.evangelisation.hommes += child.stats.evangelisation.hommes;
-            acc.evangelisation.femmes += child.stats.evangelisation.femmes;
-            acc.evangelisation.priere += child.stats.evangelisation.priere;
-            acc.evangelisation.nouveau_converti += child.stats.evangelisation.nouveau_converti;
-            acc.evangelisation.reconciliation += child.stats.evangelisation.reconciliation;
-            acc.evangelisation.moissonneurs += child.stats.evangelisation.moissonneurs;
-            acc.serviteurs.hommes += child.stats.serviteurs.hommes;
-            acc.serviteurs.femmes += child.stats.serviteurs.femmes;
-            acc.cellules.total += child.stats.cellules.total;
-            return acc;
-          },
-          {
-            culte: { ...eglise.stats.culte },
-            formation: { ...eglise.stats.formation },
-            bapteme: { ...eglise.stats.bapteme },
-            evangelisation: { ...eglise.stats.evangelisation },
-            serviteurs: { ...eglise.stats.serviteurs },
-            cellules: { ...eglise.stats.cellules },
-          }
-        )
-      : eglise.stats;
-  const totalCulte = totalStats.culte.hommes + totalStats.culte.femmes + totalStats.culte.jeunes;
+// ─── CARTE ÉGLISE COMPACTE (liste plate, scalable à 100+ églises) ──
+// Collapsed : les 6 indicateurs choisis par le superviseur.
+// Expanded ("Voir le détail complet") : tout le reste, ventilé par église.
+function CarteEgliseCompacte({
+  eglise, membresActifs, tauxPresence, leaders, evangelises, conversions, besoins, t,
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const stats = eglise.stats;
+  const serviteursTotal = stats.serviteurs.hommes + stats.serviteurs.femmes;
+  const cellulesTotal = stats.cellules.total;
+
   return (
-    <div className="flex flex-col gap-2">
-      <div
-        className={`bg-white/10 rounded-2xl overflow-hidden border-l-2 ${hasChildren ? "border-amber-400" : "border-blue-400"}`}
-        style={{ marginLeft: level * 12 }}
-      >
-        <button
-          onClick={() => toggleExpand(eglise.id)}
-          className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3"
-        >
-          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className={`text-sm font-semibold ${hasChildren ? "text-amber-300" : "text-white"}`}>
-                {eglise.nom}
-              </span>
-              {hasChildren && <Badge color="amber">{t.egliseBadgeFn(eglise.enfants.length)}</Badge>}
-              {hasChildren && !isExpanded && <Badge color="gray">{t.totalGeneral}</Badge>}
-            </div>
-            <span className="text-sm text-white/70">
-              {t.culte} : {totalCulte} · {t.bapteme} : {totalStats.bapteme.hommes + totalStats.bapteme.femmes} · {t.kpiCellules} : {totalStats.cellules.total}
-            </span>
-          </div>
-          <span className="text-sm text-white/70 flex-shrink-0">{isExpanded ? "▲" : "▼"}</span>
-        </button>
-        {isExpanded && (
-          <div className="border-t border-white/10 px-4 pb-4 pt-3">
-            <BlocStatsEglise stats={totalStats} t={t} />
-          </div>
-        )}
+    <div className="bg-white/10 rounded-2xl overflow-hidden">
+      <div className="px-4 py-4">
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <span className="text-sm font-semibold text-white truncate">{eglise.nom}</span>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 transition flex-shrink-0"
+          >
+            {expanded ? t.voirMoins : t.voirDetail} {expanded ? "▲" : "▼"}
+          </button>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <StatChip label={t.kpiMembresActifs} value={membresActifs} accent="white" />
+          <StatChip label={t.kpiCellules} value={cellulesTotal} accent="orange" />
+          <StatChip label={t.serviteurs} value={serviteursTotal} accent="yellow" />
+          <StatChip label={t.leadersTitle} value={leaders?.total || 0} accent="purple" />
+          <StatChip label={t.evangelises} value={evangelises} accent="pink" />
+          <StatChip label={t.kpiTauxPresence} value={`${tauxPresence}%`} accent="green" />
+        </div>
       </div>
-      {isExpanded &&
-        eglise.enfants?.map((child) => (
-          <CarteEglise
-            key={child.id}
-            eglise={child}
-            level={level + 1}
-            expandedEglises={expandedEglises}
-            toggleExpand={toggleExpand}
-            t={t}
-          />
-        ))}
+
+      {expanded && (
+        <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
+          <BlocStatsEglise stats={stats} t={t} />
+          <CarteLeadersDeveloppement leadersStats={leaders} t={t} />
+          <CarteConversions cd={conversions} t={t} />
+          <CarteTop5Besoins besoinsGlobaux={besoins} t={t} />
+        </div>
+      )}
     </div>
   );
 }
@@ -844,12 +796,9 @@ function StatGlobalPage() {
 
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
-  const [eglisesTree, setEglisesTree] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [parentFilter, setParentFilter] = useState("");
   const [allEglises, setAllEglises] = useState([]);
   const [rootId, setRootId] = useState(null);
-  const [expandedEglises, setExpandedEglises] = useState([]);
   const [onglet, setOnglet] = useState("ensemble");
   const [modePerso, setModePerso] = useState(false);
   const [filtrePeriode, setFiltrePeriode] = useState("30");
@@ -857,31 +806,30 @@ function StatGlobalPage() {
   const [besoinsGlobaux, setBesoinsGlobaux] = useState({});
   const [totalMembresActifs, setTotalMembresActifs] = useState(0);
   const [prevTotaux, setPrevTotaux] = useState(null);
-  // ── Taux de présence calculé à partir de la table `presences`
-  // (% moyen de membres actifs réellement présents à chaque culte)
   const [tauxPresenceMoyen, setTauxPresenceMoyen] = useState(0);
-  // ── Détail des conversions (prière du salut) : église vs évangélisation, dédupliqué
   const [conversionsDetail, setConversionsDetail] = useState(null);
 
   const [totalFamillesActives, setTotalFamillesActives] = useState(0);
   const [totalPiliers, setTotalPiliers] = useState(0);
   const [famillesFeatureActive, setFamillesFeatureActive] = useState(false);
   const [leadersStats, setLeadersStats] = useState(null);
-  
+
+  // ── Recherche / tri pour l'onglet "Par église" ──
+  const [rechercheEglise, setRechercheEglise] = useState("");
+  const [triEglise, setTriEglise] = useState("alphabetique"); // "alphabetique" | "participation"
+
+  // ── Données ventilées par eglise_id (pour l'onglet "Par église") ──
+  const [membresActifsParEglise, setMembresActifsParEglise] = useState({});
+  const [tauxPresenceParEglise, setTauxPresenceParEglise] = useState({});
+  const [leadersStatsParEglise, setLeadersStatsParEglise] = useState({});
+  const [conversionsParEglise, setConversionsParEglise] = useState({});
+  const [besoinsParEglise, setBesoinsParEglise] = useState({});
 
   useEffect(() => {
     fetchStats(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toggleExpand = (egliseId) => {
-    setExpandedEglises((prev) =>
-      prev.includes(egliseId) ? prev.filter((id) => id !== egliseId) : [...prev, egliseId]
-    );
-  };
-
-  // ── CORRECTION #1 : Cellules actives = cellules avec au moins un membre
-  // (statut_suivis = 3, etat_contact != 'supprime'), sans filtre de date.
   const getCellulesActives = async (egliseIds) => {
     const { data: toutesCellules } = await supabase
       .from("cellules")
@@ -903,78 +851,95 @@ function StatGlobalPage() {
     return toutesCellules.filter((c) => cellulesAvecMembres.has(c.id));
   };
 
- // ── Conversions (prière du salut) ──
-// Deux sources, dédupliquées pour ne jamais compter la même âme 2 fois :
-// 1. "Église"        : membres_complets, priere_salut = 'Oui', 
-//                       EXCLUT ceux liés à un évangélisé (evangelise_member_id_uuid non null)
-// 2. "Évangélisation" : fusion de `evangelises` + `suivis_des_evangelises`,
-//                       dédupliquée par evangelise_id (le suivi le plus récent gagne)
-const getConversions = async (egliseIds, debut, fin) => {
-  // ── Église (nouveaux membres arrivés directement) ──
-  let membresQuery = supabase
-    .from("membres_complets")
-    .select("id, eglise_id, priere_salut, type_conversion, created_at, evangelise_member_id_uuid")
-    .in("eglise_id", egliseIds)
-    .eq("priere_salut", "Oui")
-    .is("evangelise_member_id_uuid", null); // évite le doublon avec l'évangélisation
-  if (debut) membresQuery = membresQuery.gte("created_at", debut);
-  if (fin) membresQuery = membresQuery.lte("created_at", fin);
-  const { data: membresData } = await membresQuery;
+  // ── Conversions (prière du salut) — total réseau + ventilation par église ──
+  const getConversions = async (egliseIds, debut, fin) => {
+    let membresQuery = supabase
+      .from("membres_complets")
+      .select("id, eglise_id, priere_salut, type_conversion, created_at, evangelise_member_id_uuid")
+      .in("eglise_id", egliseIds)
+      .eq("priere_salut", "Oui")
+      .is("evangelise_member_id_uuid", null);
+    if (debut) membresQuery = membresQuery.gte("created_at", debut);
+    if (fin) membresQuery = membresQuery.lte("created_at", fin);
+    const { data: membresData } = await membresQuery;
 
-  let egliseNC = 0;
-  let egliseRecon = 0;
-  (membresData || []).forEach((m) => {
-    if (m.type_conversion === "Nouveau converti") egliseNC++;
-    else if (m.type_conversion === "Réconciliation") egliseRecon++;
-  });
+    let egliseNC = 0;
+    let egliseRecon = 0;
+    const parEgliseEglise = {};
+    (membresData || []).forEach((m) => {
+      if (!parEgliseEglise[m.eglise_id]) parEgliseEglise[m.eglise_id] = { nc: 0, recon: 0 };
+      if (m.type_conversion === "Nouveau converti") {
+        egliseNC++;
+        parEgliseEglise[m.eglise_id].nc++;
+      } else if (m.type_conversion === "Réconciliation") {
+        egliseRecon++;
+        parEgliseEglise[m.eglise_id].recon++;
+      }
+    });
 
-  // ── Évangélisation : source 1 = table evangelises ──
-  let evangQuery = supabase
-    .from("evangelises")
-    .select("id, eglise_id, priere_salut, type_conversion, date_evangelise")
-    .in("eglise_id", egliseIds)
-    .eq("priere_salut", true);
-  if (debut) evangQuery = evangQuery.gte("date_evangelise", debut);
-  if (fin) evangQuery = evangQuery.lte("date_evangelise", fin);
-  const { data: evangData } = await evangQuery;
+    let evangQuery = supabase
+      .from("evangelises")
+      .select("id, eglise_id, priere_salut, type_conversion, date_evangelise")
+      .in("eglise_id", egliseIds)
+      .eq("priere_salut", true);
+    if (debut) evangQuery = evangQuery.gte("date_evangelise", debut);
+    if (fin) evangQuery = evangQuery.lte("date_evangelise", fin);
+    const { data: evangData } = await evangQuery;
 
-  // ── Évangélisation : source 2 = table suivis_des_evangelises ──
-  // (peut mettre à jour/confirmer la conversion après un suivi)
-  let suivisQuery = supabase
-    .from("suivis_des_evangelises")
-    .select("id, evangelise_id, eglise_id, priere_salut, type_conversion, date_action")
-    .in("eglise_id", egliseIds)
-    .eq("priere_salut", true)
-    .not("evangelise_id", "is", null);
-  if (debut) suivisQuery = suivisQuery.gte("date_action", debut);
-  if (fin) suivisQuery = suivisQuery.lte("date_action", fin);
-  const { data: suivisData } = await suivisQuery;
+    let suivisQuery = supabase
+      .from("suivis_des_evangelises")
+      .select("id, evangelise_id, eglise_id, priere_salut, type_conversion, date_action")
+      .in("eglise_id", egliseIds)
+      .eq("priere_salut", true)
+      .not("evangelise_id", "is", null);
+    if (debut) suivisQuery = suivisQuery.gte("date_action", debut);
+    if (fin) suivisQuery = suivisQuery.lte("date_action", fin);
+    const { data: suivisData } = await suivisQuery;
 
-  // ── Fusion + dédup par evangelise_id : on garde l'événement le plus récent ──
-  const evangMap = new Map();
-  (evangData || []).forEach((e) => {
-    evangMap.set(e.id, { type_conversion: e.type_conversion, date: e.date_evangelise });
-  });
-  (suivisData || []).forEach((s) => {
-    const existing = evangMap.get(s.evangelise_id);
-    if (!existing || new Date(s.date_action) > new Date(existing.date)) {
-      evangMap.set(s.evangelise_id, { type_conversion: s.type_conversion, date: s.date_action });
-    }
-  });
+    const evangMap = new Map();
+    (evangData || []).forEach((e) => {
+      evangMap.set(e.id, { type_conversion: e.type_conversion, date: e.date_evangelise, eglise_id: e.eglise_id });
+    });
+    (suivisData || []).forEach((s) => {
+      const existing = evangMap.get(s.evangelise_id);
+      if (!existing || new Date(s.date_action) > new Date(existing.date)) {
+        evangMap.set(s.evangelise_id, { type_conversion: s.type_conversion, date: s.date_action, eglise_id: s.eglise_id });
+      }
+    });
 
-  let evangNC = 0;
-  let evangRecon = 0;
-  evangMap.forEach((v) => {
-    const tc = (v.type_conversion || "").toLowerCase();
-    if (tc === "nouveau converti") evangNC++;
-    else if (tc === "réconciliation" || tc === "reconciliation") evangRecon++;
-  });
+    let evangNC = 0;
+    let evangRecon = 0;
+    const parEgliseEvang = {};
+    evangMap.forEach((v) => {
+      const tc = (v.type_conversion || "").toLowerCase();
+      if (!parEgliseEvang[v.eglise_id]) parEgliseEvang[v.eglise_id] = { nc: 0, recon: 0 };
+      if (tc === "nouveau converti") {
+        evangNC++;
+        parEgliseEvang[v.eglise_id].nc++;
+      } else if (tc === "réconciliation" || tc === "reconciliation") {
+        evangRecon++;
+        parEgliseEvang[v.eglise_id].recon++;
+      }
+    });
 
-  const total = egliseNC + egliseRecon + evangNC + evangRecon;
-  return { egliseNC, egliseRecon, evangNC, evangRecon, total };
-};
+    const total = egliseNC + egliseRecon + evangNC + evangRecon;
 
-  // ── Agréger les stats ──
+    const parEglise = {};
+    egliseIds.forEach((id) => {
+      const eg = parEgliseEglise[id] || { nc: 0, recon: 0 };
+      const ev = parEgliseEvang[id] || { nc: 0, recon: 0 };
+      parEglise[id] = {
+        egliseNC: eg.nc,
+        egliseRecon: eg.recon,
+        evangNC: ev.nc,
+        evangRecon: ev.recon,
+        total: eg.nc + eg.recon + ev.nc + ev.recon,
+      };
+    });
+
+    return { egliseNC, egliseRecon, evangNC, evangRecon, total, parEglise };
+  };
+
   const buildStatsFromData = (
     egliseIds, attendanceData, formationData, baptemeData,
     evangeData, cellulesActivesData, serviteurData
@@ -1097,15 +1062,12 @@ const getConversions = async (egliseIds, debut, fin) => {
       const rootIdValue = profileData.eglise_id;
       setRootId(rootIdValue);
 
-      // La RPC retourne le root + ses descendants — on les garde tous pour les données.
-      // Le KPI "Églises supervisées" exclura le root dans BlocVueEnsemble.
       const { data: filteredEglisesData } = await supabase.rpc(
         "get_descendant_eglises",
         { root_id: rootIdValue }
       );
 
       if (!filteredEglisesData?.length) {
-        setEglisesTree([]);
         setAllEglises([]);
         setBesoinsGlobaux({});
         setTotalMembresActifs(0);
@@ -1117,18 +1079,29 @@ const getConversions = async (egliseIds, debut, fin) => {
         setTotalFamillesActives(0);
         setTotalPiliers(0);
         setFamillesFeatureActive(false);
+        setMembresActifsParEglise({});
+        setTauxPresenceParEglise({});
+        setLeadersStatsParEglise({});
+        setConversionsParEglise({});
+        setBesoinsParEglise({});
         return;
       }
 
       const egliseIds = filteredEglisesData.map((e) => e.id);
 
-      // ── Membres actifs ──
+      // ── Membres actifs (réseau + par église) ──
       const { data: membresActifsData } = await supabase
         .from("membres_complets")
         .select("id, eglise_id, sexe")
         .in("eglise_id", egliseIds)
         .in("etat_contact", ["existant", "nouveau"]);
       setTotalMembresActifs(membresActifsData?.length || 0);
+
+      const membresActifsMap = {};
+      (membresActifsData || []).forEach((m) => {
+        membresActifsMap[m.eglise_id] = (membresActifsMap[m.eglise_id] || 0) + 1;
+      });
+      setMembresActifsParEglise(membresActifsMap);
 
       const tableFetch = async (table, dateField, deb, fi) => {
         let query = supabase.from(table).select("*").in("eglise_id", egliseIds);
@@ -1139,8 +1112,6 @@ const getConversions = async (egliseIds, debut, fin) => {
         return data || [];
       };
 
-      // ── Feature "familles" : seules les églises l'ayant explicitement activée comptent ──
-      // (DEFAULT_FEATURES.familles = false → opt-in, pas de fallback à true)
       const { data: familleFeatureData } = await supabase
         .from("eglise_features")
         .select("eglise_id")
@@ -1151,34 +1122,29 @@ const getConversions = async (egliseIds, debut, fin) => {
       setFamillesFeatureActive(egliseIdsAvecFamilles.length > 0);
 
       let totalFamActives = 0;
-        let totalPil = 0;
-        if (egliseIdsAvecFamilles.length > 0) {
-          // Familles actives = familles distinctes ayant au moins un membre actif rattaché
-          const { data: membresAvecFamille } = await supabase
-            .from("membres_complets")
-            .select("id, eglise_id, famille_id, etat_contact")
-            .in("eglise_id", egliseIdsAvecFamilles)
-            .not("famille_id", "is", null)
-            .in("etat_contact", ["existant", "nouveau"]);
-        
-          const famillesActivesSet = new Set(
-            (membresAvecFamille || []).map((m) => m.famille_id)
-          );
-          totalFamActives = famillesActivesSet.size;
-        
-          // Piliers = tous les membres actifs avec pilier = true, peu importe famille_id
-          const { data: piliersData } = await supabase
-            .from("membres_complets")
-            .select("id, eglise_id")
-            .in("eglise_id", egliseIdsAvecFamilles)
-            .eq("pilier", true)
-            .in("etat_contact", ["existant", "nouveau"]);
-          totalPil = piliersData?.length || 0;
-        }
-        setTotalFamillesActives(totalFamActives);
-        setTotalPiliers(totalPil);
-      
-      // ── Fetch période courante ──
+      let totalPil = 0;
+      if (egliseIdsAvecFamilles.length > 0) {
+        const { data: membresAvecFamille } = await supabase
+          .from("membres_complets")
+          .select("id, eglise_id, famille_id, etat_contact")
+          .in("eglise_id", egliseIdsAvecFamilles)
+          .not("famille_id", "is", null)
+          .in("etat_contact", ["existant", "nouveau"]);
+
+        const famillesActivesSet = new Set((membresAvecFamille || []).map((m) => m.famille_id));
+        totalFamActives = famillesActivesSet.size;
+
+        const { data: piliersData } = await supabase
+          .from("membres_complets")
+          .select("id, eglise_id")
+          .in("eglise_id", egliseIdsAvecFamilles)
+          .eq("pilier", true)
+          .in("etat_contact", ["existant", "nouveau"]);
+        totalPil = piliersData?.length || 0;
+      }
+      setTotalFamillesActives(totalFamActives);
+      setTotalPiliers(totalPil);
+
       const [attendanceData, formationData, baptemeData, evangeData, cellulesActivesData, conversionsData] =
         await Promise.all([
           tableFetch("attendance_stats", "mois", debut, fin),
@@ -1189,58 +1155,82 @@ const getConversions = async (egliseIds, debut, fin) => {
           getConversions(egliseIds, debut, fin),
         ]);
       setConversionsDetail(conversionsData);
+      setConversionsParEglise(conversionsData.parEglise || {});
 
-        // ── Leaders en développement (agrégé sur le réseau) ──
-        const { data: leadersMembresData } = await supabase
-          .from("membres_complets")
-          .select("id, eglise_id")
-          .in("eglise_id", egliseIds)
-          .eq("leader_developpement", true);
-        
-        let leadersStatsValue = { total: 0, potentiel: 0, croissance: 0, developpement: 0, mature: 0, sansEvaluation: 0 };
-        if (leadersMembresData?.length) {
-          const leaderIds = leadersMembresData.map((m) => m.id);
-          const { data: evalsLeaderData } = await supabase
-            .from("evaluations_leader")
-            .select("membre_id, parcours_etape, date_action")
-            .in("membre_id", leaderIds)
-            .order("date_action", { ascending: false });
-        
-          const etapeMap = {};
-          (evalsLeaderData || []).forEach((e) => {
-            if (!etapeMap[e.membre_id]) etapeMap[e.membre_id] = e.parcours_etape || null;
-          });
-        
-          const counts = { potentiel: 0, croissance: 0, developpement: 0, mature: 0, sansEvaluation: 0 };
-          leadersMembresData.forEach((m) => {
-            const etape = etapeMap[m.id];
-            if (etape && counts[etape] !== undefined) counts[etape]++;
-            else counts.sansEvaluation++;
-          });
-        
-          leadersStatsValue = { total: leadersMembresData.length, ...counts };
-        }
-        setLeadersStats(leadersStatsValue);       
+      // ── Leaders en développement (réseau + par église) ──
+      const { data: leadersMembresData } = await supabase
+        .from("membres_complets")
+        .select("id, eglise_id")
+        .in("eglise_id", egliseIds)
+        .eq("leader_developpement", true);
 
-      // ── Taux de présence réel : basé sur la table `presences` ──
-      // (une ligne par membre par session de culte, avec statut "present"/"absent")
+      let leadersStatsValue = { total: 0, potentiel: 0, croissance: 0, developpement: 0, mature: 0, sansEvaluation: 0 };
+      const leadersParEgliseValue = {};
+      if (leadersMembresData?.length) {
+        const leaderIds = leadersMembresData.map((m) => m.id);
+        const { data: evalsLeaderData } = await supabase
+          .from("evaluations_leader")
+          .select("membre_id, parcours_etape, date_action")
+          .in("membre_id", leaderIds)
+          .order("date_action", { ascending: false });
+
+        const etapeMap = {};
+        (evalsLeaderData || []).forEach((e) => {
+          if (!etapeMap[e.membre_id]) etapeMap[e.membre_id] = e.parcours_etape || null;
+        });
+
+        const counts = { potentiel: 0, croissance: 0, developpement: 0, mature: 0, sansEvaluation: 0 };
+        leadersMembresData.forEach((m) => {
+          const etape = etapeMap[m.id];
+          if (etape && counts[etape] !== undefined) counts[etape]++;
+          else counts.sansEvaluation++;
+
+          if (!leadersParEgliseValue[m.eglise_id]) {
+            leadersParEgliseValue[m.eglise_id] = { total: 0, potentiel: 0, croissance: 0, developpement: 0, mature: 0, sansEvaluation: 0 };
+          }
+          leadersParEgliseValue[m.eglise_id].total++;
+          if (etape && leadersParEgliseValue[m.eglise_id][etape] !== undefined) {
+            leadersParEgliseValue[m.eglise_id][etape]++;
+          } else {
+            leadersParEgliseValue[m.eglise_id].sansEvaluation++;
+          }
+        });
+
+        leadersStatsValue = { total: leadersMembresData.length, ...counts };
+      }
+      setLeadersStats(leadersStatsValue);
+      setLeadersStatsParEglise(leadersParEgliseValue);
+
+      // ── Taux de présence (réseau + par église), basé sur `presences` ──
       const { data: sessionsData } = await supabase
         .from("attendance")
-        .select("id, date")
+        .select("id, date, eglise_id")
         .in("eglise_id", egliseIds)
         .gte("date", debut || "1900-01-01")
         .lte("date", fin || "2100-01-01");
 
+      const sessionIdToEglise = {};
+      const nombreCultesParEglise = {};
+      (sessionsData || []).forEach((s) => {
+        sessionIdToEglise[s.id] = s.eglise_id;
+        nombreCultesParEglise[s.eglise_id] = (nombreCultesParEglise[s.eglise_id] || 0) + 1;
+      });
       const sessionIds = sessionsData?.map((s) => s.id) || [];
       const nombreCultes = sessionIds.length;
 
       let totalPresents = 0;
+      const presentsParEglise = {};
       if (sessionIds.length > 0) {
         const { data: presData } = await supabase
           .from("presences")
           .select("statut, attendance_id")
           .in("attendance_id", sessionIds);
-        totalPresents = (presData || []).filter((p) => p.statut === "present").length;
+        (presData || []).forEach((p) => {
+          if (p.statut !== "present") return;
+          totalPresents++;
+          const egId = sessionIdToEglise[p.attendance_id];
+          if (egId) presentsParEglise[egId] = (presentsParEglise[egId] || 0) + 1;
+        });
       }
 
       const tauxCalcule =
@@ -1248,6 +1238,15 @@ const getConversions = async (egliseIds, debut, fin) => {
           ? Math.round((totalPresents / (membresActifsData.length * nombreCultes)) * 100)
           : 0;
       setTauxPresenceMoyen(tauxCalcule);
+
+      const tauxParEgliseMap = {};
+      egliseIds.forEach((id) => {
+        const nb = nombreCultesParEglise[id] || 0;
+        const membres = membresActifsMap[id] || 0;
+        const presents = presentsParEglise[id] || 0;
+        tauxParEgliseMap[id] = membres > 0 && nb > 0 ? Math.round((presents / (membres * nb)) * 100) : 0;
+      });
+      setTauxPresenceParEglise(tauxParEgliseMap);
 
       const { data: serviteurData } = await supabase
         .from("stats_ministere_besoin")
@@ -1259,7 +1258,6 @@ const getConversions = async (egliseIds, debut, fin) => {
         evangeData, cellulesActivesData, serviteurData
       );
 
-      // ── Fetch période précédente ──
       if (prevDebut && prevFin) {
         const [pAtt, pForm, pBap, pEvang] = await Promise.all([
           tableFetch("attendance_stats", "mois", prevDebut, prevFin),
@@ -1267,9 +1265,7 @@ const getConversions = async (egliseIds, debut, fin) => {
           tableFetch("baptemes", "date", prevDebut, prevFin),
           tableFetch("rapport_evangelisation", "date", prevDebut, prevFin),
         ]);
-        const prevMap = buildStatsFromData(
-          egliseIds, pAtt, pForm, pBap, pEvang, [], serviteurData
-        );
+        const prevMap = buildStatsFromData(egliseIds, pAtt, pForm, pBap, pEvang, [], serviteurData);
         const pt = {
           culteHommes: 0, culteFemmes: 0, culteJeunes: 0, culteEnfants: 0, culteConnectes: 0,
           baptemeH: 0, baptemeF: 0, evangH: 0, evangF: 0, servH: 0, servF: 0,
@@ -1292,12 +1288,14 @@ const getConversions = async (egliseIds, debut, fin) => {
         setPrevTotaux(null);
       }
 
-      // ── Besoins ──
+      // ── Besoins (réseau + par église) ──
       if (membresActifsData?.length) {
         const membreIds = membresActifsData.map((m) => m.id);
         const sexeMap = {};
+        const egliseMap = {};
         membresActifsData.forEach((m) => {
           sexeMap[m.id] = m.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
+          egliseMap[m.id] = m.eglise_id;
         });
         let suivisQuery = supabase
           .from("suivis")
@@ -1307,9 +1305,11 @@ const getConversions = async (egliseIds, debut, fin) => {
         if (fin) suivisQuery = suivisQuery.lte("date_action", fin);
         const { data: suivisData } = await suivisQuery;
         const count = {};
+        const countParEglise = {};
         (suivisData || []).forEach((s) => {
           if (!s.besoin) return;
           const sexe = sexeMap[s.membre_id] || "femmes";
+          const egId = egliseMap[s.membre_id];
           let items = [];
           try {
             items = Array.isArray(s.besoin) ? s.besoin : JSON.parse(s.besoin);
@@ -1324,29 +1324,31 @@ const getConversions = async (egliseIds, debut, fin) => {
             else count[label].femmes++;
             if (statut === "Résolu") count[label].resolu++;
             else count[label].enSuivi++;
+
+            if (egId) {
+              if (!countParEglise[egId]) countParEglise[egId] = {};
+              if (!countParEglise[egId][label]) countParEglise[egId][label] = { total: 0, resolu: 0 };
+              countParEglise[egId][label].total++;
+              if (statut === "Résolu") countParEglise[egId][label].resolu++;
+            }
           });
         });
         setBesoinsGlobaux(count);
+        setBesoinsParEglise(countParEglise);
+      } else {
+        setBesoinsGlobaux({});
+        setBesoinsParEglise({});
       }
 
-      // ── Arbre des églises ──
       const map = {};
       filteredEglisesData.forEach((e) => {
-        map[e.id] = { ...e, stats: statsMap[e.id], enfants: [] };
-      });
-      const tree = [];
-      Object.values(map).forEach((e) => {
-        if (e.parent_eglise_id && map[e.parent_eglise_id])
-          map[e.parent_eglise_id].enfants.push(e);
-        else tree.push(e);
+        map[e.id] = { ...e, stats: statsMap[e.id] };
       });
 
-      setEglisesTree(tree);
       setAllEglises(Object.values(map));
       setHasData(true);
     } catch (err) {
       console.error("Erreur fetch stats:", err);
-      setEglisesTree([]);
       setAllEglises([]);
       setBesoinsGlobaux({});
       setTotalMembresActifs(0);
@@ -1354,6 +1356,11 @@ const getConversions = async (egliseIds, debut, fin) => {
       setTauxPresenceMoyen(0);
       setConversionsDetail(null);
       setLeadersStats(null);
+      setMembresActifsParEglise({});
+      setTauxPresenceParEglise({});
+      setLeadersStatsParEglise({});
+      setConversionsParEglise({});
+      setBesoinsParEglise({});
       setHasData(false);
     }
     setLoading(false);
@@ -1364,26 +1371,20 @@ const getConversions = async (egliseIds, debut, fin) => {
     setModePerso(false);
   };
 
-  const parentOptions = allEglises.filter((e) => e.parent_eglise_id === rootId);
-
-  const filteredEglises = (() => {
-    if (!parentFilter) return eglisesTree;
-    const find = (tree) => {
-      for (let e of tree) {
-        if (e.id === parentFilter) return e;
-        const found = find(e.enfants || []);
-        if (found) return found;
-      }
-      return null;
-    };
-    const found = find(eglisesTree);
-    return found ? [found] : [];
-  })();
-
   const onglets = [
     { key: "ensemble", label: t.ongletEnsemble },
     { key: "eglises", label: t.ongletEglises },
   ];
+
+  // ── Liste plate, filtrée par recherche, triée alphabétique ou par participation ──
+  const eglisesFiltrees = allEglises
+    .filter((e) => e.nom?.toLowerCase().includes(rechercheEglise.toLowerCase()))
+    .sort((a, b) => {
+      if (triEglise === "alphabetique") return a.nom.localeCompare(b.nom);
+      const totA = a.stats.culte.hommes + a.stats.culte.femmes + a.stats.culte.jeunes + a.stats.culte.enfants + a.stats.culte.connectes;
+      const totB = b.stats.culte.hommes + b.stats.culte.femmes + b.stats.culte.jeunes + b.stats.culte.enfants + b.stats.culte.connectes;
+      return totB - totA;
+    });
 
   return (
     <div
@@ -1394,7 +1395,6 @@ const getConversions = async (egliseIds, debut, fin) => {
 
       <div className="w-full max-w-2xl mt-6 flex flex-col gap-5 mb-10">
 
-        {/* En-tête */}
         <div className="text-center">
           <h1 className="text-2xl font-bold mt-4 mb-2 text-white">
             {t.titreRapport}{" "}
@@ -1413,7 +1413,6 @@ const getConversions = async (egliseIds, debut, fin) => {
           </p>
         </div>
 
-        {/* Filtres */}
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
           <SectionTitle>{t.parametres}</SectionTitle>
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
@@ -1490,7 +1489,6 @@ const getConversions = async (egliseIds, debut, fin) => {
           )}
         </div>
 
-        {/* Onglets */}
         {hasData && (
           <div className="flex gap-1 bg-white/10 rounded-xl p-1">
             {onglets.map((o) => (
@@ -1507,7 +1505,6 @@ const getConversions = async (egliseIds, debut, fin) => {
           </div>
         )}
 
-        {/* Contenu */}
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
@@ -1520,54 +1517,61 @@ const getConversions = async (egliseIds, debut, fin) => {
           <div className="flex flex-col gap-4">
             <SectionTitle>
               <p className="text-white/80 text-sm font-semibold">
-  {t.synthese} — {allEglises.length}{" "}
-  {allEglises.length > 1 ? t.eglises : t.eglise}
-</p>
+                {t.synthese} — {allEglises.length}{" "}
+                {allEglises.length > 1 ? t.eglises : t.eglise}
+              </p>
             </SectionTitle>
             <BlocVueEnsemble
-            allEglises={allEglises}
-            besoinsGlobaux={besoinsGlobaux}
-            totalMembresActifs={totalMembresActifs}
-            tauxPresenceMoyen={tauxPresenceMoyen}
-            conversionsDetail={conversionsDetail}
-            prevTotaux={prevTotaux}
-            rootId={rootId}
-            totalFamillesActives={totalFamillesActives}
-            totalPiliers={totalPiliers}
-            famillesFeatureActive={famillesFeatureActive}
-            leadersStats={leadersStats}
-            t={t}
-          />
+              allEglises={allEglises}
+              besoinsGlobaux={besoinsGlobaux}
+              totalMembresActifs={totalMembresActifs}
+              tauxPresenceMoyen={tauxPresenceMoyen}
+              conversionsDetail={conversionsDetail}
+              prevTotaux={prevTotaux}
+              rootId={rootId}
+              totalFamillesActives={totalFamillesActives}
+              totalPiliers={totalPiliers}
+              famillesFeatureActive={famillesFeatureActive}
+              leadersStats={leadersStats}
+              t={t}
+            />
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {parentOptions.length > 0 && (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs text-white/50">{t.filtrerEglise}</label>
-                <select
-                  value={parentFilter}
-                  onChange={(e) => setParentFilter(e.target.value)}
-                  className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer"
-                >
-                  <option value="" className="bg-[#2a2d80]">{t.toutesEglises}</option>
-                  {parentOptions.map((e) => (
-                    <option key={e.id} value={e.id} className="bg-[#2a2d80]">{e.nom}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={rechercheEglise}
+                onChange={(e) => setRechercheEglise(e.target.value)}
+                placeholder={t.rechercherEglise}
+                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm placeholder-white/40 focus:outline-none focus:border-white/40"
+              />
+              <select
+                value={triEglise}
+                onChange={(e) => setTriEglise(e.target.value)}
+                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer"
+              >
+                <option value="alphabetique" className="bg-[#2a2d80]">{t.triAlphabetique}</option>
+                <option value="participation" className="bg-[#2a2d80]">{t.triParticipation}</option>
+              </select>
+            </div>
+
             <SectionTitle>
-              {filteredEglises.length}{" "}
-              {filteredEglises.length > 1 ? t.eglises : t.eglise}{" "}
-              {filteredEglises.length > 1 ? t.affichees : t.affichee}
+              {eglisesFiltrees.length}{" "}
+              {eglisesFiltrees.length > 1 ? t.eglises : t.eglise}{" "}
+              {eglisesFiltrees.length > 1 ? t.affichees : t.affichee}
             </SectionTitle>
-            {filteredEglises.map((eglise) => (
-              <CarteEglise
+
+            {eglisesFiltrees.map((eglise) => (
+              <CarteEgliseCompacte
                 key={eglise.id}
                 eglise={eglise}
-                level={0}
-                expandedEglises={expandedEglises}
-                toggleExpand={toggleExpand}
+                membresActifs={membresActifsParEglise[eglise.id] || 0}
+                tauxPresence={tauxPresenceParEglise[eglise.id] || 0}
+                leaders={leadersStatsParEglise[eglise.id]}
+                evangelises={eglise.stats.evangelisation.hommes + eglise.stats.evangelisation.femmes}
+                conversions={conversionsParEglise[eglise.id]}
+                besoins={besoinsParEglise[eglise.id]}
                 t={t}
               />
             ))}

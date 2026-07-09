@@ -285,6 +285,48 @@ function BarreProgression({ pct, color }) {
   );
 }
 
+const LEADER_STAGE_COLORS = {
+  potentiel:     { bg: "#E6F1FB", text: "#042C53" },
+  croissance:    { bg: "#B5D4F4", text: "#042C53" },
+  developpement: { bg: "#85B7EB", text: "#042C53" },
+  mature:        { bg: "#378ADD", text: "#E6F1FB" },
+};
+
+function LeaderStageCard({ emoji, label, value, stage }) {
+  const c = LEADER_STAGE_COLORS[stage] || { bg: "#E6F1FB", text: "#042C53" };
+  return (
+    <div
+      className="rounded-2xl px-3 py-2.5 flex flex-col justify-between overflow-hidden"
+      style={{ background: c.bg, height: "82px", boxSizing: "border-box" }}
+    >
+      <div className="flex items-start gap-1">
+        <span className="text-sm leading-tight flex-shrink-0">{emoji}</span>
+        <span className="text-sm font-medium leading-tight" style={{ color: c.text }}>
+          {label}
+        </span>
+      </div>
+      <span className="text-xl font-bold leading-none text-center" style={{ color: c.text }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function TotalLeadersCard({ label, value, sub }) {
+  return (
+    <div
+      className="bg-white/10 rounded-2xl px-3 py-2.5 flex flex-col justify-between items-center overflow-hidden"
+      style={{ height: "82px", boxSizing: "border-box" }}
+    >
+      <span className="text-sm text-white/60">{label}</span>
+      <div className="flex flex-col items-center leading-tight">
+        <span className="text-xl font-bold text-white">{value}</span>
+        {sub && <span className="text-[11px] text-white/40">{sub}</span>}
+      </div>
+    </div>
+  );
+}
+
 // ─── STATUT CONFIG ─────────────────────────────────────────────
 function statutConfig(statutNorm, t) {
   switch (statutNorm) {
@@ -456,20 +498,24 @@ function ServiteurCard({ membre, sousTitre, idx = 0 }) {
 }
 
 // ─── BLOC KPI LEADERS ───────────────────────────────────────
-function BlocLeadersKpi({ leadersDeveloppement, t }) {
+function BlocLeadersKpi({ leadersDeveloppement, totalMembres, t }) {
   const counts = { potentiel: 0, croissance: 0, developpement: 0, mature: 0, none: 0 };
   leadersDeveloppement.forEach(l => { counts[l.etape || "none"]++; });
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-      <KpiCard label={t.totalLeaders} value={leadersDeveloppement.length} accent="white" />
+      <TotalLeadersCard
+        label={t.totalLeaders}
+        value={leadersDeveloppement.length}
+        sub={totalMembres > 0 ? `${Math.round((leadersDeveloppement.length / totalMembres) * 100)}% membres` : ""}
+      />
       {STAGES_ORDER.filter(s => s !== "none").map(stage => (
-        <KpiCard
+        <LeaderStageCard
           key={stage}
+          stage={stage}
+          emoji={t.parcoursStages[stage].emoji}
           label={t.parcoursStages[stage].label}
           value={counts[stage]}
-          sub={t.parcoursStages[stage].emoji}
-          accent={STAGE_COLOR[stage]}
         />
       ))}
     </div>

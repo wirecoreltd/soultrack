@@ -53,7 +53,7 @@ const translations = {
     aDejaEglise: "A déjà son église",
     visiteur: "Visiteur",
     pilier: "🎖️ Définir en tant que Pilier",
-    leaderDeveloppement: "🌱 Parcours de croissance vers le leadership",
+    leaderDeveloppement: "🏆 Parcours de croissance vers le leadership",
     parcoursChoisir: "Choisis une étape du parcours",
     errParcours: "❌ Veuillez sélectionner une étape du parcours de développement.",
     parcoursStages: [
@@ -129,7 +129,7 @@ const translations = {
     aDejaEglise: "Already has a church",
     visiteur: "Visitor",
     pilier: "🎖️ Define as a Pillar",
-    leaderDeveloppement: "🌱 Leadership Development Path",
+    leaderDeveloppement: "🏆 Leadership Development Path",
     parcoursChoisir: "Choose a development stage",
     errParcours: "❌ Please select a development stage.",
     parcoursStages: [

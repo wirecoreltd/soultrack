@@ -272,7 +272,7 @@ function toYearMonth(dateStr) {
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
   return (
-    <p className="text-sm font-semibold uppercase tracking-widest text-white mb-3">
+    <p className="text-sm font-semibold tracking-widest text-white mb-3">
       {children}
     </p>
   );
@@ -348,7 +348,7 @@ function BarreProgression({ pct, color }) {
 function StatRow({ label, color, children }) {
   return (
     <div className={`bg-white/10 rounded-xl px-4 py-3 border-l-2 ${color}`}>
-      <p className="text-sm font-semibold uppercase tracking-widest text-white/70 mb-2">
+      <p className="text-sm font-semibold tracking-widest text-white/70 mb-2">
         {label}
       </p>
       <div className="flex flex-wrap gap-2">{children}</div>
@@ -455,7 +455,9 @@ function CarteLeadersDeveloppement({ leadersStats, t }) {
     { value: croissance, label: t.leadersCroissance, color: "text-emerald-300" },
     { value: developpement, label: t.leadersDeveloppement, color: "text-blue-300" },
     { value: mature, label: t.leadersMature, color: "text-purple-300" },
-    { value: sansEvaluation, label: t.leadersSansEvaluation, color: "text-white/70" },
+    ...(sansEvaluation >= 1
+      ? [{ value: sansEvaluation, label: t.leadersSansEvaluation, color: "text-white/70" }]
+      : []),
   ];
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">

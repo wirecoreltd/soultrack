@@ -82,7 +82,7 @@ const translations = {
     parcoursStages: [
       { key: "potentiel", emoji: "🌱", label: "Potentiel identifié" },
       { key: "croissance", emoji: "🌿", label: "Serviteur fidèle" },
-      { key: "developpement", emoji: "🌳", label: "Responsable en formation" },
+      { key: "developpement", emoji: "🌳", label: "Leader en croissance" },
       { key: "mature", emoji: "🌲", label: "Leader confirmé" },
     ], 
     // Conseiller search
@@ -167,9 +167,9 @@ const translations = {
     errParcours: "❌ Please select a development stage.",
     parcoursStages: [
       { key: "potentiel", emoji: "🌱", label: "Potential identified" },
-      { key: "croissance", emoji: "🌿", label: "Growing leader" },
-      { key: "developpement", emoji: "🌳", label: "Developing leader" },
-      { key: "mature", emoji: "🌲", label: "Mature leader" },
+      { key: "croissance", emoji: "🌿", label: "Faithful Servant" },
+      { key: "developpement", emoji: "🌳", label: "Growing leader" },
+      { key: "mature", emoji: "🌲", label: "Established Leader" },
     ],      
     searchConseiller: "Search for a counsellor...",
     noResult: "No results",

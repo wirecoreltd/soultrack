@@ -1069,7 +1069,7 @@ function Attendance() {
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7 mt-4">
             <div>
-              <SectionTitle>{t.sectionVueEnsemble}</SectionTitle>
+              //<SectionTitle>{t.sectionVueEnsemble}</SectionTitle>
               <BlocKpiGlobaux reports={reports} membresProvenance={membresProvenance} t={t} />
             </div>
             <div>

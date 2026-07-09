@@ -888,7 +888,7 @@ useEffect(() => {
         <EditMemberSuivisPopup
           member={editMember}
           currentUserRoles={userRole ? [userRole] : []}
-          user={userProfile}
+          user={profile}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updatedMember, newStage) => {
             setAllMembers((prev) =>

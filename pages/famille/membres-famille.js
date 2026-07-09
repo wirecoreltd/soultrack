@@ -182,6 +182,7 @@ function MembresFamilleContent() {
   const [openEvalLeaderMemberId, setOpenEvalLeaderMemberId] = useState(null);
   const [leaderParcours, setLeaderParcours] = useState({});
   const [userRole, setUserRole] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [logoBase64, setLogoBase64] = useState(null);
   const [egliseData, setEgliseData] = useState(null);
 
@@ -283,6 +284,7 @@ function MembresFamilleContent() {
       if (!profile) return;
 
       setUserRole(profile.role);
+      setUserProfile(profile);
 
       let query = supabase
         .from("familles")
@@ -728,6 +730,7 @@ function MembresFamilleContent() {
         <EditMemberSuivisPopup
           member={editMember}
           currentUserRoles={userRole ? [userRole] : []}
+          user={userProfile}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updated) => {
             handleUpdateMember(updated);

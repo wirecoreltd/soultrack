@@ -81,7 +81,7 @@ const translations = {
     parcoursStages: {
       potentiel:     { emoji: "🌱", label: "Potentiel identifié" },
       croissance:    { emoji: "🌿", label: "Serviteur fidèle" },
-      developpement: { emoji: "🌳", label: "Responsable en formation" },
+      developpement: { emoji: "🌳", label: "Leader en croissance" },
       mature:        { emoji: "🌲", label: "Leader confirmé" },
     },
     aucuneEvaluation: "Sans évaluation",
@@ -154,7 +154,7 @@ const translations = {
     parcoursStages: {
       potentiel:     { emoji: "🌱", label: "Potential identified" },
       croissance:    { emoji: "🌿", label: "Faithful Servant" },
-      developpement: { emoji: "🌳", label: "Leader in Training" },
+      developpement: { emoji: "🌳", label: "Growing leader" },
       mature:        { emoji: "🌲", label: "Established Leader" },
     },
     aucuneEvaluation: "No evaluation",

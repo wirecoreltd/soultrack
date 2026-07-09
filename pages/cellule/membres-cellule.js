@@ -888,9 +888,15 @@ useEffect(() => {
         <EditMemberSuivisPopup
           member={editMember}
           currentUserRoles={userRole ? [userRole] : []}
+          user={userProfile}
           onClose={() => setEditMember(null)}
-          onUpdateMember={(updated) => {
-            handleUpdateMember(updated);
+          onUpdateMember={(updatedMember, newStage) => {
+            setAllMembers((prev) =>
+              prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
+            );
+            if (newStage) {
+              setLeaderParcours((prev) => ({ ...prev, [updatedMember.id]: newStage }));
+            }
             setEditMember(null);
           }}
         />

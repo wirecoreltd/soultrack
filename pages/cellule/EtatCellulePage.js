@@ -175,7 +175,7 @@ const translations = {
     totalLeaders: "Total leaders",
     parcoursStages: {
       potentiel: { emoji: "🌱", label: "Potential identified" },
-      croissance: { emoji: "🌿", label: "Faithful Servant"" },
+      croissance: { emoji: "🌿", label: "Faithful Servant" },
       developpement: { emoji: "🌳", label: "Growing leader" },
       mature: { emoji: "🌲", label: "Established Leader" },
     },

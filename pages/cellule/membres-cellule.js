@@ -263,6 +263,7 @@ function MembresCelluleContent() {
   const [logoBase64, setLogoBase64] = useState(null);
   const [egliseData, setEgliseData] = useState(null);
   const [leaderParcours, setLeaderParcours] = useState({});
+  const [userProfile, setUserProfile] = useState(null);
 
   const memberIdStr =
     typeof memberId === "string"
@@ -371,6 +372,7 @@ useEffect(() => {
     if (!profile) return;
 
     setUserRole(profile.role);
+    setUserProfile(profile);
 
     if (profile.role === "ResponsableCellule") {
       const { data: directesData } = await supabase
@@ -888,10 +890,10 @@ useEffect(() => {
         <EditMemberSuivisPopup
           member={editMember}
           currentUserRoles={userRole ? [userRole] : []}
-          user={profile}
+          user={userProfile}
           onClose={() => setEditMember(null)}
           onUpdateMember={(updatedMember, newStage) => {
-            setAllMembers((prev) =>
+            setMembres((prev) =>
               prev.map((m) => (m.id === updatedMember.id ? updatedMember : m))
             );
             if (newStage) {

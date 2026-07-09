@@ -5,9 +5,9 @@
 // (cultes, prières, etc.) : saisie des effectifs (hommes, femmes,
 // jeunes, enfants, connectés), suivi des nouveaux venus et convertis,
 // gestion dynamique des types de temps, et vue d'ensemble (KPI,
-// répartition H/F/J, provenance des nouveaux venus, tendance
-// hebdomadaire, fréquentation par type, évangélisation). Permet
-// aussi la modification et la suppression des rapports existants.
+// provenance des nouveaux venus, tendance hebdomadaire, fréquentation
+// par type). Permet aussi la modification et la suppression des
+// rapports existants.
 //
 // Tables Supabase utilisées :
 // - profiles          (lecture)             → eglise_id de l'utilisateur connecté
@@ -73,9 +73,7 @@ const translations = {
 
     // Sections KPI
     sectionVueEnsemble: "Vue d'ensemble",
-    sectionGenre: "Répartition H / F / J",
     sectionProvenance: "Provenance des nouveaux venus",
-    sectionEvang: "Évangélisation — nouveaux venus & convertis",
     sectionParType: "Fréquentation par type de temps",
     sectionTendance: "Tendance hebdomadaire (présents H+F+J)",
 
@@ -115,6 +113,8 @@ const translations = {
     // Par type
     sess: "sess.",
     aucuneDonnee: "Aucune donnée",
+    voirPlus: "Voir plus",
+    voirMoins: "Voir moins",
 
     // Évangélisation
     nouveauxVenus: "Nouveaux venus",
@@ -207,9 +207,7 @@ const translations = {
 
     // Sections KPI
     sectionVueEnsemble: "Overview",
-    sectionGenre: "M / F / Y breakdown",
     sectionProvenance: "Newcomer source",
-    sectionEvang: "Evangelism — newcomers & converts",
     sectionParType: "Attendance by service type",
     sectionTendance: "Weekly trend (M+F+Y present)",
 
@@ -249,6 +247,8 @@ const translations = {
     // Par type
     sess: "sess.",
     aucuneDonnee: "No data",
+    voirPlus: "Show more",
+    voirMoins: "Show less",
 
     // Évangélisation
     nouveauxVenus: "Newcomers",
@@ -317,11 +317,20 @@ function formatDateCourt(dateStr) {
     day: "2-digit", month: "short",
   });
 }
-function getMonthNameFR(monthIndex) {
-  return ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"][monthIndex] || "";
-}
-function getMonthNameEN(monthIndex) {
-  return ["January","February","March","April","May","June","July","August","September","October","November","December"][monthIndex] || "";
+// Retourne le lundi (00:00) de la semaine contenant dateStr, sous forme "YYYY-MM-DD".
+// Utilisé comme clé de regroupement hebdomadaire : le tri lexicographique de cette
+// clé correspond exactement à l'ordre chronologique, ce qui évite les erreurs de
+// numérotation de semaine (ISO) qui empêchaient l'affichage du graphique.
+function getMondayKey(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  const day = d.getDay(); // 0 = dimanche ... 6 = samedi
+  const diff = (day === 0 ? -6 : 1) - day; // décalage jusqu'au lundi de cette semaine
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diff);
+  const yyyy = monday.getFullYear();
+  const mm = String(monday.getMonth() + 1).padStart(2, "0");
+  const dd = String(monday.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 // Normalise le champ "venu" de membres_complets : les valeurs existantes en
 // base sont incohérentes en casse/accents ("Évangélisation", "evangélisation",
@@ -406,46 +415,6 @@ function BlocKpiGlobaux({ reports, t }) {
   );
 }
 
-// ─── BLOC RÉPARTITION GENRE ────────────────────────────────────
-function BlocGenre({ reports, t }) {
-  const totalHommes = reports.reduce((a, r) => a + Number(r.hommes || 0), 0);
-  const totalFemmes = reports.reduce((a, r) => a + Number(r.femmes || 0), 0);
-  const totalJeunes = reports.reduce((a, r) => a + Number(r.jeunes || 0), 0);
-  const total = totalHommes + totalFemmes + totalJeunes;
-  const pctH = total > 0 ? Math.round((totalHommes / total) * 100) : 0;
-  const pctF = total > 0 ? Math.round((totalFemmes / total) * 100) : 0;
-  const pctJ = total > 0 ? Math.round((totalJeunes / total) * 100) : 100 - pctH - pctF;
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
-          <p className="text-xl font-bold text-blue-300">{totalHommes}</p>
-          <p className="text-[11px] text-blue-400/70">{t.hommes}</p>
-          <p className="text-[10px] text-blue-500/50">{pctH}%</p>
-        </div>
-        <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
-          <p className="text-xl font-bold text-pink-300">{totalFemmes}</p>
-          <p className="text-[11px] text-pink-400/70">{t.femmes}</p>
-          <p className="text-[10px] text-pink-500/50">{pctF}%</p>
-        </div>
-        <div className="bg-amber-900/40 rounded-xl px-3 py-3 text-center">
-          <p className="text-xl font-bold text-amber-300">{totalJeunes}</p>
-          <p className="text-[11px] text-amber-400/70">{t.jeunes}</p>
-          <p className="text-[10px] text-amber-500/50">{pctJ}%</p>
-        </div>
-      </div>
-      {total > 0 && (
-        <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
-          <div className="bg-blue-400 rounded-l-full transition-all" style={{ width: `${pctH}%` }} />
-          <div className="bg-pink-400 transition-all" style={{ width: `${pctF}%` }} />
-          <div className="bg-amber-400 rounded-r-full transition-all" style={{ width: `${pctJ}%` }} />
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── BLOC PROVENANCE DES NOUVEAUX VENUS ────────────────────────
 // Source : membres_complets.venu, sur les membres dont date_premiere_visite
 // tombe dans la période/tranche sélectionnée. Regroupé via normalizeVenu()
@@ -488,25 +457,26 @@ function BlocProvenance({ membres, t }) {
 }
 
 // ─── BLOC TENDANCE ─────────────────────────────────────────────
+// Regroupement par semaine calendaire (clé = lundi de la semaine, format
+// "YYYY-MM-DD"). Ce format se trie lexicographiquement dans l'ordre
+// chronologique et évite les décalages de numérotation ISO qui empêchaient
+// le graphique de s'afficher.
 function BlocTendance({ reports, t }) {
   const parSemaine = {};
   reports.forEach(r => {
-    const d = new Date(r.date + "T00:00:00");
-    const jan = new Date(d.getFullYear(), 0, 1);
-    const sem = `${d.getFullYear()}-S${String(Math.ceil(((d - jan) / 86400000 + jan.getDay() + 1) / 7)).padStart(2, "0")}`;
-    if (!parSemaine[sem]) parSemaine[sem] = { total: 0, nv: 0, nc: 0, dates: [] };
-    parSemaine[sem].total += Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0);
-    parSemaine[sem].nv += Number(r.nouveauxVenus || 0);
-    parSemaine[sem].nc += Number(r.nouveauxConvertis || 0);
-    parSemaine[sem].dates.push(r.date);
+    const key = getMondayKey(r.date);
+    if (!parSemaine[key]) parSemaine[key] = { total: 0, nv: 0, nc: 0 };
+    parSemaine[key].total += Number(r.hommes || 0) + Number(r.femmes || 0) + Number(r.jeunes || 0);
+    parSemaine[key].nv += Number(r.nouveauxVenus || 0);
+    parSemaine[key].nc += Number(r.nouveauxConvertis || 0);
   });
   const semaines = Object.entries(parSemaine)
-    .sort(([a], [b]) => a.localeCompare(b)).slice(-8)
-    .map(([sem, v]) => ({
-      sem, ...v,
-      label: v.dates.length > 0 ? formatDateCourt(v.dates[0]) : sem,
-    }));
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-8)
+    .map(([key, v]) => ({ sem: key, ...v, label: formatDateCourt(key) }));
+
   if (semaines.length < 2) return <p className="text-white/30 text-sm text-center py-4">{t.tendanceInsuffisant}</p>;
+
   const maxTotal = Math.max(...semaines.map(s => s.total), 1);
   const derniere = semaines[semaines.length - 1];
   const avantDerniere = semaines[semaines.length - 2];
@@ -534,7 +504,10 @@ function BlocTendance({ reports, t }) {
 }
 
 // ─── BLOC TAUX PAR TYPE ────────────────────────────────────────
+// Limité à 10 lignes par défaut, avec bouton "Voir plus" pour afficher le reste.
+const LIMITE_PAR_TYPE = 10;
 function BlocParType({ reports, t }) {
+  const [showAll, setShowAll] = useState(false);
   const parType = {};
   reports.forEach(r => {
     const type = r.typeTemps || "Autre";
@@ -545,8 +518,12 @@ function BlocParType({ reports, t }) {
     parType[type].nb++;
   });
   const maxTotal = Math.max(...Object.values(parType).map(v => v.total), 1);
-  const lignes = Object.entries(parType).sort((a, b) => b[1].total - a[1].total);
-  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">{t.aucuneDonnee}</p>;
+  const lignesTotal = Object.entries(parType).sort((a, b) => b[1].total - a[1].total);
+  if (!lignesTotal.length) return <p className="text-white/30 text-sm text-center py-4">{t.aucuneDonnee}</p>;
+
+  const lignes = showAll ? lignesTotal : lignesTotal.slice(0, LIMITE_PAR_TYPE);
+  const resteACacher = lignesTotal.length - LIMITE_PAR_TYPE;
+
   return (
     <div className="flex flex-col gap-2">
       {lignes.map(([type, { total, nv, nc, nb }]) => (
@@ -563,69 +540,14 @@ function BlocParType({ reports, t }) {
           </div>
         </div>
       ))}
-    </div>
-  );
-}
-
-// ─── BLOC NOUVEAUX VENUS & CONVERTIS ──────────────────────────
-function BlocEvangelisation({ reports, t, lang }) {
-  const totalNV = reports.reduce((a, r) => a + Number(r.nouveauxVenus || 0), 0);
-  const totalNC = reports.reduce((a, r) => a + Number(r.nouveauxConvertis || 0), 0);
-  const totalSess = reports.length;
-  const moyNV = totalSess > 0 ? (totalNV / totalSess).toFixed(1) : 0;
-  const moyNC = totalSess > 0 ? (totalNC / totalSess).toFixed(1) : 0;
-  const tauxConversion = totalNV > 0 ? Math.round((totalNC / totalNV) * 100) : 0;
-
-  const parMois = {};
-  reports.forEach(r => {
-    const d = new Date(r.date + "T00:00:00");
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    const monthName = lang === "en"
-      ? `${getMonthNameEN(d.getMonth()).slice(0, 3)} ${d.getFullYear()}`
-      : `${getMonthNameFR(d.getMonth()).slice(0, 3)} ${d.getFullYear()}`;
-    if (!parMois[key]) parMois[key] = { nv: 0, nc: 0, label: monthName };
-    parMois[key].nv += Number(r.nouveauxVenus || 0);
-    parMois[key].nc += Number(r.nouveauxConvertis || 0);
-  });
-  const mois = Object.entries(parMois).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
-  const maxNV = Math.max(...mois.map(([, v]) => v.nv), 1);
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-blue-900/40 rounded-2xl px-4 py-4 text-center">
-          <p className="text-2xl font-bold text-blue-300">{totalNV}</p>
-          <p className="text-[11px] text-blue-400/70">{t.nouveauxVenus}</p>
-          <p className="text-[10px] text-blue-500/50">{t.moy} {moyNV}/{t.sess}</p>
-        </div>
-        <div className="bg-emerald-900/40 rounded-2xl px-4 py-4 text-center">
-          <p className="text-2xl font-bold text-emerald-300">{totalNC}</p>
-          <p className="text-[11px] text-emerald-400/70">{t.convertis}</p>
-          <p className="text-[10px] text-emerald-500/50">{t.moy} {moyNC}/{t.sess}</p>
-        </div>
-        <div className="bg-purple-900/40 rounded-2xl px-4 py-4 text-center">
-          <p className="text-2xl font-bold text-purple-300">{tauxConversion}%</p>
-          <p className="text-[11px] text-purple-400/70">{t.tauxConv}</p>
-          <p className="text-[10px] text-purple-500/50">{t.nvConv}</p>
-        </div>
-      </div>
-      {mois.length >= 2 && (
-        <div className="flex items-end gap-2 h-20">
-          {mois.map(([key, { nv, nc, label }]) => (
-            <div key={key} className="flex-1 flex flex-col items-center gap-1">
-              <div className="w-full flex gap-0.5 items-end" style={{ height: "60px" }}>
-                <div className="flex-1 bg-blue-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (nv / maxNV) * 60)}px` }} />
-                <div className="flex-1 bg-emerald-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (nc / maxNV) * 60)}px` }} />
-              </div>
-              <p className="text-[9px] text-white/30 truncate w-full text-center">{label}</p>
-            </div>
-          ))}
-        </div>
+      {resteACacher > 0 && (
+        <button
+          onClick={() => setShowAll(v => !v)}
+          className="mt-1 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white/70 text-xs font-semibold transition active:scale-95"
+        >
+          {showAll ? t.voirMoins : `${t.voirPlus} (+${resteACacher})`}
+        </button>
       )}
-      <div className="flex gap-3 text-[11px] text-white/40">
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70 inline-block" /> {t.legendNV}</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500/70 inline-block" /> {t.legendConv}</span>
-      </div>
     </div>
   );
 }
@@ -1150,18 +1072,6 @@ function Attendance() {
               <SectionTitle>{t.sectionProvenance}</SectionTitle>
               <div className="bg-white/10 rounded-2xl px-4 py-4">
                 <BlocProvenance membres={membresProvenance} t={t} />
-              </div>
-            </div>
-            <div>
-              <SectionTitle>{t.sectionGenre}</SectionTitle>
-              <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocGenre reports={reports} t={t} />
-              </div>
-            </div>
-            <div>
-              <SectionTitle>{t.sectionEvang}</SectionTitle>
-              <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocEvangelisation reports={reports} t={t} lang={lang} />
               </div>
             </div>
             <div>

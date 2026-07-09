@@ -53,14 +53,14 @@ const translations = {
     aDejaEglise: "A déjà son église",
     visiteur: "Visiteur",
     pilier: "🎖️ Définir en tant que Pilier",
-    leaderDeveloppement: "🌱 Définir en tant que Leader en développement",
+    leaderDeveloppement: "🌱 Parcours de croissance vers le leadership",
     parcoursChoisir: "Choisis une étape du parcours",
     errParcours: "❌ Veuillez sélectionner une étape du parcours de développement.",
     parcoursStages: [
       { key: "potentiel", emoji: "🌱", label: "Potentiel identifié" },
-      { key: "croissance", emoji: "🌿", label: "Leader en croissance" },
-      { key: "developpement", emoji: "🌳", label: "Leader en développement" },
-      { key: "mature", emoji: "🌲", label: "Leader mature" },
+      { key: "croissance", emoji: "🌿", label: "Serviteur fidèle" },
+      { key: "developpement", emoji: "🌳", label: "Responsable en formation" },
+      { key: "mature", emoji: "🌲", label: "Leader confirmé" },
     ],
 
     // Footer
@@ -129,14 +129,14 @@ const translations = {
     aDejaEglise: "Already has a church",
     visiteur: "Visitor",
     pilier: "🎖️ Define as a Pillar",
-    leaderDeveloppement: "🌱 Define as a Developing Leader",
+    leaderDeveloppement: "🌱 Leadership Development Path",
     parcoursChoisir: "Choose a development stage",
     errParcours: "❌ Please select a development stage.",
     parcoursStages: [
       { key: "potentiel", emoji: "🌱", label: "Potential identified" },
-      { key: "croissance", emoji: "🌿", label: "Growing leader" },
-      { key: "developpement", emoji: "🌳", label: "Developing leader" },
-      { key: "mature", emoji: "🌲", label: "Mature leader" },
+      { key: "croissance", emoji: "🌿", label: "Faithful Servant" },
+      { key: "developpement", emoji: "🌳", label: "Leader in Training" },
+      { key: "mature", emoji: "🌲", label: "Established Leader" },
     ],
 
     // Footer

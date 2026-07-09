@@ -273,13 +273,13 @@ function getMapLabel(map, value) {
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
-  return <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">{children}</p>;
+  return <p className="text-[11px] font-semibold tracking-widest text-white/40 mb-3">{children}</p>;
 }
 function KpiCard({ label, value, sub, accent, onClick }) {
   const c = {
     green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400",
     white: "text-white", blue: "text-blue-300", pink: "text-pink-300",
-    purple: "text-purple-300", teal: "text-teal-300", orange: "text-orange-300", gray: "text-white/40",
+    purple: "text-purple-300", teal: "text-teal-300", orange: "text-orange-300", gray: "text-white/80",
   };
   return (
     <div onClick={onClick}
@@ -378,10 +378,10 @@ function BlocEntonnoir({ filteredEvangelises, filteredSuivis, t }) {
     <div className="flex flex-col gap-2">
       {etapes.map(({ label, val, pct, color }) => (
         <div key={label} className="flex items-center gap-3">
-          <p className="text-xs text-white/70 w-36 flex-shrink-0">{label}</p>
+          <p className="text-sm text-white/80 w-36 flex-shrink-0">{label}</p>
           <BarreProgression pct={pct} color={color} />
           <span className="text-xs font-bold text-white w-8 text-right">{val}</span>
-          <span className="text-[11px] text-white/40 w-9 text-right">{pct}%</span>
+          <span className="text-[11px] text-white/60 w-9 text-right">{pct}%</span>
         </div>
       ))}
     </div>
@@ -761,7 +761,7 @@ export default function RapportEvangelisation() {
           )}
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-white/50">{t.typeEvangelisation}</label>
+            <label className="text-sm text-white/80">{t.typeEvangelisation}</label>
             <select value={filtreType} onChange={e => setFiltreType(e.target.value)}
               className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
               <option value="" className="bg-[#2a2d80]">{t.tousTypes}</option>
@@ -794,8 +794,7 @@ export default function RapportEvangelisation() {
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7">
 
-            <div>
-              <SectionTitle>{t.sectionVue}</SectionTitle>
+            <div>              
               <BlocKpiGlobaux
                 filteredEvangelises={filteredEvangelises}
                 filteredSuivis={filteredSuivis}

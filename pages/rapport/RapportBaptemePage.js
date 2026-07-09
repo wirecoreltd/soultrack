@@ -212,15 +212,15 @@ function getMonthNameEN(monthIndex) {
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
-  return <p className="text-[11px] font-semibold uppercase tracking-widest text-white mb-3">{children}</p>;
+  return <p className="text-sm font-semibold uppercase tracking-widest text-white/80 mb-3">{children}</p>;
 }
 function KpiCard({ label, value, sub, accent }) {
   const c = { green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400", white: "text-white", blue: "text-blue-300", pink: "text-pink-300", purple: "text-purple-300" };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-xs text-white">{label}</p>
+      <p className="text-sm text-white">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-white mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-white/60 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -276,15 +276,15 @@ function BlocKpiGlobaux({ rapports, t }) {
       </div>
       {total > 0 && (
         <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-          <p className="text-xs text-white">{t.kpiRepartition}</p>
+          <p className="text-sm text-white">{t.kpiRepartition}</p>
           <div className="grid grid-cols-2 gap-2">
             <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
-              <p className="text-xl font-bold text-blue-300">{totalH}</p>
+              <p className="text-xl font-bold text-white/80">{totalH}</p>
               <p className="text-[11px] text-blue-400/70">{t.kpiHommeLabel}</p>
               <p className="text-[10px] text-blue-500/50">{pctH}%</p>
             </div>
             <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
-              <p className="text-xl font-bold text-pink-300">{totalF}</p>
+              <p className="text-xl font-bold text-white/80">{totalF}</p>
               <p className="text-[11px] text-pink-400/70">{t.kpiFemmeLabel}</p>
               <p className="text-[10px] text-pink-500/50">{pctF}%</p>
             </div>
@@ -817,7 +817,7 @@ function RapportBaptemes() {
           </div>
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">{t.periode}</span>
+              <span className="text-xs text-white/80 flex-shrink-0">{t.periode}</span>
               {periodes.map(p => (
                 <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
@@ -830,12 +830,12 @@ function RapportBaptemes() {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateDebut}</label>
+                  <label className="text-xs text-white/80">{t.dateDebut}</label>
                   <input type="date" value={filterDebut} onChange={e => setFilterDebut(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateFin}</label>
+                  <label className="text-xs text-white/80">{t.dateFin}</label>
                   <input type="date" value={filterFin} onChange={e => setFilterFin(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>

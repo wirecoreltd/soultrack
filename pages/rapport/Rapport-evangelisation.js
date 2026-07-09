@@ -284,9 +284,9 @@ function KpiCard({ label, value, sub, accent, onClick }) {
   return (
     <div onClick={onClick}
       className={`bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1 ${onClick ? "cursor-pointer hover:bg-white/15 active:scale-95 transition" : ""}`}>
-      <p className="text-xs text-white/50">{label}</p>
+      <p className="text-sm text-white">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-white/60 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -729,7 +729,7 @@ export default function RapportEvangelisation() {
 
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">{t.periode}</span>
+              <span className="text-xs text-white/80 flex-shrink-0">{t.periode}</span>
               {t.periodes.map(p => (
                 <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
@@ -743,12 +743,12 @@ export default function RapportEvangelisation() {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateDebut}</label>
+                  <label className="text-xs text-white/80">{t.dateDebut}</label>
                   <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateFin}</label>
+                  <label className="text-xs text-white/80">{t.dateFin}</label>
                   <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>

@@ -355,7 +355,7 @@ function KpiCard({ label, value, sub, accent }) {
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
       <p className="text-sm text-white">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-xs text-white mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-white/60 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -1023,7 +1023,7 @@ function Attendance() {
         <div className="flex gap-1 bg-white/10 rounded-xl p-1 mt-4">
           {onglets.map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/80 hover:text-white/80"}`}>
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
               {o.label}
             </button>
           ))}
@@ -1068,7 +1068,8 @@ function Attendance() {
           </div>
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7 mt-4">
-            <div>             
+            <div>
+              <SectionTitle>{t.sectionVueEnsemble}</SectionTitle>
               <BlocKpiGlobaux reports={reports} membresProvenance={membresProvenance} t={t} />
             </div>
             <div>

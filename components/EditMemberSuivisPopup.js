@@ -172,8 +172,8 @@ export default function EditMemberSuivisPopup({
   const { lang } = useLang();
   const t = translations[lang];
 
-  const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));
-  const isLeaderManager = (currentUserRoles || []).some(r => ["Administrateur", "SuperviseurCellule", "ResponsableFamille"].includes(r));
+  const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));  
+  const isLeaderManager = (currentUserRoles || []).some(r => ["Administrateur", "SuperviseurCellule", "ResponsableCellule", "ResponsableFamille", "SuperviseurFamilles"].includes(r));
 
   const [autreMinistere, setAutreMinistere] = useState("");
   const [search, setSearch] = useState("");

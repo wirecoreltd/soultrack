@@ -459,13 +459,20 @@ function CarteLeadersDeveloppement({ leadersStats, t }) {
       ? [{ value: sansEvaluation, label: t.leadersSansEvaluation, color: "text-white/70" }]
       : []),
   ];
+  const gridColsClass =
+    stages.length === 5
+      ? "grid-cols-2 sm:grid-cols-5"
+      : stages.length === 4
+      ? "grid-cols-2 sm:grid-cols-4"
+      : "grid-cols-2 sm:grid-cols-3";
+
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-white/80">{t.leadersTitle}</p>
         <p className="text-lg font-bold leading-none text-yellow-300">{total}</p>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+      <div className={`grid ${gridColsClass} gap-2`}>
         {stages.map((s) => (
           <div key={s.label} className="bg-white/5 rounded-xl px-3 py-3 text-center">
             <p className={`text-lg font-bold leading-none ${s.color}`}>{s.value}</p>

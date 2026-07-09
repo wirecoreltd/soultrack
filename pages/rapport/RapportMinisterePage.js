@@ -234,6 +234,45 @@ function KpiCard({ label, value, sub, colorClass, icon }) {
   );
 }
 
+const LEADER_STAGE_COLORS = {
+  potentiel:     { bg: "#FAEEDA", text: "#412402" },
+  croissance:    { bg: "#FAC775", text: "#412402" },
+  developpement: { bg: "#EF9F27", text: "#412402" },
+  mature:        { bg: "#BA7517", text: "#412402" },
+};
+
+function LeaderStageCard({ emoji, label, value, stage }) {
+  const c = LEADER_STAGE_COLORS[stage] || { bg: "#FAEEDA", text: "#412402" };
+  return (
+    <div
+      className="rounded-2xl px-3 py-2.5 flex flex-col justify-between items-center gap-1"
+      style={{ background: c.bg, height: "64px" }}
+    >
+      <div className="flex items-center gap-1.5 justify-center w-full">
+        <span className="text-[13px] leading-none flex-shrink-0">{emoji}</span>
+        <span className="text-[11px] font-medium text-center leading-tight" style={{ color: c.text }}>
+          {label}
+        </span>
+      </div>
+      <span className="text-xl font-bold leading-none" style={{ color: c.text }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function TotalLeadersCard({ label, value, sub }) {
+  return (
+    <div className="bg-white/8 rounded-2xl px-3 py-2.5 flex flex-col justify-between" style={{ height: "64px" }}>
+      <span className="text-[11px] text-white/60">{label}</span>
+      <div className="flex items-baseline justify-end gap-1.5">
+        <span className="text-xl font-bold text-white">{value}</span>
+        {sub && <span className="text-[10px] text-white/40">{sub}</span>}
+      </div>
+    </div>
+  );
+}
+
 function BarreProgression({ pct, color }) {
   return (
     <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
@@ -1081,24 +1120,20 @@ const leadersParFamille = useMemo(() => {
                   <div>
                     <SectionTitle icon="🌱">{t.leadersEnDeveloppement}</SectionTitle>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                      <KpiCard
-                        colorClass="green"
+                      <TotalLeadersCard
                         label={t.totalLeaders}
                         value={rapports.leadersDeveloppement.length}
                         sub={totalMembres > 0 ? `${Math.round((rapports.leadersDeveloppement.length / totalMembres) * 100)}% ${t.pctMembres}` : ""}
                       />
-                      {["potentiel", "croissance", "developpement", "mature"].map((stage) => {
-                        const colorMap = { potentiel: "teal", croissance: "green", developpement: "blue", mature: "purple" };
-                        return (
-                          <KpiCard
-                            key={stage}
-                            colorClass={colorMap[stage]}
-                            label={t.parcoursStages[stage].label}
-                            value={leadersParStage[stage].length}
-                            icon={t.parcoursStages[stage].emoji}
-                          />
-                        );
-                      })}
+                      {["potentiel", "croissance", "developpement", "mature"].map((stage) => (
+                        <LeaderStageCard
+                          key={stage}
+                          stage={stage}
+                          emoji={t.parcoursStages[stage].emoji}
+                          label={t.parcoursStages[stage].label}
+                          value={leadersParStage[stage].length}
+                        />
+                      ))}
                     </div>
                   </div>
               

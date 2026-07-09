@@ -134,7 +134,7 @@ const translations = {
     parcours: [
       { key: "potentiel", emoji: "🌱", label: "Potentiel identifié", desc: "La personne montre un potentiel de leadership." },
       { key: "croissance", emoji: "🌿", label: "Serviteur fidèle", desc: "La personne progresse dans son caractère, service et influence." },
-      { key: "developpement", emoji: "🌳", label: "Responsable en formation", desc: "La personne commence à accompagner des personnes et prendre des responsabilités." },
+      { key: "developpement", emoji: "🌳", label: "Leader en croissance", desc: "La personne commence à accompagner des personnes et prendre des responsabilités." },
       { key: "mature", emoji: "🌲", label: "Leader confirmé", desc: "La personne peut conduire, former et multiplier d'autres leaders." },
     ],
     choisirEtape: "Choisis une étape pour la mettre à jour",
@@ -275,7 +275,7 @@ const translations = {
     parcours: [
       { key: "potentiel", emoji: "🌱", label: "Potential identified", desc: "This person shows leadership potential." },
       { key: "croissance", emoji: "🌿", label: "Faithful Servant", desc: "This person is growing in character, service and influence." },
-      { key: "developpement", emoji: "🌳", label: "Leader in Training", desc: "This person is beginning to mentor others and take on responsibilities." },
+      { key: "developpement", emoji: "🌳", label: "Growing leader", desc: "This person is beginning to mentor others and take on responsibilities." },
       { key: "mature", emoji: "🌲", label: "Established Leader", desc: "This person can lead, train, and multiply other leaders." },
     ],
     choisirEtape: "Choose a stage to update it",

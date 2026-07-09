@@ -811,6 +811,7 @@ function EtatCellule() {
 
   const cellulesActive = useFeature("cellules");
   const famillesActive = useFeature("familles");
+  const [totalMembresLeaders, setTotalMembresLeaders] = useState(0);
 
   const [kpis, setKpis] = useState({
     totalEvangelises: 0, totalVenus: 0, totalIntegration: 0,
@@ -994,13 +995,17 @@ function EtatCellule() {
     try {
       const { data: membresData, error } = await supabase
         .from("membres_complets")
-        .select("id, nom, prenom, leader_developpement, cellule_id, famille_id")
-        .eq("eglise_id", userProfile.eglise_id)
-        .eq("leader_developpement", true);
+        .select("id, nom, prenom, leader_developpement, cellule_id, famille_id, etat_contact")
+        .eq("eglise_id", userProfile.eglise_id);
 
       if (error) throw error;
 
-      const leadersMembres = membresData || [];
+      const actifs = (membresData || []).filter(m =>
+        ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
+      );
+      setTotalMembresLeaders(actifs.length);
+
+      const leadersMembres = (membresData || []).filter(m => m.leader_developpement === true);
       const leaderIds = leadersMembres.map(m => m.id);
 
       const evalsMap = {};
@@ -1160,7 +1165,7 @@ function EtatCellule() {
           <div className="flex flex-col gap-7">
             <div>
               <SectionTitle>{t.leadersEnDeveloppement}</SectionTitle>
-              <BlocLeadersKpi leadersDeveloppement={leadersDeveloppementAvecCellule} t={t} />
+              <BlocLeadersKpi leadersDeveloppement={leadersDeveloppementAvecCellule} totalMembres={totalMembresLeaders} t={t} />
             </div>
 
             <div>

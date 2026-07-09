@@ -242,49 +242,62 @@ export default function EditMemberPopup({
     "Visite","Berger","Modération",
   ];
 
-  useEffect(() => {
-    if (!member?.id) return;
+ useEffect(() => {
+  if (!member?.id) return;
 
-    const fetchFreshData = async () => {
-      setLoadingData(true);
+  const fetchFreshData = async () => {
+    setLoadingData(true);
 
-      const { data: freshMember, error } = await supabase
-        .from("membres_complets")
-        .select("*")
-        .eq("id", member.id)
-        .single();
+    const { data: freshMember, error } = await supabase
+      .from("membres_complets")
+      .select("*")
+      .eq("id", member.id)
+      .single();
 
-      if (error || !freshMember) {
-        console.error("Erreur chargement membre frais:", error);
-        initForm(member);
-        setLoadingData(false);
-        return;
-      }
-
-      initForm(freshMember);
-
-      const { data: assignments, error: assignError } = await supabase
-        .from("suivi_assignments")
-        .select("conseiller_id, role, profiles:conseiller_id(id, prenom, nom)")
-        .eq("membre_id", member.id)
-        .eq("statut", "actif")
-        .order("created_at", { ascending: true });
-
-      if (!assignError && assignments) {
-        const sorted = [...assignments].sort((a, b) => {
-          if (a.role === "principal") return -1;
-          if (b.role === "principal") return 1;
-          return 0;
-        });
-        const objects = sorted.map((d) => d.profiles).filter(Boolean);
-        setSelectedConseillers(objects);
-      }
-
+    if (error || !freshMember) {
+      console.error("Erreur chargement membre frais:", error);
+      initForm(member);
       setLoadingData(false);
-    };
+      return;
+    }
 
-    fetchFreshData();
-  }, [member?.id]);
+    initForm(freshMember);
+
+    const { data: assignments, error: assignError } = await supabase
+      .from("suivi_assignments")
+      .select("conseiller_id, role, profiles:conseiller_id(id, prenom, nom)")
+      .eq("membre_id", member.id)
+      .eq("statut", "actif")
+      .order("created_at", { ascending: true });
+
+    if (!assignError && assignments) {
+      const sorted = [...assignments].sort((a, b) => {
+        if (a.role === "principal") return -1;
+        if (b.role === "principal") return 1;
+        return 0;
+      });
+      const objects = sorted.map((d) => d.profiles).filter(Boolean);
+      setSelectedConseillers(objects);
+    }
+
+    // ✅ Récupère la dernière étape APRÈS que formData soit posé par initForm
+    const { data: lastEval } = await supabase
+      .from("evaluations_leader")
+      .select("parcours_etape")
+      .eq("membre_id", member.id)
+      .order("date_action", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    setFormData((prev) =>
+      prev ? { ...prev, parcours_leader_etape: lastEval?.parcours_etape || "" } : prev
+    );
+
+    setLoadingData(false);
+  };
+
+  fetchFreshData();
+}, [member?.id]);
 
   // ✅ Hook séparé, correctement placé au niveau racine du composant
   useEffect(() => {

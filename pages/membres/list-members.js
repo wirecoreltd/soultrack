@@ -1676,13 +1676,17 @@ useEffect(() => {
         familles={famillesActive ? familles : []}
         conseillers={conseillerActive ? conseillers : []}
         currentUserRoles={getRoles(userProfile)}
+        user={userProfile}
         onClose={() => setEditMember(null)}
-        onUpdateMember={async (updatedMember) => {          
+        onUpdateMember={async (updatedMember, newStage) => {          
           setAllMembers((prev) =>
             prev.map((m) =>
               m.id === updatedMember.id ? updatedMember : m
             )
           );
+          if (newStage) {
+            setLeaderParcours((prev) => ({ ...prev, [updatedMember.id]: newStage }));
+          }
           await fetchAssignments(userProfile);
           setEditMember(null);
           showToast(t.toastUpdated);

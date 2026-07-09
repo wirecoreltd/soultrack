@@ -71,7 +71,7 @@ const translations = {
     chargementUser: "Chargement...",
     chargement: "Chargement...",
     aucunServiteur: "Aucun serviteur sur cette période.",
-    pctMembres: "% membres",
+    pctMembres: "membres",
     niveauFort: "Fort", niveauMoyen: "Moyen", niveauFaible: "Faible",
     engagementLabel: "Niveau d'engagement",
     // Leaders en développement
@@ -145,7 +145,7 @@ const translations = {
     chargementUser: "Loading...",
     chargement: "Loading...",
     aucunServiteur: "No servants for this period.",
-    pctMembres: "% members",
+    pctMembres: "members",
     niveauFort: "Strong", niveauMoyen: "Medium", niveauFaible: "Weak",
     engagementLabel: "Engagement level",
     ongletLeaders: "Emerging Leaders",

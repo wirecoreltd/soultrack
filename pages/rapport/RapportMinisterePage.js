@@ -235,28 +235,40 @@ function KpiCard({ label, value, sub, colorClass, icon }) {
 }
 
 const LEADER_STAGE_COLORS = {
-  potentiel:     { bg: "#FAEEDA", text: "#412402" },
-  croissance:    { bg: "#FAC775", text: "#412402" },
-  developpement: { bg: "#EF9F27", text: "#412402" },
-  mature:        { bg: "#BA7517", text: "#412402" },
+  potentiel:     { bg: "#E6F1FB", text: "#042C53" },
+  croissance:    { bg: "#B5D4F4", text: "#042C53" },
+  developpement: { bg: "#85B7EB", text: "#042C53" },
+  mature:        { bg: "#378ADD", text: "#E6F1FB" },
 };
 
 function LeaderStageCard({ emoji, label, value, stage }) {
-  const c = LEADER_STAGE_COLORS[stage] || { bg: "#FAEEDA", text: "#412402" };
+  const c = LEADER_STAGE_COLORS[stage] || { bg: "#E6F1FB", text: "#042C53" };
   return (
     <div
-      className="rounded-2xl px-3 py-2.5 flex flex-col justify-between items-center gap-1"
-      style={{ background: c.bg, height: "64px" }}
+      className="rounded-2xl px-3 py-2.5 flex flex-col justify-between"
+      style={{ background: c.bg, height: "68px" }}
     >
-      <div className="flex items-center gap-1.5 justify-center w-full">
-        <span className="text-[13px] leading-none flex-shrink-0">{emoji}</span>
-        <span className="text-[11px] font-medium text-center leading-tight" style={{ color: c.text }}>
+      <div className="flex items-center gap-1">
+        <span className="text-sm leading-none flex-shrink-0">{emoji}</span>
+        <span className="text-sm font-medium leading-tight" style={{ color: c.text }}>
           {label}
         </span>
       </div>
-      <span className="text-xl font-bold leading-none" style={{ color: c.text }}>
+      <span className="text-xl font-bold leading-none text-right" style={{ color: c.text }}>
         {value}
       </span>
+    </div>
+  );
+}
+
+function TotalLeadersCard({ label, value, sub }) {
+  return (
+    <div className="bg-white/10 rounded-2xl px-3 py-2.5 flex flex-col justify-between" style={{ height: "68px" }}>
+      <span className="text-sm text-white/60">{label}</span>
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-xl font-bold text-white">{value}</span>
+        {sub && <span className="text-[11px] text-white/40">{sub}</span>}
+      </div>
     </div>
   );
 }

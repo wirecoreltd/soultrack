@@ -273,7 +273,7 @@ function getMapLabel(map, value) {
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
-  return <p className="text-[11px] font-semibold tracking-widest text-white/40 mb-3">{children}</p>;
+  return <p className="text-sm font-semibold tracking-widest text-white/80 mb-3">{children}</p>;
 }
 function KpiCard({ label, value, sub, accent, onClick }) {
   const c = {

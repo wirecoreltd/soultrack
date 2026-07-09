@@ -72,7 +72,7 @@ const translations = {
       3: "Intégré",
       4: "Refus",
     },
-    btnEvalLeader: "🌱 Développement du leadership",
+    btnEvalLeader: "🏆 Suivi de la progression en leadership",
     parcoursStages: {
       potentiel: { emoji: "🌱", label: "Potentiel identifié" },
       croissance: { emoji: "🌿", label: "Serviteur fidèle" },
@@ -138,7 +138,7 @@ const translations = {
       3: "Integrated",
       4: "Refusal",
     },
-    btnEvalLeader: "🌱 Leadership Development",
+    btnEvalLeader: "🏆 Leadership Growth Tracking",
     parcoursStages: {
       potentiel: { emoji: "🌱", label: "Potential identified" },
       croissance: { emoji: "🌿", label: "Faithful Servant" },

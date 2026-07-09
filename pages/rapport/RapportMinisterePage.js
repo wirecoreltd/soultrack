@@ -793,7 +793,7 @@ const leadersParFamille = useMemo(() => {
             { key: "leaders",    label: t.ongletLeaders},
           ].map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-2 rounded-lg text-[10px] sm:text-sm font-semibold transition whitespace-nowrap flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 ${onglet === o.key ? "bg-white text-[#1e1b4b]" : "text-white/70 hover:text-white"}`}>
+              className={`flex-1 py-2 px-2 rounded-lg text-[10px] sm:text-sm font-semibold transition whitespace-nowrap flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 ${onglet === o.key ? "bg-white text-[#1e1b4b]" : "text-white/80 hover:text-white"}`}>
               <span>{o.icon}</span><span className="leading-tight text-center">{o.label}</span>
             </button>
           ))}
@@ -1013,7 +1013,7 @@ const leadersParFamille = useMemo(() => {
                   </span>
                 </SectionTitle>
                 {inactifs.length === 0 ? (
-                  <p className="text-sm text-white/40 italic px-1">{t.pasDeServiteur}</p>
+                  <p className="text-sm text-white/80 italic px-1">{t.pasDeServiteur}</p>
                 ) : (
                   <div className="flex flex-col gap-2">
                     {inactifs.map((s, idx) => (
@@ -1042,7 +1042,7 @@ const leadersParFamille = useMemo(() => {
                   </span>
                 </SectionTitle>
                 {irreguliers.length === 0 ? (
-                  <p className="text-sm text-white/40 italic px-1">{t.pasDeServiteur}</p>
+                  <p className="text-sm text-white/80 italic px-1">{t.pasDeServiteur}</p>
                 ) : (
                   <div className="flex flex-col gap-2">
                     {irreguliers.map((s, idx) => (

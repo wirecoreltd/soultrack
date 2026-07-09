@@ -195,6 +195,7 @@ export default function EditMemberPopup({
   onClose,
   onUpdateMember,
   currentUserRoles,
+  user,
 }) {
   const { lang } = useLang();
   const t = translations[lang];
@@ -247,6 +248,24 @@ export default function EditMemberPopup({
     const fetchFreshData = async () => {
       setLoadingData(true);
 
+      useEffect(() => {
+  if (!member?.id) return;
+  const fetchLastStage = async () => {
+    const { data } = await supabase
+      .from("evaluations_leader")
+      .select("parcours_etape")
+      .eq("membre_id", member.id)
+      .order("date_action", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    setFormData((prev) =>
+      prev ? { ...prev, parcours_leader_etape: data?.parcours_etape || "" } : prev
+    );
+  };
+  fetchLastStage();
+}, [member?.id]);
+
       const { data: freshMember, error } = await supabase
         .from("membres_complets")
         .select("*")
@@ -297,8 +316,8 @@ export default function EditMemberPopup({
       age: data?.age || "",
       star: !!data?.star,
       pilier: !!data?.pilier,
-      leader_developpement: !!data?.leader_developpement,
-      parcours_leader_etape: data?.parcours_leader_etape || "",
+      leader_developpement: !!data?.leader_developpement,     
+      parcours_leader_etape: "",
       etat_contact: data?.etat_contact || "Nouveau",
       bapteme_eau: data?.bapteme_eau ?? null,
       bapteme_esprit: data?.bapteme_esprit ?? null,
@@ -388,18 +407,19 @@ export default function EditMemberPopup({
   };
 
   const handleSubmit = async () => {
-    setMessage("");
-    if (!formData.prenom.trim()) return setMessage(t.errPrenom);
-    if (!formData.nom.trim()) return setMessage(t.errNom);
+  setMessage("");
+  if (!formData.prenom.trim()) return setMessage(t.errPrenom);
+  if (!formData.nom.trim()) return setMessage(t.errNom);
 
-     if (formData.star && formData.Ministere.length === 0) {
+   if (formData.star && formData.Ministere.length === 0) {
     return setMessage(t.errMinistere);
   }
-    
-if (formData.leader_developpement && !formData.parcours_leader_etape) {
-        return setMessage(t.errParcours);
-      }
-    setLoading(true);
+
+  if (canManageLeader && formData.leader_developpement && !formData.parcours_leader_etape) {
+    return setMessage(t.errParcours);
+  }
+
+  setLoading(true);
 
     try {
       let finalBesoin = [...formData.besoin];
@@ -444,9 +464,10 @@ if (formData.leader_developpement && !formData.parcours_leader_etape) {
         age: formData.age || null,
         star: isPrivileged ? !!formData.star : !!member.star,
         pilier: isPrivileged ? !!formData.pilier : !!member.pilier,
-        leader_developpement: canManageLeader
+         leader_developpement: canManageLeader
           ? !!formData.leader_developpement
-          : !!member.leader_developpement,
+          : !!member.leader_developpement,      
+        etat_contact: formData.etat_contact || "Nouveau",
         parcours_leader_etape: canManageLeader
           ? (formData.parcours_leader_etape || null)
           : (member.parcours_leader_etape || null),

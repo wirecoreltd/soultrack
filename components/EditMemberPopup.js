@@ -76,14 +76,14 @@ const translations = {
     wantsBaptism: "💦 Veut se faire baptiser",
     serviteur: "⭐ Définir en tant que serviteur",
     pilier: "🎖️ Définir en tant que Pilier",
-    leaderDev: "🌱 Parcours de croissance vers le leadership",
+    leaderDev: "🏆 Parcours de croissance vers le leadership",
     parcoursChoisir: "Choisis une étape du parcours",
     errParcours: "❌ Veuillez sélectionner une étape du parcours de développement.",
     parcoursStages: [
       { key: "potentiel", emoji: "🌱", label: "Potentiel identifié" },
-      { key: "croissance", emoji: "🌿", label: "Leader en croissance" },
-      { key: "developpement", emoji: "🌳", label: "Leader en développement" },
-      { key: "mature", emoji: "🌲", label: "Leader mature" },
+      { key: "croissance", emoji: "🌿", label: "Serviteur fidèle" },
+      { key: "developpement", emoji: "🌳", label: "Responsable en formation" },
+      { key: "mature", emoji: "🌲", label: "Leader confirmé" },
     ], 
     // Conseiller search
     searchConseiller: "Rechercher un conseiller...",
@@ -162,7 +162,7 @@ const translations = {
     wantsBaptism: "💦 Wants to be baptised",
     serviteur: "⭐ Define as a servant",
     pilier: "🎖️ Define as a Pillar",
-    leaderDev: "🌱 Leadership Growth Path",
+    leaderDev: "🏆 Leadership Growth Path",
     parcoursChoisir: "Choose a development stage",
     errParcours: "❌ Please select a development stage.",
     parcoursStages: [

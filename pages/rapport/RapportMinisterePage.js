@@ -273,18 +273,6 @@ function TotalLeadersCard({ label, value, sub }) {
   );
 }
 
-function TotalLeadersCard({ label, value, sub }) {
-  return (
-    <div className="bg-white/8 rounded-2xl px-3 py-2.5 flex flex-col justify-between" style={{ height: "64px" }}>
-      <span className="text-[11px] text-white/60">{label}</span>
-      <div className="flex items-baseline justify-end gap-1.5">
-        <span className="text-xl font-bold text-white">{value}</span>
-        {sub && <span className="text-[10px] text-white/40">{sub}</span>}
-      </div>
-    </div>
-  );
-}
-
 function BarreProgression({ pct, color }) {
   return (
     <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">

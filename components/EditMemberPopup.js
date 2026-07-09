@@ -164,13 +164,13 @@ const translations = {
     pilier: "🎖️ Define as a Pillar",
     leaderDev: "🌱 Leadership Growth Path",
     parcoursChoisir: "Choose a development stage",
-      errParcours: "❌ Please select a development stage.",
-      parcoursStages: [
-        { key: "potentiel", emoji: "🌱", label: "Potential identified" },
-        { key: "croissance", emoji: "🌿", label: "Growing leader" },
-        { key: "developpement", emoji: "🌳", label: "Developing leader" },
-        { key: "mature", emoji: "🌲", label: "Mature leader" },
-      ],      
+    errParcours: "❌ Please select a development stage.",
+    parcoursStages: [
+      { key: "potentiel", emoji: "🌱", label: "Potential identified" },
+      { key: "croissance", emoji: "🌿", label: "Growing leader" },
+      { key: "developpement", emoji: "🌳", label: "Developing leader" },
+      { key: "mature", emoji: "🌲", label: "Mature leader" },
+    ],      
     searchConseiller: "Search for a counsellor...",
     noResult: "No results",
     principal: "(main)",
@@ -248,24 +248,6 @@ export default function EditMemberPopup({
     const fetchFreshData = async () => {
       setLoadingData(true);
 
-      useEffect(() => {
-  if (!member?.id) return;
-  const fetchLastStage = async () => {
-    const { data } = await supabase
-      .from("evaluations_leader")
-      .select("parcours_etape")
-      .eq("membre_id", member.id)
-      .order("date_action", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    setFormData((prev) =>
-      prev ? { ...prev, parcours_leader_etape: data?.parcours_etape || "" } : prev
-    );
-  };
-  fetchLastStage();
-}, [member?.id]);
-
       const { data: freshMember, error } = await supabase
         .from("membres_complets")
         .select("*")
@@ -302,6 +284,25 @@ export default function EditMemberPopup({
     };
 
     fetchFreshData();
+  }, [member?.id]);
+
+  // ✅ Hook séparé, correctement placé au niveau racine du composant
+  useEffect(() => {
+    if (!member?.id) return;
+    const fetchLastStage = async () => {
+      const { data } = await supabase
+        .from("evaluations_leader")
+        .select("parcours_etape")
+        .eq("membre_id", member.id)
+        .order("date_action", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      setFormData((prev) =>
+        prev ? { ...prev, parcours_leader_etape: data?.parcours_etape || "" } : prev
+      );
+    };
+    fetchLastStage();
   }, [member?.id]);
 
   const initForm = (data) => {
@@ -407,19 +408,19 @@ export default function EditMemberPopup({
   };
 
   const handleSubmit = async () => {
-  setMessage("");
-  if (!formData.prenom.trim()) return setMessage(t.errPrenom);
-  if (!formData.nom.trim()) return setMessage(t.errNom);
+    setMessage("");
+    if (!formData.prenom.trim()) return setMessage(t.errPrenom);
+    if (!formData.nom.trim()) return setMessage(t.errNom);
 
-   if (formData.star && formData.Ministere.length === 0) {
-    return setMessage(t.errMinistere);
-  }
+    if (formData.star && formData.Ministere.length === 0) {
+      return setMessage(t.errMinistere);
+    }
 
-  if (canManageLeader && formData.leader_developpement && !formData.parcours_leader_etape) {
-    return setMessage(t.errParcours);
-  }
+    if (canManageLeader && formData.leader_developpement && !formData.parcours_leader_etape) {
+      return setMessage(t.errParcours);
+    }
 
-  setLoading(true);
+    setLoading(true);
 
     try {
       let finalBesoin = [...formData.besoin];
@@ -453,8 +454,9 @@ export default function EditMemberPopup({
             .eq("membre_id", member.id)
             .eq("type", "ministere");
         }
-      }     
+      }
 
+      // ✅ payload nettoyé : plus de parcours_leader_etape, plus de doublon etat_contact
       const payload = {
         prenom: formData.prenom,
         nom: formData.nom,
@@ -464,14 +466,10 @@ export default function EditMemberPopup({
         age: formData.age || null,
         star: isPrivileged ? !!formData.star : !!member.star,
         pilier: isPrivileged ? !!formData.pilier : !!member.pilier,
-         leader_developpement: canManageLeader
+        leader_developpement: canManageLeader
           ? !!formData.leader_developpement
-          : !!member.leader_developpement,      
+          : !!member.leader_developpement,
         etat_contact: formData.etat_contact || "Nouveau",
-        parcours_leader_etape: canManageLeader
-          ? (formData.parcours_leader_etape || null)
-          : (member.parcours_leader_etape || null),
-                etat_contact: formData.etat_contact || "Nouveau",
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
         priere_salut: formData.priere_salut || null,
@@ -500,34 +498,35 @@ export default function EditMemberPopup({
             ? JSON.stringify(finalMinistere)
             : member.Ministere,
       };
-        // ── Auto-intégration : dès qu'une cellule ou famille est attribuée ──
-        const celluleOuFamilleAttribuee = !!(payload.cellule_id || payload.famille_id);
-        if (celluleOuFamilleAttribuee) {
-          payload.statut_suivis = 3;
-        }
+      // ── Auto-intégration : dès qu'une cellule ou famille est attribuée ──
+      const celluleOuFamilleAttribuee = !!(payload.cellule_id || payload.famille_id);
+      if (celluleOuFamilleAttribuee) {
+        payload.statut_suivis = 3;
+      }
 
       const { error } = await supabase
-  .from("membres_complets")
-  .update(payload)
-  .eq("id", member.id);
-if (error) throw error;
+        .from("membres_complets")
+        .update(payload)
+        .eq("id", member.id);
+      if (error) throw error;
 
-let newStage = null;
-if (canManageLeader && formData.leader_developpement && formData.parcours_leader_etape) {
-  const { error: evalError } = await supabase.from("evaluations_leader").insert({
-    membre_id: member.id,
-    created_by: user?.id || null,
-    date_action: new Date().toISOString().split("T")[0],
-    parcours_etape: formData.parcours_leader_etape,
-  });
-  if (evalError) {
-    console.error("Erreur ajout étape parcours:", evalError);
-  } else {
-    newStage = formData.parcours_leader_etape;
-  }
-}
+      // ✅ Insertion d'une évaluation minimale si une étape a été choisie
+      let newStage = null;
+      if (canManageLeader && formData.leader_developpement && formData.parcours_leader_etape) {
+        const { error: evalError } = await supabase.from("evaluations_leader").insert({
+          membre_id: member.id,
+          created_by: user?.id || null,
+          date_action: new Date().toISOString().split("T")[0],
+          parcours_etape: formData.parcours_leader_etape,
+        });
+        if (evalError) {
+          console.error("Erreur ajout étape parcours:", evalError);
+        } else {
+          newStage = formData.parcours_leader_etape;
+        }
+      }
 
-if (isPrivileged && showConseillers) {
+      if (isPrivileged && showConseillers) {
         await supabase
           .from("suivi_assignments")
           .delete()
@@ -548,7 +547,7 @@ if (isPrivileged && showConseillers) {
         .eq("id", member.id)
         .single();
       if (selectError) throw selectError;
-      
+
       onUpdateMember(updatedMember, newStage);
       onClose();
     } catch (err) {
@@ -1030,55 +1029,55 @@ if (isPrivileged && showConseillers) {
                 </>
               )}
 
-             {canManageLeader && (
-              <div className="flex flex-col gap-2 py-2">
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
-                  <input
-                    type="checkbox"
-                    name="leader_developpement"
-                    checked={formData.leader_developpement}
-                    onChange={handleChange}
-                    className="accent-[#2E3192] w-4 h-4"
-                  />
-                  {t.leaderDev}
-                </label>
-            
-                {formData.leader_developpement && (
-                  <div className="rounded-xl p-3 border" style={{ background: "#f8faff", borderColor: "#c7cef5" }}>
-                    {!formData.parcours_leader_etape && (
-                      <p className="text-xs text-gray-400 italic mb-2">{t.parcoursChoisir}</p>
-                    )}
-                    <div className="flex items-stretch justify-between gap-2">
-                      {t.parcoursStages.map((stage) => {
-                        const isActive = stage.key === formData.parcours_leader_etape;
-                        return (
-                          <button
-                            key={stage.key}
-                            type="button"
-                            onClick={() =>
-                              setFormData((p) => ({ ...p, parcours_leader_etape: stage.key }))
-                            }
-                            className="flex-1 flex flex-col items-center gap-1 rounded-lg px-2 py-2 transition-all active:scale-95"
-                            style={{
-                              background: isActive ? "#2E3192" : "#ffffff",
-                              border: `2px solid ${isActive ? "#2E3192" : "#e2e8f0"}`,
-                            }}
-                          >
-                            <span className="text-lg leading-none">{stage.emoji}</span>
-                            <span
-                              className="text-[10px] font-semibold text-center leading-tight"
-                              style={{ color: isActive ? "#fff" : "#334155" }}
+              {canManageLeader && (
+                <div className="flex flex-col gap-2 py-2">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
+                    <input
+                      type="checkbox"
+                      name="leader_developpement"
+                      checked={formData.leader_developpement}
+                      onChange={handleChange}
+                      className="accent-[#2E3192] w-4 h-4"
+                    />
+                    {t.leaderDev}
+                  </label>
+
+                  {formData.leader_developpement && (
+                    <div className="rounded-xl p-3 border" style={{ background: "#f8faff", borderColor: "#c7cef5" }}>
+                      {!formData.parcours_leader_etape && (
+                        <p className="text-xs text-gray-400 italic mb-2">{t.parcoursChoisir}</p>
+                      )}
+                      <div className="flex items-stretch justify-between gap-2">
+                        {t.parcoursStages.map((stage) => {
+                          const isActive = stage.key === formData.parcours_leader_etape;
+                          return (
+                            <button
+                              key={stage.key}
+                              type="button"
+                              onClick={() =>
+                                setFormData((p) => ({ ...p, parcours_leader_etape: stage.key }))
+                              }
+                              className="flex-1 flex flex-col items-center gap-1 rounded-lg px-2 py-2 transition-all active:scale-95"
+                              style={{
+                                background: isActive ? "#2E3192" : "#ffffff",
+                                border: `2px solid ${isActive ? "#2E3192" : "#e2e8f0"}`,
+                              }}
                             >
-                              {stage.label}
-                            </span>
-                          </button>
-                        );
-                      })}
+                              <span className="text-lg leading-none">{stage.emoji}</span>
+                              <span
+                                className="text-[10px] font-semibold text-center leading-tight"
+                                style={{ color: isActive ? "#fff" : "#334155" }}
+                              >
+                                {stage.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
 
               <Field label={t.etatContact}>
                 <select

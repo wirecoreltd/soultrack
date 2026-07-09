@@ -59,7 +59,7 @@ const translations = {
     parcoursStages: [
       { key: "potentiel", emoji: "🌱", label: "Potentiel identifié" },
       { key: "croissance", emoji: "🌿", label: "Serviteur fidèle" },
-      { key: "developpement", emoji: "🌳", label: "Responsable en formation" },
+      { key: "developpement", emoji: "🌳", label: "Leader en croissance" },
       { key: "mature", emoji: "🌲", label: "Leader confirmé" },
     ],
 
@@ -135,7 +135,7 @@ const translations = {
     parcoursStages: [
       { key: "potentiel", emoji: "🌱", label: "Potential identified" },
       { key: "croissance", emoji: "🌿", label: "Faithful Servant" },
-      { key: "developpement", emoji: "🌳", label: "Leader in Training" },
+      { key: "developpement", emoji: "🌳", label: "Growing leader" },
       { key: "mature", emoji: "🌲", label: "Established Leader" },
     ],
 

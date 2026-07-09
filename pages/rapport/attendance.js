@@ -380,14 +380,18 @@ function BarreProgression({ pct, color }) {
 }
 
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
-function BlocKpiGlobaux({ reports, t }) {
+function BlocKpiGlobaux({ reports, membresProvenance, t }) {
   const totalSessions = reports.length;
   const totalHommes = reports.reduce((a, r) => a + Number(r.hommes || 0), 0);
   const totalFemmes = reports.reduce((a, r) => a + Number(r.femmes || 0), 0);
   const totalJeunes = reports.reduce((a, r) => a + Number(r.jeunes || 0), 0);
   const totalEnfants = reports.reduce((a, r) => a + Number(r.enfants || 0), 0);
   const totalConnectes = reports.reduce((a, r) => a + Number(r.connectes || 0), 0);
-  const totalNV = reports.reduce((a, r) => a + Number(r.nouveauxVenus || 0), 0);
+  // Aligné sur le bloc "Provenance des nouveaux venus" : on compte les membres
+  // réels (membres_complets) dont date_premiere_visite tombe dans la période,
+  // plutôt que le champ saisi manuellement par rapport (attendance.nouveauxVenus),
+  // pour que les deux chiffres affichés correspondent toujours.
+  const totalNV = membresProvenance.length;
   const totalNC = reports.reduce((a, r) => a + Number(r.nouveauxConvertis || 0), 0);
   const totalPresents = totalHommes + totalFemmes + totalJeunes;
   const totalGlobal = totalPresents + totalEnfants + totalConnectes;
@@ -1066,7 +1070,7 @@ function Attendance() {
           <div className="flex flex-col gap-7 mt-4">
             <div>
               <SectionTitle>{t.sectionVueEnsemble}</SectionTitle>
-              <BlocKpiGlobaux reports={reports} t={t} />
+              <BlocKpiGlobaux reports={reports} membresProvenance={membresProvenance} t={t} />
             </div>
             <div>
               <SectionTitle>{t.sectionProvenance}</SectionTitle>

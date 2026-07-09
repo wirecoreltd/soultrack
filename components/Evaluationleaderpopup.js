@@ -801,22 +801,20 @@ function DetailBlock({ label, value }) {
                     onClick={() => {                    
                       onSelect(stage.key);
                     }}
-             
-                    className="flex-1 flex flex-col items-center gap-1 rounded-xl px-2 py-3 transition-all active:scale-95"
-                    style={{
-                      background: isActive ? "#2E3192" : isDimmed ? "#f1f5f9" : "#ffffff",
-                      border: `2px solid ${isActive ? "#2E3192" : "#e2e8f0"}`,
-                      opacity: isDimmed ? 0.45 : 1,
-                      boxShadow: isActive
-                        ? "0 4px 10px rgba(46,49,146,0.35)"
-                        : "0 1px 3px rgba(0,0,0,0.10)",
-                    }}
-                  >
-                    <span className="text-2xl leading-none">{stage.emoji}</span>
-                    <span
-                      className="text-xs font-semibold text-center leading-tight"
-                      style={{ color: isActive ? "#ffffff" : isDimmed ? "#94a3b8" : "#334155" }}
-                    >
+                      className="flex-1 flex flex-col items-center gap-1 rounded-xl px-2 py-3 transition-all active:scale-95"
+                             style={{
+                               background: isActive ? "#2E3192" : isDimmed ? "#f1f5f9" : "#ffffff",
+                               border: `2px solid ${isActive ? "#2E3192" : "#e2e8f0"}`,
+                               boxShadow: isActive
+                                 ? "0 4px 10px rgba(46,49,146,0.35)"
+                                 : "0 1px 3px rgba(0,0,0,0.10)",
+                             }}
+                           >
+                             <span className="text-2xl leading-none">{stage.emoji}</span>
+                             <span
+                               className="text-xs font-semibold text-center leading-tight"
+                               style={{ color: isActive ? "#ffffff" : "#334155" }}
+                             >
                       {stage.label}
                     </span>
                   </button>

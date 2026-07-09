@@ -67,7 +67,7 @@ const roleCards = {
     { path: "/Presence",                          key: "presence",       emoji: "✍🏻", color: "#3052cf" },
     { path: "/rapport/rapport-hub",               key: "rapport",        emoji: "📈", color: "#FBBF24" },
     { path: "/admin/notifications",               key: "notifications",  emoji: "🔔", color: "#ef4444" },
-    { path: "/administrateur/administrateur",     key: "admin",          emoji: "⚙️", color: "#0EA5E9" },
+    { path: "/administrateur/administrateur",     key: "admin",          emoji: "⚙️", color: "#202330" },
   ],
   Superadmin: [
     { path: "/membres/membres-hub",               key: "membres",        emoji: "🧭", color: "#0E7490" },
@@ -75,11 +75,11 @@ const roleCards = {
     { path: "/cellule/cellules-hub",              key: "cellule",        emoji: "🏠", color: "#10B981" },
     { path: "/conseiller/conseiller-hub",         key: "conseiller",     emoji: "🤝", color: "#0EA5E9" },
     { path: "/famille/familles-hub",              key: "familles",       emoji: "👑", color: "#F59E0B" },
-    { path: "/enfants/enfants-hub",               key: "enfants",        emoji: "🦁", color: "#0EA5E9" },
-    { path: "/Presence",                          key: "presence",       emoji: "✍🏻", color: "#0EA5E9" },
+    { path: "/enfants/enfants-hub",               key: "enfants",        emoji: "🦁", color: "#e640b7" },
+    { path: "/Presence",                          key: "presence",       emoji: "✍🏻", color: "#3052cf" },
     { path: "/rapport/rapport-hub",               key: "rapport",        emoji: "📈", color: "#FBBF24" },
     { path: "/admin/notifications",               key: "notifications",  emoji: "🔔", color: "#ef4444" },
-    { path: "/administrateur/administrateur",     key: "admin",          emoji: "⚙️", color: "#0EA5E9" },
+    { path: "/administrateur/administrateur",     key: "admin",          emoji: "⚙️", color: "#202330" },
     { path: "/Superadmin/Superadmin-hub",         key: "superadmin",     emoji: "🔐", color: "#000000" },
   ],
   ResponsableIntegration: [
@@ -105,13 +105,13 @@ const roleCards = {
     { path: "/admin/notifications",  key: "notifications", emoji: "🔔", color: "#ef4444" },
   ],
   CheckInPresence: [
-    { path: "/Presence", key: "presence", emoji: "✍🏻", color: "#0EA5E9" },
+    { path: "/Presence", key: "presence", emoji: "✍🏻", color: "#3052cf" },
   ],
   ResponsableCheckIn: [
-    { path: "/Presence", key: "presence", emoji: "✍🏻", color: "#0EA5E9" },
+    { path: "/Presence", key: "presence", emoji: "✍🏻", color: "#3052cf" },
   ],
   ResponsableEnfants: [
-    { path: "/enfants/enfants-hub", key: "enfants", emoji: "🦁", color: "#0EA5E9" },
+    { path: "/enfants/enfants-hub", key: "enfants", emoji: "🦁", color: "#e640b7" },
   ],
   Membre: [],
 };

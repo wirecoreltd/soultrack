@@ -884,15 +884,11 @@ function RapportBaptemes() {
           </div>
         ) : rapports.length === 0 ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center flex flex-col gap-3">
-            <p className="text-white text-sm">{t.aucunRapport}</p>
-            <button onClick={() => setOnglet("saisie")}
-              className="mx-auto px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
-              {t.ajouterRapport}
-            </button>
+            <p className="text-white text-sm">{t.aucunRapport}</p>            
           </div>
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7">
-            <div>              
+            <div>             
               <BlocKpiGlobaux rapports={rapports} t={t} />
             </div>
             <div>
@@ -912,7 +908,14 @@ function RapportBaptemes() {
               </button>
             </div>
           </div>
-        ) : (          
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-end">
+              <button onClick={() => setOnglet("saisie")}
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
+                {t.nouveauRapportBtn}
+              </button>
+            </div>
             {sessions.map((r, i) => (
               <CarteSession key={`${r.date}-${r.baptise_par}-${i}`} r={r} onEdit={handleEdit} t={t} />
             ))}

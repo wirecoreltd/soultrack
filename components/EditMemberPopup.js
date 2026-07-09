@@ -76,7 +76,7 @@ const translations = {
     wantsBaptism: "💦 Veut se faire baptiser",
     serviteur: "⭐ Définir en tant que serviteur",
     pilier: "🎖️ Définir en tant que Pilier",
-    leaderDev: "🌱 Parcours de croissance vers le leadership,
+    leaderDev: "🌱 Parcours de croissance vers le leadership",
     parcoursChoisir: "Choisis une étape du parcours",
     errParcours: "❌ Veuillez sélectionner une étape du parcours de développement.",
     parcoursStages: [

@@ -203,7 +203,7 @@ function SectionTitle({ children, icon, total, className = "" }) {
     <div className={`flex items-center justify-between gap-2 mb-3 ${className}`}>
       <div className="flex items-center gap-2">
         {icon && <span className="text-base">{icon}</span>}
-        <p className="text-[11px] font-bold tracking-widest text-white/40 uppercase">{children}</p>
+        <p className="text-[11px] font-bold tracking-widest text-white/80">{children}</p>
       </div>
       {total !== undefined && (
         <span className="text-sm font-bold text-white">{total}</span>
@@ -245,16 +245,16 @@ function LeaderStageCard({ emoji, label, value, stage }) {
   const c = LEADER_STAGE_COLORS[stage] || { bg: "#E6F1FB", text: "#042C53" };
   return (
     <div
-      className="rounded-2xl px-3 py-2.5 flex flex-col justify-between"
-      style={{ background: c.bg, height: "68px" }}
+      className="rounded-2xl px-3 py-2.5 flex flex-col justify-between overflow-hidden"
+      style={{ background: c.bg, height: "82px", boxSizing: "border-box" }}
     >
-      <div className="flex items-center gap-1">
-        <span className="text-sm leading-none flex-shrink-0">{emoji}</span>
+      <div className="flex items-start gap-1">
+        <span className="text-sm leading-tight flex-shrink-0">{emoji}</span>
         <span className="text-sm font-medium leading-tight" style={{ color: c.text }}>
           {label}
         </span>
       </div>
-      <span className="text-xl font-bold leading-none text-right" style={{ color: c.text }}>
+      <span className="text-xl font-bold leading-none text-center" style={{ color: c.text }}>
         {value}
       </span>
     </div>
@@ -263,11 +263,14 @@ function LeaderStageCard({ emoji, label, value, stage }) {
 
 function TotalLeadersCard({ label, value, sub }) {
   return (
-    <div className="bg-white/10 rounded-2xl px-3 py-2.5 flex flex-col justify-between" style={{ height: "68px" }}>
-      <span className="text-sm text-white/60">{label}</span>
-      <div className="flex items-baseline gap-1.5">
+    <div
+      className="bg-white/10 rounded-2xl px-3 py-2.5 flex flex-col justify-between items-center overflow-hidden"
+      style={{ height: "82px", boxSizing: "border-box" }}
+    >
+      <span className="text-sm text-white/80">{label}</span>
+      <div className="flex flex-col items-center leading-tight">
         <span className="text-xl font-bold text-white">{value}</span>
-        {sub && <span className="text-[11px] text-white/40">{sub}</span>}
+        {sub && <span className="text-[11px] text-white/80">{sub}</span>}
       </div>
     </div>
   );
@@ -327,15 +330,15 @@ function ServiteurCard({ membre, sousTitre, actions, ministeres, derniereDate, i
               );
             })}
             {ministeres.length > 3 && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/40">+{ministeres.length - 3}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/80">+{ministeres.length - 3}</span>
             )}
           </div>
         )}
       </div>
       {derniereDate && (
         <div className="text-right flex-shrink-0">
-          <p className="text-[10px] text-white/40">dernier</p>
-          <p className="text-[11px] text-white/60">{derniereDate}</p>
+          <p className="text-[10px] text-white/80">dernier</p>
+          <p className="text-[11px] text-white/80">{derniereDate}</p>
         </div>
       )}
       {actions && (
@@ -874,7 +877,7 @@ const leadersParFamille = useMemo(() => {
                     <div className="bg-white/10 rounded-xl px-3 py-3 text-center">
                       <p className="text-xl font-bold text-white">{nonEngages}</p>
                       <p className="text-[11px] text-white/70 mt-1">{t.nonEngages}</p>
-                      <p className="text-[10px] text-white/40">{100 - pctEngages}%</p>
+                      <p className="text-[10px] text-white/80">{100 - pctEngages}%</p>
                     </div>
                     <div className="bg-green-100 rounded-xl px-3 py-3 text-center">
                       <p className="text-xl font-bold text-green-900">{rapports.lignes.length}</p>
@@ -924,7 +927,7 @@ const leadersParFamille = useMemo(() => {
                           <div key={ministere} className="flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
                             <span className="text-[11px] text-white/80">{ministere}</span>
-                            <span className="text-[11px] text-white/40">{pct}%</span>
+                            <span className="text-[11px] text-white/80">{pct}%</span>
                           </div>
                         );
                       })}
@@ -932,7 +935,7 @@ const leadersParFamille = useMemo(() => {
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-white/20" />
                           <span className="text-[11px] text-white/80">{t.autres}</span>
-                          <span className="text-[11px] text-white/40">{totalAll > 0 ? Math.round((resteTotal / totalAll) * 100) : 0}%</span>
+                          <span className="text-[11px] text-white/80">{totalAll > 0 ? Math.round((resteTotal / totalAll) * 100) : 0}%</span>
                         </div>
                       )}
                     </div>
@@ -1118,7 +1121,7 @@ const leadersParFamille = useMemo(() => {
               
                   {/* KPIs */}
                   <div>
-                    <SectionTitle icon="🌱">{t.leadersEnDeveloppement}</SectionTitle>
+                    <SectionTitle icon="🏆">{t.leadersEnDeveloppement}</SectionTitle>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                       <TotalLeadersCard
                         label={t.totalLeaders}
@@ -1334,7 +1337,7 @@ const emoji = stage === "none" ? "❔" : t.parcoursStages[stage].emoji;
                 </div>
 
                 <div className="mt-4 bg-white/8 rounded-2xl px-4 py-3 flex items-center justify-between border border-white/15">
-                  <span className="text-sm text-white font-semibold uppercase tracking-wide">{t.totalServiteurs}</span>
+                  <span className="text-sm text-white font-semibold tracking-wide">{t.totalServiteurs}</span>
                   <span className="text-xl font-bold text-emerald-300">{rapports.serviteursCount}</span>
                 </div>
               </div>

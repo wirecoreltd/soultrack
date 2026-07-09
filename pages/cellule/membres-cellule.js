@@ -152,7 +152,7 @@ const translations = {
       potentiel: { emoji: "🌱", label: "Potential identified" },
       croissance: { emoji: "🌿", label: "Faithful Servant" },
       developpement: { emoji: "🌳", label: "Leader in Training" },
-      mature: { emoji: "🌲", label: "Established Leader },
+      mature: { emoji: "🌲", label: "Established Leader" },
     },
     homme: "Man",
     femme: "Woman",

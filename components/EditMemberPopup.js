@@ -76,7 +76,15 @@ const translations = {
     wantsBaptism: "💦 Veut se faire baptiser",
     serviteur: "⭐ Définir en tant que serviteur",
     pilier: "🎖️ Définir en tant que Pilier",
-    leaderDev: "🌱 Définir en tant que Leader en développement",
+    leaderDev: "🌱 Parcours de croissance vers le leadership,
+    parcoursChoisir: "Choisis une étape du parcours",
+    errParcours: "❌ Veuillez sélectionner une étape du parcours de développement.",
+    parcoursStages: [
+      { key: "potentiel", emoji: "🌱", label: "Potentiel identifié" },
+      { key: "croissance", emoji: "🌿", label: "Leader en croissance" },
+      { key: "developpement", emoji: "🌳", label: "Leader en développement" },
+      { key: "mature", emoji: "🌲", label: "Leader mature" },
+    ], 
     // Conseiller search
     searchConseiller: "Rechercher un conseiller...",
     noResult: "Aucun résultat",
@@ -154,7 +162,15 @@ const translations = {
     wantsBaptism: "💦 Wants to be baptised",
     serviteur: "⭐ Define as a servant",
     pilier: "🎖️ Define as a Pillar",
-    leaderDev: "🌱 Define as a Development Leader",
+    leaderDev: "🌱 Leadership Growth Path",
+    parcoursChoisir: "Choose a development stage",
+      errParcours: "❌ Please select a development stage.",
+      parcoursStages: [
+        { key: "potentiel", emoji: "🌱", label: "Potential identified" },
+        { key: "croissance", emoji: "🌿", label: "Growing leader" },
+        { key: "developpement", emoji: "🌳", label: "Developing leader" },
+        { key: "mature", emoji: "🌲", label: "Mature leader" },
+      ],      
     searchConseiller: "Search for a counsellor...",
     noResult: "No results",
     principal: "(main)",
@@ -282,6 +298,7 @@ export default function EditMemberPopup({
       star: !!data?.star,
       pilier: !!data?.pilier,
       leader_developpement: !!data?.leader_developpement,
+      parcours_leader_etape: data?.parcours_leader_etape || "",
       etat_contact: data?.etat_contact || "Nouveau",
       bapteme_eau: data?.bapteme_eau ?? null,
       bapteme_esprit: data?.bapteme_esprit ?? null,
@@ -378,7 +395,10 @@ export default function EditMemberPopup({
      if (formData.star && formData.Ministere.length === 0) {
     return setMessage(t.errMinistere);
   }
-
+    
+if (formData.leader_developpement && !formData.parcours_leader_etape) {
+        return setMessage(t.errParcours);
+      }
     setLoading(true);
 
     try {
@@ -413,7 +433,7 @@ export default function EditMemberPopup({
             .eq("membre_id", member.id)
             .eq("type", "ministere");
         }
-      }
+      }     
 
       const payload = {
         prenom: formData.prenom,
@@ -427,7 +447,10 @@ export default function EditMemberPopup({
         leader_developpement: canManageLeader
           ? !!formData.leader_developpement
           : !!member.leader_developpement,
-        etat_contact: formData.etat_contact || "Nouveau",
+        parcours_leader_etape: canManageLeader
+          ? (formData.parcours_leader_etape || null)
+          : (member.parcours_leader_etape || null),
+                etat_contact: formData.etat_contact || "Nouveau",
         bapteme_eau: formData.bapteme_eau,
         bapteme_esprit: formData.bapteme_esprit,
         priere_salut: formData.priere_salut || null,
@@ -971,20 +994,50 @@ export default function EditMemberPopup({
                 </>
               )}
 
-              {canManageLeader && (
-                <div className="flex items-center gap-3 py-2">
-                  <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
-                    <input
-                      type="checkbox"
-                      name="leader_developpement"
-                      checked={formData.leader_developpement}
-                      onChange={handleChange}
-                      className="accent-[#2E3192] w-4 h-4"
-                    />
-                    {t.leaderDev}
-                  </label>
-                </div>
-              )}
+             {canManageLeader && (
+              <div className="flex flex-col gap-2 py-2">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
+                  <input
+                    type="checkbox"
+                    name="leader_developpement"
+                    checked={formData.leader_developpement}
+                    onChange={handleChange}
+                    className="accent-[#2E3192] w-4 h-4"
+                  />
+                  {t.leaderDev}
+                </label>
+            
+                {formData.leader_developpement && (
+                  <div className="rounded-xl p-3 border" style={{ background: "#f8faff", borderColor: "#c7cef5" }}>
+                    {!formData.parcours_leader_etape && (
+                      <p className="text-xs text-gray-400 italic mb-2">{t.parcoursChoisir}</p>
+                    )}
+                    <div className="flex items-stretch justify-between gap-2">
+                      {t.parcoursStages.map((stage) => {
+                        const isActive = stage.key === formData.parcours_leader_etape;
+                        return (
+                          <button
+                            key={stage.key}
+                            type="button"
+                            onClick={() => setFormData((p) => ({ ...p, parcours_leader_etape: stage.key }))}
+                            className="flex-1 flex flex-col items-center gap-1 rounded-lg px-2 py-2 transition-all active:scale-95"
+                            style={{
+                              background: isActive ? "#2E3192" : "#ffffff",
+                              border: `2px solid ${isActive ? "#2E3192" : "#e2e8f0"}`,
+                            }}
+                          >
+                            <span className="text-lg leading-none">{stage.emoji}</span>
+                            <span className="text-[10px] font-semibold text-center leading-tight" style={{ color: isActive ? "#fff" : "#334155" }}>
+                              {stage.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
               <Field label={t.etatContact}>
                 <select

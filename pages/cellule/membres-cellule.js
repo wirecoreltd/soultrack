@@ -43,9 +43,9 @@ const translations = {
     civilite: "🎗️ Civilité",
     parcoursStages: {
       potentiel: { emoji: "🌱", label: "Potentiel identifié" },
-      croissance: { emoji: "🌿", label: "Leader en croissance" },
-      developpement: { emoji: "🌳", label: "Leader en développement" },
-      mature: { emoji: "🌲", label: "Leader mature" },
+      croissance: { emoji: "🌿", label: "Serviteur fidèle" },
+      developpement: { emoji: "🌳", label: "Responsable en formation" },
+      mature: { emoji: "🌲", label: "Leader confirmé" },
     },
     homme: "Homme",
     femme: "Femme",
@@ -111,7 +111,7 @@ const translations = {
     pastoralLabel: "❤️‍🩹 Soin pastoral",
     besoinsDiff: "❓ Difficultés / Besoins",
     btnSuivis: "💡 Ajouter / Voir suivis",
-    btnEvalLeader: "🌱 Leader en développement",
+    btnEvalLeader: "🏆 Suivi de la progression en leadership",
     btnModifier: "✏️ Modifier le contact",
     statutLabels: {
       1: "En attente",
@@ -150,9 +150,9 @@ const translations = {
     civilite: "🎗️ Title",
     parcoursStages: {
       potentiel: { emoji: "🌱", label: "Potential identified" },
-      croissance: { emoji: "🌿", label: "Growing leader" },
-      developpement: { emoji: "🌳", label: "Developing leader" },
-      mature: { emoji: "🌲", label: "Mature leader" },
+      croissance: { emoji: "🌿", label: "Faithful Servant" },
+      developpement: { emoji: "🌳", label: "Leader in Training" },
+      mature: { emoji: "🌲", label: "Established Leader },
     },
     homme: "Man",
     femme: "Woman",
@@ -218,7 +218,7 @@ const translations = {
     pastoralLabel: "❤️‍🩹 Pastoral care",
     besoinsDiff: "❓ Difficulties / Needs",
     btnSuivis: "💡 Add / View follow-ups",
-    btnEvalLeader: "🌱 Development Leader",
+    btnEvalLeader: "🏆 Leadership Growth Tracking",
     btnModifier: "✏️ Edit contact",
     statutLabels: {
       1: "Pending",

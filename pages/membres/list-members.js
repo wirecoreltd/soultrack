@@ -169,12 +169,12 @@ const translations = {
     { value: "Nouveau converti", label: "Nouveau converti" },
     { value: "Réconciliation",   label: "Réconciliation" },
   ],
-    btnEvalLeader: "🌱 Leader en développement",
+    btnEvalLeader: "🏆 Suivi de la progression en leadership",
     parcoursStages: {
       potentiel: { emoji: "🌱", label: "Potentiel identifié" },
-      croissance: { emoji: "🌿", label: "Leader en croissance" },
-      developpement: { emoji: "🌳", label: "Leader en développement" },
-      mature: { emoji: "🌲", label: "Leader mature" },
+      croissance: { emoji: "🌿", label: "Serviteur fidèle" },
+      developpement: { emoji: "🌳", label: "Responsable en formation" },
+      mature: { emoji: "🌲", label: "Leader confirmé" },
     },
   },
   en: {
@@ -298,12 +298,12 @@ const translations = {
     { value: "Nouveau converti", label: "New convert" },
     { value: "Réconciliation",   label: "Reconciliation" },
   ],
-    btnEvalLeader: "🌱 Development Leader",
+    btnEvalLeader: "🏆 Leadership Growth Tracking",
     parcoursStages: {
       potentiel: { emoji: "🌱", label: "Potential identified" },
-      croissance: { emoji: "🌿", label: "Growing leader" },
-      developpement: { emoji: "🌳", label: "Developing leader" },
-      mature: { emoji: "🌲", label: "Mature leader" },
+      croissance: { emoji: "🌿", label: "Faithful Servant" },
+      developpement: { emoji: "🌳", label: "Leader in Training" },
+      mature: { emoji: "🌲", label: "Established Leader" },
     },
   },
 };

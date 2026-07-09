@@ -910,11 +910,7 @@ function RapportBaptemes() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            <div className="flex justify-end">
-              <button onClick={() => setOnglet("saisie")}
-                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition">
-                {t.nouveauRapportBtn}
-              </button>
+            <div className="flex justify-end">              
             </div>
             {sessions.map((r, i) => (
               <CarteSession key={`${r.date}-${r.baptise_par}-${i}`} r={r} onEdit={handleEdit} t={t} />

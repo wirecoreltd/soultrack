@@ -1023,7 +1023,7 @@ function Attendance() {
         <div className="flex gap-1 bg-white/10 rounded-xl p-1 mt-4">
           {onglets.map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/80 hover:text-white/80"}`}>
               {o.label}
             </button>
           ))}

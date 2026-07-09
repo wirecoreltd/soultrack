@@ -507,12 +507,27 @@ export default function EditMemberPopup({
         }
 
       const { error } = await supabase
-        .from("membres_complets")
-        .update(payload)
-        .eq("id", member.id);
-      if (error) throw error;
+  .from("membres_complets")
+  .update(payload)
+  .eq("id", member.id);
+if (error) throw error;
 
-      if (isPrivileged && showConseillers) {
+let newStage = null;
+if (canManageLeader && formData.leader_developpement && formData.parcours_leader_etape) {
+  const { error: evalError } = await supabase.from("evaluations_leader").insert({
+    membre_id: member.id,
+    created_by: user?.id || null,
+    date_action: new Date().toISOString().split("T")[0],
+    parcours_etape: formData.parcours_leader_etape,
+  });
+  if (evalError) {
+    console.error("Erreur ajout étape parcours:", evalError);
+  } else {
+    newStage = formData.parcours_leader_etape;
+  }
+}
+
+if (isPrivileged && showConseillers) {
         await supabase
           .from("suivi_assignments")
           .delete()
@@ -533,8 +548,8 @@ export default function EditMemberPopup({
         .eq("id", member.id)
         .single();
       if (selectError) throw selectError;
-
-      onUpdateMember(updatedMember);
+      
+      onUpdateMember(updatedMember, newStage);
       onClose();
     } catch (err) {
       console.error(err);
@@ -1040,7 +1055,9 @@ export default function EditMemberPopup({
                           <button
                             key={stage.key}
                             type="button"
-                            onClick={() => setFormData((p) => ({ ...p, parcours_leader_etape: stage.key }))}
+                            onClick={() =>
+                              setFormData((p) => ({ ...p, parcours_leader_etape: stage.key }))
+                            }
                             className="flex-1 flex flex-col items-center gap-1 rounded-lg px-2 py-2 transition-all active:scale-95"
                             style={{
                               background: isActive ? "#2E3192" : "#ffffff",
@@ -1048,7 +1065,10 @@ export default function EditMemberPopup({
                             }}
                           >
                             <span className="text-lg leading-none">{stage.emoji}</span>
-                            <span className="text-[10px] font-semibold text-center leading-tight" style={{ color: isActive ? "#fff" : "#334155" }}>
+                            <span
+                              className="text-[10px] font-semibold text-center leading-tight"
+                              style={{ color: isActive ? "#fff" : "#334155" }}
+                            >
                               {stage.label}
                             </span>
                           </button>

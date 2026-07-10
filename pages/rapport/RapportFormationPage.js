@@ -585,7 +585,7 @@ function FormulaireFormation({ egliseId, onSaved, editData, onCancelEdit, t }) {
         {/* Participants */}
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-sm text-blue-300">{t.labelHommesForm}</label>
+            <label className="text-sm text-white/80">{t.labelHommesForm}</label>
             <input
               type="number" name="hommes" value={formData.hommes}
               onChange={handleChange} min={0}
@@ -593,7 +593,7 @@ function FormulaireFormation({ egliseId, onSaved, editData, onCancelEdit, t }) {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm text-pink-300">{t.labelFemmesForm}</label>
+            <label className="text-sm text-white/80">{t.labelFemmesForm}</label>
             <input
               type="number" name="femmes" value={formData.femmes}
               onChange={handleChange} min={0}

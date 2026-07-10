@@ -1228,11 +1228,29 @@ function EtatCellule() {
               </div>
             )}
           </div>
-        ) : !hasData ? (
+       ) : !hasData ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center text-white/40 text-sm">
             {modePerso ? t.emptyPerso : t.emptyPeriod}
           </div>
-                   
+        ) : onglet === "kpi" ? (
+          <div className="flex flex-col gap-7">
+            <div>
+              <SectionTitle>{t.sectionOverview}</SectionTitle>
+              <BlocKpi kpis={kpis} totalAmes={totalAmes} t={t} />
+            </div>
+            <div>
+              <SectionTitle>{t.piliersLabel}</SectionTitle>
+              <BlocPiliers
+                piliers={piliers}
+                cellulesMap={cellulesMap}
+                filterCellule={filterCellule}
+                t={t}
+                open={openPiliers}
+                setOpen={setOpenPiliers}
+              />
+            </div>
+          </div>
+        ) : onglet === "cellules" ? (
           <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
         ) : (
           <OngletParMois displayedReports={displayedReports} t={t} />

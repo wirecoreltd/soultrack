@@ -409,7 +409,7 @@ function CarteSession({ r, onEdit, t }) {
               { label: t.total, value: total, color: "text-amber-300 font-bold" },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
-                <p className="text-[10px] text-white/40">{label}</p>
+                <p className="text-[10px] text-white/80">{label}</p>
                 <p className={`text-lg font-bold ${color}`}>{value || 0}</p>
               </div>
             ))}
@@ -496,12 +496,12 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-sm text-blue-300/70">{t.hommes}</label>
+            <label className="text-sm text-white/80">{t.hommes}</label>
             <input type="number" value={formData.hommes} disabled
               className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-blue-300 text-sm text-center opacity-70 cursor-not-allowed" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm text-pink-300/70">{t.femmes}</label>
+            <label className="text-sm text-white70">{t.femmes}</label>
             <input type="number" value={formData.femmes} disabled
               className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-pink-300 text-sm text-center opacity-70 cursor-not-allowed" />
           </div>

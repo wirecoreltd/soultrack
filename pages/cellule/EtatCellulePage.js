@@ -602,7 +602,7 @@ function BlocRepartitionLeaders({ leadersDeveloppement, refList, idKey, labelKey
       {lignes.map(({ id, nom, count }) => (
         <div key={id} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
           <p className="text-sm text-white flex-1 min-w-0 truncate">{nom}</p>
-          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" className="w-24 flex-shrink-0" />
+          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" className="w-40 flex-shrink-0" />
           <span className="text-sm font-semibold text-white w-6 text-right">{count}</span>
         </div>
       ))}

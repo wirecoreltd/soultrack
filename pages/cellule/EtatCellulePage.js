@@ -622,7 +622,7 @@ function CarteLigne({ r, onDetails, t }) {
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
           <span className="text-sm font-semibold text-white truncate">{r.nom_complet}</span>
-          <span className="text-xs text-white">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
+          <span className="text-xs text-white/80">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
         </div>        
       </button>
       {open && (
@@ -669,7 +669,7 @@ function ComparaisonParCellule({ displayedReports, t }) {
       {lignes.map(([cellule, n]) => (
         <div key={cellule} className="flex items-center gap-3">
           <p className="text-sm text-white flex-1 min-w-0 truncate">{cellule}</p>
-          <BarreProgression pct={(n / max) * 100} color="bg-blue-400" className="w-16 flex-shrink-0" />
+          <BarreProgression pct={(n / max) * 100} color="bg-blue-400" className="w-80 flex-shrink-0" />
           <span className="text-sm font-semibold text-white w-8 text-right">{n}</span>
         </div>
       ))}
@@ -691,7 +691,7 @@ function OngletParMois({ displayedReports, t }) {
 }
 
 // ─── ONGLET PAR CELLULE DÉTAIL ────────────────────────────────
-function OngletParCelluleDetail({ displayedReports, onDetails, t }) {
+function OngletParCelluleDetail({ displayedReports, onDetails, piliers, cellulesMap, t }) {
   const [expandedCellules, setExpandedCellules] = useState({});
 
   const grouped = {};
@@ -714,6 +714,7 @@ function OngletParCelluleDetail({ displayedReports, onDetails, t }) {
         const baptises = rows.filter(r => r.date_baptise).length;
         const ministeres = rows.filter(r => r.debut_ministere).length;
         const pctInt = rows.length > 0 ? Math.round((integres / rows.length) * 100) : 0;
+        const pilierCount = (piliers || []).filter(p => cellulesMap[p.cellule_id] === cellule).length;
 
         return (
           <div key={cellule} className="bg-white/10 rounded-2xl overflow-hidden">
@@ -721,16 +722,11 @@ function OngletParCelluleDetail({ displayedReports, onDetails, t }) {
               className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                 <span className="font-semibold text-white truncate">{cellule}</span>
-                <span className="text-xs text-white">
-                  {responsable} · {t.persons(rows.length)} · {t.integrated(pctInt)}
+                <span className="text-xs text-white/80">
+                  {responsable} · {t.persons(rows.length)}
                 </span>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Badge color="green">✔ {integres}</Badge>
-                <Badge color="amber">⏳ {encours}</Badge>
-                <Badge color="red">✗ {refus}</Badge>
-                <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
-              </div>
+              <span className="text-white/30 text-xs flex-shrink-0">{isOpen ? "▲" : "▼"}</span>
             </button>
             {isOpen && (
               <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
@@ -739,16 +735,18 @@ function OngletParCelluleDetail({ displayedReports, onDetails, t }) {
                   <span className="text-xs text-white/50">{t.integrated(pctInt)}</span>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {[
+                    { label: t.kpiIntegres, val: integres, color: "text-emerald-300" },
                     { label: t.baptises, val: baptises, color: "text-indigo-300" },
                     { label: t.ministere, val: ministeres, color: "text-pink-300" },
                     { label: t.encours, val: encours, color: "text-amber-300" },
                     { label: t.refus, val: refus, color: "text-red-300" },
+                    { label: t.piliersLabel, val: pilierCount, color: "text-teal-300" },
                   ].map(({ label, val, color }) => (
                     <div key={label} className="bg-white/5 rounded-xl px-3 py-2 text-center">
                       <p className={`text-sm font-bold ${color}`}>{val}</p>
-                      <p className="text-[10px] text-white/40">{label}</p>
+                      <p className="text-sm text-white">{label}</p>
                     </div>
                   ))}
                 </div>
@@ -922,12 +920,12 @@ function EtatCellule() {
       }
 
       const [{ data: pilierData }, { data: cellulesData }] = await Promise.all([
-        pilierQuery,
-        supabase.from("cellules").select("id, nom").eq("eglise_id", userProfile.eglise_id),
-      ]);
+  pilierQuery,
+  supabase.from("cellules").select("id, cellule_full").eq("eglise_id", userProfile.eglise_id),
+]);
 
-      const cMap = {};
-      (cellulesData || []).forEach(c => { cMap[c.id] = c.nom; });
+const cMap = {};
+(cellulesData || []).forEach(c => { cMap[c.id] = c.cellule_full; });
       setCellulesMap(cMap);
       setPiliers(pilierData || []);
 
@@ -1250,8 +1248,8 @@ function EtatCellule() {
               />
             </div>
           </div>
-        ) : onglet === "cellules" ? (
-          <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
+       ) : onglet === "cellules" ? (
+  <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} piliers={piliers} cellulesMap={cellulesMap} t={t} />
         ) : (
           <OngletParMois displayedReports={displayedReports} t={t} />
         )}

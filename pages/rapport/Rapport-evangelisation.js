@@ -443,7 +443,7 @@ function CarteSession({ r, onEdit, t }) {
   const [open, setOpen] = useState(false);
   const total = (Number(r.hommes) || 0) + (Number(r.femmes) || 0);
   return (
-    <div className="bg-white/10 rounded-2xl overflow-hidden">
+    <div className="rounded-2xl overflow-hidden">
       <button onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5">
@@ -469,7 +469,7 @@ function CarteSession({ r, onEdit, t }) {
               { label: t.reconciliation, value: r.reconciliation },
               { label: t.moissonneurs, value: r.moissonneurs },
             ].map(({ label, value }) => (
-              <div key={label} className="rounded-xl px-3 py-2 flex flex-col">
+              <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
                 <p className="text-sm text-white/80">{label}</p>
                 <p className="text-sm font-bold text-white/80">{value ?? 0}</p>
               </div>

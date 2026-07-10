@@ -10,7 +10,6 @@ import { useLang } from "../../hooks/useLang";
 // ─── TRADUCTIONS ───────────────────────────────────────────────
 const translations = {
   fr: {
-    // Page
     pageTitle: "Rapport de",
     pageTitleAccent: "Formations",
     pageSubtitleCreez: "Créez et pilotez",
@@ -19,7 +18,6 @@ const translations = {
     pageSubtitleText2: "les données, suivez la participation hommes / femmes et analysez l'impact des formations pour accompagner la",
     pageSubtitleCroissance: "croissance spirituelle et le développement des membres",
 
-    // Filtres
     perioderapide: "Période rapide",
     tranchedates: "Tranche de dates",
     periode: "Période :",
@@ -32,22 +30,18 @@ const translations = {
     dateFin: "Date de fin",
     genererRapport: "Générer le rapport",
 
-    // Onglets
     vueEnsemble: "Vue d'ensemble",
     parFormation: "Par formation",
     saisie: "Saisie",
 
-    // Vide
     aucuneFormation: "Aucune formation sur cette période",
     ajouterFormation: "➕ Ajouter une formation",
 
-    // Sections KPI
     sectionVueEnsemble: "Vue d'ensemble",
     sectionGenre: "Répartition H / F",
     sectionTendance: "Tendance mensuelle (participants)",
     sectionParFormation: "Participation par formation",
 
-    // KPI labels
     kpiFormations: "Formations",
     kpiSub: "sur la période",
     kpiTotalParticipants: "Total participants",
@@ -60,23 +54,19 @@ const translations = {
     kpiFemmes: "Femmes",
     kpiTotal2: "total",
 
-    // Genre
     hommes: "Hommes",
     femmes: "Femmes",
     totalParticipants: "participants au total",
 
-    // Tendance
     tendanceVs: "vs mois préc.",
     tendanceFormation: "formation",
     tendanceFormations: "formations",
     tendanceInsuffisant: "Données insuffisantes (≥ 2 mois)",
 
-    // Par formation
     aucuneDonnee: "Aucune donnée",
     sess: "sess.",
     sansNom: "Sans nom",
 
-    // Carte rapport
     formation: "Formation",
     modifier: "✏️ Modifier",
     supprimer: "🗑️ Supprimer",
@@ -86,7 +76,6 @@ const translations = {
     labelTotal: "Total",
     labelDuree: "Durée",
 
-    // Formulaire
     modifierFormation: "✏️ Modifier la formation",
     nouvelleFormation: "➕ Nouvelle formation",
     annuler: "Annuler",
@@ -104,12 +93,10 @@ const translations = {
     formationMiseAJour: "✅ Formation mise à jour !",
     formationAjoutee: "✅ Formation ajoutée !",
 
-    // Boutons bas de page
     ajouterModifier: "➕ Ajouter / modifier une formation",
     nouvelleFormationBtn: "➕ Nouvelle formation",
   },
   en: {
-    // Page
     pageTitle: "Training",
     pageTitleAccent: "Report",
     pageSubtitleCreez: "Create and manage",
@@ -118,7 +105,6 @@ const translations = {
     pageSubtitleText2: "data, track male/female participation and analyze training impact to support",
     pageSubtitleCroissance: "spiritual growth and member development",
 
-    // Filtres
     perioderapide: "Quick period",
     tranchedates: "Date range",
     periode: "Period:",
@@ -131,22 +117,18 @@ const translations = {
     dateFin: "End date",
     genererRapport: "Generate report",
 
-    // Onglets
     vueEnsemble: "Overview",
     parFormation: "By training",
     saisie: "Add data",
 
-    // Vide
     aucuneFormation: "No training for this period",
     ajouterFormation: "➕ Add training",
 
-    // Sections KPI
     sectionVueEnsemble: "Overview",
     sectionGenre: "M / F breakdown",
     sectionTendance: "Monthly trend (participants)",
     sectionParFormation: "Participation by training",
 
-    // KPI labels
     kpiFormations: "Trainings",
     kpiSub: "for the period",
     kpiTotalParticipants: "Total participants",
@@ -159,23 +141,19 @@ const translations = {
     kpiFemmes: "Women",
     kpiTotal2: "total",
 
-    // Genre
     hommes: "Men",
     femmes: "Women",
     totalParticipants: "total participants",
 
-    // Tendance
     tendanceVs: "vs prev. month",
     tendanceFormation: "training",
     tendanceFormations: "trainings",
     tendanceInsuffisant: "Insufficient data (≥ 2 months)",
 
-    // Par formation
     aucuneDonnee: "No data",
     sess: "sess.",
     sansNom: "Unnamed",
 
-    // Carte rapport
     formation: "Training",
     modifier: "✏️ Edit",
     supprimer: "🗑️ Delete",
@@ -185,7 +163,6 @@ const translations = {
     labelTotal: "Total",
     labelDuree: "Duration",
 
-    // Formulaire
     modifierFormation: "✏️ Edit training",
     nouvelleFormation: "➕ New training",
     annuler: "Cancel",
@@ -203,7 +180,6 @@ const translations = {
     formationMiseAJour: "✅ Training updated!",
     formationAjoutee: "✅ Training added!",
 
-    // Boutons bas de page
     ajouterModifier: "➕ Add / edit training",
     nouvelleFormationBtn: "➕ New training",
   },
@@ -234,7 +210,7 @@ function getMonthNameEN(monthIndex) {
 // ─── UI ATOMS ──────────────────────────────────────────────────
 function SectionTitle({ children }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">
+    <p className="text-sm font-semibold uppercase tracking-widest text-white/80 mb-3">
       {children}
     </p>
   );
@@ -247,9 +223,9 @@ function KpiCard({ label, value, sub, accent }) {
   };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-xs text-white/50">{label}</p>
+      <p className="text-sm text-white">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-white/60 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -324,12 +300,12 @@ function BlocGenre({ rapports, t }) {
         <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-2xl font-bold text-blue-300">{totalHommes}</p>
           <p className="text-[11px] text-blue-400/70">{t.hommes}</p>
-          <p className="text-[10px] text-blue-500/50">{pctH}%</p>
+          <p className="text-[10px] text-white/40">{pctH}%</p>
         </div>
         <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-2xl font-bold text-pink-300">{totalFemmes}</p>
           <p className="text-[11px] text-pink-400/70">{t.femmes}</p>
-          <p className="text-[10px] text-pink-500/50">{pctF}%</p>
+          <p className="text-[10px] text-white/40">{pctF}%</p>
         </div>
       </div>
       {total > 0 && (
@@ -338,7 +314,7 @@ function BlocGenre({ rapports, t }) {
           <div className="bg-pink-400 rounded-r-full transition-all" style={{ width: `${pctF}%` }} />
         </div>
       )}
-      <p className="text-[11px] text-white/30 text-center">{total} {t.totalParticipants}</p>
+      <p className="text-[11px] text-white/60 text-center">{total} {t.totalParticipants}</p>
     </div>
   );
 }
@@ -379,7 +355,7 @@ function BlocTendance({ rapports, t, lang }) {
         <span className={`text-sm font-semibold ${delta >= 0 ? "text-emerald-400" : "text-red-400"}`}>
           {delta >= 0 ? "▲" : "▼"} {Math.abs(delta)} {t.tendanceVs}
         </span>
-        <span className="text-[11px] text-white/30">
+        <span className="text-[11px] text-white/60">
           {dernier.nb} {dernier.nb > 1 ? t.tendanceFormations : t.tendanceFormation}
         </span>
       </div>
@@ -451,7 +427,7 @@ function CarteRapport({ r, onEdit, onDelete, t }) {
       >
         <div className="flex flex-col gap-0.5 min-w-0">
           <span className="font-semibold text-white text-sm truncate">{r.nom_formation || t.formation}</span>
-          <span className="text-[11px] text-white/40">
+          <span className="text-[11px] text-white/60">
             {formatDateFr(r.date_debut)}
             {r.date_fin && r.date_fin !== r.date_debut ? ` → ${formatDateFr(r.date_fin)}` : ""}
           </span>
@@ -569,7 +545,7 @@ function FormulaireFormation({ egliseId, onSaved, editData, onCancelEdit, t }) {
           {editData ? t.modifierFormation : t.nouvelleFormation}
         </p>
         {editData && (
-          <button onClick={onCancelEdit} className="text-xs text-white/40 hover:text-white/70 transition">
+          <button onClick={onCancelEdit} className="text-sm text-white/80 hover:text-white transition">
             {t.annuler}
           </button>
         )}
@@ -579,7 +555,7 @@ function FormulaireFormation({ egliseId, onSaved, editData, onCancelEdit, t }) {
         {/* Dates */}
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-white/50">{t.labelDateDebut}</label>
+            <label className="text-sm text-white/80">{t.labelDateDebut}</label>
             <input
               type="date" name="date_debut" value={formData.date_debut}
               onChange={handleChange} required
@@ -587,7 +563,7 @@ function FormulaireFormation({ egliseId, onSaved, editData, onCancelEdit, t }) {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-white/50">{t.labelDateFin}</label>
+            <label className="text-sm text-white/80">{t.labelDateFin}</label>
             <input
               type="date" name="date_fin" value={formData.date_fin}
               onChange={handleChange}
@@ -598,7 +574,7 @@ function FormulaireFormation({ egliseId, onSaved, editData, onCancelEdit, t }) {
 
         {/* Nom */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-white/50">{t.nomFormation}</label>
+          <label className="text-sm text-white/80">{t.nomFormation}</label>
           <input
             type="text" name="nom_formation" value={formData.nom_formation}
             onChange={handleChange} required placeholder={t.nomFormationPlaceholder}
@@ -609,7 +585,7 @@ function FormulaireFormation({ egliseId, onSaved, editData, onCancelEdit, t }) {
         {/* Participants */}
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-blue-300">{t.labelHommesForm}</label>
+            <label className="text-sm text-blue-300">{t.labelHommesForm}</label>
             <input
               type="number" name="hommes" value={formData.hommes}
               onChange={handleChange} min={0}
@@ -617,7 +593,7 @@ function FormulaireFormation({ egliseId, onSaved, editData, onCancelEdit, t }) {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-pink-300">{t.labelFemmesForm}</label>
+            <label className="text-sm text-pink-300">{t.labelFemmesForm}</label>
             <input
               type="number" name="femmes" value={formData.femmes}
               onChange={handleChange} min={0}
@@ -755,13 +731,13 @@ function RapportFormation() {
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button
               onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}
             >
               {t.perioderapide}
             </button>
             <button
               onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}
             >
               {t.tranchedates}
             </button>
@@ -769,15 +745,17 @@ function RapportFormation() {
 
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">{t.periode}</span>
-              {periodes.map(p => (
-                <button
-                  key={p.val} onClick={() => setFiltrePeriode(p.val)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}
-                >
-                  {p.label}
-                </button>
-              ))}
+              <span className="text-sm text-white/60 flex-shrink-0">{t.periode}</span>
+              <div className="flex gap-1 bg-white/10 rounded-xl p-1 flex-wrap">
+                {periodes.map(p => (
+                  <button
+                    key={p.val} onClick={() => setFiltrePeriode(p.val)}
+                    className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -785,7 +763,7 @@ function RapportFormation() {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateDebut}</label>
+                  <label className="text-xs text-white/80">{t.dateDebut}</label>
                   <input
                     type="date" value={dateDebut}
                     onChange={e => setDateDebut(e.target.value)}
@@ -793,7 +771,7 @@ function RapportFormation() {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateFin}</label>
+                  <label className="text-xs text-white/80">{t.dateFin}</label>
                   <input
                     type="date" value={dateFin}
                     onChange={e => setDateFin(e.target.value)}
@@ -816,7 +794,7 @@ function RapportFormation() {
           {onglets.map(o => (
             <button
               key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/80 hover:text-white"}`}
             >
               {o.label}
             </button>
@@ -840,7 +818,7 @@ function RapportFormation() {
           </div>
         ) : rapports.length === 0 ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center flex flex-col gap-3">
-            <p className="text-white/40 text-sm">{t.aucuneFormation}</p>
+            <p className="text-white text-sm">{t.aucuneFormation}</p>
             <button
               onClick={() => setOnglet("saisie")}
               className="mx-auto px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-sm font-semibold transition"

@@ -626,6 +626,7 @@ export default function RapportEvangelisation() {
   .order("date_evangelise", { ascending: false });
 // on retire les .gte()/.lte() ici : la période est déjà appliquée via `filtered`
 const { data: rapportsData } = await query;
+      console.log("rapportsData:", rapportsData, "error:", error);
       setRapports(rapportsData || []);
 
       const { data: suivisData } = await supabase

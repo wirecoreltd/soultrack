@@ -242,7 +242,7 @@ function formatStatut(statut) {
 function SectionTitle({ children, icon, total, className = "" }) {
   return (
     <div className={`flex items-center justify-between mb-3 ${className}`}>
-      <p className="text-sm font-semibold tracking-widest text-white/80 flex items-center gap-1.5">
+      <p className="text-sm font-semibold tracking-widest text-white flex items-center gap-1.5">
         {icon && <span className="text-sm">{icon}</span>}
         {children}
       </p>
@@ -320,7 +320,7 @@ function TotalLeadersCard({ label, value, sub }) {
       className="bg-white/10 rounded-2xl px-3 py-2.5 flex flex-col justify-between items-center overflow-hidden"
       style={{ height: "82px", boxSizing: "border-box" }}
     >
-      <span className="text-sm text-white/80">{label}</span>
+      <span className="text-sm text-white">{label}</span>
       <div className="flex flex-col items-center leading-tight">
         <span className="text-xl font-bold text-white">{value}</span>
         {sub && <span className="text-[11px] text-white/60">{sub}</span>}
@@ -379,7 +379,7 @@ function BlocKpi({ kpis, totalAmes, t }) {
             { label: t.funnelMinistere, val: kpis.totalMinistere, color: "bg-pink-400" },
           ].map(({ label, val, color }) => (
             <div key={label} className="flex items-center gap-3">
-              <p className="text-sm text-white/80 w-28 flex-shrink-0">{label}</p>
+              <p className="text-sm text-white w-28 flex-shrink-0">{label}</p>
               <BarreProgression pct={Math.round((val / totalAmes) * 100)} color={color} />
               <span className="text-sm text-white font-semibold w-8 text-right">{val}</span>
             </div>
@@ -438,7 +438,7 @@ function PilierCard({ membre, celluleNom, idx }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{membre.prenom} {membre.nom}</p>
-        <p className="text-xs text-white/80 truncate">{celluleNom}</p>
+        <p className="text-xs text-white truncate">{celluleNom}</p>
       </div>
     </div>
   );
@@ -493,7 +493,7 @@ function ServiteurCard({ membre, sousTitre, idx = 0 }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{membre.prenom} {membre.nom}</p>
-        <p className="text-xs text-white/80 truncate">{sousTitre}</p>
+        <p className="text-xs text-white truncate">{sousTitre}</p>
       </div>
     </div>
   );
@@ -602,7 +602,7 @@ function BlocRepartitionLeaders({ leadersDeveloppement, refList, idKey, labelKey
       {lignes.map(({ id, nom, count }) => (
         <div key={id} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
           <p className="text-sm text-white flex-1 min-w-0 truncate">{nom}</p>
-          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" className="w-40 flex-shrink-0" />
+          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" className="w-80 flex-shrink-0" />
           <span className="text-sm font-semibold text-white w-6 text-right">{count}</span>
         </div>
       ))}
@@ -721,7 +721,7 @@ function OngletParCelluleDetail({ displayedReports, onDetails, t }) {
               className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                 <span className="font-semibold text-white truncate">{cellule}</span>
-                <span className="text-xs text-white/80">
+                <span className="text-xs text-white">
                   {responsable} · {t.persons(rows.length)} · {t.integrated(pctInt)}
                 </span>
               </div>
@@ -1112,11 +1112,11 @@ function EtatCellule() {
           {/* Toggle mode */}
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
               {t.quickPeriod}
             </button>
             <button onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
               {t.dateRange}
             </button>
           </div>
@@ -1124,7 +1124,7 @@ function EtatCellule() {
           {/* Période rapide */}
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/80 flex-shrink-0">{t.periodLabel}</span>
+              <span className="text-xs text-white flex-shrink-0">{t.periodLabel}</span>
               {t.periods.map(p => (
                 <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
@@ -1139,12 +1139,12 @@ function EtatCellule() {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/80">{t.startDate}</label>
+                  <label className="text-xs text-white">{t.startDate}</label>
                   <input type="date" value={filterDebut} onChange={e => setFilterDebut(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/80">{t.endDate}</label>
+                  <label className="text-xs text-white">{t.endDate}</label>
                   <input type="date" value={filterFin} onChange={e => setFilterFin(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
@@ -1159,7 +1159,7 @@ function EtatCellule() {
           {/* Filtre cellule */}
           {hasData && availableCellules.length > 1 && (
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-white/80">{t.celluleLabel}</label>
+              <label className="text-xs text-white">{t.celluleLabel}</label>
               <select value={filterCellule} onChange={e => setFilterCellule(e.target.value)}
                 className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
                 <option value="" className="bg-[#2a2d80]">{t.allCellules}</option>
@@ -1175,7 +1175,7 @@ function EtatCellule() {
         <div className="flex gap-1 bg-white/10 rounded-xl p-1">
           {onglets.map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-2 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`flex-1 py-2 px-2 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
               {o.label}
             </button>
           ))}

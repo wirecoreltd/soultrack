@@ -966,22 +966,22 @@ function Attendance() {
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
               {t.perioderapide}
             </button>
             <button onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
               {t.tranchedates}
             </button>
           </div>
-
+          
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/60 flex-shrink-0">{t.periode}</span>
+              <span className="text-sm text-white/60 flex-shrink-0">{t.periode}</span>
               <div className="flex gap-1 bg-white/10 rounded-xl p-1 flex-wrap">
                 {periodes.map(p => (
                   <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
+                    className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
                     {p.label}
                   </button>
                 ))}
@@ -1012,17 +1012,19 @@ function Attendance() {
 
           {typesDistincts.length > 1 && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/80 flex-shrink-0">{t.type}</span>
-              <button onClick={() => setFiltreType("")}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${!filtreType ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                {t.tous}
-              </button>
-              {typesDistincts.map(tp => (
-                <button key={tp} onClick={() => setFiltreType(tp)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtreType === tp ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                  {tp}
-                </button>
-              ))}
+              <span className="text-sm text-white/80 flex-shrink-0">{t.type}</span>
+              <select
+                value={filtreType}
+                onChange={e => setFiltreType(e.target.value)}
+                className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer"
+              >
+                <option value="" className="bg-[#2a2d80]">{t.tous}</option>
+                {typesDistincts.map(tp => (
+                  <option key={tp} value={tp} className="bg-[#2a2d80]">
+                    {tp}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
         </div>

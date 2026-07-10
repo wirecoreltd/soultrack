@@ -260,17 +260,13 @@ function getCanonicalBesoin(label) {
   return BESOIN_LABELS.en[label] || label;
 }
 
-function getCanonicalBesoin(label) {
-  return BESOIN_LABELS.en[label] || label;
-}
-
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
 function BlocKpiGlobaux({ besoinsCount, totalMembres, t }) {
   const lignes = Object.entries(besoinsCount);
   const totalActifs = lignes.reduce((a, [, v]) => a + v.enSuivi, 0);
+  const totalResolus = lignes.reduce((a, [, v]) => a + v.resolu, 0);
   const totalBesoins = totalActifs + totalResolus;
-  const totalEnSuivi = totalActifs; 
-  const totalResolus = lignes.reduce((a, [, v]) => a + v.resolu, 0);  
+  const totalEnSuivi = totalActifs;
   const tauxResolution = totalBesoins > 0 ? Math.round((totalResolus / totalBesoins) * 100) : 0;
   const nbCategories = lignes.length;
 

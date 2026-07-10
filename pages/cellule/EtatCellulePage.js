@@ -323,7 +323,7 @@ function TotalLeadersCard({ label, value, sub }) {
       <span className="text-sm text-white">{label}</span>
       <div className="flex flex-col items-center leading-tight">
         <span className="text-xl font-bold text-white">{value}</span>
-        {sub && <span className="text-[11px] text-white/60">{sub}</span>}
+        {sub && <span className="text-xs text-white/80">{sub}</span>}
       </div>
     </div>
   );

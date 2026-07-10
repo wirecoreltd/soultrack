@@ -533,7 +533,7 @@ function OngletParType({ rapports, onEdit, t }) {
                       { label: t.moiss, value: typeTotals.moissonneurs, color: "text-teal-300" },
                     ].map(({ label, value, color }) => (
                       <div key={label} className="bg-white/5 rounded-xl px-2 py-2 text-center">
-                        <p className="text-[10px] text-white/40">{label}</p>
+                        <p className="text-sm text-white/80">{label}</p>
                         <p className={`text-sm font-bold ${color}`}>{value}</p>
                       </div>
                     ))}

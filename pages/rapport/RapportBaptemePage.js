@@ -498,12 +498,12 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
           <div className="flex flex-col gap-1">
             <label className="text-sm text-white/80">{t.hommes}</label>
             <input type="number" value={formData.hommes} disabled
-              className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-blue-300 text-sm text-center opacity-70 cursor-not-allowed" />
+              className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white/80 text-sm text-center opacity-70 cursor-not-allowed" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-sm text-white70">{t.femmes}</label>
+            <label className="text-sm text-white/80">{t.femmes}</label>
             <input type="number" value={formData.femmes} disabled
-              className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-pink-300 text-sm text-center opacity-70 cursor-not-allowed" />
+              className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white/80 text-sm text-center opacity-70 cursor-not-allowed" />
           </div>
         </div>
         <div className="flex flex-col gap-1">
@@ -511,7 +511,7 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
           <input type="text" required value={formData.baptise_par}
             onChange={e => setFormData(p => ({ ...p, baptise_par: e.target.value }))}
             placeholder={t.officiантPlaceholder}
-            className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 placeholder:text-white/20" />
+            className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white/80 text-sm focus:outline-none focus:border-white/40 placeholder:text-white/20" />
         </div>
         <button onClick={onSubmit}
           className="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-sm hover:from-blue-600 hover:to-indigo-700 transition-all active:scale-95">

@@ -412,28 +412,28 @@ function CarteBesoin({ besoin, data, totalMembres, onNavigate, t, lang }) {
             {[
               { label: t.hommes,      value: data.hommes,  color: "text-white/80" },
               { label: t.femmes,      value: data.femmes,  color: "text-white/80" },
-              { label: "Total",       value: data.total,   color: "text-orange-300 font-semibold" },
+              { label: "Total",       value: data.total,   color: "text-amber-400" },
               { label: t.enSuiviLabel,value: data.enSuivi, color: "text-white/80" },
               { label: t.resoluLabel, value: data.resolu,  color: "text-white/80" },
-              { label: t.tauxResolution ?? "% résolution", value: `${pctResolu}%`, color: "text-amber-300" },
+              { label: t.tauxResolution ?? "% résolution", value: `${pctResolu}%`, color: "text-white/80" },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2">
-                <p className="text-[10px] text-white/40">{label}</p>
-                <p className={`text-lg font-bold ${color}`}>{value}</p>
+                <p className="text-sm text-white/80">{label}</p>
+                <p className={`text-sm font-bold ${color}`}>{value}</p>
               </div>
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/80">{t.resolution}</span>
+            <span className="text-xs text-orange-400">{t.resolution}</span>
             <BarreProgression pct={pctResolu} />
-            <span className="text-xs text-white/80">{pctResolu}%</span>
+            <span className="text-xs text-orange-400">{pctResolu}%</span>
           </div>
-          <p className="text-xs text-white/60 text-center">
+          <p className="text-xs text-amber-400 text-center">
             {t.concerneMembres} {pctMembres}% {t.pctDesMembres}
           </p>
           <button
             onClick={() => onNavigate(besoin)}
-            className="w-full py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition"
+            className="w-full py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-white/80 text-sm font-semibold transition"
           >
             {t.voirMembres}
           </button>

@@ -16,11 +16,11 @@ const translations = {
   fr: {
     // Page
     pageTitle: "L'Évolution des Âmes par",
-    pageTitleHighlight: "Cellule",
+    pageTitleHighlight: "Famille",
     subtitle1: "Outil de vision et de gestion spirituelle.",
     subtitle2: "Les âmes viennent de",
     subtitle3: "l'évangélisation ou de l'église",
-    subtitle4: ", puis sont orientées vers les cellules pour grandir.",
+    subtitle4: ", puis sont orientées vers les familles pour grandir.",
     subtitle5: "Chaque donnée représente une vie précieuse",
     subtitle6: ", chaque progression témoigne de",
     subtitle7: "l'œuvre de Dieu",
@@ -38,12 +38,13 @@ const translations = {
     startDate: "Date de début",
     endDate: "Date de fin",
     generateReport: "Générer le rapport",
-    celluleLabel: "Cellule",
-    allCellules: "Toutes les cellules",
+    familleLabel: "Famille",
+    allFamilles: "Toutes les familles",
+    comparaisonFamilles: "Tendences par famille",
     // Onglets
     tabOverview: "Vue d'ensemble",
-    tabCellules: "Par cellule",
-    tabMois: "Par mois",
+    tabFamilles: "Par famille",
+    tabMois: "Tendances",
     // Loading / empty
     loading: "Chargement...",
     emptyPerso: "Choisissez une plage de dates et cliquez sur « Générer le rapport »",
@@ -71,15 +72,12 @@ const translations = {
     funnelMinistere: "En ministère",
     // Section titles
     sectionOverview: "Vue d'ensemble",
-    sectionPerformance: "Performance par cellule",
+    sectionPerformance: "Performance par famille",
     // Leaders en développement
     tabLeaders: "Leaders en développement",
     ongletLeaders: "Classement par étape",
-    leadersEnDeveloppement: "Leaders en développement",
+    leadersEnDeveloppement: "🏆 Leaders en développement",
     totalLeaders: "Total leaders",
-    tabDeveloppement: "Leaders en développement",
-    leadersEnDeveloppementFamille: "🏆 Leaders en développement",
-    sansFamille: "Sans famille",
     parcoursStages: {
       potentiel: { emoji: "🌱", label: "Potentiel identifié" },
       croissance: { emoji: "🌿", label: "Serviteur fidèle" },
@@ -88,14 +86,13 @@ const translations = {
     },
     aucuneEvaluation: "Sans évaluation",
     pasDeLeader: "Aucun leader",
-    sansCellule: "Sans cellule",
-    repartitionParCellule: "Répartition par cellule",
+    sansFamille: "Sans famille",
     repartitionParFamille: "Répartition par famille",
-    // BlocParCellule
+    // BlocParFamille
     noData: "Aucune donnée",
     // CarteLigne
     seeDetails: "Voir les détails",
-    cellule: "Cellule",
+    famille: "Famille",
     responsable: "Responsable",
     assignedOn: "Assigné le",
     dateEvolution: "Date évolution",
@@ -106,8 +103,8 @@ const translations = {
     // OngletParMois
     noDataPeriod: "Aucune donnée sur cette période",
     persons: (n) => `${n} personne${n > 1 ? "s" : ""}`,
-    // OngletParCelluleDetail
-    noDataCellule: "Aucune donnée",
+    // OngletParFamilleDetail
+    noDataFamille: "Aucune donnée",
     integrated: (pct) => `${pct}% intégrées`,
     baptises: "Baptisés",
     ministere: "Ministère",
@@ -123,11 +120,11 @@ const translations = {
   },
   en: {
     pageTitle: "The Evolution of Souls by",
-    pageTitleHighlight: "Cell",
+    pageTitleHighlight: "Family",
     subtitle1: "Spiritual vision and management tool.",
     subtitle2: "Souls come from",
     subtitle3: "evangelisation or the church",
-    subtitle4: ", then are directed to cells to grow.",
+    subtitle4: ", then are directed to families to grow.",
     subtitle5: "Each data point represents a precious life",
     subtitle6: ", each progression testifies to",
     subtitle7: "the work of God",
@@ -144,11 +141,11 @@ const translations = {
     startDate: "Start date",
     endDate: "End date",
     generateReport: "Generate report",
-    celluleLabel: "Cell",
-    allCellules: "All cells",
+    familleLabel: "Family",
+    allFamilles: "All families",
     tabOverview: "Overview",
-    tabCellules: "By cell",
-    tabMois: "By month",
+    tabFamilles: "By family",
+    tabMois: "Trends",
     loading: "Loading...",
     emptyPerso: "Choose a date range and click \"Generate report\"",
     emptyPeriod: "No data for this period",
@@ -172,14 +169,11 @@ const translations = {
     funnelBaptises: "Baptised",
     funnelMinistere: "In ministry",
     sectionOverview: "Overview",
-    sectionPerformance: "Performance by cell",
-    tabLeaders: "Development leaders",
+    sectionPerformance: "Performance by family",
+    tabLeaders: "Emerging Leaders",
     ongletLeaders: "Ranking by stage",
-    leadersEnDeveloppement: "Development leaders",
+    leadersEnDeveloppement: "🏆 Development leaders",
     totalLeaders: "Total leaders",
-    tabDeveloppement: "Emerging Leaders",
-    leadersEnDeveloppementFamille: "🏆 Development leaders",
-    sansFamille: "No family",
     parcoursStages: {
       potentiel: { emoji: "🌱", label: "Potential identified" },
       croissance: { emoji: "🌿", label: "Faithful Servant" },
@@ -188,12 +182,12 @@ const translations = {
     },
     aucuneEvaluation: "No evaluation",
     pasDeLeader: "No leaders",
-    sansCellule: "No cell group",
-    repartitionParCellule: "By cell",
+    sansFamille: "No family group",
     repartitionParFamille: "By family",
     noData: "No data",
     seeDetails: "See details",
-    cellule: "Cell",
+    famille: "Family",
+    comparaisonFamilles: "Trends by family",
     responsable: "Leader",
     assignedOn: "Assigned on",
     dateEvolution: "Evolution date",
@@ -203,7 +197,7 @@ const translations = {
     pasDePilier: "No pillar registered.",
     noDataPeriod: "No data for this period",
     persons: (n) => `${n} person${n > 1 ? "s" : ""}`,
-    noDataCellule: "No data",
+    noDataFamille: "No data",
     integrated: (pct) => `${pct}% integrated`,
     baptises: "Baptised",
     ministere: "Ministry",
@@ -217,10 +211,10 @@ const translations = {
   },
 };
 
-export default function EtatCellulePage() {
+export default function EtatFamillePage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "SuperviseurCellule", "ResponsableCellule"]}>
-      <EtatCellule />
+    <ProtectedRoute allowedRoles={["Administrateur", "SuperviseurFamille", "ResponsableFamille"]}>
+      <EtatFamille />
     </ProtectedRoute>
   );
 }
@@ -248,7 +242,7 @@ function formatStatut(statut) {
 function SectionTitle({ children, icon, total, className = "" }) {
   return (
     <div className={`flex items-center justify-between mb-3 ${className}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+      <p className="text-sm font-semibold tracking-widest text-white flex items-center gap-1.5">
         {icon && <span className="text-sm">{icon}</span>}
         {children}
       </p>
@@ -267,10 +261,10 @@ function KpiCard({ label, value, sub, accent }) {
     gray: "text-white/40", indigo: "text-indigo-300", yellow: "text-yellow-300",
   };
   return (
-    <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-xs text-white/50">{label}</p>
-      <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+    <div className="bg-white/10 rounded-2xl px-3 sm:px-4 py-3 sm:py-4 flex flex-col gap-1 min-w-0">
+      <p className="text-xs sm:text-sm text-white truncate">{label}</p>
+      <p className={`text-xl sm:text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
+      {sub && <p className="text-[11px] sm:text-xs text-white/60 mt-0.5 truncate">{sub}</p>}
     </div>
   );
 }
@@ -282,12 +276,12 @@ function Badge({ children, color }) {
     orange: "bg-orange-900/60 text-orange-300", yellow: "bg-yellow-900/60 text-yellow-300",
     indigo: "bg-indigo-900/60 text-indigo-300",
   };
-  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${m[color] || m.gray}`}>{children}</span>;
+  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${m[color] || m.gray}`}>{children}</span>;
 }
-function BarreProgression({ pct, color }) {
+function BarreProgression({ pct, color, className = "flex-1" }) {
   const col = color || (pct >= 70 ? "bg-emerald-400" : pct >= 40 ? "bg-amber-400" : "bg-red-400");
   return (
-    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+    <div className={`h-1.5 bg-white/10 rounded-full overflow-hidden min-w-0 ${className}`}>
       <div className={`h-full rounded-full transition-all ${col}`} style={{ width: `${Math.min(pct || 0, 100)}%` }} />
     </div>
   );
@@ -304,16 +298,16 @@ function LeaderStageCard({ emoji, label, value, stage }) {
   const c = LEADER_STAGE_COLORS[stage] || { bg: "#E6F1FB", text: "#042C53" };
   return (
     <div
-      className="rounded-2xl px-3 py-2.5 flex flex-col justify-between overflow-hidden"
+      className="rounded-2xl px-2.5 sm:px-3 py-2.5 flex flex-col justify-between overflow-hidden min-w-0"
       style={{ background: c.bg, height: "82px", boxSizing: "border-box" }}
     >
-      <div className="flex items-start gap-1">
+      <div className="flex items-start gap-1 min-w-0">
         <span className="text-sm leading-tight flex-shrink-0">{emoji}</span>
-        <span className="text-sm font-medium leading-tight" style={{ color: c.text }}>
+        <span className="text-xs sm:text-sm font-medium leading-tight line-clamp-2" style={{ color: c.text }}>
           {label}
         </span>
       </div>
-      <span className="text-xl font-bold leading-none text-center" style={{ color: c.text }}>
+      <span className="text-lg sm:text-xl font-bold leading-none text-center" style={{ color: c.text }}>
         {value}
       </span>
     </div>
@@ -323,13 +317,13 @@ function LeaderStageCard({ emoji, label, value, stage }) {
 function TotalLeadersCard({ label, value, sub }) {
   return (
     <div
-      className="bg-white/10 rounded-2xl px-3 py-2.5 flex flex-col justify-between items-center overflow-hidden"
+      className="bg-white/10 rounded-2xl px-2.5 sm:px-3 py-2.5 flex flex-col justify-between items-center overflow-hidden min-w-0"
       style={{ height: "82px", boxSizing: "border-box" }}
     >
-      <span className="text-sm text-white/60">{label}</span>
+      <span className="text-xs sm:text-sm text-white truncate w-full text-center">{label}</span>
       <div className="flex flex-col items-center leading-tight">
-        <span className="text-xl font-bold text-white">{value}</span>
-        {sub && <span className="text-[11px] text-white/40">{sub}</span>}
+        <span className="text-lg sm:text-xl font-bold text-white">{value}</span>
+        {sub && <span className="text-[11px] sm:text-xs text-white/80 whitespace-nowrap">{sub}</span>}
       </div>
     </div>
   );
@@ -362,13 +356,13 @@ function BlocKpi({ kpis, totalAmes, t }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <KpiCard label={t.kpiEvangelises} value={kpis.totalEvangelises} sub={t.kpiEvangelisesSub} accent="blue" />
         <KpiCard label={t.kpiVenus} value={kpis.totalVenus} sub={t.kpiVenusSub} accent="purple" />
         <KpiCard label={t.kpiIntegres} value={kpis.totalIntegration} sub={t.kpiOfTotal(pct(kpis.totalIntegration))} accent="green" />
         <KpiCard label={t.kpiBaptemes} value={kpis.totalBapteme} sub={t.kpiOfTotal(pct(kpis.totalBapteme))} accent="indigo" />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <KpiCard label={t.kpiMinistere} value={kpis.totalMinistere} sub={t.kpiMinistereSub} accent="teal" />
         <KpiCard label={t.kpiEncours} value={kpis.totalEncours} sub={t.kpiEncoursSub} accent="amber" />
         <KpiCard label={t.kpiAttente} value={kpis.totalAttente} sub={t.kpiAttenteSub} accent="gray" />
@@ -376,7 +370,7 @@ function BlocKpi({ kpis, totalAmes, t }) {
       </div>
 
       {totalAmes > 0 && (
-        <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3 mt-1">
+        <div className="bg-white/10 rounded-2xl p-3 sm:p-4 flex flex-col gap-3 mt-1">
           <SectionTitle>{t.funnelTitle}</SectionTitle>
           {[
             { label: t.funnelTotalAmes, val: totalAmes, color: "bg-blue-400" },
@@ -384,10 +378,10 @@ function BlocKpi({ kpis, totalAmes, t }) {
             { label: t.funnelBaptises, val: kpis.totalBapteme, color: "bg-indigo-400" },
             { label: t.funnelMinistere, val: kpis.totalMinistere, color: "bg-pink-400" },
           ].map(({ label, val, color }) => (
-            <div key={label} className="flex items-center gap-3">
-              <p className="text-xs text-white/50 w-28 flex-shrink-0">{label}</p>
+            <div key={label} className="flex items-center gap-2 sm:gap-3">
+              <p className="text-xs sm:text-sm text-white w-20 sm:w-28 flex-shrink-0 truncate">{label}</p>
               <BarreProgression pct={Math.round((val / totalAmes) * 100)} color={color} />
-              <span className="text-xs text-white font-semibold w-8 text-right">{val}</span>
+              <span className="text-xs sm:text-sm text-white font-semibold w-8 flex-shrink-0 text-right">{val}</span>
             </div>
           ))}
         </div>
@@ -396,32 +390,35 @@ function BlocKpi({ kpis, totalAmes, t }) {
   );
 }
 
-// ─── BLOC PAR CELLULE ─────────────────────────────────────────
-function BlocParCellule({ displayedReports, t }) {
-  const parCellule = {};
-  displayedReports.forEach(r => {
-    const c = r.cellule_full || "Non assignée";
-    if (!parCellule[c]) parCellule[c] = { total: 0, integres: 0, encours: 0, refus: 0 };
-    parCellule[c].total++;
-    const s = getStatutNormalise(r.statut);
-    if (s === "integre" || s === "intégré") parCellule[c].integres++;
-    else if (s === "en cours" || s === "en suivis") parCellule[c].encours++;
-    else if (s === "refus") parCellule[c].refus++;
-  });
-  const max = Math.max(...Object.values(parCellule).map(v => v.total), 1);
-  const lignes = Object.entries(parCellule).sort((a, b) => b[1].total - a[1].total);
+// ─── BLOC PAR FAMILLE ─────────────────────────────────────────
+function BlocParFamille({ displayedReports, t }) {
+  const parFamille = {};
+  displayedReports
+    .filter(r => r.famille_full)          // ✅ exclut les sans-famille
+    .forEach(r => {
+      const f = r.famille_full;
+      if (!parFamille[f]) parFamille[f] = { total: 0, integres: 0, encours: 0, refus: 0 };
+      parFamille[f].total++;
+      const s = getStatutNormalise(r.statut);
+      if (s === "integre" || s === "intégré") parFamille[f].integres++;
+      else if (s === "en cours" || s === "en suivis") parFamille[f].encours++;
+      else if (s === "refus") parFamille[f].refus++;
+    });
+  const max = Math.max(...Object.values(parFamille).map(v => v.total), 1);
+  const lignes = Object.entries(parFamille).sort((a, b) => b[1].total - a[1].total);
   if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">{t.noData}</p>;
+
 
   return (
     <div className="flex flex-col gap-2">
-      {lignes.map(([cellule, { total, integres, encours, refus }]) => (
-        <div key={cellule} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <p className="text-sm text-white w-36 flex-shrink-0 truncate">{cellule}</p>
-            <BarreProgression pct={(total / max) * 100} color="bg-blue-400" />
-            <span className="text-sm font-bold text-white w-6 text-right">{total}</span>
+      {lignes.map(([famille, { total, integres, encours, refus }]) => (
+        <div key={famille} className="bg-white/10 rounded-xl px-3 sm:px-4 py-3 flex flex-col gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <p className="text-sm text-white flex-1 min-w-0 truncate">{famille}</p>
+            <BarreProgression pct={(total / max) * 100} color="bg-blue-400" className="w-12 sm:w-16 flex-shrink-0" />
+            <span className="text-sm font-bold text-white w-6 flex-shrink-0 text-right">{total}</span>
           </div>
-          <div className="flex gap-2 ml-36">
+          <div className="flex gap-2 flex-wrap">
             <Badge color="green">✔ {integres}</Badge>
             <Badge color="amber">⏳ {encours}</Badge>
             <Badge color="red">✗ {refus}</Badge>
@@ -433,32 +430,32 @@ function BlocParCellule({ displayedReports, t }) {
 }
 
 // ─── BLOC PAR PILIER ─────────────────────────────────────────
-function PilierCard({ membre, celluleNom, idx }) {
+function PilierCard({ membre, familleNom, idx }) {
   const ac = AVATAR_COLORS[idx % AVATAR_COLORS.length];
   const initiales = `${(membre.prenom || "")[0] || ""}${(membre.nom || "")[0] || ""}`.toUpperCase();
   return (
-    <div className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-white/15 transition-colors">
+    <div className="bg-white/10 rounded-xl px-3 sm:px-4 py-3 flex items-center gap-3 hover:bg-white/15 transition-colors">
       <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0"
         style={{ background: ac.bg, color: ac.color }}>
         {initiales}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{membre.prenom} {membre.nom}</p>
-        <p className="text-[11px] text-white/50 truncate">{celluleNom}</p>
+        <p className="text-xs text-white truncate">{familleNom}</p>
       </div>
     </div>
   );
 }
 
-function BlocPiliers({ piliers, cellulesMap, filterCellule, t, open, setOpen }) {
-  const filtered = filterCellule
-    ? piliers.filter(p => cellulesMap[p.cellule_id] === filterCellule)
+function BlocPiliers({ piliers, famillesMap, filterFamille, t, open, setOpen }) {
+  const filtered = filterFamille
+    ? piliers.filter(p => famillesMap[p.famille_id] === filterFamille)
     : piliers;
 
   return (
     <div className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
       <div onClick={() => setOpen(!open)}
-        className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors">
+        className="px-3 sm:px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors">
         <span className="text-sm font-semibold text-white flex-1">{t.piliersLabel}</span>
         <span className="text-xl font-bold text-white">{filtered.length}</span>
         <svg className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${open ? "rotate-180" : ""}`}
@@ -467,13 +464,13 @@ function BlocPiliers({ piliers, cellulesMap, filterCellule, t, open, setOpen }) 
         </svg>
       </div>
       {open && (
-        <div className="px-4 pb-3 border-t border-white/10 pt-2">
+        <div className="px-3 sm:px-4 pb-3 border-t border-white/10 pt-2">
           {filtered.length === 0 ? (
             <p className="text-sm text-white/40 italic px-1">{t.pasDePilier}</p>
           ) : (
             <div className="flex flex-col gap-2">
               {filtered.map((m, idx) => (
-                <PilierCard key={m.id} idx={idx} membre={m} celluleNom={cellulesMap[m.cellule_id] || "—"} />
+                <PilierCard key={m.id} idx={idx} membre={m} familleNom={famillesMap[m.famille_id] || "—"} />
               ))}
             </div>
           )}
@@ -492,14 +489,14 @@ function ServiteurCard({ membre, sousTitre, idx = 0 }) {
   const ac = AVATAR_COLORS[idx % AVATAR_COLORS.length];
   const initiales = `${(membre.prenom || "")[0] || ""}${(membre.nom || "")[0] || ""}`.toUpperCase();
   return (
-    <div className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-white/15 transition-colors">
+    <div className="bg-white/10 rounded-xl px-3 sm:px-4 py-3 flex items-center gap-3 hover:bg-white/15 transition-colors">
       <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0"
         style={{ background: ac.bg, color: ac.color }}>
         {initiales}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{membre.prenom} {membre.nom}</p>
-        <p className="text-[11px] text-white/80 truncate">{sousTitre}</p>
+        <p className="text-xs text-white truncate">{sousTitre}</p>
       </div>
     </div>
   );
@@ -511,7 +508,7 @@ function BlocLeadersKpi({ leadersDeveloppement, totalMembres, t }) {
   leadersDeveloppement.forEach(l => { counts[l.etape || "none"]++; });
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
       <TotalLeadersCard
         label={t.totalLeaders}
         value={leadersDeveloppement.length}
@@ -546,11 +543,11 @@ function BlocClassementLeaders({ leadersDeveloppement, openStages, setOpenStages
         return (
           <div key={stage} className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
             <button onClick={() => setOpenStages(p => ({ ...p, [stage]: !p[stage] }))}
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left">
-              <span className="text-sm font-semibold text-white flex items-center gap-2">
-                <span>{emoji}</span>{label}
+              className="w-full flex items-center justify-between px-3 sm:px-4 py-3 hover:bg-white/5 transition text-left gap-2">
+              <span className="text-sm font-semibold text-white flex items-center gap-2 min-w-0 truncate">
+                <span className="flex-shrink-0">{emoji}</span><span className="truncate">{label}</span>
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <span className="text-sm font-bold text-white">{list.length}</span>
                 <svg className={`w-4 h-4 text-white/50 transition-transform ${isOpen ? "rotate-180" : ""}`}
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -559,7 +556,7 @@ function BlocClassementLeaders({ leadersDeveloppement, openStages, setOpenStages
               </div>
             </button>
             {isOpen && (
-              <div className="px-4 pb-3 border-t border-white/10 pt-2 flex flex-col gap-2">
+              <div className="px-3 sm:px-4 pb-3 border-t border-white/10 pt-2 flex flex-col gap-2">
                 {list.length === 0 ? (
                   <p className="text-sm text-white/40 italic px-1">{t.pasDeLeader}</p>
                 ) : (
@@ -584,7 +581,7 @@ function BlocClassementLeaders({ leadersDeveloppement, openStages, setOpenStages
   );
 }
 
-// ─── RÉPARTITION (cellule / famille) ─────────────────────────
+// ─── RÉPARTITION (famille) ─────────────────────────
 function BlocRepartitionLeaders({ leadersDeveloppement, refList, idKey, labelKey, t }) {
   const map = {};
   leadersDeveloppement.forEach(l => {
@@ -604,12 +601,12 @@ function BlocRepartitionLeaders({ leadersDeveloppement, refList, idKey, labelKey
   const max = Math.max(...lignes.map(l => l.count), 1);
 
   return (
-    <div className="flex flex-col gap-2 px-4">
+    <div className="flex flex-col gap-2">
       {lignes.map(({ id, nom, count }) => (
-        <div key={id} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
-          <p className="text-sm text-white w-36 flex-shrink-0 truncate">{nom}</p>
-          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" />
-          <span className="text-sm font-bold text-white w-6 text-right">{count}</span>
+        <div key={id} className="bg-white/10 rounded-xl px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3">
+          <p className="text-sm text-white flex-1 min-w-0 truncate">{nom}</p>
+          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" className="w-16 sm:w-32 flex-shrink-0" />
+          <span className="text-sm font-semibold text-white w-6 flex-shrink-0 text-right">{count}</span>
         </div>
       ))}
     </div>
@@ -625,30 +622,26 @@ function CarteLigne({ r, onDetails, t }) {
   return (
     <div className={`bg-white/10 rounded-xl overflow-hidden border-l-2 ${cfg.border}`}>
       <button onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
+        className="w-full flex items-center justify-between px-3 sm:px-4 py-3 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
           <span className="text-sm font-semibold text-white truncate">{r.nom_complet}</span>
-          <span className="text-[11px] text-white/40">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Badge color={cfg.badge}>{cfg.label}</Badge>
-          <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
+          <span className="text-xs text-white/80 truncate">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
         </div>
       </button>
       {open && (
-        <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
+        <div className="border-t border-white/10 px-3 sm:px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {[
-              { label: t.cellule, value: r.cellule_full },
+              { label: t.famille, value: r.famille_full },
               { label: t.responsable, value: r.responsable },
               { label: t.assignedOn, value: formatDateFR(r.envoyer_au_suivi_le) },
               { label: t.dateEvolution, value: formatDateFR(r.date_integration) },
               { label: t.bapteme, value: formatDateFR(r.date_baptise) },
               { label: t.debutMinistere, value: formatDateFR(r.debut_ministere) },
             ].map(({ label, value }) => (
-              <div key={label} className="bg-white/5 rounded-xl px-3 py-2">
-                <p className="text-[10px] text-white/40">{label}</p>
-                <p className="text-sm text-white font-medium">{value || "—"}</p>
+              <div key={label} className="bg-white/5 rounded-xl px-3 py-2 min-w-0">
+                <p className="text-[10px] text-white/40 truncate">{label}</p>
+                <p className="text-sm text-white font-medium truncate">{value || "—"}</p>
               </div>
             ))}
           </div>
@@ -662,113 +655,104 @@ function CarteLigne({ r, onDetails, t }) {
   );
 }
 
-// ─── ONGLET PAR MOIS ──────────────────────────────────────────
-function OngletParMois({ displayedReports, onDetails, t }) {
-  const [expandedMonths, setExpandedMonths] = useState({});
-
-  const grouped = {};
-  displayedReports.forEach(r => {
-    const d = new Date(r.date_depart);
-    const key = `${d.getFullYear()}-${d.getMonth()}`;
-    if (!grouped[key]) grouped[key] = { label: `${t.months[d.getMonth()]} ${d.getFullYear()}`, rows: [] };
-    grouped[key].rows.push(r);
-  });
-
-  const sorted = Object.entries(grouped).sort((a, b) => {
-    const [yA, mA] = a[0].split("-").map(Number);
-    const [yB, mB] = b[0].split("-").map(Number);
-    return new Date(yB, mB) - new Date(yA, mA);
-  });
-
-  if (!sorted.length) return <p className="text-white/30 text-sm text-center py-8">{t.noDataPeriod}</p>;
+// ─── COMPARAISON PAR FAMILLE (onglet Mois) ────────────────────
+function ComparaisonParFamille({ displayedReports, t }) {
+  const counts = {};
+  displayedReports
+    .filter(r => r.famille_full)          // ✅ exclut les sans-famille
+    .forEach(r => {
+      counts[r.famille_full] = (counts[r.famille_full] || 0) + 1;
+    });
+  const lignes = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (!lignes.length) return null;
+  const max = Math.max(...lignes.map(([, n]) => n), 1);
 
   return (
-    <div className="flex flex-col gap-3">
-      {sorted.map(([key, { label, rows }]) => {
-        const isOpen = expandedMonths[key];
-        const integres = rows.filter(r => ["integre","intégré"].includes(getStatutNormalise(r.statut))).length;
-        return (
-          <div key={key} className="bg-white/10 rounded-2xl overflow-hidden">
-            <button onClick={() => setExpandedMonths(p => ({ ...p, [key]: !p[key] }))}
-              className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
-              <span className="font-semibold text-white">{label}</span>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Badge color="gray">{t.persons(rows.length)}</Badge>
-                <Badge color="green">✔ {integres}</Badge>
-                <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
-              </div>
-            </button>
-            {isOpen && (
-              <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
-                {rows.map((r, i) => <CarteLigne key={i} r={r} onDetails={onDetails} t={t} />)}
-              </div>
-            )}
-          </div>
-        );
-      })}
+    <div className="bg-white/10 rounded-2xl p-3 sm:p-4 flex flex-col gap-2 mb-1">
+      <SectionTitle>{t.comparaisonFamilles}</SectionTitle>
+      {lignes.map(([famille, n]) => (
+        <div key={famille} className="flex items-center gap-2 sm:gap-3">
+          <p className="text-sm text-white flex-1 min-w-0 truncate">{famille}</p>
+          <BarreProgression pct={(n / max) * 100} color="bg-blue-400" className="w-16 sm:w-32 flex-shrink-0" />
+          <span className="text-sm font-semibold text-white w-8 flex-shrink-0 text-right">{n}</span>
+        </div>
+      ))}
     </div>
   );
 }
 
-// ─── ONGLET PAR CELLULE DÉTAIL ────────────────────────────────
-function OngletParCelluleDetail({ displayedReports, onDetails, t }) {
-  const [expandedCellules, setExpandedCellules] = useState({});
-
-  const grouped = {};
-  displayedReports.forEach(r => {
-    const c = r.cellule_full || "Non assignée";
-    if (!grouped[c]) grouped[c] = { rows: [], responsable: r.responsable || "—" };
-    grouped[c].rows.push(r);
-  });
-
-  const sorted = Object.entries(grouped).sort((a, b) => b[1].rows.length - a[1].rows.length);
-  if (!sorted.length) return <p className="text-white/30 text-sm text-center py-8">{t.noDataCellule}</p>;
+// ─── ONGLET PAR MOIS ──────────────────────────────────────────
+function OngletParMois({ displayedReports, t }) {
+  if (!displayedReports.length) {
+    return <p className="text-white/30 text-sm text-center py-8">{t.noDataPeriod}</p>;
+  }
 
   return (
     <div className="flex flex-col gap-3">
-      {sorted.map(([cellule, { rows, responsable }]) => {
-        const isOpen = expandedCellules[cellule];
+      <ComparaisonParFamille displayedReports={displayedReports} t={t} />
+    </div>
+  );
+}
+
+// ─── ONGLET PAR FAMILLE DÉTAIL ────────────────────────────────
+function OngletParFamilleDetail({ displayedReports, onDetails, piliers, famillesMap, t }) {
+  const [expandedFamilles, setExpandedFamilles] = useState({});
+
+  const grouped = {};
+  displayedReports
+    .filter(r => r.famille_full)          // ✅ exclut les sans-famille
+    .forEach(r => {
+      const f = r.famille_full;
+      if (!grouped[f]) grouped[f] = { rows: [], responsable: r.responsable || "—" };
+      grouped[f].rows.push(r);
+    });
+
+  const sorted = Object.entries(grouped).sort((a, b) => b[1].rows.length - a[1].rows.length);
+  if (!sorted.length) return <p className="text-white/30 text-sm text-center py-8">{t.noDataFamille}</p>;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {sorted.map(([famille, { rows, responsable }]) => {
+        const isOpen = expandedFamilles[famille];
         const integres = rows.filter(r => ["integre","intégré"].includes(getStatutNormalise(r.statut))).length;
         const encours = rows.filter(r => ["en cours","en suivis"].includes(getStatutNormalise(r.statut))).length;
         const refus = rows.filter(r => getStatutNormalise(r.statut) === "refus").length;
         const baptises = rows.filter(r => r.date_baptise).length;
         const ministeres = rows.filter(r => r.debut_ministere).length;
         const pctInt = rows.length > 0 ? Math.round((integres / rows.length) * 100) : 0;
+        const pilierCount = (piliers || []).filter(p => famillesMap[p.famille_id] === famille).length;
 
         return (
-          <div key={cellule} className="bg-white/10 rounded-2xl overflow-hidden">
-            <button onClick={() => setExpandedCellules(p => ({ ...p, [cellule]: !p[cellule] }))}
-              className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
+          <div key={famille} className="bg-white/10 rounded-2xl overflow-hidden">
+            <button onClick={() => setExpandedFamilles(p => ({ ...p, [famille]: !p[famille] }))}
+              className="w-full flex items-center justify-between px-3 sm:px-4 py-4 hover:bg-white/5 transition text-left gap-3">
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                <span className="font-semibold text-white truncate">{cellule}</span>
-                <span className="text-[11px] text-white/40">
-                  {responsable} · {t.persons(rows.length)} · {t.integrated(pctInt)}
+                <span className="font-semibold text-white truncate">{famille}</span>
+                <span className="text-xs text-white/80 truncate">
+                  {responsable} · {t.persons(rows.length)}
                 </span>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Badge color="green">✔ {integres}</Badge>
-                <Badge color="amber">⏳ {encours}</Badge>
-                <Badge color="red">✗ {refus}</Badge>
-                <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
-              </div>
+              <span className="text-white/30 text-xs flex-shrink-0">{isOpen ? "▲" : "▼"}</span>
             </button>
             {isOpen && (
-              <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
+              <div className="border-t border-white/10 px-3 sm:px-4 pb-4 pt-3 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <BarreProgression pct={pctInt} color="bg-emerald-400" />
-                  <span className="text-xs text-white/50">{t.integrated(pctInt)}</span>
+                  <span className="text-xs text-white/50 flex-shrink-0">{t.integrated(pctInt)}</span>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {[
+                    { label: t.kpiIntegres, val: integres, color: "text-emerald-300" },
                     { label: t.baptises, val: baptises, color: "text-indigo-300" },
                     { label: t.ministere, val: ministeres, color: "text-pink-300" },
                     { label: t.encours, val: encours, color: "text-amber-300" },
                     { label: t.refus, val: refus, color: "text-red-300" },
+                    { label: t.piliersLabel, val: pilierCount, color: "text-teal-300" },
                   ].map(({ label, val, color }) => (
-                    <div key={label} className="bg-white/5 rounded-xl px-3 py-2 text-center">
+                    <div key={label} className="bg-white/5 rounded-xl px-2 sm:px-3 py-2 text-center min-w-0">
                       <p className={`text-sm font-bold ${color}`}>{val}</p>
-                      <p className="text-[10px] text-white/40">{label}</p>
+                      <p className="text-xs sm:text-sm text-white truncate">{label}</p>
                     </div>
                   ))}
                 </div>
@@ -784,7 +768,7 @@ function OngletParCelluleDetail({ displayedReports, onDetails, t }) {
 }
 
 // ─── PAGE PRINCIPALE ───────────────────────────────────────────
-function EtatCellule() {
+function EtatFamille() {
   const { lang } = useLang();
   const t = translations[lang];
   const router = useRouter();
@@ -798,8 +782,8 @@ function EtatCellule() {
   const [filtrePeriode, setFiltrePeriode] = useState("30");
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");
-  const [filterCellule, setFilterCellule] = useState("");
-  const [availableCellules, setAvailableCellules] = useState([]);
+  const [filterFamille, setFilterFamille] = useState("");
+  const [availableFamilles, setAvailableFamilles] = useState([]);
 
   const [onglet, setOnglet] = useState("kpi");
 
@@ -808,13 +792,12 @@ function EtatCellule() {
   const [selectedEvangelise, setSelectedEvangelise] = useState(null);
 
   const [piliers, setPiliers] = useState([]);
-  const [cellulesMap, setCellulesMap] = useState({});
+  const [famillesMap, setFamillesMap] = useState({});
   const [openPiliers, setOpenPiliers] = useState(false);
 
   // ── Leaders en développement ──
   const [leadersDeveloppement, setLeadersDeveloppement] = useState([]);
   const [openStages, setOpenStages] = useState({});
-  const [openStagesFamille, setOpenStagesFamille] = useState({});
   const [cellules, setCellules] = useState([]);
   const [familles, setFamilles] = useState([]);
 
@@ -861,17 +844,17 @@ function EtatCellule() {
     loadCellulesFamilles();
   }, [userProfile, cellulesActive, famillesActive]);
 
-  // ─── Rapports (évangélisation / cellules) ───
+  // ─── Rapports (évangélisation / familles) ───
   const fetchReports = async (overrideModePerso = null) => {
     if (!userProfile) return;
     setLoading(true);
     const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
 
     const isAdmin        = userProfile.roles?.includes("Administrateur") || userProfile.roles?.includes("Superadmin");
-    const isSuperviseur  = userProfile.roles?.includes("SuperviseurCellule");
-    const isResponsable  = userProfile.roles?.includes("ResponsableCellule");
+    const isSuperviseur  = userProfile.roles?.includes("SuperviseurFamille");
+    const isResponsable  = userProfile.roles?.includes("ResponsableFamille");
 
-    let scopeCelluleIds = null; // null = pas de restriction (admin/superviseur)
+    let scopeFamilleIds = null; // null = pas de restriction (admin/superviseur)
 
     try {
       let query = supabase
@@ -885,24 +868,24 @@ function EtatCellule() {
       } else if (isSuperviseur) {
         // pas de filtre
       } else if (isResponsable) {
-        const { data: mesCellules } = await supabase
-          .from("cellules").select("id")
+        const { data: mesFamilles } = await supabase
+          .from("familles").select("id")
           .eq("responsable_id", userProfile.id)
           .eq("eglise_id", userProfile.eglise_id);
-        const mesIds = (mesCellules || []).map(c => c.id);
+        const mesIds = (mesFamilles || []).map(f => f.id);
 
         const { data: filles } = await supabase
-          .from("cellules").select("id")
-          .eq("cellule_mere_id", userProfile.id)
+          .from("familles").select("id")
+          .eq("famille_mere_id", userProfile.id)
           .eq("eglise_id", userProfile.eglise_id);
-        const fillesIds = (filles || []).map(c => c.id);
+        const fillesIds = (filles || []).map(f => f.id);
 
-        scopeCelluleIds = [...new Set([...mesIds, ...fillesIds])];
+        scopeFamilleIds = [...new Set([...mesIds, ...fillesIds])];
 
-        if (scopeCelluleIds.length > 0) {
-          query = query.in("cellule_id", scopeCelluleIds);
+        if (scopeFamilleIds.length > 0) {
+          query = query.in("famille_id", scopeFamilleIds);
         } else {
-          query = query.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
+          query = query.eq("famille_id", "00000000-0000-0000-0000-000000000000");
         }
       } else {
         setReports([]); setAllReports([]); setPiliers([]);
@@ -925,31 +908,31 @@ function EtatCellule() {
 
       setAllReports(filtered);
       setReports(filtered);
-      setAvailableCellules([...new Set(filtered.map(r => r.cellule_full).filter(Boolean))].sort());
-      setFilterCellule("");
+      setAvailableFamilles([...new Set(filtered.map(r => r.famille_full).filter(Boolean))].sort());
+      setFilterFamille("");
       updateKpis(filtered);
 
       // ── Piliers (indépendant de la période, état actuel) ──
       let pilierQuery = supabase
         .from("membres_complets")
-        .select("id, nom, prenom, cellule_id")
+        .select("id, nom, prenom, famille_id")
         .eq("eglise_id", userProfile.eglise_id)
         .eq("pilier", true)
-        .not("cellule_id", "is", null); // ← uniquement les piliers rattachés à une cellule
+        .not("famille_id", "is", null); // ← uniquement les piliers rattachés à une famille
 
-      if (scopeCelluleIds !== null) {
-        if (scopeCelluleIds.length > 0) pilierQuery = pilierQuery.in("cellule_id", scopeCelluleIds);
-        else pilierQuery = pilierQuery.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
+      if (scopeFamilleIds !== null) {
+        if (scopeFamilleIds.length > 0) pilierQuery = pilierQuery.in("famille_id", scopeFamilleIds);
+        else pilierQuery = pilierQuery.eq("famille_id", "00000000-0000-0000-0000-000000000000");
       }
 
-      const [{ data: pilierData }, { data: cellulesData }] = await Promise.all([
+      const [{ data: pilierData }, { data: famillesData }] = await Promise.all([
         pilierQuery,
-        supabase.from("cellules").select("id, nom").eq("eglise_id", userProfile.eglise_id),
+        supabase.from("familles").select("id, famille_full").eq("eglise_id", userProfile.eglise_id),
       ]);
 
-      const cMap = {};
-      (cellulesData || []).forEach(c => { cMap[c.id] = c.nom; });
-      setCellulesMap(cMap);
+      const fMap = {};
+      (famillesData || []).forEach(f => { fMap[f.id] = f.famille_full; });
+      setFamillesMap(fMap);
       setPiliers(pilierData || []);
 
     } catch (err) {
@@ -964,8 +947,8 @@ function EtatCellule() {
     if (userProfile && !modePerso) fetchReports(false);
   }, [userProfile, filtrePeriode, modePerso]);
 
-  const displayedReports = filterCellule
-    ? allReports.filter(r => r.cellule_full === filterCellule)
+  const displayedReports = filterFamille
+    ? allReports.filter(r => r.famille_full === filterFamille)
     : allReports;
 
   const updateKpis = (filtered) => {
@@ -992,7 +975,7 @@ function EtatCellule() {
 
   useEffect(() => {
     updateKpis(displayedReports);
-  }, [filterCellule, allReports]);
+  }, [filterFamille, allReports]);
 
   const handleDetailsClick = async (row) => {
     setSelectedEvangelise(row);
@@ -1002,11 +985,52 @@ function EtatCellule() {
   const fetchLeadersDeveloppement = async () => {
     if (!userProfile) return;
     try {
-      const { data: membresData, error } = await supabase
+      const isAdmin        = userProfile.roles?.includes("Administrateur") || userProfile.roles?.includes("Superadmin");
+      const isSuperviseur  = userProfile.roles?.includes("SuperviseurFamille");
+      const isResponsable  = userProfile.roles?.includes("ResponsableFamille");
+
+      // Scope des familles visibles (même logique que fetchReports)
+      let scopeFamilleIds = null; // null = pas de restriction (admin/superviseur)
+
+      if (isAdmin || isSuperviseur) {
+        // pas de filtre
+      } else if (isResponsable) {
+        const { data: mesFamilles } = await supabase
+          .from("familles").select("id")
+          .eq("responsable_id", userProfile.id)
+          .eq("eglise_id", userProfile.eglise_id);
+        const mesIds = (mesFamilles || []).map(f => f.id);
+
+        const { data: filles } = await supabase
+          .from("familles").select("id")
+          .eq("famille_mere_id", userProfile.id)
+          .eq("eglise_id", userProfile.eglise_id);
+        const fillesIds = (filles || []).map(f => f.id);
+
+        scopeFamilleIds = [...new Set([...mesIds, ...fillesIds])];
+      } else {
+        setLeadersDeveloppement([]);
+        setTotalMembresLeaders(0);
+        return;
+      }
+
+      // On ne prend que les membres rattachés à une famille
+      // (pour que le dénominateur corresponde au numérateur "avec famille")
+      let membresQuery = supabase
         .from("membres_complets")
         .select("id, nom, prenom, leader_developpement, cellule_id, famille_id, etat_contact")
-        .eq("eglise_id", userProfile.eglise_id);
+        .eq("eglise_id", userProfile.eglise_id)
+        .not("famille_id", "is", null);
 
+      if (scopeFamilleIds !== null) {
+        if (scopeFamilleIds.length > 0) {
+          membresQuery = membresQuery.in("famille_id", scopeFamilleIds);
+        } else {
+          membresQuery = membresQuery.eq("famille_id", "00000000-0000-0000-0000-000000000000");
+        }
+      }
+
+      const { data: membresData, error } = await membresQuery;
       if (error) throw error;
 
       const actifs = (membresData || []).filter(m =>
@@ -1039,6 +1063,7 @@ function EtatCellule() {
     } catch (err) {
       console.error("Erreur fetch leaders développement:", err);
       setLeadersDeveloppement([]);
+      setTotalMembresLeaders(0);
     }
   };
 
@@ -1046,21 +1071,11 @@ function EtatCellule() {
     if (userProfile) fetchLeadersDeveloppement();
   }, [userProfile]);
 
-  // ─── Leaders en développement — uniquement ceux rattachés à une cellule ───
-  const leadersDeveloppementAvecCellule = leadersDeveloppement.filter(l => l.membre.cellule_id);
-
   // ─── Leaders en développement — uniquement ceux rattachés à une famille ───
   const leadersDeveloppementAvecFamille = leadersDeveloppement.filter(l => l.membre.famille_id);
 
-  // ─── Leaders en développement — attachement (uniquement cellule sur cette page) ───
+  // ─── Leaders en développement — attachement (uniquement famille sur cette page) ───
   const getLeaderAttachment = (membre) => {
-    if (!membre.cellule_id) return { emoji: "🏠", label: t.sansCellule };
-    const c = cellules.find(c => c.id === membre.cellule_id);
-    return { emoji: "🏠", label: c?.cellule_full || "—" };
-  };
-
-  // ─── Leaders en développement — attachement famille (onglet Développement) ───
-  const getFamilleAttachment = (membre) => {
     if (!membre.famille_id) return { emoji: "👨‍👩‍👧‍👦", label: t.sansFamille };
     const f = familles.find(f => f.id === membre.famille_id);
     return { emoji: "👨‍👩‍👧‍👦", label: f?.famille_full || "—" };
@@ -1071,23 +1086,23 @@ function EtatCellule() {
 
   const onglets = [
     { key: "kpi", label: t.tabOverview },
-    { key: "cellules", label: t.tabCellules },
+    { key: "familles", label: t.tabFamilles },
     { key: "mois", label: t.tabMois },
-    { key: "developpement", label: t.tabDeveloppement },
+    { key: "leaders", label: t.tabLeaders },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+    <div className="min-h-screen flex flex-col items-center p-3 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
       <div className="w-full max-w-2xl mt-6 flex flex-col gap-5 mb-10">
 
         {/* En-tête */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mt-4 mb-2 text-blue-300 text-center text-white">
+        <div className="text-center px-1">
+          <h1 className="text-xl sm:text-2xl font-bold mt-4 mb-2 text-blue-300 text-center text-white">
             {t.pageTitle} <span className="text-emerald-300">{t.pageTitleHighlight}</span>
           </h1>
-          <p className="italic text-base text-white/90">
+          <p className="italic text-sm sm:text-base text-white/90">
             <span className="text-blue-300 font-semibold">{t.subtitle1}</span>{" "}
             {t.subtitle2} <span className="text-blue-300 font-semibold">{t.subtitle3}</span>
             {t.subtitle4}{" "}
@@ -1097,15 +1112,15 @@ function EtatCellule() {
         </div>
 
         {/* Filtres */}
-        <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
+        <div className="bg-white/10 rounded-2xl p-3 sm:p-4 flex flex-col gap-3">
           {/* Toggle mode */}
-          <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
+          <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit max-w-full overflow-x-auto">
             <button onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition whitespace-nowrap ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
               {t.quickPeriod}
             </button>
             <button onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition whitespace-nowrap ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
               {t.dateRange}
             </button>
           </div>
@@ -1113,7 +1128,7 @@ function EtatCellule() {
           {/* Période rapide */}
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">{t.periodLabel}</span>
+              <span className="text-xs text-white flex-shrink-0">{t.periodLabel}</span>
               {t.periods.map(p => (
                 <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
@@ -1126,16 +1141,16 @@ function EtatCellule() {
           {/* Tranche personnalisée */}
           {modePerso && (
             <div className="flex flex-col gap-2">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.startDate}</label>
+                  <label className="text-xs text-white">{t.startDate}</label>
                   <input type="date" value={filterDebut} onChange={e => setFilterDebut(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 w-full" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.endDate}</label>
+                  <label className="text-xs text-white">{t.endDate}</label>
                   <input type="date" value={filterFin} onChange={e => setFilterFin(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 w-full" />
                 </div>
               </div>
               <button onClick={() => fetchReports(true)}
@@ -1145,15 +1160,15 @@ function EtatCellule() {
             </div>
           )}
 
-          {/* Filtre cellule */}
-          {hasData && availableCellules.length > 1 && (
+          {/* Filtre famille */}
+          {hasData && availableFamilles.length > 1 && (
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-white/50">{t.celluleLabel}</label>
-              <select value={filterCellule} onChange={e => setFilterCellule(e.target.value)}
-                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
-                <option value="" className="bg-[#2a2d80]">{t.allCellules}</option>
-                {availableCellules.map((c, i) => (
-                  <option key={i} value={c} className="bg-[#2a2d80]">{c}</option>
+              <label className="text-xs text-white">{t.familleLabel}</label>
+              <select value={filterFamille} onChange={e => setFilterFamille(e.target.value)}
+                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer w-full">
+                <option value="" className="bg-[#2a2d80]">{t.allFamilles}</option>
+                {availableFamilles.map((f, i) => (
+                  <option key={i} value={f} className="bg-[#2a2d80]">{f}</option>
                 ))}
               </select>
             </div>
@@ -1161,10 +1176,10 @@ function EtatCellule() {
         </div>
 
         {/* Onglets */}
-        <div className="flex gap-1 bg-white/10 rounded-xl p-1">
+        <div className="flex gap-1 bg-white/10 rounded-xl p-1 overflow-x-auto">
           {onglets.map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-2 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`flex-shrink-0 sm:flex-1 py-2 px-2.5 sm:px-2 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
               {o.label}
             </button>
           ))}
@@ -1175,16 +1190,15 @@ function EtatCellule() {
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
           </div>
-        ) : onglet === "developpement" ? (
+        ) : onglet === "leaders" ? (
           /* ══════════════════════════════════════════
-             ONGLET — DÉVELOPPEMENT (FAMILLE)
+             ONGLET — LEADERS EN DÉVELOPPEMENT
              (indépendant de hasData : il a son propre fetch)
-             → n'affiche QUE les leaders rattachés à une famille
-             → aucune référence à la cellule ici
+             → n'affiche que les leaders rattachés à une famille
           ══════════════════════════════════════════ */
           <div className="flex flex-col gap-7">
             <div>
-              <SectionTitle>{t.leadersEnDeveloppementFamille}</SectionTitle>
+              <SectionTitle>{t.leadersEnDeveloppement}</SectionTitle>
               <BlocLeadersKpi leadersDeveloppement={leadersDeveloppementAvecFamille} totalMembres={totalMembresLeaders} t={t} />
             </div>
 
@@ -1192,9 +1206,9 @@ function EtatCellule() {
               <SectionTitle>{t.ongletLeaders}</SectionTitle>
               <BlocClassementLeaders
                 leadersDeveloppement={leadersDeveloppementAvecFamille}
-                openStages={openStagesFamille}
-                setOpenStages={setOpenStagesFamille}
-                getAttachment={getFamilleAttachment}
+                openStages={openStages}
+                setOpenStages={setOpenStages}
+                getAttachment={getLeaderAttachment}
                 t={t}
               />
             </div>
@@ -1204,7 +1218,6 @@ function EtatCellule() {
                 <SectionTitle
                   icon="👨‍👩‍👧‍👦"
                   total={leadersDeveloppementAvecFamille.length}
-                  className="px-8"
                 >
                   {t.repartitionParFamille}
                 </SectionTitle>
@@ -1218,7 +1231,7 @@ function EtatCellule() {
               </div>
             )}
           </div>
-        ) : !hasData ? (
+       ) : !hasData ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center text-white/40 text-sm">
             {modePerso ? t.emptyPerso : t.emptyPeriod}
           </div>
@@ -1229,25 +1242,21 @@ function EtatCellule() {
               <BlocKpi kpis={kpis} totalAmes={totalAmes} t={t} />
             </div>
             <div>
-              <SectionTitle>{t.sectionPerformance}</SectionTitle>
-              <BlocParCellule displayedReports={displayedReports} t={t} />
-            </div>
-            <div>
               <SectionTitle>{t.piliersLabel}</SectionTitle>
               <BlocPiliers
                 piliers={piliers}
-                cellulesMap={cellulesMap}
-                filterCellule={filterCellule}
+                famillesMap={famillesMap}
+                filterFamille={filterFamille}
                 t={t}
                 open={openPiliers}
                 setOpen={setOpenPiliers}
               />
             </div>
           </div>
-        ) : onglet === "cellules" ? (
-          <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
+       ) : onglet === "familles" ? (
+  <OngletParFamilleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} piliers={piliers} famillesMap={famillesMap} t={t} />
         ) : (
-          <OngletParMois displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
+          <OngletParMois displayedReports={displayedReports} t={t} />
         )}
 
       </div>

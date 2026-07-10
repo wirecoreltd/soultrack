@@ -295,7 +295,7 @@ function BlocGenre({ besoinsCount, t }) {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-2xl font-bold text-blue-300">{totalH}</p>
-          <p className="text-xs text-white/80>{t.hommes}</p>
+          <p className="text-xs text-white/80">{t.hommes}</p>
           <p className="text-xs text-white/80">{pctH}%</p>
         </div>
         <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">

@@ -40,6 +40,7 @@ const translations = {
     generateReport: "Générer le rapport",
     celluleLabel: "Cellule",
     allCellules: "Toutes les cellules",
+    comparaisonCellules: "Comparaison par cellule",
     // Onglets
     tabOverview: "Vue d'ensemble",
     tabCellules: "Par cellule",
@@ -186,6 +187,7 @@ const translations = {
     noData: "No data",
     seeDetails: "See details",
     cellule: "Cell",
+    comparaisonCellules: "Comparison by cell",
     responsable: "Leader",
     assignedOn: "Assigned on",
     dateEvolution: "Evolution date",
@@ -654,6 +656,31 @@ function CarteLigne({ r, onDetails, t }) {
   );
 }
 
+// ─── COMPARAISON PAR CELLULE (onglet Mois) ────────────────────
+function ComparaisonParCellule({ displayedReports, t }) {
+  const counts = {};
+  displayedReports.forEach(r => {
+    const c = r.cellule_full || "Non assignée";
+    counts[c] = (counts[c] || 0) + 1;
+  });
+  const lignes = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (!lignes.length) return null;
+  const max = Math.max(...lignes.map(([, n]) => n), 1);
+
+  return (
+    <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-2 mb-1">
+      <SectionTitle>{t.comparaisonCellules}</SectionTitle>
+      {lignes.map(([cellule, n]) => (
+        <div key={cellule} className="flex items-center gap-3">
+          <p className="text-sm text-white w-36 flex-shrink-0 truncate">{cellule}</p>
+          <BarreProgression pct={(n / max) * 100} color="bg-blue-400" />
+          <span className="text-sm font-bold text-white w-8 text-right">{n}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── ONGLET PAR MOIS ──────────────────────────────────────────
 function OngletParMois({ displayedReports, onDetails, t }) {
   const [expandedMonths, setExpandedMonths] = useState({});
@@ -676,6 +703,7 @@ function OngletParMois({ displayedReports, onDetails, t }) {
 
   return (
     <div className="flex flex-col gap-3">
+      <ComparaisonParCellule displayedReports={displayedReports} t={t} />
       {sorted.map(([key, { label, rows }]) => {
         const isOpen = expandedMonths[key];
         const integres = rows.filter(r => ["integre","intégré"].includes(getStatutNormalise(r.statut))).length;

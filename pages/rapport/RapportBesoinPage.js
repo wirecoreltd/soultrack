@@ -133,7 +133,7 @@ export default function RapportBesoinPage() {
 // ─── UI ATOMS ──────────────────────────────────────────────────
 function SectionTitle({ children }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">
+    <p className="text-sm font-semibold uppercase tracking-widest text-white/80 mb-3">
       {children}
     </p>
   );
@@ -147,9 +147,9 @@ function KpiCard({ label, value, sub, accent }) {
   };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-xs text-white/50">{label}</p>
+      <p className="text-sm text-white">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-white/60 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -296,12 +296,12 @@ function BlocGenre({ besoinsCount, t }) {
         <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-2xl font-bold text-blue-300">{totalH}</p>
           <p className="text-[11px] text-blue-400/70">{t.hommes}</p>
-          <p className="text-[10px] text-blue-500/50">{pctH}%</p>
+          <p className="text-[10px] text-white/40">{pctH}%</p>
         </div>
         <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-2xl font-bold text-pink-300">{totalF}</p>
           <p className="text-[11px] text-pink-400/70">{t.femmes}</p>
-          <p className="text-[10px] text-pink-500/50">{pctF}%</p>
+          <p className="text-[10px] text-white/40">{pctF}%</p>
         </div>
       </div>
       {total > 0 && (
@@ -329,12 +329,12 @@ function BlocStatut({ besoinsCount, t }) {
         <div className="bg-yellow-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-2xl font-bold text-yellow-300">{totalEnSuivi}</p>
           <p className="text-[11px] text-yellow-400/70">{t.enSuiviLabel}</p>
-          <p className="text-[10px] text-yellow-500/50">{pctSuivi}%</p>
+          <p className="text-[10px] text-white/40">{pctSuivi}%</p>
         </div>
         <div className="bg-emerald-900/40 rounded-xl px-3 py-3 text-center">
           <p className="text-2xl font-bold text-emerald-300">{totalResolu}</p>
           <p className="text-[11px] text-emerald-400/70">{t.resoluLabel}</p>
-          <p className="text-[10px] text-emerald-500/50">{pctResolu}%</p>
+          <p className="text-[10px] text-white/40">{pctResolu}%</p>
         </div>
       </div>
       {total > 0 && (
@@ -347,24 +347,24 @@ function BlocStatut({ besoinsCount, t }) {
   );
 }
 
-    // ─── BLOC CLASSEMENT BESOINS ───────────────────────────────────
-    function BlocClassement({ besoinsCount, t, lang }) {
-      const lignes = Object.entries(besoinsCount).sort((a, b) => b[1].total - a[1].total);
-      const maxTotal = Math.max(...lignes.map(([, v]) => v.total), 1);
-    
-      if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">—</p>;
-    
-      return (
-        <div className="flex flex-col gap-2">
-          {lignes.map(([besoin, data]) => {
-            const cfg = getCfg(besoin);
-            return (
-              <div key={besoin} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 w-44 flex-shrink-0">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
-                    <p className="text-sm text-white truncate">{getBesoinLabel(besoin, lang)}</p>
-                  </div>
+// ─── BLOC CLASSEMENT BESOINS ───────────────────────────────────
+function BlocClassement({ besoinsCount, t, lang }) {
+  const lignes = Object.entries(besoinsCount).sort((a, b) => b[1].total - a[1].total);
+  const maxTotal = Math.max(...lignes.map(([, v]) => v.total), 1);
+
+  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">—</p>;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {lignes.map(([besoin, data]) => {
+        const cfg = getCfg(besoin);
+        return (
+          <div key={besoin} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 w-44 flex-shrink-0">
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
+                <p className="text-sm text-white truncate">{getBesoinLabel(besoin, lang)}</p>
+              </div>
               <BarreProgression pct={(data.total / maxTotal) * 100} color={cfg.bar} />
               <p className="text-sm font-bold text-orange-300 w-8 text-right">{data.total}</p>
             </div>
@@ -380,24 +380,24 @@ function BlocStatut({ besoinsCount, t }) {
     </div>
   );
 }
-      
-      // ─── CARTE BESOIN ──────────────────────────────────────────────
-      function CarteBesoin({ besoin, data, totalMembres, onNavigate, t, lang }) {
-        const [open, setOpen] = useState(false);
-        const cfg = getCfg(besoin);
-        const pctResolu = data.total > 0 ? Math.round((data.resolu / data.total) * 100) : 0;
-        const pctMembres = totalMembres > 0 ? ((data.total / totalMembres) * 100).toFixed(1) : 0;
-      
-        return (
-          <div className="bg-white/10 rounded-2xl overflow-hidden">
-            <button
-              onClick={() => setOpen(v => !v)}
-              className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
-                <span className="font-semibold text-white text-sm truncate">{getBesoinLabel(besoin, lang)}</span>
-              </div>
+
+// ─── CARTE BESOIN ──────────────────────────────────────────────
+function CarteBesoin({ besoin, data, totalMembres, onNavigate, t, lang }) {
+  const [open, setOpen] = useState(false);
+  const cfg = getCfg(besoin);
+  const pctResolu = data.total > 0 ? Math.round((data.resolu / data.total) * 100) : 0;
+  const pctMembres = totalMembres > 0 ? ((data.total / totalMembres) * 100).toFixed(1) : 0;
+
+  return (
+    <div className="bg-white/10 rounded-2xl overflow-hidden">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${cfg.dot}`} />
+          <span className="font-semibold text-white text-sm truncate">{getBesoinLabel(besoin, lang)}</span>
+        </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge color="orange">{data.total}</Badge>
           <Badge color="yellow">S:{data.enSuivi}</Badge>
@@ -428,7 +428,7 @@ function BlocStatut({ besoinsCount, t }) {
             <BarreProgression pct={pctResolu} />
             <span className="text-[11px] text-white/40">{pctResolu}%</span>
           </div>
-          <p className="text-[11px] text-white/30 text-center">
+          <p className="text-[11px] text-white/60 text-center">
             {t.concerneMembres} {pctMembres}% {t.pctDesMembres}
           </p>
           <button
@@ -603,13 +603,13 @@ else count[label].enSuivi++;
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button
               onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}
             >
               {t.perioderapide}
             </button>
             <button
               onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}
             >
               {t.tranchedates}
             </button>
@@ -617,16 +617,18 @@ else count[label].enSuivi++;
 
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">{t.periode}</span>
-              {periodes.map(p => (
-                <button
-                  key={p.val}
-                  onClick={() => setFiltrePeriode(p.val)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}
-                >
-                  {p.label}
-                </button>
-              ))}
+              <span className="text-sm text-white/60 flex-shrink-0">{t.periode}</span>
+              <div className="flex gap-1 bg-white/10 rounded-xl p-1 flex-wrap">
+                {periodes.map(p => (
+                  <button
+                    key={p.val}
+                    onClick={() => setFiltrePeriode(p.val)}
+                    className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -634,7 +636,7 @@ else count[label].enSuivi++;
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateDebut}</label>
+                  <label className="text-xs text-white/80">{t.dateDebut}</label>
                   <input
                     type="date" value={dateDebut}
                     onChange={e => setDateDebut(e.target.value)}
@@ -642,7 +644,7 @@ else count[label].enSuivi++;
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateFin}</label>
+                  <label className="text-xs text-white/80">{t.dateFin}</label>
                   <input
                     type="date" value={dateFin}
                     onChange={e => setDateFin(e.target.value)}
@@ -666,7 +668,7 @@ else count[label].enSuivi++;
             <button
               key={o.key}
               onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/80 hover:text-white"}`}
             >
               {o.label}
             </button>
@@ -680,13 +682,13 @@ else count[label].enSuivi++;
           </div>
         ) : !hasData ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center">
-            <p className="text-white/40 text-sm">
+            <p className="text-white text-sm">
               {!egliseId ? t.chargement : t.selectionnezPeriode}
             </p>
           </div>
         ) : !hasBesoins ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center">
-            <p className="text-white/40 text-sm">{t.aucunBesoin}</p>
+            <p className="text-white text-sm">{t.aucunBesoin}</p>
           </div>
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7">
@@ -710,8 +712,8 @@ else count[label].enSuivi++;
               <SectionTitle>{t.sectionClassement}</SectionTitle>
               <BlocClassement besoinsCount={besoinsCount} t={t} lang={lang} />
             </div>
-          </div>        
-          ) : (
+          </div>
+        ) : (
           <div className="flex flex-col gap-3">
             {Object.entries(besoinsCount).map(([besoin, data]) => (
               <CarteBesoin

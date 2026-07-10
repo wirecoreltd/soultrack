@@ -251,6 +251,10 @@ function getBesoinLabel(besoin, lang) {
   const map = BESOIN_LABELS[lang] || BESOIN_LABELS.fr;
   return map[besoin] || besoin;
 }
+
+function getCanonicalBesoin(label) {
+  return BESOIN_LABELS.en[label] || label;
+}
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
 function BlocKpiGlobaux({ besoinsCount, totalMembres, t }) {
   const lignes = Object.entries(besoinsCount);
@@ -515,8 +519,15 @@ function RapportBesoin() {
       const { data: suivis, error: errorSuivis } = await query;
       if (errorSuivis) throw errorSuivis;
 
+      // trie du plus récent au plus ancien pour garder le statut le plus à jour par membre+besoin
+      const suivisTries = [...(suivis || [])].sort(
+        (a, b) => new Date(b.date_action) - new Date(a.date_action)
+      );
+
       const count = {};
-      (suivis || []).forEach(s => {
+      const seenPerBesoin = {}; // { [canonicalLabel]: Set(membre_id) } — dédupliquer par membre
+
+      suivisTries.forEach(s => {
         if (!s.besoin) return;
         const sexe = sexeMap[s.membre_id] || "femmes";
         let items = [];
@@ -525,16 +536,24 @@ function RapportBesoin() {
         } catch { return; }
 
         items.forEach(item => {
-          const label = typeof item === "string" ? item.trim() : item?.label?.trim();
+          const rawLabel = typeof item === "string" ? item.trim() : item?.label?.trim();
           const statut = typeof item === "string" ? null : item?.statut;
-          if (!label) return;
-          if (!count[label]) count[label] = { total: 0, hommes: 0, femmes: 0, enSuivi: 0, resolu: 0 };
-          count[label].total++;
-          if (sexe === "hommes") count[label].hommes++;
-          else count[label].femmes++;
+          if (!rawLabel) return;
+
+          const canonical = getCanonicalBesoin(rawLabel);
+
+          if (!seenPerBesoin[canonical]) seenPerBesoin[canonical] = new Set();
+          // déjà compté pour ce membre + ce besoin (occurrence plus ancienne) → on ignore
+          if (seenPerBesoin[canonical].has(s.membre_id)) return;
+          seenPerBesoin[canonical].add(s.membre_id);
+
+          if (!count[canonical]) count[canonical] = { total: 0, hommes: 0, femmes: 0, enSuivi: 0, resolu: 0 };
+          count[canonical].total++;
+          if (sexe === "hommes") count[canonical].hommes++;
+          else count[canonical].femmes++;
           const isResolu = statut === "Résolu" || statut === "Resolved";
-if (isResolu) count[label].resolu++;
-else count[label].enSuivi++;
+          if (isResolu) count[canonical].resolu++;
+          else count[canonical].enSuivi++;
         });
       });
 

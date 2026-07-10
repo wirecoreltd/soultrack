@@ -264,7 +264,7 @@ function KpiCard({ label, value, sub, accent }) {
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
       <p className="text-sm text-white">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-xs text-white/60 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-white/80 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -323,7 +323,7 @@ function TotalLeadersCard({ label, value, sub }) {
       <span className="text-sm text-white">{label}</span>
       <div className="flex flex-col items-center leading-tight">
         <span className="text-xl font-bold text-white">{value}</span>
-        {sub && <span className="text-[11px] text-white/60">{sub}</span>}
+        {sub && <span className="text-[11px] text-white/80">{sub}</span>}
       </div>
     </div>
   );
@@ -381,7 +381,7 @@ function BlocKpi({ kpis, totalAmes, t }) {
             <div key={label} className="flex items-center gap-3">
               <p className="text-sm text-white w-28 flex-shrink-0">{label}</p>
               <BarreProgression pct={Math.round((val / totalAmes) * 100)} color={color} />
-              <span className="text-sm text-white font-semibold w-8 text-right">{val}</span>
+              <span className="text-sm text-white font-semibold w-80 text-right">{val}</span>
             </div>
           ))}
         </div>
@@ -411,7 +411,7 @@ function BlocParCellule({ displayedReports, t }) {
       {lignes.map(([cellule, { total, integres, encours, refus }]) => (
         <div key={cellule} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
           <div className="flex items-center gap-3">
-            <p className="text-sm text-white flex-1 min-w-0 truncate">{cellule}</p>
+            <p className="text-sm text-white/80 flex-1 min-w-0 truncate">{cellule}</p>
             <BarreProgression pct={(total / max) * 100} color="bg-blue-400" className="w-16 flex-shrink-0" />
             <span className="text-sm font-bold text-white w-6 text-right">{total}</span>
           </div>

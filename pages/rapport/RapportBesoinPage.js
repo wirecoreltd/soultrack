@@ -64,6 +64,8 @@ const translations = {
     chargement: "⏳ Chargement...",
     selectionnezPeriode: "Sélectionnez une période pour afficher les données.",
     aucunBesoin: "Aucun besoin enregistré sur cette période.",
+    sectionBesoinsActifs: "🟡 Besoin en suivi",
+    sectionBesoinsResolus: "✅ Besoins résolus",
   },
   en: {
     title: "Report",
@@ -119,6 +121,8 @@ const translations = {
     chargement: "⏳ Loading...",
     selectionnezPeriode: "Select a period to display data.",
     aucunBesoin: "No needs recorded for this period.",
+    sectionBesoinsActifs: "🟡 Needs in follow-up",
+    sectionBesoinsResolus: "✅ Resolved needs",
   },
 };
 
@@ -255,9 +259,17 @@ function getBesoinLabel(besoin, lang) {
 function getCanonicalBesoin(label) {
   return BESOIN_LABELS.en[label] || label;
 }
+
+function getCanonicalBesoin(label) {
+  return BESOIN_LABELS.en[label] || label;
+}
+
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
 function BlocKpiGlobaux({ besoinsCount, totalMembres, t }) {
   const lignes = Object.entries(besoinsCount);
+  const totalActifs = lignes.reduce((a, [, v]) => a + v.enSuivi, 0);
+  const totalBesoins = totalActifs + totalResolus;
+  const totalEnSuivi = totalActifs;
   const totalBesoins = lignes.reduce((a, [, v]) => a + v.total, 0);
   const totalResolus = lignes.reduce((a, [, v]) => a + v.resolu, 0);
   const totalEnSuivi = lignes.reduce((a, [, v]) => a + v.enSuivi, 0);
@@ -353,8 +365,10 @@ function BlocStatut({ besoinsCount, t }) {
 
 // ─── BLOC CLASSEMENT BESOINS ───────────────────────────────────
 function BlocClassement({ besoinsCount, t, lang }) {
-  const lignes = Object.entries(besoinsCount).sort((a, b) => b[1].total - a[1].total);
-  const maxTotal = Math.max(...lignes.map(([, v]) => v.total), 1);
+  const lignes = Object.entries(besoinsCount).sort(
+    (a, b) => (b[1].enSuivi + b[1].resolu) - (a[1].enSuivi + a[1].resolu)
+  );
+  const maxTotal = Math.max(...lignes.map(([, v]) => v.enSuivi + v.resolu), 1);
 
   if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">—</p>;
 
@@ -386,11 +400,14 @@ function BlocClassement({ besoinsCount, t, lang }) {
 }
 
 // ─── CARTE BESOIN ──────────────────────────────────────────────
-function CarteBesoin({ besoin, data, totalMembres, onNavigate, t, lang }) {
+function CarteBesoin({ besoin, data, mode, totalMembres, onNavigate, t, lang }) {
   const [open, setOpen] = useState(false);
   const cfg = getCfg(besoin);
-  const pctResolu = data.total > 0 ? Math.round((data.resolu / data.total) * 100) : 0;
-  const pctMembres = totalMembres > 0 ? ((data.total / totalMembres) * 100).toFixed(1) : 0;
+  const isResolu = mode === "resolu";
+  const count = isResolu ? data.resolu : data.enSuivi;
+  const hommes = isResolu ? data.hommesResolu : data.hommesActif;
+  const femmes = isResolu ? data.femmesResolu : data.femmesActif;
+  const pctMembres = totalMembres > 0 ? ((count / totalMembres) * 100).toFixed(1) : 0;
 
   return (
     <div className="bg-white/10 rounded-2xl overflow-hidden">
@@ -403,9 +420,7 @@ function CarteBesoin({ besoin, data, totalMembres, onNavigate, t, lang }) {
           <span className="font-semibold text-white text-sm truncate">{getBesoinLabel(besoin, lang)}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <Badge color="orange">{data.total}</Badge>
-          <Badge color="yellow">S:{data.enSuivi}</Badge>
-          <Badge color="green">R:{data.resolu}</Badge>
+          <Badge color={isResolu ? "green" : "orange"}>{count}</Badge>
           <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
         </div>
       </button>
@@ -414,12 +429,9 @@ function CarteBesoin({ besoin, data, totalMembres, onNavigate, t, lang }) {
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {[
-              { label: t.hommes,      value: data.hommes,  color: "text-white/80" },
-              { label: t.femmes,      value: data.femmes,  color: "text-white/80" },
-              { label: "Total",       value: data.total,   color: "text-amber-400" },
-              { label: t.enSuiviLabel,value: data.enSuivi, color: "text-white/80" },
-              { label: t.resoluLabel, value: data.resolu,  color: "text-white/80" },
-              { label: t.tauxResolution ?? "% résolution", value: `${pctResolu}%`, color: "text-white/80" },
+              { label: t.hommes, value: hommes, color: "text-white/80" },
+              { label: t.femmes, value: femmes, color: "text-white/80" },
+              { label: isResolu ? t.resoluLabel : t.enSuiviLabel, value: count, color: "text-amber-400" },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2">
                 <p className="text-sm text-white/80">{label}</p>
@@ -427,16 +439,11 @@ function CarteBesoin({ besoin, data, totalMembres, onNavigate, t, lang }) {
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-orange-400">{t.resolution}</span>
-            <BarreProgression pct={pctResolu} />
-            <span className="text-xs text-orange-400">{pctResolu}%</span>
-          </div>
           <p className="text-xs text-amber-400 text-center">
             {t.concerneMembres} {pctMembres}% {t.pctDesMembres}
           </p>
           <button
-            onClick={() => onNavigate(besoin)}
+            onClick={() => onNavigate(besoin, mode)}
             className="w-full py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-white/80 text-sm font-semibold transition"
           >
             {t.voirMembres}
@@ -525,7 +532,7 @@ function RapportBesoin() {
       );
 
       const count = {};
-      const seenPerBesoin = {}; // { [canonicalLabel]: Set(membre_id) } — dédupliquer par membre
+      const seenPerBesoin = {}; // { [canonical]: Set(membre_id) }
 
       suivisTries.forEach(s => {
         if (!s.besoin) return;
@@ -543,22 +550,32 @@ function RapportBesoin() {
           const canonical = getCanonicalBesoin(rawLabel);
 
           if (!seenPerBesoin[canonical]) seenPerBesoin[canonical] = new Set();
-          // déjà compté pour ce membre + ce besoin (occurrence plus ancienne) → on ignore
-          if (seenPerBesoin[canonical].has(s.membre_id)) return;
+          if (seenPerBesoin[canonical].has(s.membre_id)) return; // occurrence plus ancienne, ignorée
           seenPerBesoin[canonical].add(s.membre_id);
 
-          if (!count[canonical]) count[canonical] = { total: 0, hommes: 0, femmes: 0, enSuivi: 0, resolu: 0 };
-          count[canonical].total++;
+          if (!count[canonical]) count[canonical] = {
+            hommes: 0, femmes: 0, enSuivi: 0, resolu: 0,
+            hommesActif: 0, femmesActif: 0, hommesResolu: 0, femmesResolu: 0,
+          };
+
           if (sexe === "hommes") count[canonical].hommes++;
           else count[canonical].femmes++;
+
           const isResolu = statut === "Résolu" || statut === "Resolved";
-          if (isResolu) count[canonical].resolu++;
-          else count[canonical].enSuivi++;
+          if (isResolu) {
+            count[canonical].resolu++;
+            if (sexe === "hommes") count[canonical].hommesResolu++;
+            else count[canonical].femmesResolu++;
+          } else {
+            count[canonical].enSuivi++;
+            if (sexe === "hommes") count[canonical].hommesActif++;
+            else count[canonical].femmesActif++;
+          }
         });
       });
 
       const sorted = Object.fromEntries(
-        Object.entries(count).sort((a, b) => b[1].total - a[1].total)
+        Object.entries(count).sort((a, b) => (b[1].enSuivi + b[1].resolu) - (a[1].enSuivi + a[1].resolu))
       );
 
       setBesoinsCount(sorted);
@@ -575,8 +592,8 @@ function RapportBesoin() {
     if (!modePerso && egliseId) fetchRapport(false);
   }, [egliseId, filtrePeriode, modePerso]);
 
-  const handleNavigate = (besoin) => {
-    const params = new URLSearchParams({ besoin });
+  const handleNavigate = (besoin, status) => {
+    const params = new URLSearchParams({ besoin, status });
     if (dateDebut) params.set("dateDebut", dateDebut);
     if (dateFin) params.set("dateFin", dateFin);
     router.push(`/membres/list-members?${params.toString()}`);
@@ -733,20 +750,56 @@ function RapportBesoin() {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {Object.entries(besoinsCount).map(([besoin, data]) => (
-              <CarteBesoin
-                key={besoin}
-                besoin={besoin}
-                data={data}
-                totalMembres={totalMembres}
-                onNavigate={handleNavigate}
-                t={t}
-                lang={lang}
-              />
-            ))}
+          <div className="flex flex-col gap-7">
+            <div>
+              <SectionTitle>{t.sectionBesoinsActifs}</SectionTitle>
+              <div className="flex flex-col gap-3">
+                {Object.entries(besoinsCount)
+                  .filter(([, data]) => data.enSuivi > 0)
+                  .sort((a, b) => b[1].enSuivi - a[1].enSuivi)
+                  .map(([besoin, data]) => (
+                    <CarteBesoin
+                      key={`actif-${besoin}`}
+                      besoin={besoin}
+                      data={data}
+                      mode="actif"
+                      totalMembres={totalMembres}
+                      onNavigate={handleNavigate}
+                      t={t}
+                      lang={lang}
+                    />
+                  ))}
+                {Object.values(besoinsCount).every((d) => d.enSuivi === 0) && (
+                  <p className="text-white/30 text-sm text-center py-4">—</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <SectionTitle>{t.sectionBesoinsResolus}</SectionTitle>
+              <div className="flex flex-col gap-3">
+                {Object.entries(besoinsCount)
+                  .filter(([, data]) => data.resolu > 0)
+                  .sort((a, b) => b[1].resolu - a[1].resolu)
+                  .map(([besoin, data]) => (
+                    <CarteBesoin
+                      key={`resolu-${besoin}`}
+                      besoin={besoin}
+                      data={data}
+                      mode="resolu"
+                      totalMembres={totalMembres}
+                      onNavigate={handleNavigate}
+                      t={t}
+                      lang={lang}
+                    />
+                  ))}
+                {Object.values(besoinsCount).every((d) => d.resolu === 0) && (
+                  <p className="text-white/30 text-sm text-center py-4">—</p>
+                )}
+              </div>
+            </div>
           </div>
-        )}
+        )}    
 
         {message && !loading && (
           <p className="text-center text-sm text-white/60">{message}</p>

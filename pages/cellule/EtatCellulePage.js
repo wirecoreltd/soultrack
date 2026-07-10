@@ -393,18 +393,21 @@ function BlocKpi({ kpis, totalAmes, t }) {
 // ─── BLOC PAR CELLULE ─────────────────────────────────────────
 function BlocParCellule({ displayedReports, t }) {
   const parCellule = {};
-  displayedReports.forEach(r => {
-    const c = r.cellule_full || "Non assignée";
-    if (!parCellule[c]) parCellule[c] = { total: 0, integres: 0, encours: 0, refus: 0 };
-    parCellule[c].total++;
-    const s = getStatutNormalise(r.statut);
-    if (s === "integre" || s === "intégré") parCellule[c].integres++;
-    else if (s === "en cours" || s === "en suivis") parCellule[c].encours++;
-    else if (s === "refus") parCellule[c].refus++;
-  });
+  displayedReports
+    .filter(r => r.cellule_full)          // ✅ exclut les sans-cellule
+    .forEach(r => {
+      const c = r.cellule_full;
+      if (!parCellule[c]) parCellule[c] = { total: 0, integres: 0, encours: 0, refus: 0 };
+      parCellule[c].total++;
+      const s = getStatutNormalise(r.statut);
+      if (s === "integre" || s === "intégré") parCellule[c].integres++;
+      else if (s === "en cours" || s === "en suivis") parCellule[c].encours++;
+      else if (s === "refus") parCellule[c].refus++;
+    });
   const max = Math.max(...Object.values(parCellule).map(v => v.total), 1);
   const lignes = Object.entries(parCellule).sort((a, b) => b[1].total - a[1].total);
   if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">{t.noData}</p>;
+  
 
   return (
     <div className="flex flex-col gap-2">
@@ -655,10 +658,11 @@ function CarteLigne({ r, onDetails, t }) {
 // ─── COMPARAISON PAR CELLULE (onglet Mois) ────────────────────
 function ComparaisonParCellule({ displayedReports, t }) {
   const counts = {};
-  displayedReports.forEach(r => {
-    const c = r.cellule_full || "Non assignée";
-    counts[c] = (counts[c] || 0) + 1;
-  });
+  displayedReports
+    .filter(r => r.cellule_full)          // ✅ exclut les sans-cellule
+    .forEach(r => {
+      counts[r.cellule_full] = (counts[r.cellule_full] || 0) + 1;
+    });
   const lignes = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   if (!lignes.length) return null;
   const max = Math.max(...lignes.map(([, n]) => n), 1);
@@ -695,13 +699,16 @@ function OngletParCelluleDetail({ displayedReports, onDetails, piliers, cellules
   const [expandedCellules, setExpandedCellules] = useState({});
 
   const grouped = {};
-  displayedReports.forEach(r => {
-    const c = r.cellule_full || "Non assignée";
-    if (!grouped[c]) grouped[c] = { rows: [], responsable: r.responsable || "—" };
-    grouped[c].rows.push(r);
-  });
+  displayedReports
+    .filter(r => r.cellule_full)          // ✅ exclut les sans-cellule
+    .forEach(r => {
+      const c = r.cellule_full;
+      if (!grouped[c]) grouped[c] = { rows: [], responsable: r.responsable || "—" };
+      grouped[c].rows.push(r);
+    });
 
   const sorted = Object.entries(grouped).sort((a, b) => b[1].rows.length - a[1].rows.length);
+  // ... reste inchangé
   if (!sorted.length) return <p className="text-white/30 text-sm text-center py-8">{t.noDataCellule}</p>;
 
   return (

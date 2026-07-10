@@ -1232,9 +1232,7 @@ function EtatCellule() {
           <div className="bg-white/10 rounded-2xl p-8 text-center text-white/40 text-sm">
             {modePerso ? t.emptyPerso : t.emptyPeriod}
           </div>
-
-            {/*------ */}
-          
+                   
           <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
         ) : (
           <OngletParMois displayedReports={displayedReports} t={t} />

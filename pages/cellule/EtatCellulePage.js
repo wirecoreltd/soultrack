@@ -436,7 +436,7 @@ function PilierCard({ membre, celluleNom, idx }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{membre.prenom} {membre.nom}</p>
-        <p className="text-[11px] text-white/50 truncate">{celluleNom}</p>
+        <p className="text-xs text-white/80 truncate">{celluleNom}</p>
       </div>
     </div>
   );
@@ -491,7 +491,7 @@ function ServiteurCard({ membre, sousTitre, idx = 0 }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white truncate">{membre.prenom} {membre.nom}</p>
-        <p className="text-[11px] text-white/80 truncate">{sousTitre}</p>
+        <p className="text-xs text-white/80 truncate">{sousTitre}</p>
       </div>
     </div>
   );
@@ -601,7 +601,7 @@ function BlocRepartitionLeaders({ leadersDeveloppement, refList, idKey, labelKey
         <div key={id} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
           <p className="text-sm text-white w-36 flex-shrink-0 truncate">{nom}</p>
           <BarreProgression pct={(count / max) * 100} color="bg-blue-400" />
-          <span className="text-sm font-bold text-white w-6 text-right">{count}</span>
+          <span className="text-sm font-semibold text-white w-6 text-right">{count}</span>
         </div>
       ))}
     </div>
@@ -620,7 +620,7 @@ function CarteLigne({ r, onDetails, t }) {
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
           <span className="text-sm font-semibold text-white truncate">{r.nom_complet}</span>
-          <span className="text-[11px] text-white/40">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
+          <span className="text-xs text-white/80">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge color={cfg.badge}>{cfg.label}</Badge>
@@ -733,7 +733,7 @@ function OngletParCelluleDetail({ displayedReports, onDetails, t }) {
               className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                 <span className="font-semibold text-white truncate">{cellule}</span>
-                <span className="text-[11px] text-white/40">
+                <span className="text-xs text-white/80">
                   {responsable} · {t.persons(rows.length)} · {t.integrated(pctInt)}
                 </span>
               </div>

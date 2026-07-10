@@ -410,11 +410,11 @@ function CarteBesoin({ besoin, data, totalMembres, onNavigate, t, lang }) {
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {[
-              { label: t.hommes,      value: data.hommes,  color: "text-blue-300" },
-              { label: t.femmes,      value: data.femmes,  color: "text-pink-300" },
-              { label: "Total",       value: data.total,   color: "text-orange-300 font-bold" },
-              { label: t.enSuiviLabel,value: data.enSuivi, color: "text-yellow-300" },
-              { label: t.resoluLabel, value: data.resolu,  color: "text-emerald-300" },
+              { label: t.hommes,      value: data.hommes,  color: "text-white/80" },
+              { label: t.femmes,      value: data.femmes,  color: "text-white/80" },
+              { label: "Total",       value: data.total,   color: "text-orange-300 font-semibold" },
+              { label: t.enSuiviLabel,value: data.enSuivi, color: "text-white/80" },
+              { label: t.resoluLabel, value: data.resolu,  color: "text-white/80" },
               { label: t.tauxResolution ?? "% résolution", value: `${pctResolu}%`, color: "text-amber-300" },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2">
@@ -424,9 +424,9 @@ function CarteBesoin({ besoin, data, totalMembres, onNavigate, t, lang }) {
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-white/40">{t.resolution}</span>
+            <span className="text-xs text-white/80">{t.resolution}</span>
             <BarreProgression pct={pctResolu} />
-            <span className="text-[11px] text-white/40">{pctResolu}%</span>
+            <span className="text-xs text-white/80">{pctResolu}%</span>
           </div>
           <p className="text-[11px] text-white/60 text-center">
             {t.concerneMembres} {pctMembres}% {t.pctDesMembres}

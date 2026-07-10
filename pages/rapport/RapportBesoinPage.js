@@ -332,9 +332,9 @@ function BlocStatut({ besoinsCount, t }) {
           <p className="text-[10px] text-white/40">{pctSuivi}%</p>
         </div>
         <div className="bg-emerald-900/40 rounded-xl px-3 py-3 text-center">
-          <p className="text-2xl font-bold text-emerald-300">{totalResolu}</p>
-          <p className="text-[11px] text-emerald-400/70">{t.resoluLabel}</p>
-          <p className="text-[10px] text-white/40">{pctResolu}%</p>
+          <p className="text-sm font-bold text-white/80">{totalResolu}</p>
+          <p className="text-xs text-emerald-400/70">{t.resoluLabel}</p>
+          <p className="text-xs text-white/40">{pctResolu}%</p>
         </div>
       </div>
       {total > 0 && (

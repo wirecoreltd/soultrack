@@ -1,7 +1,26 @@
 // ═══════════════════════════════════════════════════════════════
 // PAGE : Tableau de Bord Évangélisation (RapportEvangelisation)
 // ═══════════════════════════════════════════════════════════════
-// (commentaires d'en-tête inchangés — voir version originale)
+// Description : Affiche un dashboard d'analyse des activités
+// d'évangélisation de l'église : KPIs globaux (évangélisés,
+// convertis, intégrés, en cours, envoyés/non envoyés au suivi,
+// refus, moissonneurs, intégrés en cellule/à l'église), entonnoir
+// de conversion, tendance mensuelle (évangélisés vs convertis), et
+// résultats détaillés par type d'évangélisation (avec sessions/
+// rapports modifiables). Les données sont filtrables par période
+// rapide (7j/30j/90j/6 mois/1 an), tranche de dates personnalisée,
+// et type d'évangélisation. Un clic sur un KPI redirige vers la
+// page de suivi des âmes avec les filtres correspondants.
+//
+// Tables Supabase utilisées :
+// - profiles                (lecture)            → eglise_id de l'utilisateur connecté
+// - evangelises              (lecture)            → contacts évangélisés (filtrés par période/type)
+// - rapport_evangelisation   (lecture + écriture) → sessions/rapports d'évangélisation détaillés
+// - suivis_des_evangelises   (lecture)            → statut de suivi (cellule, conseiller, intégration)
+//
+// Realtime : aucun
+//
+// Edge Function : aucune
 // ═══════════════════════════════════════════════════════════════
 
 "use client";

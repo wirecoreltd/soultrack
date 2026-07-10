@@ -469,8 +469,8 @@ function CarteSession({ r, onEdit, t }) {
               { label: t.reconciliation, value: r.reconciliation },
               { label: t.moissonneurs, value: r.moissonneurs },
             ].map(({ label, value }) => (
-              <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
-                <p className="text-sm text-white/50">{label}</p>
+              <div key={label} className="rounded-xl px-3 py-2 flex flex-col">
+                <p className="text-sm text-white/80">{label}</p>
                 <p className="text-sm font-bold text-white/80">{value ?? 0}</p>
               </div>
             ))}

@@ -461,22 +461,22 @@ function CarteSession({ r, onEdit, t }) {
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {[
-              { label: t.hommes, value: r.hommes, color: "text-blue-300" },
-              { label: t.femmes, value: r.femmes, color: "text-pink-300" },
-              { label: t.total, value: total, color: "text-amber-300 font-bold" },
-              { label: t.priereSalut, value: r.priere, color: "text-emerald-300" },
-              { label: t.nvConvertis, value: r.nouveau_converti, color: "text-white" },
-              { label: t.reconciliation, value: r.reconciliation, color: "text-white" },
-              { label: t.moissonneurs, value: r.moissonneurs, color: "text-teal-300" },
-            ].map(({ label, value, color }) => (
+              { label: t.hommes, value: r.hommes },
+              { label: t.femmes, value: r.femmes },
+              { label: t.total, value: total },
+              { label: t.priereSalut, value: r.priere },
+              { label: t.nvConvertis, value: r.nouveau_converti },
+              { label: t.reconciliation, value: r.reconciliation },
+              { label: t.moissonneurs, value: r.moissonneurs },
+            ].map(({ label, value }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
-                <p className="text-[10px] text-white/40">{label}</p>
-                <p className={`text-lg font-bold ${color}`}>{value ?? 0}</p>
+                <p className="text-sm text-white/50">{label}</p>
+                <p className="text-sm font-bold text-white/80">{value ?? 0}</p>
               </div>
             ))}
           </div>
           <button onClick={() => onEdit(r)}
-            className="w-full py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition">
+            className="w-full py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-white/80 text-sm font-semibold transition">
             {t.modifier}
           </button>
         </div>
@@ -525,18 +525,19 @@ function OngletParType({ rapports, onEdit, t }) {
               <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
                   {[
-                    { label: t.hommes, value: typeTotals.hommes, color: "text-blue-300" },
-                    { label: t.femmes, value: typeTotals.femmes, color: "text-pink-300" },
-                    { label: t.total, value: typeTotals.total, color: "text-amber-300 font-bold" },
-                    { label: t.prieres, value: typeTotals.priere, color: "text-emerald-300" },
-                    { label: t.nvConv, value: typeTotals.nouveau, color: "text-white" },
-                    { label: t.moiss, value: typeTotals.moissonneurs, color: "text-teal-300" },
-                  ].map(({ label, value, color }) => (
-                    <div key={label} className="bg-white/5 rounded-xl px-2 py-2 text-center">
-                      <p className="text-[10px] text-white/40">{label}</p>
-                      <p className={`text-base font-bold ${color}`}>{value}</p>
-                    </div>
-                  ))}
+                    {[
+                      { label: t.hommes, value: typeTotals.hommes, color: "text-blue-300" },
+                      { label: t.femmes, value: typeTotals.femmes, color: "text-pink-300" },
+                      { label: t.total, value: typeTotals.total, color: "text-amber-300 font-bold" },
+                      { label: t.prieres, value: typeTotals.priere, color: "text-emerald-300" },
+                      { label: t.nvConv, value: typeTotals.nouveau, color: "text-white" },
+                      { label: t.moiss, value: typeTotals.moissonneurs, color: "text-teal-300" },
+                    ].map(({ label, value, color }) => (
+                      <div key={label} className="bg-white/5 rounded-xl px-2 py-2 text-center">
+                        <p className="text-[10px] text-white/40">{label}</p>
+                        <p className={`text-sm font-bold ${color}`}>{value}</p>
+                      </div>
+                    ))}
                 </div>
                 {rows.sort((a, b) => new Date(b.date_evangelise) - new Date(a.date_evangelise)).map(r => (
                   <CarteSession key={r.id} r={r} onEdit={onEdit} t={t} />

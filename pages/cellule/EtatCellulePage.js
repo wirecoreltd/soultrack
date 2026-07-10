@@ -1017,15 +1017,56 @@ function EtatCellule() {
     setSelectedEvangelise(row);
   };
 
-  // ─── Leaders en développement — fetch ───
+ // ─── Leaders en développement — fetch ───
   const fetchLeadersDeveloppement = async () => {
     if (!userProfile) return;
     try {
-      const { data: membresData, error } = await supabase
+      const isAdmin        = userProfile.roles?.includes("Administrateur") || userProfile.roles?.includes("Superadmin");
+      const isSuperviseur  = userProfile.roles?.includes("SuperviseurCellule");
+      const isResponsable  = userProfile.roles?.includes("ResponsableCellule");
+
+      // Scope des cellules visibles (même logique que fetchReports)
+      let scopeCelluleIds = null; // null = pas de restriction (admin/superviseur)
+
+      if (isAdmin || isSuperviseur) {
+        // pas de filtre
+      } else if (isResponsable) {
+        const { data: mesCellules } = await supabase
+          .from("cellules").select("id")
+          .eq("responsable_id", userProfile.id)
+          .eq("eglise_id", userProfile.eglise_id);
+        const mesIds = (mesCellules || []).map(c => c.id);
+
+        const { data: filles } = await supabase
+          .from("cellules").select("id")
+          .eq("cellule_mere_id", userProfile.id)
+          .eq("eglise_id", userProfile.eglise_id);
+        const fillesIds = (filles || []).map(c => c.id);
+
+        scopeCelluleIds = [...new Set([...mesIds, ...fillesIds])];
+      } else {
+        setLeadersDeveloppement([]);
+        setTotalMembresLeaders(0);
+        return;
+      }
+
+      // On ne prend que les membres rattachés à une cellule
+      // (pour que le dénominateur corresponde au numérateur "avec cellule")
+      let membresQuery = supabase
         .from("membres_complets")
         .select("id, nom, prenom, leader_developpement, cellule_id, famille_id, etat_contact")
-        .eq("eglise_id", userProfile.eglise_id);
+        .eq("eglise_id", userProfile.eglise_id)
+        .not("cellule_id", "is", null);
 
+      if (scopeCelluleIds !== null) {
+        if (scopeCelluleIds.length > 0) {
+          membresQuery = membresQuery.in("cellule_id", scopeCelluleIds);
+        } else {
+          membresQuery = membresQuery.eq("cellule_id", "00000000-0000-0000-0000-000000000000");
+        }
+      }
+
+      const { data: membresData, error } = await membresQuery;
       if (error) throw error;
 
       const actifs = (membresData || []).filter(m =>
@@ -1058,6 +1099,7 @@ function EtatCellule() {
     } catch (err) {
       console.error("Erreur fetch leaders développement:", err);
       setLeadersDeveloppement([]);
+      setTotalMembresLeaders(0);
     }
   };
 

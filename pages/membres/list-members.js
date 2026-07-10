@@ -501,7 +501,7 @@ const getYesNo = (value) => {
 
         items.forEach((item) => {
           const label = typeof item === "string" ? item.trim() : item?.label?.trim();
-          if (label === besoinFromUrl) ids.add(s.membre_id);
+          if (getCanonicalBesoin(label) === getCanonicalBesoin(besoinFromUrl)) ids.add(s.membre_id);
         });
       });
 

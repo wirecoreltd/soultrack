@@ -346,7 +346,7 @@ function normalizeVenu(v) {
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
-  return <p className="text-sm font-semibold uppercase tracking-widest text-white/80 mb-3">{children}</p>;
+  return <p className="text-sm font-semibold tracking-widest text-white/90 mb-3">{children}</p>;
 }
 function KpiCard({ label, value, sub, accent }) {
   const c = { green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400", white: "text-white", blue: "text-blue-300", pink: "text-pink-300",cyan: "text-cyan-300",
@@ -718,14 +718,14 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Date */}
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-white/60">{t.dateLabel}</label>
+          <label className="text-sm text-white/80">{t.dateLabel}</label>
           <input type="date" name="date" value={formData.date} onChange={handleChange} required
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40" />
         </div>
 
         {/* Type de temps */}
         <div className="flex flex-col gap-1" ref={selectRef}>
-          <label className="text-sm text-white/60">{t.typeTempsLabel}</label>
+          <label className="text-sm text-white/80">{t.typeTempsLabel}</label>
           <div onClick={() => setDropdownOpen(v => !v)}
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm flex justify-between items-center cursor-pointer hover:bg-white/15 transition">
             <span className={formData.typeTemps ? "text-white" : "text-white/30"}>
@@ -770,7 +770,7 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
 
         {formData.typeTemps === "Culte" && (
           <div className="flex flex-col gap-1">
-            <label className="text-sm text-white/60">{t.numeroCulte}</label>
+            <label className="text-sm text-white/80">{t.numeroCulte}</label>
             <select name="numero_culte" value={formData.numero_culte} onChange={handleChange}
               className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
               <option value="" className="bg-[#2a2d80]">{t.selectionner}</option>

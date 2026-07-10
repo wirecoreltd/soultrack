@@ -377,9 +377,9 @@ function BlocKpi({ kpis, totalAmes, t }) {
             { label: t.funnelMinistere, val: kpis.totalMinistere, color: "bg-pink-400" },
           ].map(({ label, val, color }) => (
             <div key={label} className="flex items-center gap-3">
-              <p className="text-xs text-white/50 w-28 flex-shrink-0">{label}</p>
+              <p className="text-sm text-white/80 w-28 flex-shrink-0">{label}</p>
               <BarreProgression pct={Math.round((val / totalAmes) * 100)} color={color} />
-              <span className="text-xs text-white font-semibold w-8 text-right">{val}</span>
+              <span className="text-sm text-white font-semibold w-8 text-right">{val}</span>
             </div>
           ))}
         </div>
@@ -620,7 +620,7 @@ function CarteLigne({ r, onDetails, t }) {
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
           <span className="text-sm font-semibold text-white truncate">{r.nom_complet}</span>
-          <span className="text-xs text-white/80">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
+          <span className="text-xs text-white">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge color={cfg.badge}>{cfg.label}</Badge>

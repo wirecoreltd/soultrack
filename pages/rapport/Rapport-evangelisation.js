@@ -381,7 +381,7 @@ function BlocEntonnoir({ filteredEvangelises, filteredSuivis, t }) {
           <p className="text-sm text-white/80 w-36 flex-shrink-0">{label}</p>
           <BarreProgression pct={pct} color={color} />
           <span className="text-xs font-bold text-white w-8 text-right">{val}</span>
-          <span className="text-[11px] text-white/60 w-9 text-right">{pct}%</span>
+          <span className="text-[11px] text-white/80 w-9 text-right">{pct}%</span>
         </div>
       ))}
     </div>

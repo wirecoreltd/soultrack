@@ -458,13 +458,13 @@ function CarteRapport({ r, onEdit, onDelete, t }) {
           <div className="flex gap-2 pt-1">
             <button
               onClick={() => onEdit(r)}
-              className="flex-1 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition"
+              className="flex-1 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-white/80 text-sm font-semibold transition"
             >
               {t.modifier}
             </button>
             <button
               onClick={() => onDelete(r.id)}
-              className="flex-1 py-2 rounded-xl bg-red-900/40 hover:bg-red-900/60 text-red-300 text-sm font-semibold transition"
+              className="flex-1 py-2 rounded-xl bg-red-900/40 hover:bg-red-900/60 text-white/80 text-sm font-semibold transition"
             >
               {t.supprimer}
             </button>

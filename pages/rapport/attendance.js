@@ -593,8 +593,8 @@ function CarteSession({ r, onEdit, onDelete, t }) {
               { label: t.totalGlobal, value: totalGlobal },
             ].map(({ label, value }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
-                <p className="text-sm text-white/60">{label}</p>
-                <p className="text-sm text-white/60">{value || 0}</p>
+                <p className="text-sm text-white/80">{label}</p>
+                <p className="text-sm text-white/80">{value || 0}</p>
               </div>
             ))}
           </div>
@@ -725,7 +725,7 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
 
         {/* Type de temps */}
         <div className="flex flex-col gap-1" ref={selectRef}>
-          <label className="text-sm text-white/80">{t.typeTempsLabel}</label>
+          <label className="text-sm text-white/60">{t.typeTempsLabel}</label>
           <div onClick={() => setDropdownOpen(v => !v)}
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm flex justify-between items-center cursor-pointer hover:bg-white/15 transition">
             <span className={formData.typeTemps ? "text-white" : "text-white/30"}>
@@ -792,7 +792,7 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {fields.map(({ name, label }) => (
             <div key={name} className="flex flex-col gap-1">
-              <label className="text-sm text-white/50">{label}</label>
+              <label className="text-sm text-white/80">{label}</label>
               <input type="number" name={name} value={formData[name]} onChange={handleChange} min={0}
                 onFocus={e => e.target.select()}
                 className="no-spinner bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 text-center" />

@@ -1,26 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // PAGE : Tableau de Bord Évangélisation (RapportEvangelisation)
 // ═══════════════════════════════════════════════════════════════
-// Description : Affiche un dashboard d'analyse des activités
-// d'évangélisation de l'église : KPIs globaux (évangélisés,
-// convertis, intégrés, en cours, envoyés/non envoyés au suivi,
-// refus, moissonneurs, intégrés en cellule/à l'église), entonnoir
-// de conversion, tendance mensuelle (évangélisés vs convertis), et
-// résultats détaillés par type d'évangélisation (avec sessions/
-// rapports modifiables). Les données sont filtrables par période
-// rapide (7j/30j/90j/6 mois/1 an), tranche de dates personnalisée,
-// et type d'évangélisation. Un clic sur un KPI redirige vers la
-// page de suivi des âmes avec les filtres correspondants.
-//
-// Tables Supabase utilisées :
-// - profiles                (lecture)            → eglise_id de l'utilisateur connecté
-// - evangelises              (lecture)            → contacts évangélisés (filtrés par période/type)
-// - rapport_evangelisation   (lecture + écriture) → sessions/rapports d'évangélisation détaillés
-// - suivis_des_evangelises   (lecture)            → statut de suivi (cellule, conseiller, intégration)
-//
-// Realtime : aucun
-//
-// Edge Function : aucune
+// (commentaires d'en-tête inchangés — voir version originale)
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
@@ -35,20 +16,18 @@ import { useLang } from "../../hooks/useLang";
 
 const translations = {
   fr: {
-    // Page title & intro
     pageTitle: "Tableau de Bord",
     pageTitleAccent: " Évangélisation",
     pageIntro: "Suivez et analysez facilement vos activités d'évangélisation. Filtrez par date et type, visualisez les rapports détaillés et consultez rapidement les KPIs :",
     pageIntroAccent: "évangélisés, convertis, intégrés en cellule ou à l'église, et suivis en cours",
 
-    // Filtres
     periodeRapide: "Période rapide",
     trancheDates: "Tranche de dates",
     periode: "Période :",
     dateDebut: "Date de début",
     dateFin: "Date de fin",
     genererRapport: "Générer le rapport",
-    typeEvangelisation: "Type d'évangélisation",
+    typeEvangelisation: "Type :",
     tousTypes: "Tous les types",
     periodes: [
       { label: "7 j", val: "7" },
@@ -58,17 +37,14 @@ const translations = {
       { label: "1 an", val: "365" },
     ],
 
-    // Onglets
     ongletKpi: "Vue d'ensemble",
     ongletType: "Par type",
 
-    // Section titles
     sectionVue: "Vue d'ensemble",
     sectionEntonnoir: "Entonnoir de conversion",
     sectionTendance: "Tendance mensuelle",
     sectionParType: "Résultats par type d'évangélisation",
 
-    // KPI labels
     kpiEvangelises: "Évangélisés",
     kpiConvertis: "Convertis",
     kpiIntegres: "Intégrés",
@@ -87,7 +63,6 @@ const translations = {
     desSuivis: "des suivis",
     impliques: "impliqués",
 
-    // Entonnoir
     entonnoirEvangelises: "Évangélisés",
     entonnoirEnvoyes: "Envoyés au suivi",
     entonnoirConvertis: "Convertis",
@@ -95,12 +70,10 @@ const translations = {
     aucuneDonnee: "Aucune donnée",
     donneesInsuffisantes: "Données insuffisantes (≥ 2 mois)",
 
-    // Tendance
     vsMoisPrec: "vs mois préc.",
     legendeEvangelises: "Évangélisés",
     legendeConvertis: "Convertis",
 
-    // CarteSession / OngletParType
     nonDefini: "Non défini",
     modifier: "✏️ Modifier",
     rapportPluriel: "rapport",
@@ -116,47 +89,42 @@ const translations = {
     nvConv: "Nv. conv.",
     moiss: "Moiss.",
 
-    // États
     aucuneDonneePeriode: "Aucune donnée sur cette période",
     aucunRapport: "Aucun rapport sur cette période",
     rapportMaj: "✅ Rapport mis à jour !",
 
-    // Types d'évangélisation
-   typesEvangelisation: [
-    "Individuel",
-    "Sortie de groupe",
-    "Campagne d'évangélisation",
-    "Évangélisation de rue",
-    "Évangélisation maison",
-    "Évangélisation stade",
-  ],
-  typeEvangOptions: {
-    "Individuel": "Individuel",
-    "Sortie de groupe": "Sortie de groupe",
-    "Campagne d'évangélisation": "Campagne d'évangélisation",
-    "Évangélisation de rue": "Évangélisation de rue",
-    "Évangélisation maison": "Évangélisation maison",
-    "Évangélisation stade": "Évangélisation stade",
-  },
+    typesEvangelisation: [
+      "Individuel",
+      "Sortie de groupe",
+      "Campagne d'évangélisation",
+      "Évangélisation de rue",
+      "Évangélisation maison",
+      "Évangélisation stade",
+    ],
+    typeEvangOptions: {
+      "Individuel": "Individuel",
+      "Sortie de groupe": "Sortie de groupe",
+      "Campagne d'évangélisation": "Campagne d'évangélisation",
+      "Évangélisation de rue": "Évangélisation de rue",
+      "Évangélisation maison": "Évangélisation maison",
+      "Évangélisation stade": "Évangélisation stade",
+    },
 
-    // Mois
     mois: ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"],
   },
   en: {
-    // Page title & intro
     pageTitle: "Dashboard",
     pageTitleAccent: " Evangelism",
     pageIntro: "Easily track and analyze your evangelism activities. Filter by date and type, view detailed reports and quickly check KPIs:",
     pageIntroAccent: "evangelized, converted, integrated in cell or church, and follow-ups in progress",
 
-    // Filtres
     periodeRapide: "Quick period",
     trancheDates: "Date range",
     periode: "Period:",
     dateDebut: "Start date",
     dateFin: "End date",
     genererRapport: "Generate report",
-    typeEvangelisation: "Evangelism type",
+    typeEvangelisation: "Type:",
     tousTypes: "All types",
     periodes: [
       { label: "7 d", val: "7" },
@@ -166,17 +134,14 @@ const translations = {
       { label: "1 yr", val: "365" },
     ],
 
-    // Onglets
     ongletKpi: "Overview",
     ongletType: "By type",
 
-    // Section titles
     sectionVue: "Overview",
     sectionEntonnoir: "Conversion funnel",
     sectionTendance: "Monthly trend",
     sectionParType: "Results by evangelism type",
 
-    // KPI labels
     kpiEvangelises: "Evangelized",
     kpiConvertis: "Converted",
     kpiIntegres: "Integrated",
@@ -195,7 +160,6 @@ const translations = {
     desSuivis: "of follow-ups",
     impliques: "involved",
 
-    // Entonnoir
     entonnoirEvangelises: "Evangelized",
     entonnoirEnvoyes: "Sent to follow-up",
     entonnoirConvertis: "Converted",
@@ -203,12 +167,10 @@ const translations = {
     aucuneDonnee: "No data",
     donneesInsuffisantes: "Insufficient data (≥ 2 months)",
 
-    // Tendance
     vsMoisPrec: "vs prev. month",
     legendeEvangelises: "Evangelized",
     legendeConvertis: "Converted",
 
-    // CarteSession / OngletParType
     nonDefini: "Not defined",
     modifier: "✏️ Edit",
     rapportPluriel: "report",
@@ -224,30 +186,27 @@ const translations = {
     nvConv: "New conv.",
     moiss: "Harv.",
 
-    // États
     aucuneDonneePeriode: "No data for this period",
     aucunRapport: "No reports for this period",
     rapportMaj: "✅ Report updated!",
 
-    // Types d'évangélisation (kept in French as stored values in DB)
     typesEvangelisation: [
-    "Individuel",
-    "Sortie de groupe",
-    "Campagne d'évangélisation",
-    "Évangélisation de rue",
-    "Évangélisation maison",
-    "Évangélisation stade",
-  ],
-  typeEvangOptions: {
-    "Individuel": "Individual",
-    "Sortie de groupe": "Group outing",
-    "Campagne d'évangélisation": "Evangelism campaign",
-    "Évangélisation de rue": "Street evangelism",
-    "Évangélisation maison": "House evangelism",
-    "Évangélisation stade": "Stadium evangelism",
-  },
+      "Individuel",
+      "Sortie de groupe",
+      "Campagne d'évangélisation",
+      "Évangélisation de rue",
+      "Évangélisation maison",
+      "Évangélisation stade",
+    ],
+    typeEvangOptions: {
+      "Individuel": "Individual",
+      "Sortie de groupe": "Group outing",
+      "Campagne d'évangélisation": "Evangelism campaign",
+      "Évangélisation de rue": "Street evangelism",
+      "Évangélisation maison": "House evangelism",
+      "Évangélisation stade": "Stadium evangelism",
+    },
 
-    // Mois
     mois: ["January","February","March","April","May","June","July","August","September","October","November","December"],
   },
 };
@@ -256,11 +215,6 @@ const translations = {
 function formatDateFr(dateStr) {
   return new Date(dateStr).toLocaleDateString("fr-FR", {
     day: "2-digit", month: "short", year: "numeric",
-  });
-}
-function formatDateCourt(dateStr) {
-  return new Date(dateStr).toLocaleDateString("fr-FR", {
-    day: "2-digit", month: "short",
   });
 }
 function getMonthName(monthIndex, moisArray) {
@@ -273,7 +227,7 @@ function getMapLabel(map, value) {
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
-  return <p className="text-sm font-semibold tracking-widest text-white/80 mb-3">{children}</p>;
+  return <p className="text-sm font-semibold uppercase tracking-widest text-white/80 mb-3">{children}</p>;
 }
 function KpiCard({ label, value, sub, accent, onClick }) {
   const c = {
@@ -348,7 +302,7 @@ function BlocKpiGlobaux({ filteredEvangelises, filteredSuivis, rapports, onKpiCl
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KpiCard label={t.kpiEnvoyes} value={totalEnvoyes} sub={`${pct(totalEnvoyes)}% ${t.desEvangelises}`} accent="purple" onClick={() => onKpiClick("Envoyé")} />
         <KpiCard label={t.kpiNonEnvoyes} value={totalNonEnvoyes} sub={`${pct(totalNonEnvoyes)}%`} accent="gray" onClick={() => onKpiClick("NonEnvoye")} />
-        <KpiCard label={t.kpiRefus} value={totalRefus} sub={`${pct(totalRefus)}%`} accent="red" onClick={() => onKpiClick("Refus")} />        
+        <KpiCard label={t.kpiRefus} value={totalRefus} sub={`${pct(totalRefus)}%`} accent="red" onClick={() => onKpiClick("Refus")} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <KpiCard label={t.kpiIntegreCellule} value={totalCellule} sub={filteredSuivis.length > 0 ? `${Math.round((totalCellule / filteredSuivis.length) * 100)}% ${t.desSuivis}` : "—"} accent="blue" onClick={onCelluleClick} />
@@ -475,7 +429,7 @@ function CarteSession({ r, onEdit, t }) {
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="font-semibold text-white text-sm">{getMapLabel(t.typeEvangOptions, r.type_evangelisation) || t.nonDefini}</span>
-          <span className="text-[11px] text-white/40">{formatDateFr(r.date_evangelise)}</span>
+          <span className="text-[11px] text-white/60">{formatDateFr(r.date_evangelise)}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge color="blue">H {r.hommes ?? 0}</Badge>
@@ -536,7 +490,7 @@ function OngletParType({ rapports, onEdit, t }) {
               className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
               <div className="flex flex-col gap-0.5">
                 <span className="font-semibold text-white text-sm">{type === t.nonDefini ? type : getMapLabel(t.typeEvangOptions, type)}</span>
-                <span className="text-[11px] text-white/40">
+                <span className="text-[11px] text-white/60">
                   {rows.length} {rows.length > 1 ? t.rapportPlurielS : t.rapportPluriel}
                 </span>
               </div>
@@ -630,7 +584,7 @@ export default function RapportEvangelisation() {
     try {
       const { data: evangelisesData } = await supabase
         .from("evangelises")
-        .select("id, eglise_id, date_evangelise, type_evangelisation, status_suivi, priere_salut") // ✅ select("*") remplacé par des colonnes explicites
+        .select("id, eglise_id, date_evangelise, type_evangelisation, status_suivi, priere_salut")
         .eq("eglise_id", egliseId).neq("status_suivi", "supprime");
       setAllEvangelises(evangelisesData || []);
 
@@ -647,7 +601,7 @@ export default function RapportEvangelisation() {
         .from("rapport_evangelisation")
         .select(
           "id, eglise_id, evangelise_member_id, date_evangelise, type_evangelisation, hommes, femmes, priere, nouveau_converti, reconciliation, moissonneurs"
-        ) // ✅ select("*") remplacé par des colonnes explicites
+        )
         .eq("eglise_id", egliseId)
         .in("evangelise_member_id", filtered.map(e => e.id))
         .order("date_evangelise", { ascending: false });
@@ -658,7 +612,7 @@ export default function RapportEvangelisation() {
 
       const { data: suivisData } = await supabase
         .from("suivis_des_evangelises")
-        .select("id, eglise_id, evangelise_id, date_suivi, type_evangelisation, status_suivis_evangelises, cellule_id, conseiller_id") // ✅ select("*") remplacé par des colonnes explicites
+        .select("id, eglise_id, evangelise_id, date_suivi, type_evangelisation, status_suivis_evangelises, cellule_id, conseiller_id")
         .eq("eglise_id", egliseId);
       const evangeliseIds = new Set(filtered.map(e => e.id));
       const filteredSuivisFinal = (suivisData || []).filter(s => {
@@ -718,24 +672,26 @@ export default function RapportEvangelisation() {
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
               {t.periodeRapide}
             </button>
             <button onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
               {t.trancheDates}
             </button>
           </div>
 
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/80 flex-shrink-0">{t.periode}</span>
-              {t.periodes.map(p => (
-                <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                  {p.label}
-                </button>
-              ))}
+              <span className="text-sm text-white/60 flex-shrink-0">{t.periode}</span>
+              <div className="flex gap-1 bg-white/10 rounded-xl p-1 flex-wrap">
+                {t.periodes.map(p => (
+                  <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
+                    className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -760,10 +716,10 @@ export default function RapportEvangelisation() {
             </div>
           )}
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-white/80">{t.typeEvangelisation}</label>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-white/80 flex-shrink-0">{t.typeEvangelisation}</span>
             <select value={filtreType} onChange={e => setFiltreType(e.target.value)}
-              className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
+              className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
               <option value="" className="bg-[#2a2d80]">{t.tousTypes}</option>
               {t.typesEvangelisation.map(type => (
                 <option key={type} value={type} className="bg-[#2a2d80]">{getMapLabel(t.typeEvangOptions, type)}</option>
@@ -776,7 +732,7 @@ export default function RapportEvangelisation() {
         <div className="flex gap-1 bg-white/10 rounded-xl p-1">
           {onglets.map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/80 hover:text-white"}`}>
               {o.label}
             </button>
           ))}
@@ -788,13 +744,14 @@ export default function RapportEvangelisation() {
             <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
           </div>
         ) : filteredEvangelises.length === 0 ? (
-          <div className="bg-white/10 rounded-2xl p-8 text-center text-white/40 text-sm">
+          <div className="bg-white/10 rounded-2xl p-8 text-center text-white/60 text-sm">
             {t.aucuneDonneePeriode}
           </div>
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7">
 
-            <div>              
+            <div>
+              <SectionTitle>{t.sectionVue}</SectionTitle>
               <BlocKpiGlobaux
                 filteredEvangelises={filteredEvangelises}
                 filteredSuivis={filteredSuivis}

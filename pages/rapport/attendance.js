@@ -346,7 +346,7 @@ function normalizeVenu(v) {
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
-  return <p className="text-[11px] font-semibold uppercase tracking-widest text-white mb-3">{children}</p>;
+  return <p className="text-sm font-semibold uppercase tracking-widest text-white/80 mb-3">{children}</p>;
 }
 function KpiCard({ label, value, sub, accent }) {
   const c = { green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400", white: "text-white", blue: "text-blue-300", pink: "text-pink-300",cyan: "text-cyan-300",
@@ -569,7 +569,7 @@ function CarteSession({ r, onEdit, onDelete, t }) {
         className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="font-semibold text-white text-sm">{label}</span>
-          <span className="text-[11px] text-white/40">{formatDateFr(r.date)}</span>
+          <span className="text-[11px] text-white/60">{formatDateFr(r.date)}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge color="blue">H {r.hommes}</Badge>
@@ -583,18 +583,18 @@ function CarteSession({ r, onEdit, onDelete, t }) {
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { label: t.hommes, value: r.hommes, color: "text-blue-300" },
-              { label: t.femmes, value: r.femmes, color: "text-pink-300" },
-              { label: t.jeunes, value: r.jeunes, color: "text-amber-300" },
-              { label: t.kpiEnfants, value: r.enfants, color: "text-white" },
-              { label: t.fConnectes, value: r.connectes, color: "text-white" },
-              { label: t.nv, value: r.nouveauxVenus, color: "text-blue-300" },
-              { label: t.convertis, value: r.nouveauxConvertis, color: "text-emerald-300" },
-              { label: t.totalGlobal, value: totalGlobal, color: "text-white font-bold" },
-            ].map(({ label, value, color }) => (
+              { label: t.hommes, value: r.hommes },
+              { label: t.femmes, value: r.femmes },
+              { label: t.jeunes, value: r.jeunes },
+              { label: t.kpiEnfants, value: r.enfants },
+              { label: t.fConnectes, value: r.connectes },
+              { label: t.nv, value: r.nouveauxVenus },
+              { label: t.convertis, value: r.nouveauxConvertis },
+              { label: t.totalGlobal, value: totalGlobal },
+            ].map(({ label, value }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
-                <p className="text-[10px] text-white/40">{label}</p>
-                <p className={`text-lg font-bold ${color}`}>{value || 0}</p>
+                <p className="text-sm text-white/60">{label}</p>
+                <p className="text-sm text-white/60">{value || 0}</p>
               </div>
             ))}
           </div>
@@ -697,13 +697,13 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
   };
 
   const fields = [
-    { name: "hommes", label: t.fHommes, color: "text-blue-300" },
-    { name: "femmes", label: t.fFemmes, color: "text-pink-300" },
-    { name: "jeunes", label: t.fJeunes, color: "text-amber-300" },
-    { name: "enfants", label: t.fEnfants, color: "text-white/70" },
-    { name: "connectes", label: t.fConnectes, color: "text-white/70" },
-    { name: "nouveauxVenus", label: t.fNouveauxVenus, color: "text-blue-300" },
-    { name: "nouveauxConvertis", label: t.fNouveauxConvertis, color: "text-emerald-300" },
+    { name: "hommes", label: t.fHommes },
+    { name: "femmes", label: t.fFemmes },
+    { name: "jeunes", label: t.fJeunes },
+    { name: "enfants", label: t.fEnfants },
+    { name: "connectes", label: t.fConnectes },
+    { name: "nouveauxVenus", label: t.fNouveauxVenus },
+    { name: "nouveauxConvertis", label: t.fNouveauxConvertis },
   ];
 
   return (
@@ -711,21 +711,21 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
       <div className="flex items-center justify-between">
         <p className="text-white font-semibold">{editData ? t.modifierRapportTitre : t.saisieRapport}</p>
         {editData && (
-          <button onClick={onCancelEdit} className="text-xs text-white/40 hover:text-white/70 transition">{t.annuler}</button>
+          <button onClick={onCancelEdit} className="text-sm text-white/60 hover:text-white/80 transition">{t.annuler}</button>
         )}
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Date */}
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-white">{t.dateLabel}</label>
+          <label className="text-sm text-white/60">{t.dateLabel}</label>
           <input type="date" name="date" value={formData.date} onChange={handleChange} required
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40" />
         </div>
 
         {/* Type de temps */}
         <div className="flex flex-col gap-1" ref={selectRef}>
-          <label className="text-xs text-white">{t.typeTempsLabel}</label>
+          <label className="text-sm text-white/60">{t.typeTempsLabel}</label>
           <div onClick={() => setDropdownOpen(v => !v)}
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm flex justify-between items-center cursor-pointer hover:bg-white/15 transition">
             <span className={formData.typeTemps ? "text-white" : "text-white/30"}>
@@ -754,13 +754,13 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
         {formData.typeTemps === "AUTRE" && (
           <div className="flex flex-col gap-2">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-white">{t.nomTemps}</label>
+              <label className="text-sm text-white/60">{t.nomTemps}</label>
               <input type="text" name="nouveauTemps" value={formData.nouveauTemps}
                 onChange={e => setFormData(p => ({ ...p, nouveauTemps: e.target.value.slice(0, 30) }))}
                 placeholder={t.nomTempsPlaceholder} maxLength={30}
                 className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 placeholder:text-white/20" />
             </div>
-            <label className="flex items-center gap-2 text-xs text-amber-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-white/60 cursor-pointer">
               <input type="checkbox" checked={formData.enregistrerTemps}
                 onChange={e => setFormData(p => ({ ...p, enregistrerTemps: e.target.checked }))} />
               {t.enregistrerTemps}
@@ -770,7 +770,7 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
 
         {formData.typeTemps === "Culte" && (
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-white">{t.numeroCulte}</label>
+            <label className="text-sm text-white/60">{t.numeroCulte}</label>
             <select name="numero_culte" value={formData.numero_culte} onChange={handleChange}
               className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
               <option value="" className="bg-[#2a2d80]">{t.selectionner}</option>
@@ -784,12 +784,18 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
         )}
 
         {/* Champs numériques */}
+        <style>{`
+          input.no-spinner::-webkit-outer-spin-button,
+          input.no-spinner::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+          input.no-spinner[type=number] { -moz-appearance: textfield; }
+        `}</style>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {fields.map(({ name, label, color }) => (
+          {fields.map(({ name, label }) => (
             <div key={name} className="flex flex-col gap-1">
-              <label className={`text-xs ${color}`}>{label}</label>
+              <label className="text-sm text-white/50">{label}</label>
               <input type="number" name={name} value={formData[name]} onChange={handleChange} min={0}
-                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 text-center" />
+                onFocus={e => e.target.select()}
+                className="no-spinner bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40 text-center" />
             </div>
           ))}
         </div>
@@ -960,24 +966,26 @@ function Attendance() {
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
               {t.perioderapide}
             </button>
             <button onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
               {t.tranchedates}
             </button>
           </div>
 
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/80 flex-shrink-0">{t.periode}</span>
-              {periodes.map(p => (
-                <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                  {p.label}
-                </button>
-              ))}
+              <span className="text-xs text-white/60 flex-shrink-0">{t.periode}</span>
+              <div className="flex gap-1 bg-white/10 rounded-xl p-1 flex-wrap">
+                {periodes.map(p => (
+                  <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -1023,7 +1031,7 @@ function Attendance() {
         <div className="flex gap-1 bg-white/10 rounded-xl p-1 mt-4">
           {onglets.map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/80 hover:text-white"}`}>
               {o.label}
             </button>
           ))}
@@ -1032,11 +1040,11 @@ function Attendance() {
         {/* Boutons actions */}
         <div className="flex gap-2 mt-3">
           <button onClick={handleAjouter}
-            className="flex-1 py-2 rounded-xl bg-emerald-600/40 hover:bg-emerald-600/60 text-emerald-300 text-sm font-semibold transition active:scale-95">
+            className="flex-1 py-2 rounded-xl bg-emerald-600/40 hover:bg-emerald-600/60 text-white/80 text-sm font-semibold transition active:scale-95">
             {t.ajouterRapport}
           </button>
           <button onClick={handleModifier}
-            className="flex-1 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition active:scale-95">
+            className="flex-1 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-white/80 text-sm font-semibold transition active:scale-95">
             {t.modifierRapport}
           </button>
         </div>
@@ -1068,7 +1076,8 @@ function Attendance() {
           </div>
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7 mt-4">
-            <div>             
+            <div>
+              <SectionTitle>{t.sectionVueEnsemble}</SectionTitle>
               <BlocKpiGlobaux reports={reports} membresProvenance={membresProvenance} t={t} />
             </div>
             <div>

@@ -240,7 +240,7 @@ function formatStatut(statut) {
 function SectionTitle({ children, icon, total, className = "" }) {
   return (
     <div className={`flex items-center justify-between mb-3 ${className}`}>
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 flex items-center gap-1.5">
+      <p className="text-sm font-semibold tracking-widest text-white/80 flex items-center gap-1.5">
         {icon && <span className="text-sm">{icon}</span>}
         {children}
       </p>
@@ -260,9 +260,9 @@ function KpiCard({ label, value, sub, accent }) {
   };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-xs text-white/50">{label}</p>
+      <p className="text-sm text-white">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-white/60 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -1094,7 +1094,7 @@ function EtatCellule() {
           {/* Période rapide */}
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">{t.periodLabel}</span>
+              <span className="text-xs text-white/80 flex-shrink-0">{t.periodLabel}</span>
               {t.periods.map(p => (
                 <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
                   className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
@@ -1109,12 +1109,12 @@ function EtatCellule() {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.startDate}</label>
+                  <label className="text-xs text-white/80">{t.startDate}</label>
                   <input type="date" value={filterDebut} onChange={e => setFilterDebut(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.endDate}</label>
+                  <label className="text-xs text-white/80">{t.endDate}</label>
                   <input type="date" value={filterFin} onChange={e => setFilterFin(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
@@ -1129,7 +1129,7 @@ function EtatCellule() {
           {/* Filtre cellule */}
           {hasData && availableCellules.length > 1 && (
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-white/50">{t.celluleLabel}</label>
+              <label className="text-xs text-white/80">{t.celluleLabel}</label>
               <select value={filterCellule} onChange={e => setFilterCellule(e.target.value)}
                 className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
                 <option value="" className="bg-[#2a2d80]">{t.allCellules}</option>

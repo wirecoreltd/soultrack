@@ -320,10 +320,10 @@ function TotalLeadersCard({ label, value, sub }) {
       className="bg-white/10 rounded-2xl px-3 py-2.5 flex flex-col justify-between items-center overflow-hidden"
       style={{ height: "82px", boxSizing: "border-box" }}
     >
-      <span className="text-sm text-white/60">{label}</span>
+      <span className="text-sm text-white/80">{label}</span>
       <div className="flex flex-col items-center leading-tight">
         <span className="text-xl font-bold text-white">{value}</span>
-        {sub && <span className="text-[11px] text-white/40">{sub}</span>}
+        {sub && <span className="text-[11px] text-white/60">{sub}</span>}
       </div>
     </div>
   );

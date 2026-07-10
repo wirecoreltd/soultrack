@@ -212,7 +212,7 @@ function getMonthNameEN(monthIndex) {
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
-  return <p className="text-sm font-semibold uppercase tracking-widest text-white/80 mb-3">{children}</p>;
+  return <p className="text-sm font-semibold tracking-widest text-white/80 mb-3">{children}</p>;
 }
 function KpiCard({ label, value, sub, accent }) {
   const c = { green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400", white: "text-white", blue: "text-blue-300", pink: "text-pink-300", purple: "text-purple-300" };
@@ -397,7 +397,7 @@ function CarteSession({ r, onEdit, t }) {
           <Badge color="blue">H {r.hommes}</Badge>
           <Badge color="pink">F {r.femmes}</Badge>
           <Badge color="amber">{t.total} {total}</Badge>
-          <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
+          <span className="text-white/80 text-xs">{open ? "▲" : "▼"}</span>
         </div>
       </button>
       {open && (

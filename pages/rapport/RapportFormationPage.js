@@ -444,8 +444,8 @@ function CarteRapport({ r, onEdit, onDelete, t }) {
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { label: t.labelHommes, value: r.hommes || 0, color: "text-blue-300" },
-              { label: t.labelFemmes, value: r.femmes || 0, color: "text-pink-300" },
+              { label: t.labelHommes, value: r.hommes || 0, color: "text-white/80" },
+              { label: t.labelFemmes, value: r.femmes || 0, color: "text-white/80" },
               { label: t.labelTotal, value: total, color: "text-amber-300 font-bold" },
               { label: t.labelDuree, value: duree !== null ? `${duree}j` : "—", color: "text-purple-300" },
             ].map(({ label, value, color }) => (
@@ -605,7 +605,7 @@ function FormulaireFormation({ egliseId, onSaved, editData, onCancelEdit, t }) {
         {/* Résumé total */}
         {(Number(formData.hommes) + Number(formData.femmes)) > 0 && (
           <div className="bg-white/5 rounded-xl px-4 py-2 flex items-center justify-center gap-3">
-            <span className="text-[11px] text-white/40">{t.totalParticipantsForm}</span>
+            <span className="text-xs text-white/60">{t.totalParticipantsForm}</span>
             <span className="text-lg font-bold text-amber-300">
               {Number(formData.hommes) + Number(formData.femmes)}
             </span>

@@ -261,10 +261,10 @@ function KpiCard({ label, value, sub, accent }) {
     gray: "text-white/40", indigo: "text-indigo-300", yellow: "text-yellow-300",
   };
   return (
-    <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-sm text-white">{label}</p>
-      <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-xs text-white/60 mt-0.5">{sub}</p>}
+    <div className="bg-white/10 rounded-2xl px-3 sm:px-4 py-3 sm:py-4 flex flex-col gap-1 min-w-0">
+      <p className="text-xs sm:text-sm text-white truncate">{label}</p>
+      <p className={`text-xl sm:text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
+      {sub && <p className="text-[11px] sm:text-xs text-white/60 mt-0.5 truncate">{sub}</p>}
     </div>
   );
 }
@@ -276,12 +276,12 @@ function Badge({ children, color }) {
     orange: "bg-orange-900/60 text-orange-300", yellow: "bg-yellow-900/60 text-yellow-300",
     indigo: "bg-indigo-900/60 text-indigo-300",
   };
-  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${m[color] || m.gray}`}>{children}</span>;
+  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${m[color] || m.gray}`}>{children}</span>;
 }
 function BarreProgression({ pct, color, className = "flex-1" }) {
   const col = color || (pct >= 70 ? "bg-emerald-400" : pct >= 40 ? "bg-amber-400" : "bg-red-400");
   return (
-    <div className={`h-1.5 bg-white/10 rounded-full overflow-hidden ${className}`}>
+    <div className={`h-1.5 bg-white/10 rounded-full overflow-hidden min-w-0 ${className}`}>
       <div className={`h-full rounded-full transition-all ${col}`} style={{ width: `${Math.min(pct || 0, 100)}%` }} />
     </div>
   );
@@ -298,16 +298,16 @@ function LeaderStageCard({ emoji, label, value, stage }) {
   const c = LEADER_STAGE_COLORS[stage] || { bg: "#E6F1FB", text: "#042C53" };
   return (
     <div
-      className="rounded-2xl px-3 py-2.5 flex flex-col justify-between overflow-hidden"
+      className="rounded-2xl px-2.5 sm:px-3 py-2.5 flex flex-col justify-between overflow-hidden min-w-0"
       style={{ background: c.bg, height: "82px", boxSizing: "border-box" }}
     >
-      <div className="flex items-start gap-1">
+      <div className="flex items-start gap-1 min-w-0">
         <span className="text-sm leading-tight flex-shrink-0">{emoji}</span>
-        <span className="text-sm font-medium leading-tight" style={{ color: c.text }}>
+        <span className="text-xs sm:text-sm font-medium leading-tight line-clamp-2" style={{ color: c.text }}>
           {label}
         </span>
       </div>
-      <span className="text-xl font-bold leading-none text-center" style={{ color: c.text }}>
+      <span className="text-lg sm:text-xl font-bold leading-none text-center" style={{ color: c.text }}>
         {value}
       </span>
     </div>
@@ -317,13 +317,13 @@ function LeaderStageCard({ emoji, label, value, stage }) {
 function TotalLeadersCard({ label, value, sub }) {
   return (
     <div
-      className="bg-white/10 rounded-2xl px-3 py-2.5 flex flex-col justify-between items-center overflow-hidden"
+      className="bg-white/10 rounded-2xl px-2.5 sm:px-3 py-2.5 flex flex-col justify-between items-center overflow-hidden min-w-0"
       style={{ height: "82px", boxSizing: "border-box" }}
     >
-      <span className="text-sm text-white">{label}</span>
+      <span className="text-xs sm:text-sm text-white truncate w-full text-center">{label}</span>
       <div className="flex flex-col items-center leading-tight">
-        <span className="text-xl font-bold text-white">{value}</span>
-        {sub && <span className="text-xs text-white/80">{sub}</span>}
+        <span className="text-lg sm:text-xl font-bold text-white">{value}</span>
+        {sub && <span className="text-[11px] sm:text-xs text-white/80 whitespace-nowrap">{sub}</span>}
       </div>
     </div>
   );
@@ -356,13 +356,13 @@ function BlocKpi({ kpis, totalAmes, t }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <KpiCard label={t.kpiEvangelises} value={kpis.totalEvangelises} sub={t.kpiEvangelisesSub} accent="blue" />
         <KpiCard label={t.kpiVenus} value={kpis.totalVenus} sub={t.kpiVenusSub} accent="purple" />
         <KpiCard label={t.kpiIntegres} value={kpis.totalIntegration} sub={t.kpiOfTotal(pct(kpis.totalIntegration))} accent="green" />
         <KpiCard label={t.kpiBaptemes} value={kpis.totalBapteme} sub={t.kpiOfTotal(pct(kpis.totalBapteme))} accent="indigo" />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <KpiCard label={t.kpiMinistere} value={kpis.totalMinistere} sub={t.kpiMinistereSub} accent="teal" />
         <KpiCard label={t.kpiEncours} value={kpis.totalEncours} sub={t.kpiEncoursSub} accent="amber" />
         <KpiCard label={t.kpiAttente} value={kpis.totalAttente} sub={t.kpiAttenteSub} accent="gray" />
@@ -370,7 +370,7 @@ function BlocKpi({ kpis, totalAmes, t }) {
       </div>
 
       {totalAmes > 0 && (
-        <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3 mt-1">
+        <div className="bg-white/10 rounded-2xl p-3 sm:p-4 flex flex-col gap-3 mt-1">
           <SectionTitle>{t.funnelTitle}</SectionTitle>
           {[
             { label: t.funnelTotalAmes, val: totalAmes, color: "bg-blue-400" },
@@ -378,10 +378,10 @@ function BlocKpi({ kpis, totalAmes, t }) {
             { label: t.funnelBaptises, val: kpis.totalBapteme, color: "bg-indigo-400" },
             { label: t.funnelMinistere, val: kpis.totalMinistere, color: "bg-pink-400" },
           ].map(({ label, val, color }) => (
-            <div key={label} className="flex items-center gap-3">
-              <p className="text-sm text-white w-28 flex-shrink-0">{label}</p>
+            <div key={label} className="flex items-center gap-2 sm:gap-3">
+              <p className="text-xs sm:text-sm text-white w-20 sm:w-28 flex-shrink-0 truncate">{label}</p>
               <BarreProgression pct={Math.round((val / totalAmes) * 100)} color={color} />
-              <span className="text-sm text-white font-semibold w-8 text-right">{val}</span>
+              <span className="text-xs sm:text-sm text-white font-semibold w-8 flex-shrink-0 text-right">{val}</span>
             </div>
           ))}
         </div>
@@ -412,13 +412,13 @@ function BlocParCellule({ displayedReports, t }) {
   return (
     <div className="flex flex-col gap-2">
       {lignes.map(([cellule, { total, integres, encours, refus }]) => (
-        <div key={cellule} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
-          <div className="flex items-center gap-3">
+        <div key={cellule} className="bg-white/10 rounded-xl px-3 sm:px-4 py-3 flex flex-col gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             <p className="text-sm text-white flex-1 min-w-0 truncate">{cellule}</p>
-            <BarreProgression pct={(total / max) * 100} color="bg-blue-400" className="w-16 flex-shrink-0" />
-            <span className="text-sm font-bold text-white w-6 text-right">{total}</span>
+            <BarreProgression pct={(total / max) * 100} color="bg-blue-400" className="w-12 sm:w-16 flex-shrink-0" />
+            <span className="text-sm font-bold text-white w-6 flex-shrink-0 text-right">{total}</span>
           </div>
-          <div className="flex gap-2 ml-36">
+          <div className="flex gap-2 flex-wrap">
             <Badge color="green">✔ {integres}</Badge>
             <Badge color="amber">⏳ {encours}</Badge>
             <Badge color="red">✗ {refus}</Badge>
@@ -434,7 +434,7 @@ function PilierCard({ membre, celluleNom, idx }) {
   const ac = AVATAR_COLORS[idx % AVATAR_COLORS.length];
   const initiales = `${(membre.prenom || "")[0] || ""}${(membre.nom || "")[0] || ""}`.toUpperCase();
   return (
-    <div className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-white/15 transition-colors">
+    <div className="bg-white/10 rounded-xl px-3 sm:px-4 py-3 flex items-center gap-3 hover:bg-white/15 transition-colors">
       <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0"
         style={{ background: ac.bg, color: ac.color }}>
         {initiales}
@@ -455,7 +455,7 @@ function BlocPiliers({ piliers, cellulesMap, filterCellule, t, open, setOpen }) 
   return (
     <div className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
       <div onClick={() => setOpen(!open)}
-        className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors">
+        className="px-3 sm:px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors">
         <span className="text-sm font-semibold text-white flex-1">{t.piliersLabel}</span>
         <span className="text-xl font-bold text-white">{filtered.length}</span>
         <svg className={`w-4 h-4 text-white/50 transition-transform flex-shrink-0 ${open ? "rotate-180" : ""}`}
@@ -464,7 +464,7 @@ function BlocPiliers({ piliers, cellulesMap, filterCellule, t, open, setOpen }) 
         </svg>
       </div>
       {open && (
-        <div className="px-4 pb-3 border-t border-white/10 pt-2">
+        <div className="px-3 sm:px-4 pb-3 border-t border-white/10 pt-2">
           {filtered.length === 0 ? (
             <p className="text-sm text-white/40 italic px-1">{t.pasDePilier}</p>
           ) : (
@@ -489,7 +489,7 @@ function ServiteurCard({ membre, sousTitre, idx = 0 }) {
   const ac = AVATAR_COLORS[idx % AVATAR_COLORS.length];
   const initiales = `${(membre.prenom || "")[0] || ""}${(membre.nom || "")[0] || ""}`.toUpperCase();
   return (
-    <div className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-white/15 transition-colors">
+    <div className="bg-white/10 rounded-xl px-3 sm:px-4 py-3 flex items-center gap-3 hover:bg-white/15 transition-colors">
       <div className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold flex-shrink-0"
         style={{ background: ac.bg, color: ac.color }}>
         {initiales}
@@ -508,7 +508,7 @@ function BlocLeadersKpi({ leadersDeveloppement, totalMembres, t }) {
   leadersDeveloppement.forEach(l => { counts[l.etape || "none"]++; });
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
       <TotalLeadersCard
         label={t.totalLeaders}
         value={leadersDeveloppement.length}
@@ -543,11 +543,11 @@ function BlocClassementLeaders({ leadersDeveloppement, openStages, setOpenStages
         return (
           <div key={stage} className="rounded-xl overflow-hidden border border-white/10 bg-white/8">
             <button onClick={() => setOpenStages(p => ({ ...p, [stage]: !p[stage] }))}
-              className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left">
-              <span className="text-sm font-semibold text-white flex items-center gap-2">
-                <span>{emoji}</span>{label}
+              className="w-full flex items-center justify-between px-3 sm:px-4 py-3 hover:bg-white/5 transition text-left gap-2">
+              <span className="text-sm font-semibold text-white flex items-center gap-2 min-w-0 truncate">
+                <span className="flex-shrink-0">{emoji}</span><span className="truncate">{label}</span>
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <span className="text-sm font-bold text-white">{list.length}</span>
                 <svg className={`w-4 h-4 text-white/50 transition-transform ${isOpen ? "rotate-180" : ""}`}
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -556,7 +556,7 @@ function BlocClassementLeaders({ leadersDeveloppement, openStages, setOpenStages
               </div>
             </button>
             {isOpen && (
-              <div className="px-4 pb-3 border-t border-white/10 pt-2 flex flex-col gap-2">
+              <div className="px-3 sm:px-4 pb-3 border-t border-white/10 pt-2 flex flex-col gap-2">
                 {list.length === 0 ? (
                   <p className="text-sm text-white/40 italic px-1">{t.pasDeLeader}</p>
                 ) : (
@@ -601,12 +601,12 @@ function BlocRepartitionLeaders({ leadersDeveloppement, refList, idKey, labelKey
   const max = Math.max(...lignes.map(l => l.count), 1);
 
   return (
-    <div className="flex flex-col gap-2 px-4">
+    <div className="flex flex-col gap-2">
       {lignes.map(({ id, nom, count }) => (
-        <div key={id} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
+        <div key={id} className="bg-white/10 rounded-xl px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-3">
           <p className="text-sm text-white flex-1 min-w-0 truncate">{nom}</p>
-          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" className="w-80 flex-shrink-0" />
-          <span className="text-sm font-semibold text-white w-6 text-right">{count}</span>
+          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" className="w-16 sm:w-32 flex-shrink-0" />
+          <span className="text-sm font-semibold text-white w-6 flex-shrink-0 text-right">{count}</span>
         </div>
       ))}
     </div>
@@ -622,14 +622,14 @@ function CarteLigne({ r, onDetails, t }) {
   return (
     <div className={`bg-white/10 rounded-xl overflow-hidden border-l-2 ${cfg.border}`}>
       <button onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
+        className="w-full flex items-center justify-between px-3 sm:px-4 py-3 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
           <span className="text-sm font-semibold text-white truncate">{r.nom_complet}</span>
-          <span className="text-xs text-white/80">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
+          <span className="text-xs text-white/80 truncate">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
         </div>        
       </button>
       {open && (
-        <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
+        <div className="border-t border-white/10 px-3 sm:px-4 pb-4 pt-3 flex flex-col gap-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {[
               { label: t.cellule, value: r.cellule_full },
@@ -639,9 +639,9 @@ function CarteLigne({ r, onDetails, t }) {
               { label: t.bapteme, value: formatDateFR(r.date_baptise) },
               { label: t.debutMinistere, value: formatDateFR(r.debut_ministere) },
             ].map(({ label, value }) => (
-              <div key={label} className="bg-white/5 rounded-xl px-3 py-2">
-                <p className="text-[10px] text-white/40">{label}</p>
-                <p className="text-sm text-white font-medium">{value || "—"}</p>
+              <div key={label} className="bg-white/5 rounded-xl px-3 py-2 min-w-0">
+                <p className="text-[10px] text-white/40 truncate">{label}</p>
+                <p className="text-sm text-white font-medium truncate">{value || "—"}</p>
               </div>
             ))}
           </div>
@@ -668,13 +668,13 @@ function ComparaisonParCellule({ displayedReports, t }) {
   const max = Math.max(...lignes.map(([, n]) => n), 1);
 
   return (
-    <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-2 mb-1">
+    <div className="bg-white/10 rounded-2xl p-3 sm:p-4 flex flex-col gap-2 mb-1">
       <SectionTitle>{t.comparaisonCellules}</SectionTitle>
       {lignes.map(([cellule, n]) => (
-        <div key={cellule} className="flex items-center gap-3">
+        <div key={cellule} className="flex items-center gap-2 sm:gap-3">
           <p className="text-sm text-white flex-1 min-w-0 truncate">{cellule}</p>
-          <BarreProgression pct={(n / max) * 100} color="bg-blue-400" className="w-80 flex-shrink-0" />
-          <span className="text-sm font-semibold text-white w-8 text-right">{n}</span>
+          <BarreProgression pct={(n / max) * 100} color="bg-blue-400" className="w-16 sm:w-32 flex-shrink-0" />
+          <span className="text-sm font-semibold text-white w-8 flex-shrink-0 text-right">{n}</span>
         </div>
       ))}
     </div>
@@ -726,23 +726,23 @@ function OngletParCelluleDetail({ displayedReports, onDetails, piliers, cellules
         return (
           <div key={cellule} className="bg-white/10 rounded-2xl overflow-hidden">
             <button onClick={() => setExpandedCellules(p => ({ ...p, [cellule]: !p[cellule] }))}
-              className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
+              className="w-full flex items-center justify-between px-3 sm:px-4 py-4 hover:bg-white/5 transition text-left gap-3">
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                 <span className="font-semibold text-white truncate">{cellule}</span>
-                <span className="text-xs text-white/80">
+                <span className="text-xs text-white/80 truncate">
                   {responsable} · {t.persons(rows.length)}
                 </span>
               </div>
               <span className="text-white/30 text-xs flex-shrink-0">{isOpen ? "▲" : "▼"}</span>
             </button>
             {isOpen && (
-              <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
+              <div className="border-t border-white/10 px-3 sm:px-4 pb-4 pt-3 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <BarreProgression pct={pctInt} color="bg-emerald-400" />
-                  <span className="text-xs text-white/50">{t.integrated(pctInt)}</span>
+                  <span className="text-xs text-white/50 flex-shrink-0">{t.integrated(pctInt)}</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {[
                     { label: t.kpiIntegres, val: integres, color: "text-emerald-300" },
                     { label: t.baptises, val: baptises, color: "text-indigo-300" },
@@ -751,9 +751,9 @@ function OngletParCelluleDetail({ displayedReports, onDetails, piliers, cellules
                     { label: t.refus, val: refus, color: "text-red-300" },
                     { label: t.piliersLabel, val: pilierCount, color: "text-teal-300" },
                   ].map(({ label, val, color }) => (
-                    <div key={label} className="bg-white/5 rounded-xl px-3 py-2 text-center">
+                    <div key={label} className="bg-white/5 rounded-xl px-2 sm:px-3 py-2 text-center min-w-0">
                       <p className={`text-sm font-bold ${color}`}>{val}</p>
-                      <p className="text-sm text-white">{label}</p>
+                      <p className="text-xs sm:text-sm text-white truncate">{label}</p>
                     </div>
                   ))}
                 </div>
@@ -1093,17 +1093,17 @@ const cMap = {};
   ];
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+    <div className="min-h-screen flex flex-col items-center p-3 sm:p-6" style={{ background: "#333699" }}>
       <HeaderPages />
 
       <div className="w-full max-w-2xl mt-6 flex flex-col gap-5 mb-10">
 
         {/* En-tête */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mt-4 mb-2 text-blue-300 text-center text-white">
+        <div className="text-center px-1">
+          <h1 className="text-xl sm:text-2xl font-bold mt-4 mb-2 text-blue-300 text-center text-white">
             {t.pageTitle} <span className="text-emerald-300">{t.pageTitleHighlight}</span>
           </h1>
-          <p className="italic text-base text-white/90">
+          <p className="italic text-sm sm:text-base text-white/90">
             <span className="text-blue-300 font-semibold">{t.subtitle1}</span>{" "}
             {t.subtitle2} <span className="text-blue-300 font-semibold">{t.subtitle3}</span>
             {t.subtitle4}{" "}
@@ -1113,15 +1113,15 @@ const cMap = {};
         </div>
 
         {/* Filtres */}
-        <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
+        <div className="bg-white/10 rounded-2xl p-3 sm:p-4 flex flex-col gap-3">
           {/* Toggle mode */}
-          <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
+          <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit max-w-full overflow-x-auto">
             <button onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition whitespace-nowrap ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
               {t.quickPeriod}
             </button>
             <button onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition whitespace-nowrap ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
               {t.dateRange}
             </button>
           </div>
@@ -1142,16 +1142,16 @@ const cMap = {};
           {/* Tranche personnalisée */}
           {modePerso && (
             <div className="flex flex-col gap-2">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-white">{t.startDate}</label>
                   <input type="date" value={filterDebut} onChange={e => setFilterDebut(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 w-full" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-white">{t.endDate}</label>
                   <input type="date" value={filterFin} onChange={e => setFilterFin(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 w-full" />
                 </div>
               </div>
               <button onClick={() => fetchReports(true)}
@@ -1166,7 +1166,7 @@ const cMap = {};
             <div className="flex flex-col gap-1">
               <label className="text-xs text-white">{t.celluleLabel}</label>
               <select value={filterCellule} onChange={e => setFilterCellule(e.target.value)}
-                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
+                className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer w-full">
                 <option value="" className="bg-[#2a2d80]">{t.allCellules}</option>
                 {availableCellules.map((c, i) => (
                   <option key={i} value={c} className="bg-[#2a2d80]">{c}</option>
@@ -1177,10 +1177,10 @@ const cMap = {};
         </div>
 
         {/* Onglets */}
-        <div className="flex gap-1 bg-white/10 rounded-xl p-1">
+        <div className="flex gap-1 bg-white/10 rounded-xl p-1 overflow-x-auto">
           {onglets.map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-2 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
+              className={`flex-shrink-0 sm:flex-1 py-2 px-2.5 sm:px-2 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}>
               {o.label}
             </button>
           ))}
@@ -1219,7 +1219,6 @@ const cMap = {};
                 <SectionTitle
                   icon="🏠"
                   total={leadersDeveloppementAvecCellule.length}
-                  className="px-8"
                 >
                   {t.repartitionParCellule}
                 </SectionTitle>

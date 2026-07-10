@@ -212,7 +212,7 @@ function getMonthNameEN(monthIndex) {
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
-  return <p className="text-sm font-semibold tracking-widest text-white/80 mb-3">{children}</p>;
+  return <p className="text-sm font-semibold uppercase tracking-widest text-white/80 mb-3">{children}</p>;
 }
 function KpiCard({ label, value, sub, accent }) {
   const c = { green: "text-emerald-400", red: "text-red-400", amber: "text-amber-400", white: "text-white", blue: "text-blue-300", pink: "text-pink-300", purple: "text-purple-300" };
@@ -281,12 +281,12 @@ function BlocKpiGlobaux({ rapports, t }) {
             <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
               <p className="text-xl font-bold text-white/80">{totalH}</p>
               <p className="text-[11px] text-blue-400/70">{t.kpiHommeLabel}</p>
-              <p className="text-[10px] text-blue-500/50">{pctH}%</p>
+              <p className="text-[10px] text-white/40">{pctH}%</p>
             </div>
             <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
               <p className="text-xl font-bold text-white/80">{totalF}</p>
               <p className="text-[11px] text-pink-400/70">{t.kpiFemmeLabel}</p>
-              <p className="text-[10px] text-pink-500/50">{pctF}%</p>
+              <p className="text-[10px] text-white/40">{pctF}%</p>
             </div>
           </div>
           <div className="flex h-2 rounded-full overflow-hidden gap-0.5">
@@ -313,7 +313,7 @@ function BlocTendance({ rapports, t, lang }) {
     parMois[key].f += Number(r.femmes || 0);
   });
   const mois = Object.entries(parMois).sort(([a], [b]) => a.localeCompare(b)).slice(-8);
-  if (mois.length < 2) return <p className="text-white text-sm text-center py-4">{t.tendanceInsuffisant}</p>;
+  if (mois.length < 2) return <p className="text-white/30 text-sm text-center py-4">{t.tendanceInsuffisant}</p>;
   const maxVal = Math.max(...mois.map(([, v]) => v.h + v.f), 1);
   const derniere = mois[mois.length - 1];
   const avantDerniere = mois[mois.length - 2];
@@ -333,11 +333,11 @@ function BlocTendance({ rapports, t, lang }) {
               <div className="flex-1 bg-blue-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (h / maxVal) * 60)}px` }} />
               <div className="flex-1 bg-pink-500/70 rounded-t-sm" style={{ height: `${Math.max(3, (f / maxVal) * 60)}px` }} />
             </div>
-            <p className="text-[9px] text-white truncate w-full text-center">{label}</p>
+            <p className="text-[9px] text-white/30 truncate w-full text-center">{label}</p>
           </div>
         ))}
       </div>
-      <div className="flex gap-3 text-[11px] text-white">
+      <div className="flex gap-3 text-[11px] text-white/40">
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-500/70 inline-block" /> {t.legendH}</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-pink-500/70 inline-block" /> {t.legendF}</span>
       </div>
@@ -357,7 +357,7 @@ function BlocParOfficiant({ rapports, t }) {
   });
   const lignes = Object.entries(parOfficiant).sort((a, b) => (b[1].h + b[1].f) - (a[1].h + a[1].f));
   const maxTot = Math.max(...lignes.map(([, v]) => v.h + v.f), 1);
-  if (!lignes.length) return <p className="text-white text-sm text-center py-4">{t.aucuneDonnee}</p>;
+  if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">{t.aucuneDonnee}</p>;
   return (
     <div className="flex flex-col gap-2">
       {lignes.map(([nom, { h, f, nb }]) => {
@@ -391,13 +391,13 @@ function CarteSession({ r, onEdit, t }) {
         className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="font-semibold text-white text-sm">{r.baptise_par || "—"}</span>
-          <span className="text-[11px] text-white/40">{formatDateFr(r.date)}</span>
+          <span className="text-[11px] text-white/60">{formatDateFr(r.date)}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge color="blue">H {r.hommes}</Badge>
           <Badge color="pink">F {r.femmes}</Badge>
           <Badge color="amber">{t.total} {total}</Badge>
-          <span className="text-white/80 text-xs">{open ? "▲" : "▼"}</span>
+          <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
         </div>
       </button>
       {open && (
@@ -409,7 +409,7 @@ function CarteSession({ r, onEdit, t }) {
               { label: t.total, value: total, color: "text-amber-300 font-bold" },
             ].map(({ label, value, color }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
-                <p className="text-[10px] text-white">{label}</p>
+                <p className="text-[10px] text-white/40">{label}</p>
                 <p className={`text-lg font-bold ${color}`}>{value || 0}</p>
               </div>
             ))}
@@ -485,29 +485,29 @@ function FormulaireSaisie({ formData, setFormData, candidats, selectedCandidats,
         <div className="flex items-center justify-between">
           <p className="text-white font-semibold">{editRapport ? t.modifierRapport : t.nouveauRapport}</p>
           {editRapport && (
-            <button onClick={onCancelEdit} className="text-xs text-white/40 hover:text-white/70 transition">{t.annuler}</button>
+            <button onClick={onCancelEdit} className="text-sm text-white/80 hover:text-white transition">{t.annuler}</button>
           )}
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-white/50">{t.dateLabel}</label>
+          <label className="text-sm text-white/80">{t.dateLabel}</label>
           <input type="date" required value={formData.date}
             onChange={e => setFormData(p => ({ ...p, date: e.target.value }))}
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/40" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-blue-300/70">{t.hommes}</label>
+            <label className="text-sm text-blue-300/70">{t.hommes}</label>
             <input type="number" value={formData.hommes} disabled
               className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-blue-300 text-sm text-center opacity-70 cursor-not-allowed" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-pink-300/70">{t.femmes}</label>
+            <label className="text-sm text-pink-300/70">{t.femmes}</label>
             <input type="number" value={formData.femmes} disabled
               className="bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-pink-300 text-sm text-center opacity-70 cursor-not-allowed" />
           </div>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-white/50">{t.baptisePar}</label>
+          <label className="text-sm text-white/80">{t.baptisePar}</label>
           <input type="text" required value={formData.baptise_par}
             onChange={e => setFormData(p => ({ ...p, baptise_par: e.target.value }))}
             placeholder={t.officiантPlaceholder}
@@ -544,16 +544,14 @@ function RapportBaptemes() {
   const [selectedCandidats, setSelectedCandidats] = useState([]);
   const [onglet, setOnglet] = useState("kpi");
   const [rapportSuccess, setRapportSuccess] = useState(false);
-  const [userProfile, setUserProfile] = useState(null); // ← profil complet stocké
+  const [userProfile, setUserProfile] = useState(null);
   const formRef = useRef(null);
 
-  // ✅ Lire ?onglet=saisie depuis l'URL
   useEffect(() => {
     const ongletParam = searchParams.get("onglet");
     if (ongletParam === "saisie") setOnglet("saisie");
   }, [searchParams]);
 
-  // Calcul hommes/femmes depuis sélection
   useEffect(() => {
     const selected = candidats.filter(c => selectedCandidats.includes(c.id));
     setFormData(prev => ({
@@ -563,7 +561,6 @@ function RapportBaptemes() {
     }));
   }, [selectedCandidats, candidats]);
 
-  // ─── Chargement utilisateur + fetchCandidats avec filtres par rôle ───
   useEffect(() => {
     const fetchUser = async () => {
       const { data: session } = await supabase.auth.getSession();
@@ -584,7 +581,6 @@ function RapportBaptemes() {
     fetchUser();
   }, []);
 
-  // ─── fetchCandidats : filtre selon le rôle ───────────────────
   const fetchCandidats = async (profile) => {
     const { eglise_id, id: profileId, role, superviseur_id } = profile;
     const roles = profile.roles || [role];
@@ -606,7 +602,6 @@ function RapportBaptemes() {
       roles.includes("SuperviseurCellule") ||
       roles.includes("SuperviseurFamilles")
     ) {
-      // Voit les membres des cellules qu'il supervise
       const { data: cellulesSupervisees } = await supabase
         .from("cellules")
         .select("id")
@@ -621,7 +616,6 @@ function RapportBaptemes() {
       }
 
     } else if (roles.includes("ResponsableCellule")) {
-      // Cellule(s) dont il est responsable direct
       const { data: celluleDirecte } = await supabase
         .from("cellules")
         .select("id")
@@ -629,7 +623,6 @@ function RapportBaptemes() {
 
       const idsMere = (celluleDirecte || []).map(c => c.id);
 
-      // Cellules filles (enfants directs)
       let idsFilles = [];
       if (idsMere.length > 0) {
         const { data: filles } = await supabase
@@ -649,7 +642,6 @@ function RapportBaptemes() {
       }
 
     } else if (roles.includes("ResponsableFamilles")) {
-      // Membres de ses familles
       const { data: familles } = await supabase
         .from("familles")
         .select("id")
@@ -664,11 +656,9 @@ function RapportBaptemes() {
       }
 
     } else if (roles.includes("Conseiller")) {
-      // Membres qui lui sont attribués directement
       query = query.eq("conseiller_id", profileId);
 
     } else {
-      // Rôle inconnu ou restreint — ne montre rien
       setCandidats([]);
       return;
     }
@@ -677,7 +667,6 @@ function RapportBaptemes() {
     setCandidats(data || []);
   };
 
-  // ─── fetchRapports (inchangé, filtre sur eglise_id) ──────────
   const fetchRapports = async (overrideModePerso = null) => {
     if (!formData.eglise_id) return;
     setLoading(true);
@@ -706,7 +695,6 @@ function RapportBaptemes() {
     if (!modePerso && formData.eglise_id) fetchRapports(false);
   }, [formData.eglise_id, filtrePeriode, modePerso]);
 
-  // ─── handleSubmit ─────────────────────────────────────────────
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!formData.baptise_par.trim()) { alert(t.alertOfficiant); return; }
@@ -753,7 +741,6 @@ function RapportBaptemes() {
       }
 
       setSelectedCandidats([]);
-      // ✅ Utiliser userProfile pour recharger les candidats filtrés
       if (userProfile) fetchCandidats(userProfile);
       setRapportSuccess(true);
       setTimeout(() => setRapportSuccess(false), 3000);
@@ -807,23 +794,25 @@ function RapportBaptemes() {
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
               {t.perioderapide}
             </button>
             <button onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
               {t.tranchedates}
             </button>
           </div>
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/80 flex-shrink-0">{t.periode}</span>
-              {periodes.map(p => (
-                <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "bg-white/15 text-white/70 hover:bg-white/20"}`}>
-                  {p.label}
-                </button>
-              ))}
+              <span className="text-sm text-white/60 flex-shrink-0">{t.periode}</span>
+              <div className="flex gap-1 bg-white/10 rounded-xl p-1 flex-wrap">
+                {periodes.map(p => (
+                  <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
+                    className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {modePerso && (
@@ -852,7 +841,7 @@ function RapportBaptemes() {
         <div className="flex gap-1 bg-white/10 rounded-xl p-1">
           {onglets.map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}>
+              className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/80 hover:text-white"}`}>
               {o.label}
             </button>
           ))}
@@ -884,11 +873,12 @@ function RapportBaptemes() {
           </div>
         ) : rapports.length === 0 ? (
           <div className="bg-white/10 rounded-2xl p-8 text-center flex flex-col gap-3">
-            <p className="text-white text-sm">{t.aucunRapport}</p>            
+            <p className="text-white text-sm">{t.aucunRapport}</p>
           </div>
         ) : onglet === "kpi" ? (
           <div className="flex flex-col gap-7">
-            <div>             
+            <div>
+              <SectionTitle>{t.sectionVueEnsemble}</SectionTitle>
               <BlocKpiGlobaux rapports={rapports} t={t} />
             </div>
             <div>
@@ -910,8 +900,6 @@ function RapportBaptemes() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            <div className="flex justify-end">              
-            </div>
             {sessions.map((r, i) => (
               <CarteSession key={`${r.date}-${r.baptise_par}-${i}`} r={r} onEdit={handleEdit} t={t} />
             ))}

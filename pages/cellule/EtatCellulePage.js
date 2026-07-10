@@ -44,7 +44,7 @@ const translations = {
     // Onglets
     tabOverview: "Vue d'ensemble",
     tabCellules: "Par cellule",
-    tabMois: "Par mois",
+    tabMois: "Tendances",
     // Loading / empty
     loading: "Chargement...",
     emptyPerso: "Choisissez une plage de dates et cliquez sur « Générer le rapport »",
@@ -145,7 +145,7 @@ const translations = {
     allCellules: "All cells",
     tabOverview: "Overview",
     tabCellules: "By cell",
-    tabMois: "By month",
+    tabMois: "Trends",
     loading: "Loading...",
     emptyPerso: "Choose a date range and click \"Generate report\"",
     emptyPeriod: "No data for this period",
@@ -278,10 +278,10 @@ function Badge({ children, color }) {
   };
   return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${m[color] || m.gray}`}>{children}</span>;
 }
-function BarreProgression({ pct, color }) {
+function BarreProgression({ pct, color, className = "flex-1" }) {
   const col = color || (pct >= 70 ? "bg-emerald-400" : pct >= 40 ? "bg-amber-400" : "bg-red-400");
   return (
-    <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+    <div className={`h-1.5 bg-white/10 rounded-full overflow-hidden ${className}`}>
       <div className={`h-full rounded-full transition-all ${col}`} style={{ width: `${Math.min(pct || 0, 100)}%` }} />
     </div>
   );
@@ -411,8 +411,8 @@ function BlocParCellule({ displayedReports, t }) {
       {lignes.map(([cellule, { total, integres, encours, refus }]) => (
         <div key={cellule} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
           <div className="flex items-center gap-3">
-            <p className="text-sm text-white w-36 flex-shrink-0 truncate">{cellule}</p>
-            <BarreProgression pct={(total / max) * 100} color="bg-blue-400" />
+            <p className="text-sm text-white flex-1 min-w-0 truncate">{cellule}</p>
+            <BarreProgression pct={(total / max) * 100} color="bg-blue-400" className="w-16 flex-shrink-0" />
             <span className="text-sm font-bold text-white w-6 text-right">{total}</span>
           </div>
           <div className="flex gap-2 ml-36">
@@ -601,8 +601,8 @@ function BlocRepartitionLeaders({ leadersDeveloppement, refList, idKey, labelKey
     <div className="flex flex-col gap-2 px-4">
       {lignes.map(({ id, nom, count }) => (
         <div key={id} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
-          <p className="text-sm text-white w-36 flex-shrink-0 truncate">{nom}</p>
-          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" />
+          <p className="text-sm text-white flex-1 min-w-0 truncate">{nom}</p>
+          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" className="w-16 flex-shrink-0" />
           <span className="text-sm font-semibold text-white w-6 text-right">{count}</span>
         </div>
       ))}
@@ -623,11 +623,7 @@ function CarteLigne({ r, onDetails, t }) {
         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
           <span className="text-sm font-semibold text-white truncate">{r.nom_complet}</span>
           <span className="text-xs text-white">{r.type_evangelisation} · {formatDateFR(r.date_depart)}</span>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Badge color={cfg.badge}>{cfg.label}</Badge>
-          <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
-        </div>
+        </div>        
       </button>
       {open && (
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
@@ -672,8 +668,8 @@ function ComparaisonParCellule({ displayedReports, t }) {
       <SectionTitle>{t.comparaisonCellules}</SectionTitle>
       {lignes.map(([cellule, n]) => (
         <div key={cellule} className="flex items-center gap-3">
-          <p className="text-sm text-white w-36 flex-shrink-0 truncate">{cellule}</p>
-          <BarreProgression pct={(n / max) * 100} color="bg-blue-400" />
+          <p className="text-sm text-white flex-1 min-w-0 truncate">{cellule}</p>
+          <BarreProgression pct={(n / max) * 100} color="bg-blue-400" className="w-16 flex-shrink-0" />
           <span className="text-sm font-bold text-white w-8 text-right">{n}</span>
         </div>
       ))}

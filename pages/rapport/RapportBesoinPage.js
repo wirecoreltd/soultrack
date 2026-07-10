@@ -294,12 +294,12 @@ function BlocGenre({ besoinsCount, t }) {
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-blue-900/40 rounded-xl px-3 py-3 text-center">
-          <p className="text-sm font-semibold text-white/80">{totalH}</p>
+          <p className="textfont-semibold text-white/80">{totalH}</p>
           <p className="text-xs text-white/80">{t.hommes}</p>
           <p className="text-xs text-white/80">{pctH}%</p>
         </div>
         <div className="bg-pink-900/40 rounded-xl px-3 py-3 text-center">
-          <p className="text-sm font-semibold text-white/80">{totalF}</p>
+          <p className="text font-semibold text-white/80">{totalF}</p>
           <p className="text-xs text-white/80">{t.femmes}</p>
           <p className="text-xs text-white/80">{pctF}%</p>
         </div>
@@ -327,12 +327,12 @@ function BlocStatut({ besoinsCount, t }) {
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-yellow-900/40 rounded-xl px-3 py-3 text-center">
-          <p className="text-sm font-semibold text-white/80">{totalEnSuivi}</p>
+          <p className="text font-semibold text-white/80">{totalEnSuivi}</p>
           <p className="text-xs text-white/80">{t.enSuiviLabel}</p>
           <p className="text-xs text-white/80">{pctSuivi}%</p>
         </div>
         <div className="bg-emerald-900/40 rounded-xl px-3 py-3 text-center">
-          <p className="text-sm font-semibold text-white/80">{totalResolu}</p>
+          <p className="text font-semibold text-white/80">{totalResolu}</p>
           <p className="text-xs text-white/80">{t.resoluLabel}</p>
           <p className="text-xs text-white/80">{pctResolu}%</p>
         </div>

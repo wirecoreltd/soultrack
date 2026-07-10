@@ -616,17 +616,16 @@ export default function RapportEvangelisation() {
       });
       setFilteredEvangelises(filtered);
 
-      let query = supabase
+     let query = supabase
   .from("rapport_evangelisation")
   .select(
-    "id, eglise_id, evangelise_member_id, date_evangelise, type_evangelisation, hommes, femmes, priere, nouveau_converti, reconciliation, moissonneurs"
+    "eglise_id, evangelise_member_id, date_evangelise, type_evangelisation, hommes, femmes, priere, nouveau_converti, reconciliation, moissonneurs"
   )
   .eq("eglise_id", egliseId)
   .in("evangelise_member_id", filtered.map(e => e.id))
   .order("date_evangelise", { ascending: false });
 // on retire les .gte()/.lte() ici : la période est déjà appliquée via `filtered`
-const { data: rapportsData } = await query;
-      console.log("rapportsData:", rapportsData, "error:", error);
+const { data: rapportsData } = await query;      
       setRapports(rapportsData || []);
 
       const { data: suivisData } = await supabase

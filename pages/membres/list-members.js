@@ -425,6 +425,7 @@ function ListMembersContent() {
   const isIntegration = roles.includes("ResponsableIntegration");
   const canAddMember = isAdmin || isIntegration;
   const canEditSensitiveFields = isAdmin || isIntegration;
+  const statusFromUrl = searchParams.get("status"); // "actif" | "resolu"
 
   const getLabel = (options, value) => {
   if (!value) return "—";
@@ -495,42 +496,56 @@ const getYesNo = (value) => {
 
   // ─── FIX : charge les membre_ids depuis suivis.besoin ─────────
   useEffect(() => {
-    if (!besoinFromUrl || !userProfile) return;
+  if (!besoinFromUrl || !userProfile) return;
 
-    const fetchBesoinIds = async () => {
-      let query = supabase
-        .from("suivis")
-        .select("membre_id, besoin, date_action");
+  const fetchBesoinIds = async () => {
+    let query = supabase.from("suivis").select("membre_id, besoin, date_action");
+    if (dateDebut) query = query.gte("date_action", dateDebut);
+    if (dateFin)   query = query.lte("date_action", dateFin);
 
-      if (dateDebut) query = query.gte("date_action", dateDebut);
-      if (dateFin)   query = query.lte("date_action", dateFin);
+    const { data, error } = await query;
+    if (error || !data) {
+      console.error("fetchBesoinIds error:", error);
+      setBesoinMembreIds([]);
+      return;
+    }
 
-      const { data, error } = await query;
-      if (error || !data) {
-        console.error("fetchBesoinIds error:", error);
-        setBesoinMembreIds([]);
-        return;
-      }
+    const sorted = [...data].sort(
+      (a, b) => new Date(b.date_action) - new Date(a.date_action)
+    );
 
-      const ids = new Set();
-      data.forEach((s) => {
-        if (!s.besoin) return;
-        let items = [];
-        try {
-          items = Array.isArray(s.besoin) ? s.besoin : JSON.parse(s.besoin);
-        } catch { return; }
+    const statusParMembre = new Map();
 
-        items.forEach((item) => {
-          const label = typeof item === "string" ? item.trim() : item?.label?.trim();
-          if (getCanonicalBesoin(label) === getCanonicalBesoin(besoinFromUrl)) ids.add(s.membre_id);
-        });
+    sorted.forEach((s) => {
+      if (!s.besoin) return;
+      if (statusParMembre.has(s.membre_id)) return; // déjà le plus récent pour ce membre
+
+      let items = [];
+      try {
+        items = Array.isArray(s.besoin) ? s.besoin : JSON.parse(s.besoin);
+      } catch { return; }
+
+      const match = items.find((item) => {
+        const label = typeof item === "string" ? item.trim() : item?.label?.trim();
+        return getCanonicalBesoin(label) === getCanonicalBesoin(besoinFromUrl);
       });
+      if (!match) return;
 
-      setBesoinMembreIds([...ids]);
-    };
+      const statut = typeof match === "string" ? null : match?.statut;
+      const isResolu = statut === "Résolu" || statut === "Resolved";
+      statusParMembre.set(s.membre_id, isResolu ? "resolu" : "actif");
+    });
 
-    fetchBesoinIds();
-  }, [besoinFromUrl, userProfile, dateDebut, dateFin]);
+    const wanted = statusFromUrl === "resolu" ? "resolu" : "actif";
+    const ids = [...statusParMembre.entries()]
+      .filter(([, status]) => status === wanted)
+      .map(([membreId]) => membreId);
+
+    setBesoinMembreIds(ids);
+  };
+
+  fetchBesoinIds();
+}, [besoinFromUrl, statusFromUrl, userProfile, dateDebut, dateFin]);
 
   // ─── fetchAssignments ──────────────────────────────────────────
   const fetchAssignments = useCallback(async (currentUserProfile) => {

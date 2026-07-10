@@ -40,7 +40,7 @@ const translations = {
     generateReport: "Générer le rapport",
     celluleLabel: "Cellule",
     allCellules: "Toutes les cellules",
-    comparaisonCellules: "Comparaison par cellule",
+    comparaisonCellules: "Tendences par cellule",
     // Onglets
     tabOverview: "Vue d'ensemble",
     tabCellules: "Par cellule",
@@ -187,7 +187,7 @@ const translations = {
     noData: "No data",
     seeDetails: "See details",
     cellule: "Cell",
-    comparaisonCellules: "Comparison by cell",
+    comparaisonCellules: "Trends by cell",
     responsable: "Leader",
     assignedOn: "Assigned on",
     dateEvolution: "Evolution date",
@@ -602,7 +602,7 @@ function BlocRepartitionLeaders({ leadersDeveloppement, refList, idKey, labelKey
       {lignes.map(({ id, nom, count }) => (
         <div key={id} className="bg-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
           <p className="text-sm text-white flex-1 min-w-0 truncate">{nom}</p>
-          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" className="w-16 flex-shrink-0" />
+          <BarreProgression pct={(count / max) * 100} color="bg-blue-400" className="w-24 flex-shrink-0" />
           <span className="text-sm font-semibold text-white w-6 text-right">{count}</span>
         </div>
       ))}
@@ -670,7 +670,7 @@ function ComparaisonParCellule({ displayedReports, t }) {
         <div key={cellule} className="flex items-center gap-3">
           <p className="text-sm text-white flex-1 min-w-0 truncate">{cellule}</p>
           <BarreProgression pct={(n / max) * 100} color="bg-blue-400" className="w-16 flex-shrink-0" />
-          <span className="text-sm font-bold text-white w-8 text-right">{n}</span>
+          <span className="text-sm font-semibold text-white w-8 text-right">{n}</span>
         </div>
       ))}
     </div>
@@ -678,50 +678,14 @@ function ComparaisonParCellule({ displayedReports, t }) {
 }
 
 // ─── ONGLET PAR MOIS ──────────────────────────────────────────
-function OngletParMois({ displayedReports, onDetails, t }) {
-  const [expandedMonths, setExpandedMonths] = useState({});
-
-  const grouped = {};
-  displayedReports.forEach(r => {
-    const d = new Date(r.date_depart);
-    const key = `${d.getFullYear()}-${d.getMonth()}`;
-    if (!grouped[key]) grouped[key] = { label: `${t.months[d.getMonth()]} ${d.getFullYear()}`, rows: [] };
-    grouped[key].rows.push(r);
-  });
-
-  const sorted = Object.entries(grouped).sort((a, b) => {
-    const [yA, mA] = a[0].split("-").map(Number);
-    const [yB, mB] = b[0].split("-").map(Number);
-    return new Date(yB, mB) - new Date(yA, mA);
-  });
-
-  if (!sorted.length) return <p className="text-white/30 text-sm text-center py-8">{t.noDataPeriod}</p>;
+function OngletParMois({ displayedReports, t }) {
+  if (!displayedReports.length) {
+    return <p className="text-white/30 text-sm text-center py-8">{t.noDataPeriod}</p>;
+  }
 
   return (
     <div className="flex flex-col gap-3">
       <ComparaisonParCellule displayedReports={displayedReports} t={t} />
-      {sorted.map(([key, { label, rows }]) => {
-        const isOpen = expandedMonths[key];
-        const integres = rows.filter(r => ["integre","intégré"].includes(getStatutNormalise(r.statut))).length;
-        return (
-          <div key={key} className="bg-white/10 rounded-2xl overflow-hidden">
-            <button onClick={() => setExpandedMonths(p => ({ ...p, [key]: !p[key] }))}
-              className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
-              <span className="font-semibold text-white">{label}</span>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Badge color="gray">{t.persons(rows.length)}</Badge>
-                <Badge color="green">✔ {integres}</Badge>
-                <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
-              </div>
-            </button>
-            {isOpen && (
-              <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
-                {rows.map((r, i) => <CarteLigne key={i} r={r} onDetails={onDetails} t={t} />)}
-              </div>
-            )}
-          </div>
-        );
-      })}
     </div>
   );
 }
@@ -1293,7 +1257,7 @@ function EtatCellule() {
         ) : onglet === "cellules" ? (
           <OngletParCelluleDetail displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
         ) : (
-          <OngletParMois displayedReports={displayedReports} onDetails={handleDetailsClick} t={t} />
+          <OngletParMois displayedReports={displayedReports} t={t} />
         )}
 
       </div>

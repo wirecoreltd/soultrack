@@ -337,6 +337,27 @@ export default function ListMembers() {
   );
 }
 
+const BESOIN_CANONICAL_EN = {
+  "Finances": "Finances",
+  "Santé": "Health", "Health": "Health",
+  "Travail / Études": "Work / Studies", "Work / Studies": "Work / Studies",
+  "Famille / Enfants": "Family / Children", "Family / Children": "Family / Children",
+  "Relations / Conflits": "Relationships / Conflicts", "Relationships / Conflicts": "Relationships / Conflicts",
+  "Addictions / Dépendances": "Addictions / Dependencies", "Addictions / Dependencies": "Addictions / Dependencies",
+  "Guidance spirituelle": "Spiritual Guidance", "Spiritual Guidance": "Spiritual Guidance",
+  "Logement / Sécurité": "Housing / Safety", "Housing / Safety": "Housing / Safety",
+  "Communauté / Isolement": "Community / Isolation", "Community / Isolation": "Community / Isolation",
+  "Dépression / Santé mentale": "Depression / Mental Health", "Depression / Mental Health": "Depression / Mental Health",
+  "Miracle": "Miracle",
+  "Délivrance": "Deliverance", "Deliverance": "Deliverance",
+  "Others": "Others", "Autres": "Others",
+};
+
+function getCanonicalBesoin(label) {
+  if (!label) return label;
+  return BESOIN_CANONICAL_EN[label] || label;
+}
+
 function ListMembersContent() {
   const { lang } = useLang();
   const t = translations[lang];

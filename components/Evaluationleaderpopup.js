@@ -556,6 +556,73 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
              hint={t.choisirEtape}
            />
 
+          {/* HISTORIQUE - remonté avant le formulaire de nouvelle évaluation */}
+          <SectionTitle>{t.historique}</SectionTitle>
+
+          {evaluations.length === 0 && <p className="text-sm text-gray-400 italic">{t.aucuneEval}</p>}
+
+          {evaluations.map((ev) => {
+            const isBeingEdited = editingEval?.id === ev.id;
+            const isExpanded = expandedEvals[ev.id];
+            const stageInfo = t.parcours.find((s) => s.key === ev.parcours_etape);
+
+            return (
+              <div key={ev.id} className={`rounded-xl px-4 py-3 text-sm space-y-1 border transition-colors ${isBeingEdited ? "bg-orange-50 border-orange-300" : "bg-gray-50 border-gray-200"}`}>
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-gray-800">📅 {formatDate(ev.date_action)}</p>
+                  <button onClick={() => handleEditEval(ev)} className={`text-xs px-2 py-1 rounded-lg font-semibold border transition-colors ${isBeingEdited ? "bg-orange-100 border-orange-400 text-orange-700" : "bg-white border-gray-300 text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600"}`}>
+                    {isBeingEdited ? t.enCours : t.modifier}
+                  </button>
+                </div>
+
+                {stageInfo && (
+                  <p className="text-gray-700">
+                    {stageInfo.emoji} <span className="font-semibold" style={{ color: "#2E3192" }}>{stageInfo.label}</span>
+                  </p>
+                )}
+                
+                <button
+                  onClick={() => toggleExpand(ev.id)}
+                  className="text-xs font-semibold mt-1 flex items-center gap-1"
+                  style={{ color: "#2E3192", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                >
+                  {isExpanded ? t.voirMoins : t.voirDetails}
+                </button>
+
+                {isExpanded && (
+                  <div className="mt-2 space-y-3 pt-2 border-t border-gray-200">                   
+                    {SECTION_CONFIG.map((cfg) => {
+                      const items = parseArr(ev[cfg.key]);
+                      const autres = ev[cfg.autresKey];
+                      if (items.length === 0 && !autres) return null;
+                      return (
+                        <div key={cfg.key}>
+                          <p style={{ fontSize: 10, fontWeight: 700, color: "#2E3192", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 3 }}>
+                            {t[cfg.titleKey]}
+                          </p>
+                          {items.map((it, i) => <p key={i} className="text-gray-700">• {it}</p>)}
+                          {autres && <DetailBlock label={cfg.autresLabel === "autres" ? t.autres : t.observation} value={autres} />}
+                        </div>
+                      );
+                    })}
+                    {(parseArr(ev.prochaine_etape).length > 0 || ev.prochaine_etape_objectif || ev.prochaine_etape_date) && (
+                      <div>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: "#2E3192", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 3 }}>
+                          {t.s10_titre}
+                        </p>
+                        {parseArr(ev.prochaine_etape).map((it, i) => <p key={i} className="text-gray-700">• {it}</p>)}
+                        {ev.prochaine_etape_objectif && <DetailBlock label={t.objectif} value={ev.prochaine_etape_objectif} />}
+                        {ev.prochaine_etape_date && <p className="text-gray-600 text-xs mt-1">{t.dateProchainSuivi} : {formatDate(ev.prochaine_etape_date)}</p>}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <p className="text-gray-400 text-xs pt-1">👤 {ev.profiles?.prenom} {ev.profiles?.nom}</p>
+              </div>
+            );
+          })}
+
           {editingEval && (
             <div className="flex items-center justify-between bg-orange-50 border border-orange-300 rounded-xl px-4 py-2">
               <p className="text-orange-700 text-sm font-semibold">{t.modificationDu} {formatDate(editingEval.date_action)}</p>
@@ -632,73 +699,6 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
           </SectionBlock>
 
           {currentUserName && <p className="text-center text-sm text-gray-400">👤 {currentUserName}</p>}          
-
-          {/* HISTORIQUE */}
-          <SectionTitle>{t.historique}</SectionTitle>
-
-          {evaluations.length === 0 && <p className="text-sm text-gray-400 italic">{t.aucuneEval}</p>}
-
-          {evaluations.map((ev) => {
-            const isBeingEdited = editingEval?.id === ev.id;
-            const isExpanded = expandedEvals[ev.id];
-            const stageInfo = t.parcours.find((s) => s.key === ev.parcours_etape);
-
-            return (
-              <div key={ev.id} className={`rounded-xl px-4 py-3 text-sm space-y-1 border transition-colors ${isBeingEdited ? "bg-orange-50 border-orange-300" : "bg-gray-50 border-gray-200"}`}>
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold text-gray-800">📅 {formatDate(ev.date_action)}</p>
-                  <button onClick={() => handleEditEval(ev)} className={`text-xs px-2 py-1 rounded-lg font-semibold border transition-colors ${isBeingEdited ? "bg-orange-100 border-orange-400 text-orange-700" : "bg-white border-gray-300 text-gray-600 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600"}`}>
-                    {isBeingEdited ? t.enCours : t.modifier}
-                  </button>
-                </div>
-
-                {stageInfo && (
-                  <p className="text-gray-700">
-                    {stageInfo.emoji} <span className="font-semibold" style={{ color: "#2E3192" }}>{stageInfo.label}</span>
-                  </p>
-                )}
-                
-                <button
-                  onClick={() => toggleExpand(ev.id)}
-                  className="text-xs font-semibold mt-1 flex items-center gap-1"
-                  style={{ color: "#2E3192", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                >
-                  {isExpanded ? t.voirMoins : t.voirDetails}
-                </button>
-
-                {isExpanded && (
-                  <div className="mt-2 space-y-3 pt-2 border-t border-gray-200">                   
-                    {SECTION_CONFIG.map((cfg) => {
-                      const items = parseArr(ev[cfg.key]);
-                      const autres = ev[cfg.autresKey];
-                      if (items.length === 0 && !autres) return null;
-                      return (
-                        <div key={cfg.key}>
-                          <p style={{ fontSize: 10, fontWeight: 700, color: "#2E3192", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 3 }}>
-                            {t[cfg.titleKey]}
-                          </p>
-                          {items.map((it, i) => <p key={i} className="text-gray-700">• {it}</p>)}
-                          {autres && <DetailBlock label={cfg.autresLabel === "autres" ? t.autres : t.observation} value={autres} />}
-                        </div>
-                      );
-                    })}
-                    {(parseArr(ev.prochaine_etape).length > 0 || ev.prochaine_etape_objectif || ev.prochaine_etape_date) && (
-                      <div>
-                        <p style={{ fontSize: 10, fontWeight: 700, color: "#2E3192", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 3 }}>
-                          {t.s10_titre}
-                        </p>
-                        {parseArr(ev.prochaine_etape).map((it, i) => <p key={i} className="text-gray-700">• {it}</p>)}
-                        {ev.prochaine_etape_objectif && <DetailBlock label={t.objectif} value={ev.prochaine_etape_objectif} />}
-                        {ev.prochaine_etape_date && <p className="text-gray-600 text-xs mt-1">{t.dateProchainSuivi} : {formatDate(ev.prochaine_etape_date)}</p>}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <p className="text-gray-400 text-xs pt-1">👤 {ev.profiles?.prenom} {ev.profiles?.nom}</p>
-              </div>
-            );
-          })}
 
         </div>
 
@@ -782,52 +782,52 @@ function DetailBlock({ label, value }) {
   );
 }
 
-      function ParcoursWidget({ stages, selected, onSelect, hint }) {      
-        const activeStage = stages.find((s) => s.key === selected);
-      
-        return (
-          <div className="rounded-2xl p-4 border" style={{ background: "linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)", borderColor: "#c7cef5" }}>
-            {!activeStage && <p className="text-xs text-gray-400 italic mb-3">{hint}</p>}
-      
-            <div className="flex items-stretch justify-between gap-2">
-              {stages.map((stage) => {
-                const isActive = stage.key === selected;
-                const isDimmed = !!selected && !isActive;
-      
-                return (
-                  <button
-                    key={stage.key}
-                    type="button"
-                    onClick={() => {                    
-                      onSelect(stage.key);
-                    }}
-                      className="flex-1 flex flex-col items-center gap-1 rounded-xl px-2 py-3 transition-all active:scale-95"
-                             style={{
-                               background: isActive ? "#2E3192" : isDimmed ? "#f1f5f9" : "#ffffff",
-                               border: `2px solid ${isActive ? "#2E3192" : "#e2e8f0"}`,
-                               boxShadow: isActive
-                                 ? "0 4px 10px rgba(46,49,146,0.35)"
-                                 : "0 1px 3px rgba(0,0,0,0.10)",
-                             }}
-                           >
-                             <span className="text-2xl leading-none">{stage.emoji}</span>
-                             <span
-                               className="text-xs font-semibold text-center leading-tight"
-                               style={{ color: isActive ? "#ffffff" : "#334155" }}
-                             >
-                      {stage.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-      
-            {activeStage && (
-              <p className="text-xs text-gray-600 mt-3 text-center leading-relaxed">{activeStage.desc}</p>
-            )}
-          </div>
-        );
-      }
+function ParcoursWidget({ stages, selected, onSelect, hint }) {
+  const activeStage = stages.find((s) => s.key === selected);
+
+  return (
+    <div className="rounded-2xl p-3 sm:p-4 border" style={{ background: "linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%)", borderColor: "#c7cef5" }}>
+      {!activeStage && <p className="text-xs text-gray-400 italic mb-3">{hint}</p>}
+
+      <div className="grid grid-cols-2 sm:flex sm:items-stretch sm:justify-between gap-2">
+        {stages.map((stage) => {
+          const isActive = stage.key === selected;
+          const isDimmed = !!selected && !isActive;
+
+          return (
+            <button
+              key={stage.key}
+              type="button"
+              onClick={() => {
+                onSelect(stage.key);
+              }}
+              className="flex flex-col items-center gap-1 rounded-xl px-1.5 py-2 sm:flex-1 sm:px-2 sm:py-3 transition-all active:scale-95 min-w-0 w-full"
+              style={{
+                background: isActive ? "#2E3192" : isDimmed ? "#f1f5f9" : "#ffffff",
+                border: `2px solid ${isActive ? "#2E3192" : "#e2e8f0"}`,
+                boxShadow: isActive
+                  ? "0 4px 10px rgba(46,49,146,0.35)"
+                  : "0 1px 3px rgba(0,0,0,0.10)",
+              }}
+            >
+              <span className="text-xl sm:text-2xl leading-none">{stage.emoji}</span>
+              <span
+                className="text-[11px] sm:text-xs font-semibold text-center leading-tight break-words"
+                style={{ color: isActive ? "#ffffff" : "#334155" }}
+              >
+                {stage.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {activeStage && (
+        <p className="text-xs text-gray-600 mt-3 text-center leading-relaxed">{activeStage.desc}</p>
+      )}
+    </div>
+  );
+}
 
 function SectionTitle({ children }) {
   return (

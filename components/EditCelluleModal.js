@@ -17,7 +17,8 @@ const translations = {
     responsableDefault: "-- Choisir un responsable --",
     chargement: "Chargement...",
     telephone: "Téléphone du responsable",
-    email : "Email",
+    email: "Email",
+    emailPlaceholder: "exemple@email.com",
     telephonePlaceholder: "+33 6 00 00 00 00",
     sectionCelluleMere: "🌿 Cellule mère",
     celluleMere: "Responsable supérieur",
@@ -41,7 +42,8 @@ const translations = {
     chargement: "Loading...",
     telephone: "Leader's phone number",
     telephonePlaceholder: "+44 7700 000000",
-    email : "Email",
+    email: "Email",
+    emailPlaceholder: "example@email.com",
     sectionCelluleMere: "🌿 Parent cell",
     celluleMere: "Parent leader",
     celluleMereDefault: "-- Select a Parent --",
@@ -62,6 +64,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 
   const [ville, setVille]         = useState(cellule?.ville     || "");
   const [telephone, setTelephone] = useState(cellule?.telephone || "");
+  const [email, setEmail]         = useState(cellule?.email     || "");
   const [loading, setLoading]     = useState(false);
   const [message, setMessage]     = useState("");
 
@@ -266,13 +269,13 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
           </Field>
 
               <Field label={t.email}>
-            <input
-              className="inp"
-              value={email}
-              onChange={(e) => setTelephone(e.target.value)}
-              placeholder={t.emailPlaceholder}
-            />
-          </Field>
+                <input
+                  className="inp"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t.emailPlaceholder}
+                />
+              </Field>
 
           <SectionTitle>{t.sectionCelluleMere}</SectionTitle>
 

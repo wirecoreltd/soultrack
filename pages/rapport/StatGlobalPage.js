@@ -592,7 +592,7 @@ function BlocVueEnsemble({
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard label={t.kpiMembresActifs} value={totalMembresActifs} sub={t.kpiMembresActifsSub} accent="white/80" />
+        <KpiCard label={t.kpiMembresActifs} value={totalMembresActifs} sub={t.kpiMembresActifsSub} accent="white" />
         <KpiCard
           label={t.kpiTauxPresence}
           value={`${tauxPresence}%`}

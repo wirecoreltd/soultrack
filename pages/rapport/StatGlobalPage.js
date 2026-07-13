@@ -295,9 +295,9 @@ function KpiCard({ label, value, sub, accent, delta }) {
   };
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
-      <p className="text-sm text-white/80">{label}</p>
-      <p className={`text-lg font-bold leading-none ${c[accent] || "text-white/80"}`}>{value}</p>
-      {sub && <p className="text-xs text-white/80 mt-0.5">{sub}</p>}
+      <p className="text-sm text-white">{label}</p>
+      <p className={`text-lg font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
+      {sub && <p className="text-xs text-white mt-0.5">{sub}</p>}
       {delta !== null && delta !== undefined && (
         <p
           className={`text-sm font-semibold mt-0.5 ${
@@ -370,8 +370,8 @@ function StatChip({ label, value, accent }) {
   };
   return (
     <div className="bg-white/5 rounded-xl px-3 py-2 flex flex-col items-center min-w-[70px]">
-      <p className={`text-lg font-bold leading-none ${c[accent] || "text-white/80"}`}>{value}</p>
-      <p className="text-sm text-white/80 mt-0.5 text-center">{label}</p>
+      <p className={`text-lg font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
+      <p className="text-sm text-white mt-0.5 text-center">{label}</p>
     </div>
   );
 }
@@ -469,14 +469,14 @@ function CarteLeadersDeveloppement({ leadersStats, t }) {
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-white/80">{t.leadersTitle}</p>
+        <p className="text-sm text-white">{t.leadersTitle}</p>
         <p className="text-lg font-bold leading-none text-yellow-300">{total}</p>
       </div>
       <div className={`grid ${gridColsClass} gap-2`}>
         {stages.map((s) => (
           <div key={s.label} className="bg-white/5 rounded-xl px-3 py-3 text-center">
             <p className={`text-lg font-bold leading-none ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-white/80 mt-1">{s.label}</p>
+            <p className="text-xs text-white mt-1">{s.label}</p>
           </div>
         ))}
       </div>
@@ -490,7 +490,7 @@ function CarteConversions({ cd, t }) {
   return (
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-white/80">{t.sectionConversions}</p>
+        <p className="text-sm text-white">{t.sectionConversions}</p>
         <p className="text-lg font-bold leading-none text-yellow-300">{cd.total}</p>
       </div>
 
@@ -499,11 +499,11 @@ function CarteConversions({ cd, t }) {
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
             <p className="text-lg font-bold leading-none text-yellow-300">{cd.egliseNC}</p>
-            <p className="text-xs text-white/80 mt-1">{t.chipNouveauxConvertis}</p>
+            <p className="text-xs text-white mt-1">{t.chipNouveauxConvertis}</p>
           </div>
           <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
             <p className="text-lg font-bold leading-none text-blue-300">{cd.egliseRecon}</p>
-            <p className="text-xs text-white/80 mt-1">{t.chipReconciliations}</p>
+            <p className="text-xs text-white mt-1">{t.chipReconciliations}</p>
           </div>
         </div>
       </div>
@@ -513,11 +513,11 @@ function CarteConversions({ cd, t }) {
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
             <p className="text-lg font-bold leading-none text-yellow-300">{cd.evangNC}</p>
-            <p className="text-sm text-white/80 mt-1">{t.chipNouveauxConvertis}</p>
+            <p className="text-sm text-white mt-1">{t.chipNouveauxConvertis}</p>
           </div>
           <div className="bg-white/5 rounded-xl px-2 py-2 text-center">
             <p className="text-lg font-bold leading-none text-blue-300">{cd.evangRecon}</p>
-            <p className="text-sm text-white/80 mt-1">{t.chipReconciliations}</p>
+            <p className="text-sm text-white mt-1">{t.chipReconciliations}</p>
           </div>
         </div>
       </div>
@@ -636,7 +636,7 @@ function BlocVueEnsemble({
       <CarteConversions cd={cd} t={t} />
 
       <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-        <p className="text-sm text-white/80 font-semibold">{t.repartitionTitle}</p>
+        <p className="text-sm text-white font-semibold">{t.repartitionTitle}</p>
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: t.hommes, val: totaux.culteHommes, color: "text-blue-300", bg: "bg-blue-900/40" },
@@ -647,8 +647,8 @@ function BlocVueEnsemble({
             return (
               <div key={label} className={`${bg} rounded-xl px-3 py-3 text-center`}>
                 <p className={`text-lg font-bold ${color}`}> {val}</p>
-                <p className="text-sm text-white/80 mt-1"> {label}</p>
-                <p className="text-sm text-white/80 mt-0.5"> {pct}%</p>
+                <p className="text-sm text-white mt-1"> {label}</p>
+                <p className="text-sm text-white mt-0.5"> {pct}%</p>
               </div>
             );
           })}
@@ -671,10 +671,10 @@ function BlocVueEnsemble({
               const pct = totalCulteGlobal > 0 ? Math.round((tot / totalCulteGlobal) * 100) : 0;
               return (
                 <div key={e.id} className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-white/80 w-4 flex-shrink-0">#{index + 1}</span>
-                  <p className="text-sm text-white/80 w-32 flex-shrink-0 truncate">{e.nom}</p>
+                  <span className="text-sm font-bold text-white w-4 flex-shrink-0">#{index + 1}</span>
+                  <p className="text-sm text-white w-32 flex-shrink-0 truncate">{e.nom}</p>
                   <BarreProgression pct={pct} color="bg-blue-400" />
-                  <span className="text-lg text-white/80 font-semibold w-8 text-right">{tot}</span>
+                  <span className="text-lg text-white font-semibold w-8 text-right">{tot}</span>
                 </div>
               );
             })}
@@ -742,9 +742,9 @@ function BlocStatsEglise({ stats, t }) {
             { label: t.serviteurs, val: stats.serviteurs.hommes + stats.serviteurs.femmes, color: "bg-yellow-400" },
           ].map(({ label, val, color }) => (
             <div key={label} className="flex items-center gap-3">
-              <p className="text-sm text-white/80 w-28 flex-shrink-0">{label}</p>
+              <p className="text-sm text-white w-28 flex-shrink-0">{label}</p>
               <BarreProgression pct={Math.round((val / totalCulteGlobal) * 100)} color={color} />
-              <span className="text-lg text-white/80 font-semibold w-8 text-right">{val}</span>
+              <span className="text-lg text-white font-semibold w-8 text-right">{val}</span>
             </div>
           ))}
         </div>
@@ -771,7 +771,7 @@ function CarteEgliseCompacte({
           <span className="text-sm font-semibold text-white truncate">{eglise.nom}</span>
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 transition flex-shrink-0"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition flex-shrink-0"
           >
             {expanded ? t.voirMoins : t.voirDetail} {expanded ? "▲" : "▼"}
           </button>
@@ -1427,13 +1427,13 @@ function StatGlobalPage() {
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button
               onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}
             >
               {t.periodeRapide}
             </button>
             <button
               onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"}`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"}`}
             >
               {t.trancheDates}
             </button>
@@ -1505,7 +1505,7 @@ function StatGlobalPage() {
                 key={o.key}
                 onClick={() => setOnglet(o.key)}
                 className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition ${
-                  onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white/80"
+                  onglet === o.key ? "bg-white text-[#333699]" : "text-white/50 hover:text-white"
                 }`}
               >
                 {o.label}
@@ -1525,7 +1525,7 @@ function StatGlobalPage() {
         ) : onglet === "ensemble" ? (
           <div className="flex flex-col gap-4">
             <SectionTitle>
-              <p className="text-white/80 text-sm font-semibold">
+              <p className="text-white text-sm font-semibold">
                 {t.synthese} — {allEglises.length}{" "}
                 {allEglises.length > 1 ? t.eglises : t.eglise}
               </p>

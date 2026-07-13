@@ -118,21 +118,33 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   }, [user]);
 
   useEffect(() => {
-    if (!user?.eglise_id || !cellulesActive) return;
-    const fetchCellules = async () => {
-      const { data } = await supabase
-        .from("cellules")
-        .select("id, cellule_full, ville, cellule, responsable_id")
-        .eq("eglise_id", user.eglise_id)
-        .order("cellule_full");
-      setCellules(data || []);
-      const dejassignees = (data || [])
-        .filter((c) => c.responsable_id === user.id)
-        .map((c) => c.id);
-      setSelectedCelluleIds(dejassignees);
-    };
-    fetchCellules();
-  }, [user, cellulesActive]);
+  // Toujours repartir d'un état propre à chaque changement d'utilisateur
+  setCellules([]);
+  setSelectedCelluleIds([]);
+
+  if (!user?.eglise_id || !cellulesActive) return;
+
+  const fetchCellules = async () => {
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("id, cellule_full, ville, cellule, responsable_id")
+      .eq("eglise_id", user.eglise_id)
+      .order("cellule_full");
+
+    if (error) {
+      console.error("Erreur fetch cellules :", error);
+      return;
+    }
+
+    setCellules(data || []);
+    const dejassignees = (data || [])
+      .filter((c) => c.responsable_id === user.id)
+      .map((c) => c.id);
+    setSelectedCelluleIds(dejassignees);
+  };
+
+  fetchCellules();
+}, [user, cellulesActive]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {

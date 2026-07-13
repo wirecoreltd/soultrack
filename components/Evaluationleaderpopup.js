@@ -9,17 +9,17 @@ import { useLang } from "../hooks/useLang";
    ============================================================ */
 const translations = {
   fr: {
-    titre: "Évaluation du leader",
-    nouvelleEval: "Nouvelle évaluation",
-    modifierEval: "Modifier l'évaluation",
-    historique: "📅 Historique des évaluations",
-    nouvelleEvalSection: "📋 Nouvelle évaluation",
-    modifierEvalSection: "📋 Modifier l'évaluation",
-    modificationDu: "✏️ Modification de l'évaluation du",
+    titre: "Suivi du leader",
+    nouvelleEval: "Nouvelle suivi",
+    modifierEval: "Modifier le suivi",
+    historique: "📅 Historique des suivis",
+    nouvelleEvalSection: "📋 Nouvelle suivi",
+    modifierEvalSection: "📋 Modifier le suivi",
+    modificationDu: "✏️ Modification du suivi du",
     annuler: "Annuler",
     date: "Date",
-    succesAjout: "✅ Évaluation ajoutée avec succès",
-    succesMaj: "✅ Évaluation mise à jour avec succès",
+    succesAjout: "✅ Suivi ajoutée avec succès",
+    succesMaj: "✅ Suivi mise à jour avec succès",
    
     observation: "Observation",
 
@@ -140,15 +140,15 @@ const translations = {
     choisirEtape: "Choisis une étape pour la mettre à jour",
 
     // Historique
-    aucuneEval: "Aucune évaluation pour le moment",
+    aucuneEval: "Aucun suivi pour le moment",
     modifier: "✏️ Modifier",
     enCours: "✏️ En cours...",
     voirMoins: "▲ Voir moins",
-    voirDetails: "▼ Voir le détail de l'évaluation",
+    voirDetails: "▼ Voir le détail du suivi",
 
     // Footer
     fermer: "Fermer",
-    ajouterEval: "Ajouter l'évaluation",
+    ajouterEval: "Ajouter un suivi",
     enregistrer: "💾 Enregistrer les modifications",
     ajoutEnCours: "Ajout...",
     miseAJour: "Mise à jour...",
@@ -160,16 +160,16 @@ const translations = {
   },
 
   en: {
-    titre: "Leader Evaluation",
-    nouvelleEval: "New evaluation",
-    modifierEval: "Edit evaluation",
-    historique: "📅 Evaluation history",
-    nouvelleEvalSection: "📋 New evaluation",
-    modifierEvalSection: "📋 Edit evaluation",
-    modificationDu: "✏️ Editing evaluation from",
+    titre: "Leader Follow up",
+    nouvelleEval: "New follow up",
+    modifierEval: "Edit follow up",
+    historique: "📅 Follow up history",
+    nouvelleEvalSection: "📋 New follow up",
+    modifierEvalSection: "📋 Edit follow up",
+    modificationDu: "✏️ Editing follow up from",
     annuler: "Cancel",
-    succesAjout: "✅ Evaluation added successfully",
-    succesMaj: "✅ Evaluation updated successfully", 
+    succesAjout: "✅ Follow up added successfully",
+    succesMaj: "✅ Follow up updated successfully", 
     date: "Date",
      
     observation: "Observation",
@@ -280,14 +280,14 @@ const translations = {
     ],
     choisirEtape: "Choose a stage to update it",
 
-    aucuneEval: "No evaluations yet",
+    aucuneEval: "No follow up yet",
     modifier: "✏️ Edit",
     enCours: "✏️ Editing...",
     voirMoins: "▲ Show less",
-    voirDetails: "▼ View evaluation details",
+    voirDetails: "▼ View follow up details",
 
     fermer: "Close",
-    ajouterEval: "Add evaluation",
+    ajouterEval: "Add follow up",
     enregistrer: "💾 Save changes",
     ajoutEnCours: "Adding...",
     miseAJour: "Updating...",

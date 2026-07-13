@@ -1076,9 +1076,9 @@ function EtatFamille() {
 
   // ─── Leaders en développement — attachement (uniquement famille sur cette page) ───
   const getLeaderAttachment = (membre) => {
-    if (!membre.famille_id) return { emoji: "👨‍👩‍👧‍👦", label: t.sansFamille };
+    if (!membre.famille_id) return { emoji: "👑", label: t.sansFamille };
     const f = familles.find(f => f.id === membre.famille_id);
-    return { emoji: "👨‍👩‍👧‍👦", label: f?.famille_full || "—" };
+    return { emoji: "👑", label: f?.famille_full || "—" };
   };
 
   const hasData = allReports.length > 0;
@@ -1216,7 +1216,7 @@ function EtatFamille() {
             {famillesActive && (
               <div>
                 <SectionTitle
-                  icon="👨‍👩‍👧‍👦"
+                  icon="👑"
                   total={leadersDeveloppementAvecFamille.length}
                 >
                   {t.repartitionParFamille}

@@ -285,21 +285,7 @@ function RapportHubContent() {
             <div className="text-lg font-bold text-gray-800 text-center">
               {t.cards.registres}
             </div>
-          </Link>
-
-          {/* Etat Leader — visible uniquement pour les Administrateurs */}
-          {isAdmin && (
-            <Link
-              href="/rapport/etatleader"
-              className={cardClass}
-              style={{ borderTopColor: "#f5420b" }}
-            >
-              <div className="text-4xl mb-2">🏆</div>
-              <div className="text-lg font-bold text-gray-800 text-center">
-                {t.cards.leader}
-              </div>
-            </Link>
-          )}
+          </Link>          
 
           {/* Stats Globale — toujours visible */}
           <Link

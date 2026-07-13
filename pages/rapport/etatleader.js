@@ -215,8 +215,8 @@ function getRattachementType(membre, cellulesActive, famillesActive) {
 
 function getRattachementLabel(membre, type, cellulesMap, famillesMap, t) {
   if (type === "cellule") return { emoji: "🏠", label: cellulesMap[membre.cellule_id] || t.sansCellule };
-  if (type === "famille") return { emoji: "👪", label: famillesMap[membre.famille_id] || t.sansFamille };
-  return { emoji: "⛪", label: t.rattachementLabelEglise };
+  if (type === "famille") return { emoji: "👑", label: famillesMap[membre.famille_id] || t.sansFamille };
+  return { emoji: "🛐", label: t.rattachementLabelEglise };
 }
 
 // ─── BLOC KPI LEADERS (total + par étape) ────────────────────

@@ -441,14 +441,14 @@ export default function HomePage() {
       >
         <div
           style={{
-            maxWidth: "1100px",
+            maxWidth: "1240px",
             margin: "0 auto",
             padding: "22px 24px",
             height: "88px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: "10px",
+            gap: "24px",
             boxSizing: "border-box",
           }}
         >
@@ -464,13 +464,14 @@ export default function HomePage() {
               flexShrink: 0,
             }}
           >
-            <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
+            <Image src="/logo.png" alt="SoulTrack" width={38} height={38} />
             <span
               style={{
                 color: "#fff",
-                fontSize: "22px",
+                fontSize: "19px",
                 fontWeight: 500,
                 fontFamily: "'Great Vibes', cursive",
+                whiteSpace: "nowrap",
               }}
             >
               SoulTrack
@@ -483,9 +484,9 @@ export default function HomePage() {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "40px",
+              gap: "26px",
               zIndex: 1,
-              marginLeft: "auto",
+              flexShrink: 0,
             }}
           >
             {/* NAV desktop */}
@@ -493,8 +494,9 @@ export default function HomePage() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "28px",
+                gap: "20px",
                 zIndex: 1,
+                flexShrink: 0,
               }}
             >
               {t.nav.map((item) => (
@@ -524,7 +526,7 @@ export default function HomePage() {
             <div
               style={{
                 display: "flex",
-                gap: "10px",
+                gap: "8px",
                 alignItems: "center",
                 zIndex: 1,
                 flexShrink: 0,
@@ -572,7 +574,7 @@ export default function HomePage() {
                       background: "transparent",
                       color: "#fff",
                       border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "7px 14px",
+                      padding: "6px 12px",
                       borderRadius: "8px",
                       fontSize: "14px",
                       cursor: "pointer",
@@ -588,7 +590,7 @@ export default function HomePage() {
                       background: "transparent",
                       color: "#fbbf24",
                       border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "7px 14px",
+                      padding: "6px 12px",
                       borderRadius: "8px",
                       fontSize: "14px",
                       cursor: "pointer",
@@ -639,8 +641,9 @@ export default function HomePage() {
             <div
               style={{
                 display: "flex",
-                gap: "8px",
+                gap: "10px",
                 alignItems: "center",
+                flexShrink: 0,
               }}
             >
               <button
@@ -653,15 +656,16 @@ export default function HomePage() {
                   padding: 0,
                   opacity: lang === "fr" ? 1 : 0.45,
                   transition: "opacity 0.2s",
+                  flexShrink: 0,
                 }}
               >
                 <img
                   src="https://flagcdn.com/w40/fr.png"
                   srcSet="https://flagcdn.com/w80/fr.png 2x"
-                  width="32"
-                  height="22"
+                  width="30"
+                  height="21"
                   alt="Français"
-                  style={{ display: "block", borderRadius: "3px" }}
+                  style={{ display: "block", borderRadius: "3px", flexShrink: 0 }}
                 />
               </button>
               <button
@@ -674,15 +678,16 @@ export default function HomePage() {
                   padding: 0,
                   opacity: lang === "en" ? 1 : 0.45,
                   transition: "opacity 0.2s",
+                  flexShrink: 0,
                 }}
               >
                 <img
                   src="https://flagcdn.com/w40/gb.png"
                   srcSet="https://flagcdn.com/w80/gb.png 2x"
-                  width="32"
-                  height="22"
+                  width="30"
+                  height="21"
                   alt="English"
-                  style={{ display: "block", borderRadius: "3px" }}
+                  style={{ display: "block", borderRadius: "3px", flexShrink: 0 }}
                 />
               </button>
             </div>

@@ -17,6 +17,7 @@ const translations = {
     responsableDefault: "-- Choisir un responsable --",
     chargement: "Chargement...",
     telephone: "Téléphone du responsable",
+    email : "Email",
     telephonePlaceholder: "+33 6 00 00 00 00",
     sectionCelluleMere: "🌿 Cellule mère",
     celluleMere: "Responsable supérieur",
@@ -40,6 +41,7 @@ const translations = {
     chargement: "Loading...",
     telephone: "Leader's phone number",
     telephonePlaceholder: "+44 7700 000000",
+    email : "Email",
     sectionCelluleMere: "🌿 Parent cell",
     celluleMere: "Parent leader",
     celluleMereDefault: "-- Select a Parent --",
@@ -92,7 +94,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
 
     supabase
       .from("profiles")
-      .select("id, prenom, nom, telephone, role, roles")
+      .select("id, prenom, nom, telephone, email, role, roles")
       .eq("eglise_id", egliseId)
       .order("nom")
       .then(({ data, error }) => {
@@ -147,6 +149,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
       .update({
         ville,
         telephone,
+        email,
         responsable_id:  selectedResponsableId || null,
         responsable:     responsableNom,
         cellule_mere_id: selectedParentResponsableId || null,
@@ -259,6 +262,15 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
               value={telephone}
               onChange={(e) => setTelephone(e.target.value)}
               placeholder={t.telephonePlaceholder}
+            />
+          </Field>
+
+              <Field label={t.email}>
+            <input
+              className="inp"
+              value={email}
+              onChange={(e) => setTelephone(e.target.value)}
+              placeholder={t.emailPlaceholder}
             />
           </Field>
 

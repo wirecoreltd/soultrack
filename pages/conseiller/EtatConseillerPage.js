@@ -225,7 +225,7 @@ function formatStatut(statut, t) {
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-3">
+    <p className="text-sm font-semibold uppercase tracking-widest text-white/80 mb-3">
       {children}
     </p>
   );
@@ -245,9 +245,9 @@ function KpiCard({ label, value, sub, accent, onClick }) {
         onClick ? "cursor-pointer hover:bg-white/15 active:scale-95 transition" : ""
       }`}
     >
-      <p className="text-xs text-white/50">{label}</p>
+      <p className="text-sm text-white">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-[11px] text-white/40 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-white/60 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -404,7 +404,7 @@ function CarteLigne({ r, onDetails, t, lang }) {
           <span className="text-sm font-semibold text-white truncate">
             {r.nom_complet}
           </span>
-          <span className="text-[11px] text-white/40">
+          <span className="text-[11px] text-white/60">
             {r.type_evangelisation} · {formatDateFR(r.date_depart, lang)}
           </span>
         </div>
@@ -419,8 +419,8 @@ function CarteLigne({ r, onDetails, t, lang }) {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {fields.map(({ label, value }) => (
               <div key={label} className="bg-white/5 rounded-xl px-3 py-2">
-                <p className="text-[10px] text-white/40">{label}</p>
-                <p className="text-sm text-white font-medium">{value || "—"}</p>
+                <p className="text-sm text-white/80">{label}</p>
+                <p className="text-sm text-white/80">{value || "—"}</p>
               </div>
             ))}
           </div>
@@ -558,7 +558,7 @@ function OngletParConseillerDetail({ displayedReports, onDetails, t, lang }) {
                 <span className="font-semibold text-white truncate">
                   {conseiller}
                 </span>
-                <span className="text-[11px] text-white/40">
+                <span className="text-[11px] text-white/60">
                   {rows.length}{" "}
                   {rows.length > 1 ? t.personnes : t.personne} ·{" "}
                   {pctInt}% {t.pctIntegres}
@@ -809,20 +809,20 @@ function EtatConseiller() {
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button
               onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${
                 !modePerso
                   ? "bg-white text-[#333699]"
-                  : "text-white/50 hover:text-white/80"
+                  : "text-white/60 hover:text-white/80"
               }`}
             >
               {t.periodRapide}
             </button>
             <button
               onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${
                 modePerso
                   ? "bg-white text-[#333699]"
-                  : "text-white/50 hover:text-white/80"
+                  : "text-white/60 hover:text-white/80"
               }`}
             >
               {t.trancheDates}
@@ -832,22 +832,24 @@ function EtatConseiller() {
           {/* Période rapide */}
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/50 flex-shrink-0">
+              <span className="text-sm text-white/60 flex-shrink-0">
                 {t.periode}
               </span>
-              {t.periods.map((p) => (
-                <button
-                  key={p.val}
-                  onClick={() => setFiltrePeriode(p.val)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-                    filtrePeriode === p.val
-                      ? "bg-white text-[#333699]"
-                      : "bg-white/15 text-white/70 hover:bg-white/20"
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
+              <div className="flex gap-1 bg-white/10 rounded-xl p-1 flex-wrap">
+                {t.periods.map((p) => (
+                  <button
+                    key={p.val}
+                    onClick={() => setFiltrePeriode(p.val)}
+                    className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${
+                      filtrePeriode === p.val
+                        ? "bg-white text-[#333699]"
+                        : "text-white/60 hover:text-white/80"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -856,7 +858,7 @@ function EtatConseiller() {
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateDebut}</label>
+                  <label className="text-xs text-white/80">{t.dateDebut}</label>
                   <input
                     type="date"
                     value={filterDebut}
@@ -865,7 +867,7 @@ function EtatConseiller() {
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/50">{t.dateFin}</label>
+                  <label className="text-xs text-white/80">{t.dateFin}</label>
                   <input
                     type="date"
                     value={filterFin}
@@ -886,7 +888,7 @@ function EtatConseiller() {
           {/* Filtre conseiller */}
           {hasData && availableConseillers.length > 1 && (
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-white/50">{t.conseillerLabel}</label>
+              <label className="text-sm text-white/80">{t.conseillerLabel}</label>
               <select
                 value={filterConseiller}
                 onChange={(e) => setFilterConseiller(e.target.value)}
@@ -914,7 +916,7 @@ function EtatConseiller() {
               className={`flex-1 py-2 px-2 rounded-lg text-sm font-semibold transition whitespace-nowrap ${
                 onglet === o.key
                   ? "bg-white text-[#333699]"
-                  : "text-white/50 hover:text-white/80"
+                  : "text-white/80 hover:text-white"
               }`}
             >
               {o.label}
@@ -982,5 +984,3 @@ function EtatConseiller() {
     </div>
   );
 }
-
-

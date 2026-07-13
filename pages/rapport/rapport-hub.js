@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import FooterHub from "../../components/FooterHub";
 import { useLang } from "../../hooks/useLang";
 import { useFeature } from "../../components/FeaturesContext";
+import supabase from "../../lib/supabaseClient";
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
 const translations = {
@@ -94,10 +95,27 @@ function RapportHubContent() {
   const famillesActive       = useFeature("familles");
 
   const [userName, setUserName] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const name = localStorage.getItem("userName") || "Utilisateur";
     setUserName(name.split(" ")[0]);
+  }, []);
+
+  // ─── Rôle utilisateur (pour sécuriser les cards réservées aux Administrateurs,
+  //     même si ce composant venait à être réutilisé dans un hub multi-rôles) ───
+  useEffect(() => {
+    const fetchRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("roles")
+        .eq("id", user.id)
+        .single();
+      setIsAdmin(!!data?.roles?.includes("Administrateur"));
+    };
+    fetchRole();
   }, []);
 
   const cardClass =
@@ -269,17 +287,19 @@ function RapportHubContent() {
             </div>
           </Link>
 
-        {/* Registres présences — toujours visible */}
-          <Link
-            href="/rapport/etatleader"
-            className={cardClass}
-            style={{ borderTopColor: "#f5420b" }}
-          >
-            <div className="text-4xl mb-2">✅</div>
-            <div className="text-lg font-bold text-gray-800 text-center">
-              {t.cards.leader}
-            </div>
-          </Link>
+          {/* Etat Leader — visible uniquement pour les Administrateurs */}
+          {isAdmin && (
+            <Link
+              href="/rapport/etatleader"
+              className={cardClass}
+              style={{ borderTopColor: "#f5420b" }}
+            >
+              <div className="text-4xl mb-2">🏆</div>
+              <div className="text-lg font-bold text-gray-800 text-center">
+                {t.cards.leader}
+              </div>
+            </Link>
+          )}
 
           {/* Stats Globale — toujours visible */}
           <Link

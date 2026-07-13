@@ -30,6 +30,23 @@ const translations = {
     // Cellules
     noCellule: "Aucune cellule trouvée pour cette église.",
     dejaAssignee: "(déjà assignée)",
+    // Nouvelle cellule
+    creerNouvelleCellule: "➕ Créer une nouvelle cellule",
+    nomCellule: "Nom de la cellule *",
+    zoneCellule: "Zone / Ville *",
+    celluleMereLabel: "Cellule mère",
+    celluleMereOptional: "(optionnel)",
+    celluleMereInfo: "Le responsable de la cellule mère deviendra automatiquement superviseur de cette cellule.",
+    aucuneCelluleMere: "-- Aucune cellule mère --",
+    // Famille
+    titreFamille: "👨‍👩‍👧 Informations de la famille",
+    nomFamille: "Nom de la famille *",
+    secteurFamille: "Secteur *",
+    // Erreurs validation
+    erreurNomCellule: "❌ Le nom de la cellule est obligatoire.",
+    erreurZoneCellule: "❌ La zone de la cellule est obligatoire.",
+    erreurNomFamille: "❌ Le nom de la famille est obligatoire.",
+    erreurSecteurFamille: "❌ Le secteur est obligatoire.",
     // Footer
     cancel: "Annuler",
     saving: "Enregistrement...",
@@ -58,6 +75,20 @@ const translations = {
     responsableFamilles: "Families Manager",
     noCellule: "No cell found for this church.",
     dejaAssignee: "(already assigned)",
+    creerNouvelleCellule: "➕ Create a new cell group",
+    nomCellule: "Cell group name *",
+    zoneCellule: "Area / City *",
+    celluleMereLabel: "Parent cell group",
+    celluleMereOptional: "(optional)",
+    celluleMereInfo: "The leader of the parent cell group will automatically become the supervisor of this cell group.",
+    aucuneCelluleMere: "-- No parent cell group --",
+    titreFamille: "👨‍👩‍👧 Family information",
+    nomFamille: "Family name *",
+    secteurFamille: "Sector *",
+    erreurNomCellule: "❌ Cell group name is required.",
+    erreurZoneCellule: "❌ Cell group area is required.",
+    erreurNomFamille: "❌ Family name is required.",
+    erreurSecteurFamille: "❌ Sector is required.",
     cancel: "Cancel",
     saving: "Saving...",
     save: "💾 Save",
@@ -87,6 +118,16 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   const [cellules, setCellules] = useState([]);
   const [selectedCelluleIds, setSelectedCelluleIds] = useState([]);
 
+  // ── Nouvelle cellule ──
+  const [creerNouvelleCellule, setCreerNouvelleCellule] = useState(false);
+  const [celluleNom, setCelluleNom] = useState("");
+  const [celluleZone, setCelluleZone] = useState("");
+  const [celluleMereId, setCelluleMereId] = useState("");
+
+  // ── Nouvelle famille ──
+  const [familleNom, setFamilleNom] = useState("");
+  const [familleSecteur, setFamilleSecteur] = useState("");
+
   const modalRef = useRef(null);
 
   const allRoles = useMemo(() => [
@@ -106,6 +147,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
     ] : []),
   ], [cellulesActive, conseillerActive, famillesActive, lang]);
 
+  // ── Initialisation du formulaire à l'ouverture ──
   useEffect(() => {
     if (!user) return;
     setForm({
@@ -115,36 +157,45 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
       telephone: user.telephone || "",
       roles: user.roles || [],
     });
+
+    // Reset des champs de création à chaque changement d'utilisateur
+    setCreerNouvelleCellule(false);
+    setCelluleNom("");
+    setCelluleZone("");
+    setCelluleMereId("");
+    setFamilleNom("");
+    setFamilleSecteur("");
   }, [user]);
 
+  // ── Chargement des cellules existantes de l'église ──
   useEffect(() => {
-  // Toujours repartir d'un état propre à chaque changement d'utilisateur
-  setCellules([]);
-  setSelectedCelluleIds([]);
+    // Toujours repartir d'un état propre pour éviter tout résidu
+    setCellules([]);
+    setSelectedCelluleIds([]);
 
-  if (!user?.eglise_id || !cellulesActive) return;
+    if (!user?.eglise_id || !cellulesActive) return;
 
-  const fetchCellules = async () => {
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule_full, ville, cellule, responsable_id")
-      .eq("eglise_id", user.eglise_id)
-      .order("cellule_full");
+    const fetchCellules = async () => {
+      const { data, error } = await supabase
+        .from("cellules")
+        .select("id, cellule_full, ville, cellule, responsable_id")
+        .eq("eglise_id", user.eglise_id)
+        .order("cellule_full");
 
-    if (error) {
-      console.error("Erreur fetch cellules :", error);
-      return;
-    }
+      if (error) {
+        console.error("Erreur fetch cellules :", error);
+        return;
+      }
 
-    setCellules(data || []);
-    const dejassignees = (data || [])
-      .filter((c) => c.responsable_id === user.id)
-      .map((c) => c.id);
-    setSelectedCelluleIds(dejassignees);
-  };
+      setCellules(data || []);
+      const dejassignees = (data || [])
+        .filter((c) => c.responsable_id === user.id)
+        .map((c) => c.id);
+      setSelectedCelluleIds(dejassignees);
+    };
 
-  fetchCellules();
-}, [user, cellulesActive]);
+    fetchCellules();
+  }, [user, cellulesActive]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -164,12 +215,28 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   };
 
   const handleRoleChange = (roleValue) => {
+    const hadRole = form.roles.includes(roleValue);
+
     setForm((prev) => {
       const roles = prev.roles.includes(roleValue)
         ? prev.roles.filter((r) => r !== roleValue)
         : [...prev.roles, roleValue];
       return { ...prev, roles };
     });
+
+    // Si on décoche ResponsableCellule, on nettoie les champs de création cellule
+    if (roleValue === "ResponsableCellule" && hadRole) {
+      setCreerNouvelleCellule(false);
+      setCelluleNom("");
+      setCelluleZone("");
+      setCelluleMereId("");
+    }
+
+    // Si on décoche ResponsableFamilles, on nettoie les champs famille
+    if (roleValue === "ResponsableFamilles" && hadRole) {
+      setFamilleNom("");
+      setFamilleSecteur("");
+    }
   };
 
   const handleCelluleChange = (celluleId) => {
@@ -183,6 +250,19 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   const handleSave = async () => {
     if (!user?.id) return;
     setMessage("");
+
+    // ✅ Validation cellule (uniquement si on crée une nouvelle cellule)
+    if (form.roles.includes("ResponsableCellule") && creerNouvelleCellule) {
+      if (!celluleNom.trim()) { setMessage(t.erreurNomCellule); return; }
+      if (!celluleZone.trim()) { setMessage(t.erreurZoneCellule); return; }
+    }
+
+    // ✅ Validation famille
+    if (form.roles.includes("ResponsableFamilles")) {
+      if (!familleNom.trim()) { setMessage(t.erreurNomFamille); return; }
+      if (!familleSecteur.trim()) { setMessage(t.erreurSecteurFamille); return; }
+    }
+
     setSaving(true);
 
     const { data, error } = await supabase
@@ -204,6 +284,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
       return;
     }
 
+    // ── Gestion des cellules déjà existantes (assignation / retrait) ──
     if (cellulesActive) {
       if (form.roles.includes("ResponsableCellule")) {
         const cellulesARetirer = cellules
@@ -232,6 +313,51 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
       }
     }
 
+    // ── Création d'une nouvelle cellule si demandé ──
+    if (cellulesActive && form.roles.includes("ResponsableCellule") && creerNouvelleCellule) {
+      let superviseur_id = null;
+      if (celluleMereId) {
+        const { data: celluleMere } = await supabase
+          .from("cellules")
+          .select("responsable_id")
+          .eq("id", celluleMereId)
+          .single();
+        if (celluleMere?.responsable_id) superviseur_id = celluleMere.responsable_id;
+      }
+
+      const { error: celluleError } = await supabase.from("cellules").insert({
+        cellule: celluleNom,
+        ville: celluleZone,
+        responsable: `${form.prenom} ${form.nom}`,
+        responsable_id: user.id,
+        telephone: form.telephone || "",
+        eglise_id: user.eglise_id,
+        cellule_mere_id: celluleMereId || null,
+        superviseur_id,
+      });
+
+      if (celluleError) {
+        console.error("Erreur création cellule :", celluleError);
+      }
+    }
+
+    // ── Création d'une famille si demandé ──
+    if (famillesActive && form.roles.includes("ResponsableFamilles")) {
+      const { error: familleError } = await supabase.from("familles").insert({
+        famille: familleNom,
+        ville: familleSecteur,
+        responsable: `${form.prenom} ${form.nom}`,
+        responsable_id: user.id,
+        telephone: form.telephone || "",
+        eglise_id: user.eglise_id,
+        created_at: new Date(),
+      });
+
+      if (familleError) {
+        console.error("Erreur création famille :", familleError);
+      }
+    }
+
     setSaving(false);
     if (data && data.length > 0 && onUpdated) onUpdated(data[0]);
     setMessage(t.success);
@@ -242,6 +368,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
   };
 
   const showCellules = cellulesActive && form.roles.includes("ResponsableCellule");
+  const showFamille = famillesActive && form.roles.includes("ResponsableFamilles");
 
   return (
     <div
@@ -321,6 +448,7 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
             ))}
           </div>
 
+          {/* ── Bloc Cellules ── */}
           {showCellules && (
             <>
               <SectionTitle>{t.cellules}</SectionTitle>
@@ -352,6 +480,83 @@ export default function EditUserModal({ user, onClose, onUpdated }) {
                   ))}
                 </div>
               )}
+
+              {/* ➕ Créer une nouvelle cellule */}
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer mt-2">
+                <input
+                  type="checkbox"
+                  checked={creerNouvelleCellule}
+                  onChange={() => setCreerNouvelleCellule((v) => !v)}
+                  className="accent-[#2E3192] w-4 h-4"
+                />
+                {t.creerNouvelleCellule}
+              </label>
+
+              {creerNouvelleCellule && (
+                <div className="flex flex-col gap-3 p-4 bg-blue-50 rounded-2xl border border-blue-200">
+                  <Field label={t.nomCellule}>
+                    <input
+                      value={celluleNom}
+                      onChange={(e) => setCelluleNom(e.target.value)}
+                      className="inp"
+                    />
+                  </Field>
+                  <Field label={t.zoneCellule}>
+                    <input
+                      value={celluleZone}
+                      onChange={(e) => setCelluleZone(e.target.value)}
+                      className="inp"
+                    />
+                  </Field>
+                  <div className="flex flex-col gap-1">
+                    <label
+                      className="text-xs font-semibold uppercase tracking-wide"
+                      style={{ color: "#64748b" }}
+                    >
+                      {t.celluleMereLabel}{" "}
+                      <span className="text-gray-400 font-normal normal-case">
+                        {t.celluleMereOptional}
+                      </span>
+                    </label>
+                    <p className="text-xs text-gray-500">{t.celluleMereInfo}</p>
+                    <select
+                      value={celluleMereId}
+                      onChange={(e) => setCelluleMereId(e.target.value)}
+                      className="inp"
+                    >
+                      <option value="">{t.aucuneCelluleMere}</option>
+                      {cellules.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.cellule_full || `${c.ville} - ${c.cellule}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Bloc Famille ── */}
+          {showFamille && (
+            <>
+              <SectionTitle>{t.titreFamille}</SectionTitle>
+              <div className="flex flex-col gap-3 p-4 bg-green-50 rounded-2xl border border-green-200">
+                <Field label={t.nomFamille}>
+                  <input
+                    value={familleNom}
+                    onChange={(e) => setFamilleNom(e.target.value)}
+                    className="inp"
+                  />
+                </Field>
+                <Field label={t.secteurFamille}>
+                  <input
+                    value={familleSecteur}
+                    onChange={(e) => setFamilleSecteur(e.target.value)}
+                    className="inp"
+                  />
+                </Field>
+              </div>
             </>
           )}
         </div>

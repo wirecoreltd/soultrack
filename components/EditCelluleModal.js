@@ -127,6 +127,13 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+  if (!loadingResponsables && selectedResponsableId) {
+    const obj = responsables.find((r) => r.id === selectedResponsableId);
+    if (obj) setEmail(obj.email || "");
+  }
+}, [loadingResponsables, responsables, selectedResponsableId]);
+
   // ─── Fermer en cliquant dehors ───
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -239,7 +246,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
                   setSelectedResponsableId(id);
                   const obj = responsables.find((r) => r.id === id);
                   setTelephone(obj?.telephone || "");
-                  // Retirer ce responsable de la liste parent si sélectionné
+                  setEmail(obj?.email || ""); 
                   setParentResponsables(
                     responsables.filter((r) => r.id !== id)
                   );

@@ -451,6 +451,11 @@ function CreateInternalUserContent() {
     if (!formData.cellule_zone?.trim()) { setMessage(t.erreurZoneCellule); return; }
   }
 
+    if (formData.roles.includes("ResponsableFamilles")) {
+  if (!formData.famille_nom?.trim()) { setMessage(t.erreurNomFamille); return; }
+  if (!formData.famille_secteur?.trim()) { setMessage(t.erreurSecteurFamille); return; }
+}
+
     setLoading(true);
     setMessage("");
 

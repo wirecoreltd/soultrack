@@ -38,6 +38,7 @@ const translations = {
       evolution: "Évolution des Âmes par Conseiller",
       etatCellule: "État Cellule",
       registres: "Statistiques des présences individuelles",
+      leader: "Etat Leader",
       statsGlobale: "Stats Globale",
     },
     verse:
@@ -71,6 +72,7 @@ const translations = {
       evolution: "Soul progress by Counselor",
       etatCellule: "Cell group status",
       registres: "Individual Attendance Statistics",
+      leader: "Etat Leader",
       statsGlobale: "Global stats",
     },
     verse: "And the Lord added to the church daily those who were being saved.",
@@ -264,6 +266,18 @@ function RapportHubContent() {
             <div className="text-4xl mb-2">✅</div>
             <div className="text-lg font-bold text-gray-800 text-center">
               {t.cards.registres}
+            </div>
+          </Link>
+
+        {/* Registres présences — toujours visible */}
+          <Link
+            href="/rapport/etatleader"
+            className={cardClass}
+            style={{ borderTopColor: "#f5420b" }}
+          >
+            <div className="text-4xl mb-2">✅</div>
+            <div className="text-lg font-bold text-gray-800 text-center">
+              {t.cards.leader}
             </div>
           </Link>
 

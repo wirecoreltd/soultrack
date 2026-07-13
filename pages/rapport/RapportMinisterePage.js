@@ -358,7 +358,7 @@ function ServiteurCard({ membre, sousTitre, actions, ministeres, derniereDate, i
 // ─── EXPORT ─────────────────────────────────────────────────────
 export default function RapportMinisterePage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration"]}>
+    <ProtectedRoute allowedRoles={["Administrateur","SuperviseurCellule","SuperviseurFamilles"]}>
       <RapportMinistere />
     </ProtectedRoute>
   );

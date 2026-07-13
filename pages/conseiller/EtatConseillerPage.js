@@ -614,7 +614,7 @@ function EtatConseiller() {
   const [loading, setLoading] = useState(false);
 
   // Filtres
-  const [modePerso, setModePerso] = useState(true);
+  const [modePerso, setModePerso] = useState(false);
   const [filtrePeriode, setFiltrePeriode] = useState("30");
   const [filterDebut, setFilterDebut] = useState("");
   const [filterFin, setFilterFin] = useState("");

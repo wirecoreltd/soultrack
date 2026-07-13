@@ -207,10 +207,10 @@ function ListUsersContent() {
     setLoading(true);
 
     const { data } = await supabase
-      .from("profiles")
-      .select("id, prenom, nom, email, telephone, roles, created_at")
-      .eq("eglise_id", egliseId)
-      .order("created_at", { ascending: true });
+  .from("profiles")
+  .select("id, prenom, nom, email, telephone, roles, created_at, eglise_id") // ✅ ajouté
+  .eq("eglise_id", egliseId)
+  .order("created_at", { ascending: true });
 
     setUsers(data || []);
 

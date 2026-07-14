@@ -222,106 +222,117 @@ export default function PricingPage() {
       <div style={{ position: "fixed", width: "600px", height: "600px", borderRadius: "50%", background: "radial-gradient(circle, rgba(251,191,36,0.07) 0%, rgba(255,255,255,0.02) 40%, transparent 65%)", top: "600px", left: "50%", transform: "translateX(-50%)", pointerEvents: "none", zIndex: 0 }} />
 
       {/* ───── HEADER ───── */}
-      <header style={{ background: scrolled ? "rgba(51,54,153,0.92)" : "transparent", borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent", position: "relativey", zIndex: 100, backdropFilter: scrolled ? "blur(16px)" : "none", transition: "background 0.3s, border-color 0.3s", width: "100%" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "22px 24px", height: "88px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", boxSizing: "border-box" }}>
+      <header style={{ background: scrolled ? "rgba(51,54,153,0.92)" : "transparent", borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent", position: "sticky", top: 0, zIndex: 100, backdropFilter: scrolled ? "blur(16px)" : "none", transition: "background 0.3s, border-color 0.3s", width: "100%" }}>
+        <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "22px 24px", height: "88px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", boxSizing: "border-box" }}>
 
+          {/* LOGO */}
           <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
-            <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
-            <span style={{ color: "#fff", fontSize: "22px", fontWeight: 500, fontFamily: "'Great Vibes', cursive" }}>SoulTrack</span>
+            <Image src="/logo.png" alt="SoulTrack" width={38} height={38} />
+            <span style={{ color: "#fff", fontSize: "19px", fontWeight: 500, fontFamily: "'Great Vibes', cursive", whiteSpace: "nowrap" }}>SoulTrack</span>
           </div>
 
-          <nav style={{ display: "flex", alignItems: "center", gap: "32px", zIndex: 1 }}>
-            {t.nav.map((item) => (
-              <span key={item.path} onClick={() => router.push(item.path)}
-                style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "color 0.2s" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = pathname === item.path ? "#fbbf24" : "#fff")}
-                className="nav-hide"
-              >{item.label}</span>
-            ))}
-          </nav>
+          {/* ───── GROUPE DROITE desktop : nav + boutons + switcher langue ───── */}
+          <div className="nav-hide" style={{ display: "flex", alignItems: "center", gap: "26px", zIndex: 1, flexShrink: 0 }}>
 
-          <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
-            {loadingProfile ? (
-              <div style={{ width: "120px", height: "34px" }} />
-            ) : profile ? (
-              <>
-                <span
-                  onClick={() => router.push("/hub")}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    cursor: "pointer",
-                    color: "#fff",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                  }}
-                >
+            {/* NAV */}
+            <nav style={{ display: "flex", alignItems: "center", gap: "20px", zIndex: 1, flexShrink: 0 }}>
+              {t.nav.map((item) => (
+                <span key={item.path} onClick={() => router.push(item.path)}
+                  style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "color 0.2s", whiteSpace: "nowrap" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = pathname === item.path ? "#fbbf24" : "#fff")}
+                >{item.label}</span>
+              ))}
+            </nav>
+
+            {/* BOUTONS */}
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", zIndex: 1, flexShrink: 0 }}>
+              {loadingProfile ? (
+                <div style={{ width: "120px", height: "34px" }} />
+              ) : profile ? (
+                <>
                   <span
+                    onClick={() => router.push("/hub")}
                     style={{
-                      width: "28px",
-                      height: "28px",
-                      borderRadius: "50%",
-                      background: "#fbbf24",
-                      color: "#333699",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 700,
-                      fontSize: "13px",
+                      gap: "8px",
+                      cursor: "pointer",
+                      color: "#fff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    {profile.prenom?.[0]?.toUpperCase() || "U"}
+                    <span
+                      style={{
+                        width: "28px",
+                        height: "28px",
+                        borderRadius: "50%",
+                        background: "#fbbf24",
+                        color: "#333699",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                        fontSize: "13px",
+                      }}
+                    >
+                      {profile.prenom?.[0]?.toUpperCase() || "U"}
+                    </span>
+                    {profile.prenom} {profile.nom}
                   </span>
-                  {profile.prenom} {profile.nom}
-                </span>
 
-                <button
-                  onClick={() => router.push("/hub")}
-                  style={{
-                    background: "transparent",
-                    color: "#fff",
-                    border: "0.5px solid rgba(255,255,255,0.35)",
-                    padding: "7px 14px",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                  }}
-                >
-                  {t.webVersion}
-                </button>
+                  <button
+                    onClick={() => router.push("/hub")}
+                    style={{
+                      background: "transparent",
+                      color: "#fff",
+                      border: "0.5px solid rgba(255,255,255,0.35)",
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {t.webVersion}
+                  </button>
 
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    background: "transparent",
-                    color: "#fbbf24",
-                    border: "0.5px solid rgba(255,255,255,0.35)",
-                    padding: "7px 14px",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                  }}
-                >
-                  {t.logout}
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      background: "transparent",
+                      color: "#fbbf24",
+                      border: "0.5px solid rgba(255,255,255,0.35)",
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {t.logout}
+                  </button>
+                </>
+              ) : (
+                <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer", whiteSpace: "nowrap" }}>
+                  {t.login}
                 </button>
-              </>
-            ) : (
-              <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
-                {t.login}
+              )}
+            </div>
+
+            {/* Switcher langue */}
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", flexShrink: 0 }}>
+              <button onClick={() => changeLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s", flexShrink: 0 }}>
+                <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="30" height="21" alt="Français" style={{ display: "block", borderRadius: "3px", flexShrink: 0 }} />
               </button>
-            )}
+              <button onClick={() => changeLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s", flexShrink: 0 }}>
+                <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="30" height="21" alt="English" style={{ display: "block", borderRadius: "3px", flexShrink: 0 }} />
+              </button>
+            </div>
           </div>
-
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", marginLeft: "8px" }}>
-            <button onClick={() => changeLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s" }}>
-              <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
-            </button>
-            <button onClick={() => changeLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s" }}>
-              <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
-            </button>
-          </div>
+          {/* ───── FIN GROUPE DROITE ───── */}
 
           <button onClick={() => setOpenMenu(!openMenu)} className="nav-show" style={{ background: "none", border: "none", cursor: "pointer", display: "none", flexDirection: "column", gap: "5px", padding: "4px", zIndex: 1 }}>
             {[0, 1, 2].map((i) => (

@@ -575,23 +575,8 @@ export default function EditMemberSuivisPopup({
 
           <Field label={t.formation}>
             <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
-          </Field>
+          </Field>         
           
-          {isPrivileged && (
-            <div className="flex flex-col gap-2 py-2">
-              <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
-                <input
-                  type="checkbox"
-                  name="pilier"
-                  checked={formData.pilier}
-                  onChange={handleChange}
-                  className="accent-[#2E3192] w-4 h-4"
-                />
-                {t.pilier}
-              </label>
-            </div>
-          )}
-
           {isLeaderManager && (
             <div className="flex flex-col gap-2 py-2">
               <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">

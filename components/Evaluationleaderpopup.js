@@ -20,7 +20,7 @@ const translations = {
     date: "Date",
     succesAjout: "✅ Suivi ajoutée avec succès",
     succesMaj: "✅ Suivi mise à jour avec succès",
-   
+
     observation: "Observation",
 
     // Section 1
@@ -112,8 +112,21 @@ const translations = {
       "Gestion des émotions",
     ],
 
-    // Section 9
-    s10_titre: "9. Prochaine étape",
+    // Section 9 — Zone de transformation (nouvelle, dédupliquée par rapport aux sections 1 à 8)
+    s11_titre: "9. Zone de transformation (points à travailler)",
+    s11_items: [
+      "Manque de clarté sur sa vision personnelle et sa direction de vie",
+      "Difficulté à gérer ses émotions sous la pression",
+      "Difficulté à faire confiance et à déléguer aux autres",
+      "Manque de discernement dans les choix et décisions importantes",
+      "Tendance à agir dans la précipitation, sans préparation suffisante",
+      "Fragilité de caractère face aux compromis et aux pressions extérieures",
+      "Instabilité de la discipline personnelle, dépendante de la motivation du moment",
+      "Manque de profondeur dans sa vie spirituelle et sa dépendance à Dieu",
+    ],
+
+    // Section 10 (prochaine étape)
+    s10_titre: "10. Prochaine étape",
     s10_items: [
       "Diriger une partie de cellule",
       "Accompagner un nouveau membre",
@@ -169,9 +182,9 @@ const translations = {
     modificationDu: "✏️ Editing follow up from",
     annuler: "Cancel",
     succesAjout: "✅ Follow up added successfully",
-    succesMaj: "✅ Follow up updated successfully", 
+    succesMaj: "✅ Follow up updated successfully",
     date: "Date",
-     
+
     observation: "Observation",
 
     s2_titre: "1. Responsibility and maturity",
@@ -255,7 +268,20 @@ const translations = {
       "Emotional management",
     ],
 
-    s10_titre: "9. Next step",
+    // Growth zone (deduplicated against sections 1-8)
+    s11_titre: "9. Growth zone (areas to work on)",
+    s11_items: [
+      "Lacks clarity on personal vision and life direction",
+      "Struggles to manage emotions under pressure",
+      "Struggles to trust others and delegate",
+      "Lacks discernment in important choices and decisions",
+      "Tends to act hastily, without enough preparation",
+      "Fragile character under compromise and outside pressure",
+      "Unstable personal discipline, dependent on momentary motivation",
+      "Lacks depth in spiritual life and dependence on God",
+    ],
+
+    s10_titre: "10. Next step",
     s10_items: [
       "Lead part of a cell group",
       "Mentor a new member",
@@ -314,10 +340,11 @@ const SECTION_CONFIG = [
   { key: "fidelite_discipline", itemsKey: "s7_items", titleKey: "s7_titre", autresKey: "fidelite_discipline_autres", autresLabel: "autres" },
   { key: "capacite_apprentissage", itemsKey: "s8_items", titleKey: "s8_titre", autresKey: "capacite_apprentissage_observation", autresLabel: "observation" },
   { key: "domaine_developper", itemsKey: "s9_items", titleKey: "s9_titre", autresKey: "domaine_developper_autres", autresLabel: "autres" },
+  { key: "zone_transformation", itemsKey: "s11_items", titleKey: "s11_titre", autresKey: "zone_transformation_autres", autresLabel: "autres" },
 ];
 
 const EMPTY_FORM = {
-  date_action: "",  
+  date_action: "",
   responsabilite: [],
   responsabilite_autres: "",
   coeur_serviteur: [],
@@ -334,6 +361,8 @@ const EMPTY_FORM = {
   capacite_apprentissage_observation: "",
   domaine_developper: [],
   domaine_developper_autres: "",
+  zone_transformation: [],
+  zone_transformation_autres: "",
   prochaine_etape: [],
   prochaine_etape_objectif: "",
   prochaine_etape_date: "",
@@ -407,11 +436,11 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
 
   useEffect(() => { fetchEvaluations(); }, []);
 
-   useEffect(() => {
-  if (!editingEval && evaluations.length > 0) {
-    setForm((p) => ({ ...p, parcours_etape: evaluations[0].parcours_etape || "" }));
-  }
-}, [evaluations]);
+  useEffect(() => {
+    if (!editingEval && evaluations.length > 0) {
+      setForm((p) => ({ ...p, parcours_etape: evaluations[0].parcours_etape || "" }));
+    }
+  }, [evaluations]);
 
   const fetchEvaluations = async () => {
     const { data } = await supabase
@@ -425,7 +454,7 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
   const handleEditEval = (e) => {
     setEditingEval(e);
     setForm({
-      date_action: e.date_action || "",     
+      date_action: e.date_action || "",
       responsabilite: parseArr(e.responsabilite),
       responsabilite_autres: e.responsabilite_autres || "",
       coeur_serviteur: parseArr(e.coeur_serviteur),
@@ -442,6 +471,8 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
       capacite_apprentissage_observation: e.capacite_apprentissage_observation || "",
       domaine_developper: parseArr(e.domaine_developper),
       domaine_developper_autres: e.domaine_developper_autres || "",
+      zone_transformation: parseArr(e.zone_transformation),
+      zone_transformation_autres: e.zone_transformation_autres || "",
       prochaine_etape: parseArr(e.prochaine_etape),
       prochaine_etape_objectif: e.prochaine_etape_objectif || "",
       prochaine_etape_date: e.prochaine_etape_date || "",
@@ -461,7 +492,7 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
     setLoading(true);
 
     const payload = {
-      date_action: form.date_action,    
+      date_action: form.date_action,
       responsabilite: form.responsabilite.length ? JSON.stringify(form.responsabilite) : null,
       responsabilite_autres: form.responsabilite_autres || null,
       coeur_serviteur: form.coeur_serviteur.length ? JSON.stringify(form.coeur_serviteur) : null,
@@ -478,6 +509,8 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
       capacite_apprentissage_observation: form.capacite_apprentissage_observation || null,
       domaine_developper: form.domaine_developper.length ? JSON.stringify(form.domaine_developper) : null,
       domaine_developper_autres: form.domaine_developper_autres || null,
+      zone_transformation: form.zone_transformation.length ? JSON.stringify(form.zone_transformation) : null,
+      zone_transformation_autres: form.zone_transformation_autres || null,
       prochaine_etape: form.prochaine_etape.length ? JSON.stringify(form.prochaine_etape) : null,
       prochaine_etape_objectif: form.prochaine_etape_objectif || null,
       prochaine_etape_date: form.prochaine_etape_date || null,
@@ -538,23 +571,23 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
         {/* BODY */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
 
-           {successMsg && (
-             <div
-               className="rounded-xl px-4 py-2 text-sm font-semibold text-center"
-               style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac" }}
-             >
-               {successMsg}
-             </div>
-           )}
+          {successMsg && (
+            <div
+              className="rounded-xl px-4 py-2 text-sm font-semibold text-center"
+              style={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac" }}
+            >
+              {successMsg}
+            </div>
+          )}
 
-         {/* PARCOURS DE DEVELOPPEMENT - tout en haut */}   
-           <SectionTitle>{t.parcoursTitre}</SectionTitle>
-           <ParcoursWidget
-             stages={t.parcours}
-             selected={form.parcours_etape}
-             onSelect={(key) => setForm((p) => ({ ...p, parcours_etape: key }))}
-             hint={t.choisirEtape}
-           />
+          {/* PARCOURS DE DEVELOPPEMENT - tout en haut */}
+          <SectionTitle>{t.parcoursTitre}</SectionTitle>
+          <ParcoursWidget
+            stages={t.parcours}
+            selected={form.parcours_etape}
+            onSelect={(key) => setForm((p) => ({ ...p, parcours_etape: key }))}
+            hint={t.choisirEtape}
+          />
 
           {/* HISTORIQUE - remonté avant le formulaire de nouvelle évaluation */}
           <SectionTitle>{t.historique}</SectionTitle>
@@ -580,7 +613,7 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
                     {stageInfo.emoji} <span className="font-semibold" style={{ color: "#2E3192" }}>{stageInfo.label}</span>
                   </p>
                 )}
-                
+
                 <button
                   onClick={() => toggleExpand(ev.id)}
                   className="text-xs font-semibold mt-1 flex items-center gap-1"
@@ -590,7 +623,7 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
                 </button>
 
                 {isExpanded && (
-                  <div className="mt-2 space-y-3 pt-2 border-t border-gray-200">                   
+                  <div className="mt-2 space-y-3 pt-2 border-t border-gray-200">
                     {SECTION_CONFIG.map((cfg) => {
                       const items = parseArr(ev[cfg.key]);
                       const autres = ev[cfg.autresKey];
@@ -634,9 +667,9 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
 
           <Field label={t.date}>
             <input type="date" value={formatDateForInput(form.date_action)} onChange={(e) => setForm((p) => ({ ...p, date_action: e.target.value }))} className="inp" />
-          </Field>          
+          </Field>
 
-          {/* SECTIONS 2 A 9 (checkboxes generiques) */}
+          {/* SECTIONS 1 A 9 (checkboxes generiques, incluant la Zone de transformation) */}
           {SECTION_CONFIG.map((cfg) => (
             <SectionBlock key={cfg.key} title={t[cfg.titleKey]}>
               <CheckboxGroup
@@ -698,7 +731,7 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
             </Field>
           </SectionBlock>
 
-          {currentUserName && <p className="text-center text-sm text-gray-400">👤 {currentUserName}</p>}          
+          {currentUserName && <p className="text-center text-sm text-gray-400">👤 {currentUserName}</p>}
 
         </div>
 

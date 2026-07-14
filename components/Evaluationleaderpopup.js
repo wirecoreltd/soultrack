@@ -112,17 +112,20 @@ const translations = {
       "Gestion des émotions",
     ],
 
-    // Section 9 — Zone de transformation (nouvelle, dédupliquée par rapport aux sections 1 à 8)
+    // Section 9 — Zone de transformation (basée sur les 10 handicaps du leader, Yvan Castanou + ajouts, dédupliquée)
     s11_titre: "9. Zone de transformation (points à travailler)",
     s11_items: [
-      "Manque de clarté sur sa vision personnelle et sa direction de vie",
-      "Difficulté à gérer ses émotions sous la pression",
-      "Difficulté à faire confiance et à déléguer aux autres",
-      "Manque de discernement dans les choix et décisions importantes",
-      "Tendance à agir dans la précipitation, sans préparation suffisante",
-      "Fragilité de caractère face aux compromis et aux pressions extérieures",
-      "Instabilité de la discipline personnelle, dépendante de la motivation du moment",
-      "Manque de profondeur dans sa vie spirituelle et sa dépendance à Dieu",
+      "Orgueil : difficulté à accueillir un regard extérieur et à se remettre en question",
+      "Manque de clarté sur sa vision",
+      "Peur qui freine la prise de décision et l'action",
+      "Manque de caractère : fragilité face aux compromis et aux pressions",
+      "Manque de sagesse dans le discernement et les choix",
+      "Instabilité émotionnelle face aux situations difficiles",
+      "Manque de préparation avant d'agir ou de décider",
+      "Lacune dans la planification et l'organisation des projets",
+      "Manque de communication : ne donne pas de directives claires",
+      "Décide tout par lui-même, sans consulter ni déléguer",
+      "Manque de dépendance à Dieu dans sa marche spirituelle personnelle",
     ],
 
     // Section 10 (prochaine étape)
@@ -170,6 +173,7 @@ const translations = {
     alerteChamps: "La date est obligatoire",
     alerteSession: "Session introuvable. Veuillez vous déconnecter et vous reconnecter.",
     erreur: "Erreur : ",
+    optionIndisponible: "Option indisponible : incohérente avec une réponse déjà cochée ailleurs",
   },
 
   en: {
@@ -268,17 +272,20 @@ const translations = {
       "Emotional management",
     ],
 
-    // Growth zone (deduplicated against sections 1-8)
+    // Growth zone (based on Yvan Castanou's 10 leadership handicaps + additions, deduplicated)
     s11_titre: "9. Growth zone (areas to work on)",
     s11_items: [
-      "Lacks clarity on personal vision and life direction",
-      "Struggles to manage emotions under pressure",
-      "Struggles to trust others and delegate",
-      "Lacks discernment in important choices and decisions",
-      "Tends to act hastily, without enough preparation",
-      "Fragile character under compromise and outside pressure",
-      "Unstable personal discipline, dependent on momentary motivation",
-      "Lacks depth in spiritual life and dependence on God",
+      "Pride: difficulty receiving outside input and questioning oneself",
+      "Lack of clarity on vision",
+      "Fear that holds back decision-making and action",
+      "Lack of character: fragile under compromise and pressure",
+      "Lack of wisdom in discernment and choices",
+      "Emotional instability in difficult situations",
+      "Lack of preparation before acting or deciding",
+      "Gap in planning and organizing projects",
+      "Poor communication: does not give clear direction",
+      "Decides everything alone, without consulting or delegating",
+      "Lack of dependence on God in one's personal spiritual walk",
     ],
 
     s10_titre: "10. Next step",
@@ -321,6 +328,7 @@ const translations = {
     alerteChamps: "Date is required",
     alerteSession: "Session not found. Please log out and log back in.",
     erreur: "Error: ",
+    optionIndisponible: "Option unavailable: conflicts with an answer already checked elsewhere",
   },
 };
 
@@ -342,6 +350,53 @@ const SECTION_CONFIG = [
   { key: "domaine_developper", itemsKey: "s9_items", titleKey: "s9_titre", autresKey: "domaine_developper_autres", autresLabel: "autres" },
   { key: "zone_transformation", itemsKey: "s11_items", titleKey: "s11_titre", autresKey: "zone_transformation_autres", autresLabel: "autres" },
 ];
+
+/* ============================================================
+   EXCLUSIONS CROISÉES ENTRE SECTIONS
+   Si l'item A (d'une section) est coché, l'item B (d'une autre
+   section) doit être grisé, et inversement.
+   On référence par INDEX dans le tableau d'items (stable entre
+   fr/en) plutôt que par texte, pour que ça marche dans les 2 langues.
+   ============================================================ */
+const CROSS_EXCLUSIVE_PAIRS = [
+  // Orgueil (zone_transformation) vs Accepte la correction (responsabilite)
+  [{ key: "zone_transformation", idx: 0 }, { key: "responsabilite", idx: 2 }],
+  // Orgueil (zone_transformation) vs Sert avec humilité (coeur_serviteur)
+  [{ key: "zone_transformation", idx: 0 }, { key: "coeur_serviteur", idx: 0 }],
+  // Manque de clarté sur sa vision vs Comprend la vision de l'église
+  [{ key: "zone_transformation", idx: 1 }, { key: "vision_engagement", idx: 0 }],
+  // Manque de clarté sur sa vision vs Comprend la vision des cellules
+  [{ key: "zone_transformation", idx: 1 }, { key: "vision_engagement", idx: 1 }],
+  // Manque de caractère (compromis/pressions) vs Fait preuve de stabilité
+  [{ key: "zone_transformation", idx: 3 }, { key: "responsabilite", idx: 7 }],
+  // Lacune dans la planification vs Est ponctuel et organisé
+  [{ key: "zone_transformation", idx: 7 }, { key: "fidelite_discipline", idx: 2 }],
+  // Manque de communication / directives floues vs Communique clairement
+  [{ key: "zone_transformation", idx: 8 }, { key: "leadership_relationnel", idx: 1 }],
+  // Décide tout par lui-même, sans déléguer vs Travaille bien en équipe
+  [{ key: "zone_transformation", idx: 9 }, { key: "leadership_relationnel", idx: 4 }],
+];
+
+// Retrouve le texte d'un item à partir de sa section (key) et de son index, dans la langue active (t)
+function getItemText(sectionKey, idx, t) {
+  const cfg = SECTION_CONFIG.find((c) => c.key === sectionKey);
+  if (!cfg) return null;
+  return t[cfg.itemsKey]?.[idx] ?? null;
+}
+
+// Retourne l'ensemble des libellés (dans la langue active) à griser pour une section donnée,
+// en fonction de ce qui est déjà coché ailleurs dans le formulaire.
+function getCrossDisabledItems(sectionKey, form, t) {
+  const disabled = new Set();
+  CROSS_EXCLUSIVE_PAIRS.forEach(([a, b]) => {
+    const aText = getItemText(a.key, a.idx, t);
+    const bText = getItemText(b.key, b.idx, t);
+    if (!aText || !bText) return;
+    if (a.key === sectionKey && (form[b.key] || []).includes(bText)) disabled.add(aText);
+    if (b.key === sectionKey && (form[a.key] || []).includes(aText)) disabled.add(bText);
+  });
+  return disabled;
+}
 
 const EMPTY_FORM = {
   date_action: "",
@@ -676,6 +731,8 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
                 items={t[cfg.itemsKey]}
                 selected={form[cfg.key]}
                 exclusivePairs={cfg.exclusivePairs}
+                disabledItems={getCrossDisabledItems(cfg.key, form, t)}
+                disabledTitle={t.optionIndisponible}
                 onToggle={(item) => {
                   setForm((prev) => {
                     const current = prev[cfg.key];
@@ -760,21 +817,27 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
    SOUS-COMPOSANTS
    ============================================================ */
 
-function CheckboxGroup({ items, selected, onToggle }) {
+function CheckboxGroup({ items, selected, onToggle, disabledItems, disabledTitle }) {
   return (
     <div className="space-y-2 mt-1">
       {items.map((item) => {
         const isChecked = selected.includes(item);
+        const isDisabled = !isChecked && !!disabledItems && disabledItems.has(item);
         return (
-          <label key={item} className="flex items-center gap-2 text-sm cursor-pointer select-none" onClick={() => onToggle(item)}>
-            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isChecked ? "bg-orange-400 border-orange-400" : "bg-white border-gray-300"}`}>
+          <label
+            key={item}
+            className={`flex items-center gap-2 text-sm select-none ${isDisabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"}`}
+            onClick={() => { if (!isDisabled) onToggle(item); }}
+            title={isDisabled ? disabledTitle : undefined}
+          >
+            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isChecked ? "bg-orange-400 border-orange-400" : isDisabled ? "bg-gray-100 border-gray-200" : "bg-white border-gray-300"}`}>
               {isChecked && (
                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               )}
             </div>
-            <span className="text-gray-700">{item}</span>
+            <span className={isDisabled ? "text-gray-400" : "text-gray-700"}>{item}</span>
           </label>
         );
       })}

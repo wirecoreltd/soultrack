@@ -24,10 +24,10 @@ jobs:
 
       - name: Install Capacitor
         run: |
-          npm install @capacitor/core@6 @capacitor/cli@6
-          npm install @capacitor/android@6
-          npm install @capacitor/push-notifications@6
-          npm install @capacitor/splash-screen@6
+          npm install @capacitor/core@7 @capacitor/cli@7
+          npm install @capacitor/android@7
+          npm install @capacitor/push-notifications@7
+          npm install @capacitor/splash-screen@7
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -111,9 +111,9 @@ jobs:
 
       - name: Install Capacitor
         run: |
-          npm install @capacitor/core@6 @capacitor/cli@6
-          npm install @capacitor/ios@6
-          npm install @capacitor/push-notifications@6
+          npm install @capacitor/core@7 @capacitor/cli@7
+          npm install @capacitor/ios@7
+          npm install @capacitor/push-notifications@7
 
       - name: Add iOS platform
         run: npx cap add ios

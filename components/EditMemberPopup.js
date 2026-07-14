@@ -393,6 +393,8 @@ export default function EditMemberPopup({
         ...prev,
         [name]: checked,
         ...(name === "star" && !checked ? { Ministere: [] } : {}),
+        ...(name === "pilier" && checked ? { star: true } : {}),
+        ...(name === "leader_developpement" && checked ? { star: true } : {}),
       }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));

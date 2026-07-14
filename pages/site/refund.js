@@ -191,13 +191,15 @@ export default function RefundPage() {
       >
         <div
           style={{
-            maxWidth: "1100px",
+            maxWidth: "1240px",
             margin: "0 auto",
             padding: "22px 24px",
             height: "88px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            gap: "24px",
+            boxSizing: "border-box",
           }}
         >
           {/* LOGO */}
@@ -205,53 +207,57 @@ export default function RefundPage() {
             onClick={() => router.push("/site/HomePage")}
             style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}
           >
-            <Image src="/logo.png" alt="SoulTrack" width={50} height={50} />
-            <span style={{ color: "#fff", fontSize: "22px", fontWeight: 500, fontFamily: "'Great Vibes', cursive" }}>
+            <Image src="/logo.png" alt="SoulTrack" width={38} height={38} />
+            <span style={{ color: "#fff", fontSize: "19px", fontWeight: 500, fontFamily: "'Great Vibes', cursive", whiteSpace: "nowrap" }}>
               SoulTrack
             </span>
           </div>
 
-          {/* NAV desktop */}
-          <nav style={{ display: "flex", alignItems: "center", gap: "32px", zIndex: 1 }}>
-            {t.nav.map((item) => (
-              <span
-                key={item.path}
-                onClick={() => router.push(item.path)}
-                style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "color 0.2s" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = pathname === item.path ? "#fbbf24" : "#fff")}
-                className="nav-hide"
+          {/* ───── GROUPE DROITE desktop : nav + boutons + switcher langue ───── */}
+          <div className="nav-hide" style={{ display: "flex", alignItems: "center", gap: "26px", zIndex: 1, flexShrink: 0 }}>
+
+            {/* NAV desktop */}
+            <nav style={{ display: "flex", alignItems: "center", gap: "20px", zIndex: 1, flexShrink: 0 }}>
+              {t.nav.map((item) => (
+                <span
+                  key={item.path}
+                  onClick={() => router.push(item.path)}
+                  style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "color 0.2s", whiteSpace: "nowrap" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = pathname === item.path ? "#fbbf24" : "#fff")}
+                >
+                  {item.label}
+                </span>
+              ))}
+            </nav>
+
+            {/* BOUTONS desktop */}
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", zIndex: 1, flexShrink: 0 }}>
+              <button
+                onClick={() => router.push("/login")}
+                style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer", whiteSpace: "nowrap" }}
               >
-                {item.label}
-              </span>
-            ))}
-          </nav>
+                {t.login}
+              </button>
+              <button
+                onClick={() => router.push("/site/pricing")}
+                style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                {t.signup}
+              </button>
+            </div>
 
-          {/* BOUTONS desktop */}
-          <div style={{ display: "flex", gap: "10px", alignItems: "center", zIndex: 1, flexShrink: 0 }} className="nav-hide">
-            <button
-              onClick={() => router.push("/login")}
-              style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
-            >
-              {t.login}
-            </button>
-            <button
-              onClick={() => router.push("/site/pricing")}
-              style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
-            >
-              {t.signup}
-            </button>
+            {/* Switcher langue desktop */}
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", flexShrink: 0 }}>
+              <button onClick={() => changeLang("fr")} title="Français" style={{ ...langBtnStyle(lang === "fr"), flexShrink: 0 }}>
+                <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="30" height="21" alt="Français" style={{ display: "block", borderRadius: "3px", flexShrink: 0 }} />
+              </button>
+              <button onClick={() => changeLang("en")} title="English" style={{ ...langBtnStyle(lang === "en"), flexShrink: 0 }}>
+                <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="30" height="21" alt="English" style={{ display: "block", borderRadius: "3px", flexShrink: 0 }} />
+              </button>
+            </div>
           </div>
-
-          {/* Switcher langue desktop */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }} className="nav-hide">
-            <button onClick={() => changeLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
-              <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="32" height="22" alt="Français" style={{ display: "block", borderRadius: "3px" }} />
-            </button>
-            <button onClick={() => changeLang("en")} title="English" style={langBtnStyle(lang === "en")}>
-              <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="32" height="22" alt="English" style={{ display: "block", borderRadius: "3px" }} />
-            </button>
-          </div>
+          {/* ───── FIN GROUPE DROITE ───── */}
 
           {/* HAMBURGER */}
           <button

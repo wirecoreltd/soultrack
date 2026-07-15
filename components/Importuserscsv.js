@@ -470,34 +470,25 @@ export default function ImportUsersCSV() {
     let successCount = 0;
     const rowErrors = [];
 
-    for (let i = 0; i < data.length; i++) {
-      const row = data[i];
-      setProgress(t.progressMsg(i + 1, data.length));
+    setProgress(t.progressMsg(1, data.length));
 
-      try {
-        const res = await fetch("/api/create-user", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            ...row,
-            member_id: "add-serviteur",
-          }),
-        });
-
-        const result = await res.json();
-
-        if (!res.ok) {
-          rowErrors.push(t.errorRow(i + 2, result?.error ?? "Unknown error"));
-        } else {
-          successCount++;
-        }
-      } catch (err) {
-        rowErrors.push(t.errorRow(i + 2, err.message));
+      const res = await fetch("/api/create-users-batch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ users: data }),
+      });
+      
+      const result = await res.json();
+      
+      if (!res.ok) {
+        rowErrors.push(result?.error ?? "Unknown error");
+      } else {
+        successCount = result.success;
+        rowErrors.push(...(result.errors || []));
       }
-    }
 
     setLoading(false);
     setProgress("");

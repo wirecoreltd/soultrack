@@ -428,37 +428,23 @@ export default function ImportMembresCSV({ user }) {
     }
 
     const dupsToUpdate = duplicates.filter((d) => depsToUpdate[d.telephone]);
-    for (const dup of dupsToUpdate) {
-      const { existingId, rowData } = dup;
-      const { error } = await supabase
-        .from("membres_complets")
-        .update({
-          nom: rowData.nom,
-          prenom: rowData.prenom,
-          sexe: rowData.sexe,
-          age: rowData.age,
-          date_venu: rowData.date_venu,
-          star: rowData.star,
-          statut: rowData.statut,
-          venu: rowData.venu,
-          priere_salut: rowData.priere_salut,
-          telephone: rowData.telephone,
-          ville: rowData.ville,
-          is_whatsapp: rowData.is_whatsapp,
-          bapteme_eau: rowData.bapteme_eau,
-          bapteme_esprit: rowData.bapteme_esprit,
-          besoin: rowData.besoin,
-          type_conversion: rowData.type_conversion,
-          infos_supplementaires: rowData.infos_supplementaires,
-        })
-        .eq("id", existingId);
-
-      if (error) {
-        alert(`${t.errorUpdate} ${dup.csv}: ` + error.message);
-        setLoading(false);
-        return;
-      }
-    }
+if (dupsToUpdate.length > 0) {
+  const updateResults = await Promise.all(
+    dupsToUpdate.map(({ existingId, rowData }) =>
+      supabase.from("membres_complets").update({
+        nom: rowData.nom, prenom: rowData.prenom, sexe: rowData.sexe,
+        age: rowData.age, date_venu: rowData.date_venu, star: rowData.star,
+        statut: rowData.statut, venu: rowData.venu, priere_salut: rowData.priere_salut,
+        telephone: rowData.telephone, ville: rowData.ville, is_whatsapp: rowData.is_whatsapp,
+        bapteme_eau: rowData.bapteme_eau, bapteme_esprit: rowData.bapteme_esprit,
+        besoin: rowData.besoin, type_conversion: rowData.type_conversion,
+        infos_supplementaires: rowData.infos_supplementaires,
+      }).eq("id", existingId)
+    )
+  );
+  const failed = updateResults.find((r) => r.error);
+  if (failed) { alert(t.errorUpdate + ": " + failed.error.message); setLoading(false); return; }
+}
 
     setLoading(false);
     setImportCount(data.length + dupsToInsert.length + dupsToUpdate.length);

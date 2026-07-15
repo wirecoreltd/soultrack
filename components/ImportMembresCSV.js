@@ -174,8 +174,8 @@ export default function ImportMembresCSV({ user }) {
   const [importCount, setImportCount] = useState(0);
 
   const requiredFields = [
-    "nom", "prenom", "sexe", "age", "date_venu", "serviteur",
-    "statut", "venu", "priere_salut", "type_conversion",
+  "nom", "prenom", "sexe", "age", "date_venu", "serviteur",
+  "statut", "venu", "priere_salut",
   ];
 
   const capitalize = (str) =>
@@ -257,6 +257,9 @@ export default function ImportMembresCSV({ user }) {
               rowErrors.push(`Ligne ${index + 1}: ${field} manquant`);
           });
 
+          if (normalized.priere_salut === "Oui" && !normalized.type_conversion) {
+            rowErrors.push(`Ligne ${index + 1}: type_conversion manquant (requis si priere_salut = Oui)`);
+          }
           // Validations des valeurs
           if (normalized.sexe && !["Homme", "Femme"].includes(normalized.sexe))
             rowErrors.push(`Ligne ${index + 1}: sexe invalide (Homme ou Femme)`);

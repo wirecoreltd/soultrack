@@ -360,26 +360,21 @@ export default function ImportMembresFamilleCSV({ user }) {
     }
 
     const dupsToUpdate = duplicates.filter((d) => depsToUpdate[d.telephone]);
-    for (const dup of dupsToUpdate) {
-      const { existingId, rowData } = dup;
-      const { error } = await supabase
-        .from("membres_complets")
-        .update({
-          nom: rowData.nom,
-          prenom: rowData.prenom,
-          sexe: rowData.sexe,
-          age: rowData.age,
-          date_venu: rowData.date_venu,
-          telephone: rowData.telephone,
-          ville: rowData.ville,
-          bapteme_eau: rowData.bapteme_eau,
-          bapteme_esprit: rowData.bapteme_esprit,
-          star: rowData.star,
-          infos_supplementaires: rowData.infos_supplementaires,
-        })
-        .eq("id", existingId);
-      if (error) { alert(`${t.errorUpdate} ${dup.csv}: ` + error.message); setLoading(false); return; }
-    }
+    if (dupsToUpdate.length > 0) {
+  const updateResults = await Promise.all(
+    dupsToUpdate.map(({ existingId, rowData }) =>
+      supabase.from("membres_complets").update({
+        nom: rowData.nom, prenom: rowData.prenom, sexe: rowData.sexe,
+        age: rowData.age, date_venu: rowData.date_venu,
+        telephone: rowData.telephone, ville: rowData.ville,
+        bapteme_eau: rowData.bapteme_eau, bapteme_esprit: rowData.bapteme_esprit,
+        star: rowData.star, infos_supplementaires: rowData.infos_supplementaires,
+      }).eq("id", existingId)
+    )
+  );
+  const failed = updateResults.find((r) => r.error);
+  if (failed) { alert(t.errorUpdate + ": " + failed.error.message); setLoading(false); return; }
+}
 
     setLoading(false);
     setImportCount(data.length + dupsToInsert.length + dupsToUpdate.length);

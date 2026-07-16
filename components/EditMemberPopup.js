@@ -239,7 +239,7 @@ export default function EditMemberPopup({
     "Intercession","Louange","Administration","Technique",
     "Communication","Les Enfants","Les ados","Les jeunes",
     "Finance","Nettoyage","Conseiller","Compassion",
-    "Visite","Berger","Modération",
+    "Visite","Berger","Équipe d’accueil","Modération",
   ];
 
  useEffect(() => {

@@ -4,6 +4,14 @@ import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
 
+// ✅ Liste canonique unique des ministères (valeurs stockées en base, en français)
+const MINISTERE_KEYS = [
+  "Intercession", "Louange", "Administration", "Technique",
+  "Communication", "Les Enfants", "Les ados", "Les jeunes",
+  "Finance", "Nettoyage", "Conseiller", "Compassion",
+  "Visite", "Berger", "Équipe d’accueil", "Modération",
+];
+
 const translations = {
   fr: {
     // Header
@@ -48,8 +56,8 @@ const translations = {
     femme: "Femme",
     // Age options
     ages: [
-      "12-17 ans","18-25 ans","26-30 ans","31-40 ans",
-      "41-55 ans","56-69 ans","70 ans et plus",
+      "12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans",
+      "41-55 ans", "56-69 ans", "70 ans et plus",
     ],
     // Suivi statut options
     enAttente: "En Attente",
@@ -84,7 +92,7 @@ const translations = {
       { key: "croissance", emoji: "🌿", label: "Serviteur fidèle" },
       { key: "developpement", emoji: "🌳", label: "Leader en croissance" },
       { key: "mature", emoji: "🌲", label: "Leader confirmé" },
-    ], 
+    ],
     // Conseiller search
     searchConseiller: "Rechercher un conseiller...",
     noResult: "Aucun résultat",
@@ -93,6 +101,25 @@ const translations = {
     lockedMessage: "🔒 La cellule, la famille et les conseillers sont gérés par un administrateur.",
     // Ministere
     autreMinistere: "Précisez le ministère",
+    // ✅ Labels traduits des ministères (clés = valeurs stockées en base)
+    ministereLabels: {
+      "Intercession": "Intercession",
+      "Louange": "Louange",
+      "Administration": "Administration",
+      "Technique": "Technique",
+      "Communication": "Communication",
+      "Les Enfants": "Les Enfants",
+      "Les ados": "Les ados",
+      "Les jeunes": "Les jeunes",
+      "Finance": "Finance",
+      "Nettoyage": "Nettoyage",
+      "Conseiller": "Conseiller",
+      "Compassion": "Compassion",
+      "Visite": "Visite",
+      "Berger": "Berger",
+      "Équipe d’accueil": "Équipe d’accueil",
+      "Modération": "Modération",
+    },
     // Footer buttons
     cancel: "Annuler",
     saving: "Enregistrement...",
@@ -140,8 +167,8 @@ const translations = {
     homme: "Man",
     femme: "Woman",
     ages: [
-      "12-17 yrs","18-25 yrs","26-30 yrs","31-40 yrs",
-      "41-55 yrs","56-69 yrs","70 yrs and over",
+      "12-17 yrs", "18-25 yrs", "26-30 yrs", "31-40 yrs",
+      "41-55 yrs", "56-69 yrs", "70 yrs and over",
     ],
     enAttente: "Pending",
     integrer: "Integrate",
@@ -170,12 +197,31 @@ const translations = {
       { key: "croissance", emoji: "🌿", label: "Faithful Servant" },
       { key: "developpement", emoji: "🌳", label: "Growing leader" },
       { key: "mature", emoji: "🌲", label: "Established Leader" },
-    ],      
+    ],
     searchConseiller: "Search for a counsellor...",
     noResult: "No results",
     principal: "(main)",
     lockedMessage: "🔒 Cell, family and counsellors are managed by an administrator.",
     autreMinistere: "Specify the ministry",
+    // ✅ Translated ministry labels (keys = values stored in DB)
+    ministereLabels: {
+      "Intercession": "Intercession",
+      "Louange": "Worship",
+      "Administration": "Administration",
+      "Technique": "Technical/AV",
+      "Communication": "Communication",
+      "Les Enfants": "Children's Ministry",
+      "Les ados": "Teens",
+      "Les jeunes": "Young Adults",
+      "Finance": "Finance",
+      "Nettoyage": "Cleaning",
+      "Conseiller": "Counselling",
+      "Compassion": "Compassion",
+      "Visite": "Visitation",
+      "Berger": "Pastoral Care",
+      "Équipe d’accueil": "Usher Team",
+      "Modération": "Moderation",
+    },
     cancel: "Cancel",
     saving: "Saving...",
     loading: "Loading...",
@@ -235,69 +281,62 @@ export default function EditMemberPopup({
 
   const modalRef = useRef(null);
 
-  const ministereOptions = [
-    "Intercession","Louange","Administration","Technique",
-    "Communication","Les Enfants","Les ados","Les jeunes",
-    "Finance","Nettoyage","Conseiller","Compassion",
-    "Visite","Berger","Équipe d’accueil","Modération",
-  ];
+  useEffect(() => {
+    if (!member?.id) return;
 
- useEffect(() => {
-  if (!member?.id) return;
+    const fetchFreshData = async () => {
+      setLoadingData(true);
 
-  const fetchFreshData = async () => {
-    setLoadingData(true);
+      const { data: freshMember, error } = await supabase
+        .from("membres_complets")
+        .select("*")
+        .eq("id", member.id)
+        .single();
 
-    const { data: freshMember, error } = await supabase
-      .from("membres_complets")
-      .select("*")
-      .eq("id", member.id)
-      .single();
+      if (error || !freshMember) {
+        console.error("Erreur chargement membre frais:", error);
+        initForm(member);
+        setLoadingData(false);
+        return;
+      }
 
-    if (error || !freshMember) {
-      console.error("Erreur chargement membre frais:", error);
-      initForm(member);
+      initForm(freshMember);
+
+      const { data: assignments, error: assignError } = await supabase
+        .from("suivi_assignments")
+        .select("conseiller_id, role, profiles:conseiller_id(id, prenom, nom)")
+        .eq("membre_id", member.id)
+        .eq("statut", "actif")
+        .order("created_at", { ascending: true });
+
+      if (!assignError && assignments) {
+        const sorted = [...assignments].sort((a, b) => {
+          if (a.role === "principal") return -1;
+          if (b.role === "principal") return 1;
+          return 0;
+        });
+        const objects = sorted.map((d) => d.profiles).filter(Boolean);
+        setSelectedConseillers(objects);
+      }
+
+      // ✅ Récupère la dernière étape APRÈS que formData soit posé par initForm
+      const { data: lastEval } = await supabase
+        .from("evaluations_leader")
+        .select("parcours_etape")
+        .eq("membre_id", member.id)
+        .order("date_action", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      setFormData((prev) =>
+        prev ? { ...prev, parcours_leader_etape: lastEval?.parcours_etape || "" } : prev
+      );
+
       setLoadingData(false);
-      return;
-    }
+    };
 
-    initForm(freshMember);
-
-    const { data: assignments, error: assignError } = await supabase
-      .from("suivi_assignments")
-      .select("conseiller_id, role, profiles:conseiller_id(id, prenom, nom)")
-      .eq("membre_id", member.id)
-      .eq("statut", "actif")
-      .order("created_at", { ascending: true });
-
-    if (!assignError && assignments) {
-      const sorted = [...assignments].sort((a, b) => {
-        if (a.role === "principal") return -1;
-        if (b.role === "principal") return 1;
-        return 0;
-      });
-      const objects = sorted.map((d) => d.profiles).filter(Boolean);
-      setSelectedConseillers(objects);
-    }
-
-    // ✅ Récupère la dernière étape APRÈS que formData soit posé par initForm
-    const { data: lastEval } = await supabase
-      .from("evaluations_leader")
-      .select("parcours_etape")
-      .eq("membre_id", member.id)
-      .order("date_action", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    setFormData((prev) =>
-      prev ? { ...prev, parcours_leader_etape: lastEval?.parcours_etape || "" } : prev
-    );
-
-    setLoadingData(false);
-  };
-
-  fetchFreshData();
-}, [member?.id]);
+    fetchFreshData();
+  }, [member?.id]);
 
   // ✅ Hook séparé, correctement placé au niveau racine du composant
   useEffect(() => {
@@ -330,7 +369,7 @@ export default function EditMemberPopup({
       age: data?.age || "",
       star: !!data?.star,
       pilier: !!data?.pilier,
-      leader_developpement: !!data?.leader_developpement,     
+      leader_developpement: !!data?.leader_developpement,
       parcours_leader_etape: "",
       etat_contact: data?.etat_contact || "Nouveau",
       bapteme_eau: data?.bapteme_eau ?? null,
@@ -357,14 +396,13 @@ export default function EditMemberPopup({
         data?.Commentaire_Suivi_Evangelisation || "",
     });
 
-    const ministereOptionsFull = [
-      "Intercession","Louange","Administration","Technique",
-      "Communication","Les Enfants","Les ados","Les jeunes",
-      "Finance","Nettoyage","Conseiller","Compassion",
-      "Visite","Berger","Modération","Autre",
-    ];
+    // ✅ Utilise la même liste canonique que celle affichée pour éviter
+    // toute divergence (ex: "Équipe d’accueil" oublié) qui ferait passer
+    // à tort une valeur connue pour un "Autre" ministère personnalisé.
     const ministereList = parseBesoin(data?.Ministere);
-    const autreVal = ministereList.find((m) => !ministereOptionsFull.includes(m));
+    const autreVal = ministereList.find(
+      (m) => ![...MINISTERE_KEYS, "Autre"].includes(m)
+    );
     if (autreVal) {
       setAutreMinistere(autreVal);
     }
@@ -975,7 +1013,7 @@ export default function EditMemberPopup({
                   {formData.star && (
                     <Field label={t.ministere}>
                       <div className="grid grid-cols-2 gap-1 mt-1">
-                        {ministereOptions.map((m) => (
+                        {MINISTERE_KEYS.map((m) => (
                           <label
                             key={m}
                             className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1"
@@ -995,7 +1033,7 @@ export default function EditMemberPopup({
                               }}
                               className="accent-[#2E3192]"
                             />
-                            {m}
+                            {t.ministereLabels[m] || m}
                           </label>
                         ))}
                         <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer py-1">

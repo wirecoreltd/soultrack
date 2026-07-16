@@ -768,12 +768,12 @@ const leadersParFamille = useMemo(() => {
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-white/60">{t.dateDebut}</label>
                   <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-400/60" />
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-white/60">{t.dateFin}</label>
                   <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-400/60" />
+                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
               </div>
               <button onClick={() => fetchRapport(true)} disabled={!egliseId || loading}

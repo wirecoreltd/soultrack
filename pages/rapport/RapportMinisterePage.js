@@ -739,45 +739,49 @@ const leadersParFamille = useMemo(() => {
           <p className="text-sm text-white/60 italic">{t.subtitle}</p>
         </div>        
 
-        {/* Filtres */}
-        <div className="bg-white/8 rounded-2xl p-4 flex flex-col gap-3 border border-white/10">
+       {/* Filtres */}
+        <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!modePerso ? "bg-white text-[#1e1b4b]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
               {t.perioderapide}
             </button>
             <button onClick={() => setModePerso(true)}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${modePerso ? "bg-white text-[#1e1b4b]" : "text-white/50 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
               {t.tranchedates}
             </button>
           </div>
+        
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-white/60">{t.periode}</span>
-              {periodes.map(p => (
-                <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition ${filtrePeriode === p.val ? "bg-emerald-500 text-white" : "bg-white/10 text-white/70 hover:bg-white/20"}`}>
-                  {p.label}
-                </button>
-              ))}
+              <span className="text-sm text-white/60 flex-shrink-0">{t.periode}</span>
+              <div className="flex gap-1 bg-white/10 rounded-xl p-1 flex-wrap">
+                {periodes.map(p => (
+                  <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
+                    className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
+        
           {modePerso && (
             <div className="flex flex-col gap-2">
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/60">{t.dateDebut}</label>
+                  <label className="text-xs text-white/80">{t.dateDebut}</label>
                   <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-white/60">{t.dateFin}</label>
+                  <label className="text-xs text-white/80">{t.dateFin}</label>
                   <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
                     className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
               </div>
               <button onClick={() => fetchRapport(true)} disabled={!egliseId || loading}
-                className="w-full py-2 rounded-xl bg-emerald-500/80 hover:bg-emerald-500 text-white text-sm font-semibold transition active:scale-95 disabled:opacity-50">
+                className="w-full py-2 rounded-xl bg-amber-500/80 hover:bg-amber-500 text-white text-sm font-semibold transition active:scale-95 disabled:opacity-50">
                 {t.genererRapport}
               </button>
             </div>
@@ -785,7 +789,7 @@ const leadersParFamille = useMemo(() => {
         </div>
 
         {/* Onglets */}
-        <div className="flex gap-1 bg-white/8 rounded-xl p-1 border border-white/10">
+        <div className="flex gap-1 bg-white/10 rounded-xl p-1 mt-4">
           {[
             { key: "vision",     label: t.ongletVision},
             { key: "berger",     label: t.ongletBerger},
@@ -793,8 +797,8 @@ const leadersParFamille = useMemo(() => {
             { key: "leaders",    label: t.ongletLeaders},
           ].map(o => (
             <button key={o.key} onClick={() => setOnglet(o.key)}
-              className={`flex-1 py-2 px-2 rounded-lg text-[10px] sm:text-sm font-semibold transition whitespace-nowrap flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 ${onglet === o.key ? "bg-white text-[#1e1b4b]" : "text-white/80 hover:text-white"}`}>
-              <span>{o.icon}</span><span className="leading-tight text-center">{o.label}</span>
+              className={`flex-1 py-2 px-2 rounded-lg text-[10px] sm:text-sm font-semibold transition whitespace-nowrap ${onglet === o.key ? "bg-white text-[#333699]" : "text-white/80 hover:text-white"}`}>
+              {o.label}
             </button>
           ))}
         </div>

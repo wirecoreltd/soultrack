@@ -300,7 +300,8 @@ export default function HeaderPages() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
+    className="w-full max-w-5xl mx-auto pt-6 sm:pt-4"
+    style={{ paddingTop: "max(1.5rem, env(safe-area-inset-top))" }}
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-1">

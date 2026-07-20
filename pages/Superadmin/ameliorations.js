@@ -61,7 +61,7 @@ function AmeliorationsContent() {
   }
 
   return (
-    <div style={{ background: "#333699", minHeight: "100vh", paddingTop: "24px" }}>
+    <div style={{ background: "#333699", minHeight: "100vh" }}>
       <HeaderPages />
 
       <div style={{ textAlign: "center", padding: "28px 24px 0" }}>

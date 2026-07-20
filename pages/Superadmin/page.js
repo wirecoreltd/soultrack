@@ -44,21 +44,25 @@ function BillingContent() {
     if (error || !eglises?.length) { setLoading(false); return; }
 
     const { data: subs } = await supabase
-      .from("subscriptions")
-      .select("eglise_id, plan_id, current_period_end");
+  .from("subscriptions")
+  .select("eglise_id, plan_id, current_period_end, statut, created_at")
+  .eq("statut", "active")
+  .order("created_at", { ascending: false });
 
-    const { data: membresRaw } = await supabase
-      .from("membres_complets")
-      .select("eglise_id")
-      .is("raison_supprime", null);
+const { data: membresRaw } = await supabase
+  .from("membres_complets")
+  .select("eglise_id")
+  .is("raison_supprime", null);
 
-    const membresCount = {};
-    (membresRaw || []).forEach(m => {
-      membresCount[m.eglise_id] = (membresCount[m.eglise_id] || 0) + 1;
-    });
+const membresCount = {};
+(membresRaw || []).forEach(m => {
+  membresCount[m.eglise_id] = (membresCount[m.eglise_id] || 0) + 1;
+});
 
-    const subMap = {};
-    (subs || []).forEach(s => { subMap[s.eglise_id] = s; });
+const subMap = {};
+(subs || []).forEach(s => {
+  if (!subMap[s.eglise_id]) subMap[s.eglise_id] = s;
+});
 
     setRows(eglises.map(e => ({
       eglise: e,

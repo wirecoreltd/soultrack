@@ -70,6 +70,17 @@ jobs:
           grep -E "compileSdk|targetSdk" android/app/build.gradle
           echo "--- styles.xml ---"
           cat "$STYLES_FILE"
+
+      - name: Debug navigation bar
+        run: |
+          echo "=== styles.xml ==="
+          cat android/app/src/main/res/values/styles.xml
+          echo ""
+          echo "=== MainActivity.java ==="
+          cat android/app/src/main/java/org/soultrack/app/MainActivity.java
+          echo ""
+          echo "=== build.gradle targetSdk ==="
+          grep -E "compileSdk|targetSdk|minSdk" android/app/build.gradle  
           
       - name: Set version code
         run: |

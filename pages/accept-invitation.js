@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import HeaderInvitation from "../components/HeaderInvitation";
+import Footer from "../components/Footer";
 
 export default function AcceptInvitation() {
   const router = useRouter();
@@ -167,6 +168,8 @@ export default function AcceptInvitation() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }

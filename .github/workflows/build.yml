@@ -38,6 +38,19 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Add App Links intent-filter
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          sed -i '/<\/activity>/i \
+            <intent-filter android:autoVerify="true">\n\
+                <action android:name="android.intent.action.VIEW" />\n\
+                <category android:name="android.intent.category.DEFAULT" />\n\
+                <category android:name="android.intent.category.BROWSABLE" />\n\
+                <data android:scheme="https" android:host="www.soultrack.org" />\n\
+            </intent-filter>' "$MANIFEST"
+          echo "=== AndroidManifest.xml ==="
+          cat "$MANIFEST"
+
       - name: Generate app icons & splash
         run: |
           npm install @capacitor/assets --save-dev

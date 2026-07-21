@@ -74,13 +74,13 @@ export default function Administrateur() {
       if (storedName) setUserName(storedName.split(" ")[0]);
 
       const { data: profile, error: profileError } = await supabase
-        .from("profiles").select("branche_id").eq("id", user.id).single();
-      if (profileError || !profile?.branche_id) return;
+  .from("profiles").select("eglise_id").eq("id", user.id).single();
+if (profileError || !profile?.eglise_id) return;
 
-      const { data: invites, error: inviteError } = await supabase
-        .from("eglise_supervisions").select("*")
-        .eq("supervisee_branche_id", profile.branche_id)
-        .in("statut", ["pending", "refusee"]).limit(1);
+const { data: invites, error: inviteError } = await supabase
+  .from("eglise_supervisions").select("*")
+  .eq("supervisee_eglise_id", profile.eglise_id)
+  .in("statut", ["pending", "refusee"]).limit(1);
 
       if (!inviteError && invites && invites.length > 0) setInvitation(invites[0]);
     };

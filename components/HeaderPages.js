@@ -150,21 +150,13 @@ function getPaysLabel(countryNameFr, lang) {
   return countryNameFr;
 }
 
-function abbrevDenomination(str) {
-  return (str || "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((w) => w[0].toUpperCase())
-    .join("");
-}
-
-function getSupervisionLabel({ denomination, nom, branche, ville }) {
+// Libellé complet de l'église superviseure : "Denomination-Nom - Ville - Pays"
+// Exemple : "Christ Church-Love of God - New York - États-Unis"
+function getSupervisionLabel({ denomination, nom, ville, pays }, lang) {
   return [
-    abbrevDenomination(denomination),
-    (nom || "").trim(),
-    (branche || "").trim(),
+    [denomination, nom].filter(Boolean).join("-"),
     (ville || "").trim(),
+    getPaysLabel(pays, lang),
   ]
     .filter(Boolean)
     .join(" - ");
@@ -252,7 +244,7 @@ export default function HeaderPages() {
           if (supervisionData?.superviseur_eglise_id) {
             const { data: superviseurEglise } = await supabase
               .from("eglises")
-              .select("nom, denomination, ville, branche")
+              .select("nom, denomination, ville, pays, branche")
               .eq("id", supervisionData.superviseur_eglise_id)
               .single();
 
@@ -262,6 +254,7 @@ export default function HeaderPages() {
                 nom: superviseurEglise.nom,
                 branche: superviseurEglise.branche,
                 ville: superviseurEglise.ville,
+                pays: superviseurEglise.pays,
               });
             }
           }
@@ -357,8 +350,8 @@ export default function HeaderPages() {
           </p>
 
           {supervision && (
-            <p className="text-amber-300 text-sm mt-0.5 text-right leading-snug break-words max-w-[220px]">
-              {t.supervisedBy} {getSupervisionLabel(supervision)}
+            <p className="text-amber-300 text-sm mt-0.5 text-right leading-snug break-words max-w-[240px]">
+              {t.supervisedBy} {getSupervisionLabel(supervision, lang)}
             </p>
           )}
         </div>

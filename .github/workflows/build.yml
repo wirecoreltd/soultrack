@@ -42,7 +42,7 @@ jobs:
       - name: Fix Android navigation bar
         run: |
           STYLES_FILE="android/app/src/main/res/values/styles.xml"
-          sed -i 's|</style>|    <item name="android:navigationBarColor">@android:color/transparent</item>\n    <item name="android:windowTranslucentNavigation">true</item>\n    <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>\n</style>|' "$STYLES_FILE"
+          sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:windowTranslucentNavigation">false</item>\n    <item name="android:navigationBarDividerColor">#333699</item>\n</style>|' "$STYLES_FILE"
 
       - name: Generate app icons & splash
         run: |

@@ -349,7 +349,7 @@ export default function LinkEglise() {
     const branche = superviseur.eglise_branche ? `, ${superviseur.eglise_branche}` : "";
     const superviseurInfo = `${superviseur.prenom} ${superviseur.nom} de ${superviseur.eglise_denomination}, ${superviseur.eglise_nom}${branche}, ${superviseur.eglise_ville}`;
     const destinataire = `${responsable.prenom} ${responsable.nom}`;
-    const lien = `https://soultrack-three.vercel.app/accept-invitation?token=${token}`;
+    const lien = `https://www.soultrack.org/accept-invitation?token=${token}`;
 
     const salut = t.msgBonjour(destinataire);
     const corps = mode === "rappel" ? t.msgRappelInvite(superviseurInfo) : t.msgNouveauInvite(superviseurInfo);

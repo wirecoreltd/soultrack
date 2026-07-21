@@ -74,13 +74,24 @@ export default function Administrateur() {
       if (storedName) setUserName(storedName.split(" ")[0]);
 
       const { data: profile, error: profileError } = await supabase
-  .from("profiles").select("eglise_id").eq("id", user.id).single();
-if (profileError || !profile?.eglise_id) return;
+        .from("profiles").select("eglise_id").eq("id", user.id).single();
+      if (profileError) return;
 
-const { data: invites, error: inviteError } = await supabase
-  .from("eglise_supervisions").select("*")
-  .eq("supervisee_eglise_id", profile.eglise_id)
-  .in("statut", ["pending", "refusee"]).limit(1);
+      // Tant que l'invitation n'a pas été ouverte une première fois,
+      // supervisee_eglise_id est encore null (il est rempli par le RPC
+      // get_invitation_par_token). On matche donc aussi par email pour
+      // retrouver l'invitation avant ce premier clic.
+      const orFilters = [`responsable_email.eq.${user.email}`];
+      if (profile?.eglise_id) {
+        orFilters.push(`supervisee_eglise_id.eq.${profile.eglise_id}`);
+      }
+
+      const { data: invites, error: inviteError } = await supabase
+        .from("eglise_supervisions")
+        .select("*")
+        .or(orFilters.join(","))
+        .in("statut", ["pending", "refusee"])
+        .limit(1);
 
       if (!inviteError && invites && invites.length > 0) setInvitation(invites[0]);
     };

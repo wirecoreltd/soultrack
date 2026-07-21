@@ -14,6 +14,7 @@
     "bcryptjs": "^2.4.3",
     "@capacitor/core": "^7.0.0",
     "@capacitor/cli": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
     "@capacitor/push-notifications": "^7.0.0",
     "@lemonsqueezy/lemonsqueezy.js": "^3.3.1",
     "next": "14.2.29",

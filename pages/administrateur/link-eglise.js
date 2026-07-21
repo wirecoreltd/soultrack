@@ -37,16 +37,11 @@ const translations = {
     placeholderPrenom: "Prénom *",
     labelNom: "Nom du responsable",
     placeholderNom: "Nom *",
-    labelDenomination: "Dénomination",
-    placeholderDenomination: "Dénomination *",
-    labelNomEglise: "Nom de l'église",
-    placeholderNomEglise: "Nom église",
-    labelBranche: "Branche de l'église",
-    placeholderBranche: "Branche église",
-    labelVille: "Ville",
-    placeholderVille: "Ville",
-    labelPays: "Pays",
-    placeholderPays: "Pays *",
+    labelEglise: "Église à inviter",
+    placeholderEglise: "Rechercher une église (nom ou dénomination) *",
+    egliseAucunResultat: "Aucune église trouvée",
+    changerEglise: "✕ Changer d'église",
+    egliseDejaSupervisee: "⚠️ Cette église est déjà supervisée par une autre église.",
     labelModeEnvoi: "Mode d'envoi",
     placeholderModeEnvoi: "Choisir un mode d'envoi",
     modeWhatsapp: "WhatsApp",
@@ -128,16 +123,11 @@ const translations = {
     placeholderPrenom: "First name *",
     labelNom: "Leader's last name",
     placeholderNom: "Last name *",
-    labelDenomination: "Denomination",
-    placeholderDenomination: "Denomination *",
-    labelNomEglise: "Church name",
-    placeholderNomEglise: "Church name",
-    labelBranche: "Church branch",
-    placeholderBranche: "Church branch",
-    labelVille: "City",
-    placeholderVille: "City",
-    labelPays: "Country",
-    placeholderPays: "Country *",
+    labelEglise: "Church to invite",
+    placeholderEglise: "Search a church (name or denomination) *",
+    egliseAucunResultat: "No church found",
+    changerEglise: "✕ Change church",
+    egliseDejaSupervisee: "⚠️ This church is already supervised by another church.",
     labelModeEnvoi: "Sending method",
     placeholderModeEnvoi: "Choose a sending method",
     modeWhatsapp: "WhatsApp",
@@ -196,6 +186,7 @@ export default function LinkEglise() {
   const t = translations[lang];
 
   const formRef = useRef(null);
+  const searchTimeout = useRef(null);
 
   const [superviseur, setSuperviseur] = useState({
     prenom: "",
@@ -218,6 +209,11 @@ export default function LinkEglise() {
     pays: "",
     branche: "",
   });
+
+  // ── Recherche d'église existante ──
+  const [egliseSearch, setEgliseSearch] = useState("");
+  const [egliseResults, setEgliseResults] = useState([]);
+  const [egliseDejaSupervisee, setEgliseDejaSupervisee] = useState(false);
 
   const [canal, setCanal] = useState("");
   const [invitations, setInvitations] = useState([]);
@@ -288,6 +284,61 @@ export default function LinkEglise() {
     loadInvitations();
   }, [superviseur.eglise_id]);
 
+  // ── Recherche d'église (debounce 300ms) ──
+  useEffect(() => {
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+    if (!egliseSearch || egliseSearch.length < 2 || eglise.id) {
+      setEgliseResults([]);
+      return;
+    }
+
+    searchTimeout.current = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from("eglises")
+        .select("id, nom, denomination, ville, pays, branche")
+        .or(`nom.ilike.%${egliseSearch}%,denomination.ilike.%${egliseSearch}%`)
+        .neq("id", superviseur.eglise_id)
+        .limit(8);
+
+      if (!error) setEgliseResults(data || []);
+    }, 300);
+
+    return () => clearTimeout(searchTimeout.current);
+  }, [egliseSearch, eglise.id, superviseur.eglise_id]);
+
+  const checkDejaSupervisee = async (egliseId) => {
+    const { data } = await supabase
+      .from("eglise_supervisions")
+      .select("id")
+      .eq("supervisee_eglise_id", egliseId)
+      .eq("statut", "acceptee")
+      .maybeSingle();
+    setEgliseDejaSupervisee(!!data);
+  };
+
+  const handleSelectEgliseResult = (result) => {
+    setEglise({
+      id: result.id,
+      nom: result.nom || "",
+      denomination: result.denomination || "",
+      ville: result.ville || "",
+      pays: result.pays || "",
+      branche: result.branche || "",
+    });
+    setEgliseSearch(`${result.denomination || ""} — ${result.nom || ""}`.trim());
+    setEgliseResults([]);
+    setErrors((prev) => ({ ...prev, eglise: false }));
+    checkDejaSupervisee(result.id);
+  };
+
+  const handleChangerEglise = () => {
+    setEglise({ id: null, nom: "", denomination: "", ville: "", pays: "", branche: "" });
+    setEgliseSearch("");
+    setEgliseResults([]);
+    setEgliseDejaSupervisee(false);
+  };
+
   const handleSelectInvitation = (inv, mode) => {
     setSelectedInvitation(inv);
     setModeAction(mode);
@@ -296,13 +347,15 @@ export default function LinkEglise() {
       nom: inv.responsable_nom || "",
     });
     setEglise({
-      id: null,
+      id: inv.supervisee_eglise_id || null,
       nom: inv.eglise_nom || "",
       denomination: inv.eglise_denomination || "",
       ville: inv.eglise_ville || "",
       pays: inv.eglise_pays || "",
       branche: inv.eglise_branche || "",
     });
+    setEgliseSearch(`${inv.eglise_denomination || ""} — ${inv.eglise_nom || ""}`.trim());
+    setEgliseResults([]);
     setErrors({});
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
   };
@@ -310,6 +363,9 @@ export default function LinkEglise() {
   const resetForm = () => {
     setResponsable({ prenom: "", nom: "" });
     setEglise({ id: null, nom: "", denomination: "", ville: "", pays: "", branche: "" });
+    setEgliseSearch("");
+    setEgliseResults([]);
+    setEgliseDejaSupervisee(false);
     setCanal("");
     setSelectedInvitation(null);
     setModeAction(null);
@@ -339,8 +395,7 @@ export default function LinkEglise() {
     const newErrors = {};
     if (!responsable.prenom.trim()) newErrors.prenom = true;
     if (!responsable.nom.trim()) newErrors.nom = true;
-    if (!eglise.denomination.trim()) newErrors.denomination = true;
-    if (!eglise.pays.trim()) newErrors.pays = true;
+    if (!eglise.id) newErrors.eglise = true;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -399,6 +454,7 @@ export default function LinkEglise() {
             expire_at: expireAt.toISOString(),
             responsable_prenom: responsable.prenom,
             responsable_nom: responsable.nom,
+            supervisee_eglise_id: eglise.id,
             eglise_nom: eglise.nom,
             eglise_denomination: eglise.denomination,
             eglise_ville: eglise.ville,
@@ -414,12 +470,13 @@ export default function LinkEglise() {
         return;
       }
 
+      // Doublon : basé sur l'église cible réelle (supervisee_eglise_id),
+      // pas sur un texte libre — une église n'a qu'un seul superviseur.
       const { data: existing } = await supabase
         .from("eglise_supervisions")
         .select("id, statut")
         .eq("superviseur_eglise_id", superviseur.eglise_id)
-        .eq("eglise_denomination", eglise.denomination)
-        .eq("eglise_pays", eglise.pays)
+        .eq("supervisee_eglise_id", eglise.id)
         .maybeSingle();
 
       if (existing) {
@@ -429,6 +486,7 @@ export default function LinkEglise() {
 
       await supabase.from("eglise_supervisions").insert([{
         superviseur_eglise_id: superviseur.eglise_id,
+        supervisee_eglise_id: eglise.id,
         responsable_prenom: responsable.prenom,
         responsable_nom: responsable.nom,
         eglise_nom: eglise.nom,
@@ -530,46 +588,62 @@ export default function LinkEglise() {
           {errors.nom && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
         </div>
 
-        <div>
-          <LabelField required>{t.labelDenomination}</LabelField>
-          <input className={inputClass(errors.denomination)} placeholder={t.placeholderDenomination}
-            value={eglise.denomination}
-            onChange={(e) => setEglise({ ...eglise, denomination: e.target.value })}
+        <div className="relative">
+          <LabelField required>{t.labelEglise}</LabelField>
+          <input
+            className={inputClass(errors.eglise)}
+            placeholder={t.placeholderEglise}
+            value={egliseSearch}
+            disabled={!!eglise.id}
+            onChange={(e) => {
+              setEgliseSearch(e.target.value);
+              setEglise({ id: null, nom: "", denomination: "", ville: "", pays: "", branche: "" });
+              setEgliseDejaSupervisee(false);
+            }}
           />
-          {errors.denomination && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
-        </div>
 
-        <div>
-          <LabelField>{t.labelNomEglise}</LabelField>
-          <input className={inputClass(false)} placeholder={t.placeholderNomEglise}
-            value={eglise.nom}
-            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
-          />
-        </div>
+          {eglise.id && (
+            <button
+              type="button"
+              onClick={handleChangerEglise}
+              className="text-xs text-white/50 hover:text-white underline mt-1"
+            >
+              {t.changerEglise}
+            </button>
+          )}
 
-        <div>
-          <LabelField>{t.labelBranche}</LabelField>
-          <input className={inputClass(false)} placeholder={t.placeholderBranche}
-            value={eglise.branche}
-            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
-          />
-        </div>
+          {!eglise.id && egliseResults.length > 0 && (
+            <div className="absolute z-10 mt-1 w-full bg-white text-black rounded shadow-lg max-h-56 overflow-y-auto">
+              {egliseResults.map((r) => (
+                <button
+                  type="button"
+                  key={r.id}
+                  onClick={() => handleSelectEgliseResult(r)}
+                  className="w-full text-left px-3 py-2 hover:bg-gray-100 border-b last:border-b-0 text-sm"
+                >
+                  <span className="font-semibold">{r.denomination}</span> — {r.nom}
+                  {r.ville && <span className="text-gray-500"> ({r.ville}, {r.pays})</span>}
+                </button>
+              ))}
+            </div>
+          )}
 
-        <div>
-          <LabelField>{t.labelVille}</LabelField>
-          <input className={inputClass(false)} placeholder={t.placeholderVille}
-            value={eglise.ville}
-            onChange={(e) => setEglise({ ...eglise, ville: e.target.value })}
-          />
-        </div>
+          {!eglise.id && egliseSearch.length >= 2 && egliseResults.length === 0 && (
+            <p className="text-white/50 text-xs mt-1">{t.egliseAucunResultat}</p>
+          )}
 
-        <div>
-          <LabelField required>{t.labelPays}</LabelField>
-          <input className={inputClass(errors.pays)} placeholder={t.placeholderPays}
-            value={eglise.pays}
-            onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
-          />
-          {errors.pays && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
+          {errors.eglise && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
+
+          {eglise.id && (
+            <div className="mt-2 text-xs text-white/70 space-y-0.5">
+              {eglise.branche && <p>{eglise.branche}</p>}
+              {(eglise.ville || eglise.pays) && <p>{eglise.ville}{eglise.ville && eglise.pays ? ", " : ""}{eglise.pays}</p>}
+            </div>
+          )}
+
+          {eglise.id && egliseDejaSupervisee && (
+            <p className="text-amber-300 text-xs mt-2">{t.egliseDejaSupervisee}</p>
+          )}
         </div>
 
         <div>

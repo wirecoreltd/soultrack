@@ -37,11 +37,22 @@ const translations = {
     placeholderPrenom: "Prénom *",
     labelNom: "Nom du responsable",
     placeholderNom: "Nom *",
-    labelEglise: "Église à inviter",
-    placeholderEglise: "Rechercher une église (nom ou dénomination) *",
+    labelRechercheEglise: "Rechercher une église existante",
+    placeholderRechercheEglise: "Nom ou dénomination *",
     egliseAucunResultat: "Aucune église trouvée",
     changerEglise: "✕ Changer d'église",
     egliseDejaSupervisee: "⚠️ Cette église est déjà supervisée par une autre église.",
+    erreurEgliseNonSelectionnee: "Veuillez sélectionner une église dans la liste de résultats",
+    labelDenomination: "Dénomination",
+    placeholderDenomination: "Dénomination *",
+    labelNomEglise: "Nom de l'église",
+    placeholderNomEglise: "Nom église",
+    labelBranche: "Branche de l'église",
+    placeholderBranche: "Branche église",
+    labelVille: "Ville",
+    placeholderVille: "Ville",
+    labelPays: "Pays",
+    placeholderPays: "Pays *",
     labelModeEnvoi: "Mode d'envoi",
     placeholderModeEnvoi: "Choisir un mode d'envoi",
     modeWhatsapp: "WhatsApp",
@@ -123,11 +134,22 @@ const translations = {
     placeholderPrenom: "First name *",
     labelNom: "Leader's last name",
     placeholderNom: "Last name *",
-    labelEglise: "Church to invite",
-    placeholderEglise: "Search a church (name or denomination) *",
+    labelRechercheEglise: "Search an existing church",
+    placeholderRechercheEglise: "Name or denomination *",
     egliseAucunResultat: "No church found",
     changerEglise: "✕ Change church",
     egliseDejaSupervisee: "⚠️ This church is already supervised by another church.",
+    erreurEgliseNonSelectionnee: "Please select a church from the results list",
+    labelDenomination: "Denomination",
+    placeholderDenomination: "Denomination *",
+    labelNomEglise: "Church name",
+    placeholderNomEglise: "Church name",
+    labelBranche: "Church branch",
+    placeholderBranche: "Church branch",
+    labelVille: "City",
+    placeholderVille: "City",
+    labelPays: "Country",
+    placeholderPays: "Country *",
     labelModeEnvoi: "Sending method",
     placeholderModeEnvoi: "Choose a sending method",
     modeWhatsapp: "WhatsApp",
@@ -332,13 +354,6 @@ export default function LinkEglise() {
     checkDejaSupervisee(result.id);
   };
 
-  const handleChangerEglise = () => {
-    setEglise({ id: null, nom: "", denomination: "", ville: "", pays: "", branche: "" });
-    setEgliseSearch("");
-    setEgliseResults([]);
-    setEgliseDejaSupervisee(false);
-  };
-
   const handleSelectInvitation = (inv, mode) => {
     setSelectedInvitation(inv);
     setModeAction(mode);
@@ -395,6 +410,8 @@ export default function LinkEglise() {
     const newErrors = {};
     if (!responsable.prenom.trim()) newErrors.prenom = true;
     if (!responsable.nom.trim()) newErrors.nom = true;
+    if (!eglise.denomination.trim()) newErrors.denomination = true;
+    if (!eglise.pays.trim()) newErrors.pays = true;
     if (!eglise.id) newErrors.eglise = true;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -589,30 +606,19 @@ export default function LinkEglise() {
         </div>
 
         <div className="relative">
-          <LabelField required>{t.labelEglise}</LabelField>
+          <LabelField required>{t.labelRechercheEglise}</LabelField>
           <input
             className={inputClass(errors.eglise)}
-            placeholder={t.placeholderEglise}
+            placeholder={t.placeholderRechercheEglise}
             value={egliseSearch}
-            disabled={!!eglise.id}
             onChange={(e) => {
               setEgliseSearch(e.target.value);
-              setEglise({ id: null, nom: "", denomination: "", ville: "", pays: "", branche: "" });
+              setEglise({ id: null, nom: eglise.nom, denomination: eglise.denomination, ville: eglise.ville, pays: eglise.pays, branche: eglise.branche });
               setEgliseDejaSupervisee(false);
             }}
           />
 
-          {eglise.id && (
-            <button
-              type="button"
-              onClick={handleChangerEglise}
-              className="text-xs text-white/50 hover:text-white underline mt-1"
-            >
-              {t.changerEglise}
-            </button>
-          )}
-
-          {!eglise.id && egliseResults.length > 0 && (
+          {egliseResults.length > 0 && (
             <div className="absolute z-10 mt-1 w-full bg-white text-black rounded shadow-lg max-h-56 overflow-y-auto">
               {egliseResults.map((r) => (
                 <button
@@ -628,22 +634,61 @@ export default function LinkEglise() {
             </div>
           )}
 
-          {!eglise.id && egliseSearch.length >= 2 && egliseResults.length === 0 && (
+          {egliseSearch.length >= 2 && egliseResults.length === 0 && !eglise.id && (
             <p className="text-white/50 text-xs mt-1">{t.egliseAucunResultat}</p>
           )}
 
-          {errors.eglise && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
-
-          {eglise.id && (
-            <div className="mt-2 text-xs text-white/70 space-y-0.5">
-              {eglise.branche && <p>{eglise.branche}</p>}
-              {(eglise.ville || eglise.pays) && <p>{eglise.ville}{eglise.ville && eglise.pays ? ", " : ""}{eglise.pays}</p>}
-            </div>
+          {eglise.id ? (
+            <p className="text-emerald-300 text-xs mt-1">✓ {egliseSearch}</p>
+          ) : (
+            errors.eglise && <p className="text-red-400 text-xs mt-1">{t.erreurEgliseNonSelectionnee}</p>
           )}
 
           {eglise.id && egliseDejaSupervisee && (
             <p className="text-amber-300 text-xs mt-2">{t.egliseDejaSupervisee}</p>
           )}
+        </div>
+
+        <div>
+          <LabelField required>{t.labelDenomination}</LabelField>
+          <input className={inputClass(errors.denomination)} placeholder={t.placeholderDenomination}
+            value={eglise.denomination}
+            onChange={(e) => setEglise({ ...eglise, denomination: e.target.value })}
+          />
+          {errors.denomination && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
+        </div>
+
+        <div>
+          <LabelField>{t.labelNomEglise}</LabelField>
+          <input className={inputClass(false)} placeholder={t.placeholderNomEglise}
+            value={eglise.nom}
+            onChange={(e) => setEglise({ ...eglise, nom: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <LabelField>{t.labelBranche}</LabelField>
+          <input className={inputClass(false)} placeholder={t.placeholderBranche}
+            value={eglise.branche}
+            onChange={(e) => setEglise({ ...eglise, branche: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <LabelField>{t.labelVille}</LabelField>
+          <input className={inputClass(false)} placeholder={t.placeholderVille}
+            value={eglise.ville}
+            onChange={(e) => setEglise({ ...eglise, ville: e.target.value })}
+          />
+        </div>
+
+        <div>
+          <LabelField required>{t.labelPays}</LabelField>
+          <input className={inputClass(errors.pays)} placeholder={t.placeholderPays}
+            value={eglise.pays}
+            onChange={(e) => setEglise({ ...eglise, pays: e.target.value })}
+          />
+          {errors.pays && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
         </div>
 
         <div>

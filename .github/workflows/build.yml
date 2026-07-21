@@ -58,9 +58,28 @@ jobs:
 
       - name: Fix Android navigation bar
         run: |
-          STYLES_FILE="android/app/src/main/res/values/styles.xml"
-          sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:windowTranslucentNavigation">false</item>\n    <item name="android:navigationBarDividerColor">#333699</item>\n</style>|' "$STYLES_FILE"
-
+          MAIN="android/app/src/main/java/org/soultrack/app/MainActivity.java"
+          cat > "$MAIN" << 'EOF'
+          package org.soultrack.app;
+          
+          import android.graphics.Color;
+          import android.os.Bundle;
+          import androidx.core.view.WindowCompat;
+          import androidx.core.view.WindowInsetsControllerCompat;
+          import com.getcapacitor.BridgeActivity;
+          
+          public class MainActivity extends BridgeActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+                  getWindow().setNavigationBarColor(Color.parseColor("#333699"));
+                  getWindow().setStatusBarColor(Color.parseColor("#333699"));
+                  WindowInsetsControllerCompat controller = new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
+                  controller.setAppearanceLightNavigationBars(false);
+              }
+          }
+          EOF
       - name: Set version code
         run: |
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle

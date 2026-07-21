@@ -22,48 +22,41 @@ export default function AcceptInvitation() {
     if (t) setToken(t);
   }, []);
 
-  // ── Charger l'invitation + remplir supervisee_eglise_id ──
+  // ── Charger l'invitation + remplir supervisee_eglise_id (via RPC sécurisée) ──
   useEffect(() => {
     if (!token) return;
 
     const fetchAndLink = async () => {
       setLoading(true);
       try {
-        // 1. Récupérer l'invitation
-        const { data, error } = await supabase
-          .from("eglise_supervisions")
-          .select("*")
-          .eq("invitation_token", token)
-          .single();
+        // Récupérer l'église de l'utilisateur connecté (si connecté)
+        const { data: { user } } = await supabase.auth.getUser();
+        let egliseId = null;
 
-        if (error || !data) {
+        if (user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("eglise_id")
+            .eq("id", user.id)
+            .single();
+          egliseId = profile?.eglise_id || null;
+        }
+
+        // Appel sécurisé : lit l'invitation par token et remplit
+        // supervisee_eglise_id si besoin, sans exposer eglise_supervisions
+        // à un accès direct (RLS reste strict sur la table).
+        const { data, error } = await supabase.rpc("get_invitation_par_token", {
+          p_token: token,
+          p_eglise_id: egliseId,
+        });
+
+        if (error || !data?.success) {
           setInvitation(null);
           setLoading(false);
           return;
         }
 
-        setInvitation(data);
-
-        // 2. Récupérer l'église de l'utilisateur connecté
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setLoading(false);
-          return;
-        }
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("eglise_id")
-          .eq("id", user.id)
-          .single();
-
-        // 3. Remplir supervisee_eglise_id si pas encore rempli
-        if (profile?.eglise_id && !data.supervisee_eglise_id) {
-          await supabase
-            .from("eglise_supervisions")
-            .update({ supervisee_eglise_id: profile.eglise_id })
-            .eq("invitation_token", token);
-        }
+        setInvitation(data.invitation);
 
       } catch (err) {
         console.error(err);
@@ -77,49 +70,40 @@ export default function AcceptInvitation() {
   }, [token]);
 
   const handleSubmit = async () => {
-  if (!choice || !invitation) return;
-  setSubmitting(true);
+    if (!choice || !invitation) return;
+    setSubmitting(true);
 
-  try {
-    // 1. Mettre à jour le statut de l'invitation
-    const { error } = await supabase
-      .from("eglise_supervisions")
-      .update({
-        statut: choice,
-        approved_at: choice === "acceptee" ? new Date().toISOString() : null,
-      })
-      .eq("invitation_token", token);
+    try {
+      // Appel sécurisé : met à jour le statut de l'invitation et, si acceptée,
+      // met à jour parent_eglise_id dans eglises — le tout côté serveur,
+      // sans accès direct depuis le frontend.
+      const { data, error } = await supabase.rpc("repondre_invitation_complet", {
+        p_token: token,
+        p_choice: choice,
+      });
 
-    if (error) throw new Error(error.message);
+      if (error || !data?.success) {
+        throw new Error(error?.message || data?.error || "Erreur inconnue");
+      }
 
-    // 2. Si acceptée → mettre à jour parent_eglise_id dans eglises
-    if (choice === "acceptee" && invitation.supervisee_eglise_id && invitation.superviseur_eglise_id) {
-      const { error: linkError } = await supabase
-        .from("eglises")
-        .update({ parent_eglise_id: invitation.superviseur_eglise_id })
-        .eq("id", invitation.supervisee_eglise_id);
+      if (choice === "acceptee") {
+        setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_denomination} — ${invitation.eglise_nom}`);
+      } else if (choice === "refusee") {
+        setMessage(`Vous avez refusé l'invitation de ${invitation.eglise_denomination}`);
+      } else if (choice === "pending") {
+        setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
+      }
 
-      if (linkError) throw new Error(linkError.message);
+      setTimeout(() => router.push("/"), 3000);
+
+    } catch (err) {
+      console.error("Erreur :", err.message);
+      setMessage("Une erreur est survenue lors du traitement de l'invitation.");
+    } finally {
+      setSubmitting(false);
     }
+  };
 
-    if (choice === "acceptee") {
-      setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_denomination} — ${invitation.eglise_nom}`);
-    } else if (choice === "refusee") {
-      setMessage(`Vous avez refusé l'invitation de ${invitation.eglise_denomination}`);
-    } else if (choice === "pending") {
-      setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
-    }
-
-    setTimeout(() => router.push("/"), 3000);
-
-  } catch (err) {
-    console.error("Erreur :", err.message);
-    setMessage("Une erreur est survenue lors du traitement de l'invitation.");
-  } finally {
-    setSubmitting(false);
-  }
-};
-  
   if (loading) return <div className="p-10 text-white">Chargement…</div>;
   if (!invitation) return <div className="p-10 text-red-400">Invitation introuvable ou expirée.</div>;
 

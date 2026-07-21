@@ -21,56 +21,47 @@ export default function AcceptInvitationConfirm() {
       return;
     }
 
-    const updateInvitation = async () => {
-      try {
-        // Récupérer invitation
-        const { data: invitation, error: fetchError } = await supabase
-          .from("eglise_supervisions")
-          .select("*")
-          .eq("invitation_token", token)
-          .single();
+    econst updateInvitation = async () => {
+  try {
+    // Appel sécurisé : la fonction RPC vérifie le token et met à jour
+    // le statut sans exposer la table eglise_supervisions à un accès
+    // public direct (RLS reste strict, seule cette fonction contourne
+    // RLS de façon contrôlée, via SECURITY DEFINER).
+    const { data, error: rpcError } = await supabase.rpc("repondre_invitation", {
+      p_token: token,
+      p_action: action,
+    });
 
-        if (fetchError || !invitation) {
-          setMessage("Invitation introuvable ou expirée.");
-          setLoading(false);
-          return;
-        }
+    if (rpcError) {
+      console.error(rpcError);
+      setMessage(rpcError.message);
+      setLoading(false);
+      return;
+    }
 
-        // Mise à jour simple
-        const { error: updateError } = await supabase
-          .from("eglise_supervisions")
-          .update({
-            statut: action,
-          })
-          .eq("id", invitation.id);
+    if (!data?.success) {
+      setMessage(data?.error || "Invitation introuvable ou expirée.");
+      setLoading(false);
+      return;
+    }
 
-        if (updateError) {
-          console.error(updateError);
-          setMessage(updateError.message);
-          setLoading(false);
-          return;
-        }
-
-        setMessage(
-          action === "acceptee"
-            ? "Invitation acceptée !"
-            : action === "refusee"
-            ? "Invitation refusée."
-            : "Invitation laissée en attente."
-        );
-
-        setTimeout(() => {
-          router.push("/");
-        }, 2000);
-
-      } catch (err) {
-        console.error(err);
-        setMessage("Une erreur est survenue.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    setMessage(
+      action === "acceptee"
+        ? "Invitation acceptée !"
+        : action === "refusee"
+        ? "Invitation refusée."
+        : "Invitation laissée en attente."
+    );
+    setTimeout(() => {
+      router.push("/");
+    }, 2000);
+  } catch (err) {
+    console.error(err);
+    setMessage("Une erreur est survenue.");
+  } finally {
+    setLoading(false);
+  }
+};
     updateInvitation();
   }, [searchParams, router]);
 

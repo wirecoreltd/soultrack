@@ -41,30 +41,8 @@ jobs:
 
       - name: Fix Android navigation bar
         run: |
-          MAIN_ACTIVITY="android/app/src/main/java/org/soultrack/app/MainActivity.java"
-          python3 - << 'PYEOF'
-          path = "android/app/src/main/java/org/soultrack/app/MainActivity.java"
-          with open(path, "r") as f:
-              content = f.read()
-          inject = """
-              @Override
-              protected void onCreate(android.os.Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-                  if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                      getWindow().setNavigationBarColor(android.graphics.Color.parseColor("#333699"));
-                      getWindow().setStatusBarColor(android.graphics.Color.parseColor("#333699"));
-                  }
-              }
-          """
-          content = content.replace(
-              "public class MainActivity extends BridgeActivity {",
-              "public class MainActivity extends BridgeActivity {" + inject
-          )
-          with open(path, "w") as f:
-              f.write(content)
-          print("MainActivity.java patched")
-          PYEOF
-          cat "$MAIN_ACTIVITY"
+          STYLES_FILE="android/app/src/main/res/values/styles.xml"
+          sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:windowTranslucentNavigation">false</item>\n    <item name="android:navigationBarDividerColor">#333699</item>\n</style>|' "$STYLES_FILE"
           
       - name: Generate app icons & splash
         run: |

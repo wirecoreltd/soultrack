@@ -39,6 +39,11 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
+      - name: Fix Android navigation bar
+        run: |
+          STYLES_FILE="android/app/src/main/res/values/styles.xml"
+          sed -i 's|</style>|    <item name="android:navigationBarColor">@android:color/transparent</item>\n    <item name="android:windowTranslucentNavigation">true</item>\n    <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>\n</style>|' "$STYLES_FILE"
+
       - name: Generate app icons & splash
         run: |
           npm install @capacitor/assets --save-dev

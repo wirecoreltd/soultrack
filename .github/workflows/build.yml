@@ -42,8 +42,29 @@ jobs:
       - name: Fix Android navigation bar
         run: |
           STYLES_FILE="android/app/src/main/res/values/styles.xml"
-          sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:windowTranslucentNavigation">false</item>\n    <item name="android:navigationBarDividerColor">#333699</item>\n</style>|' "$STYLES_FILE"
-
+          cat >> "$STYLES_FILE" << 'XMLEOF'
+          XMLEOF
+          python3 - << 'PYEOF'
+          import re
+          path = "android/app/src/main/res/values/styles.xml"
+          with open(path, "r") as f:
+              content = f.read()
+          inject = '''    <item name="android:navigationBarColor">#333699</item>
+              <item name="android:windowTranslucentNavigation">false</item>
+              <item name="android:statusBarColor">#333699</item>
+          '''
+          content = content.replace('</resources>', f'</resources>', 1)
+          content = re.sub(
+              r'(<style name="AppTheme"[^>]*>)',
+              r'\1\n' + inject,
+              content
+          )
+          with open(path, "w") as f:
+              f.write(content)
+          print("styles.xml patched")
+          PYEOF
+          cat "$STYLES_FILE"
+          
       - name: Generate app icons & splash
         run: |
           npm install @capacitor/assets --save-dev

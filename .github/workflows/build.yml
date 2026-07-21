@@ -1,4 +1,3 @@
-
 name: Build SoulTrack Mobile
 
 on:
@@ -39,11 +38,6 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Fix Android navigation bar
-        run: |
-          STYLES_FILE="android/app/src/main/res/values/styles.xml"
-          sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:windowTranslucentNavigation">false</item>\n    <item name="android:navigationBarDividerColor">#333699</item>\n</style>|' "$STYLES_FILE"
-          
       - name: Generate app icons & splash
         run: |
           npm install @capacitor/assets --save-dev
@@ -51,7 +45,7 @@ jobs:
 
       - name: Set launch URL
         run: |
-           sed -i 's|launchUrl = null|launchUrl = "https://www.soultrack.org/login"|g' android/app/src/main/java/org/soultrack/app/MainActivity.java 2>/dev/null || true  
+          sed -i 's|launchUrl = null|launchUrl = "https://www.soultrack.org/login"|g' android/app/src/main/java/org/soultrack/app/MainActivity.java 2>/dev/null || true
 
       - name: Inject google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
@@ -61,6 +55,11 @@ jobs:
 
       - name: Sync Capacitor
         run: npx cap sync android
+
+      - name: Fix Android navigation bar
+        run: |
+          STYLES_FILE="android/app/src/main/res/values/styles.xml"
+          sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:windowTranslucentNavigation">false</item>\n    <item name="android:navigationBarDividerColor">#333699</item>\n</style>|' "$STYLES_FILE"
 
       - name: Set version code
         run: |

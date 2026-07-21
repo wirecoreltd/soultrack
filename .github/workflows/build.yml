@@ -56,7 +56,7 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-       - name: Fix Android navigation bar
+      - name: Fix Android navigation bar
         run: |
           # Passer targetSdk à 34 pour désactiver l'edge-to-edge forcé
           sed -i 's/targetSdkVersion = 35/targetSdkVersion = 34/' android/variables.gradle
@@ -66,17 +66,11 @@ jobs:
           STYLES_FILE="android/app/src/main/res/values/styles.xml"
           sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:windowTranslucentNavigation">false</item>\n</style>|' "$STYLES_FILE"
 
-          echo "=== variables.gradle ===" 
+          echo "=== variables.gradle ==="
           cat android/variables.gradle
+          echo "=== styles.xml ==="
+          cat "$STYLES_FILE"
 
-      - name: Debug navigation bar
-        run: |
-          echo "=== variables SDK dans build.gradle racine ==="
-          cat android/build.gradle
-          echo ""
-          echo "=== variables SDK dans variables.gradle ==="
-          cat android/variables.gradle 2>/dev/null || echo "pas de variables.gradle"
-          
       - name: Set version code
         run: |
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle

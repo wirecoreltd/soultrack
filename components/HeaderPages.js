@@ -234,29 +234,22 @@ export default function HeaderPages() {
             setPays(egliseData.pays || "");
           }
 
-          const { data: supervisionData } = await supabase
-            .from("eglise_supervisions")
-            .select("superviseur_eglise_id")
-            .eq("supervisee_eglise_id", profile.eglise_id)
-            .eq("statut", "acceptee")
-            .maybeSingle();
+          // Appel sécurisé (SECURITY DEFINER) : contourne la RLS sur "eglises"
+          // pour récupérer les infos de l'église superviseure sans y donner
+          // un accès direct depuis le frontend.
+          const { data: supervisionData } = await supabase.rpc(
+            "get_supervision_active",
+            { p_eglise_id: profile.eglise_id }
+          );
 
-          if (supervisionData?.superviseur_eglise_id) {
-            const { data: superviseurEglise } = await supabase
-              .from("eglises")
-              .select("nom, denomination, ville, pays, branche")
-              .eq("id", supervisionData.superviseur_eglise_id)
-              .single();
-
-            if (superviseurEglise) {
-              setSupervision({
-                denomination: superviseurEglise.denomination,
-                nom: superviseurEglise.nom,
-                branche: superviseurEglise.branche,
-                ville: superviseurEglise.ville,
-                pays: superviseurEglise.pays,
-              });
-            }
+          if (supervisionData) {
+            setSupervision({
+              denomination: supervisionData.denomination,
+              nom: supervisionData.nom,
+              branche: supervisionData.branche,
+              ville: supervisionData.ville,
+              pays: supervisionData.pays,
+            });
           }
         }
       } catch (err) {

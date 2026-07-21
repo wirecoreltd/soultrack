@@ -74,24 +74,30 @@ export default function Administrateur() {
       if (storedName) setUserName(storedName.split(" ")[0]);
 
       const { data: profile, error: profileError } = await supabase
-        .from("profiles").select("eglise_id").eq("id", user.id).single();
+        .from("profiles")
+        .select(`eglise_id, eglises(denomination, pays)`)
+        .eq("id", user.id)
+        .single();
       if (profileError) {
         console.error("❌ Erreur profile :", profileError);
         return;
       }
 
-      console.log("🔎 user.email :", user.email, "| profile.eglise_id :", profile?.eglise_id);
+      const egliseId = profile?.eglise_id;
+      const denomination = profile?.eglises?.denomination;
+      const pays = profile?.eglises?.pays;
 
       // Tant que l'invitation n'a pas été ouverte une première fois,
-      // supervisee_eglise_id est encore null (il est rempli par le RPC
-      // get_invitation_par_token). On matche donc aussi par email pour
-      // retrouver l'invitation avant ce premier clic.
-      const orFilters = [`responsable_email.eq.${user.email}`];
-      if (profile?.eglise_id) {
-        orFilters.push(`supervisee_eglise_id.eq.${profile.eglise_id}`);
+      // supervisee_eglise_id est encore null (rempli plus tard par le RPC
+      // get_invitation_par_token). En attendant, on compare aux infos de
+      // SA PROPRE église (denomination + pays, déjà connues via son profil) —
+      // jamais une recherche dans les autres églises.
+      const orFilters = [];
+      if (egliseId) orFilters.push(`supervisee_eglise_id.eq.${egliseId}`);
+      if (denomination && pays) {
+        orFilters.push(`and(supervisee_eglise_id.is.null,eglise_denomination.eq.${denomination},eglise_pays.eq.${pays})`);
       }
-
-      console.log("🔎 filtre OR envoyé :", orFilters.join(","));
+      if (orFilters.length === 0) return;
 
       const { data: invites, error: inviteError } = await supabase
         .from("eglise_supervisions")
@@ -99,8 +105,6 @@ export default function Administrateur() {
         .or(orFilters.join(","))
         .in("statut", ["pending", "refusee"])
         .limit(1);
-
-      console.log("🔎 résultat invites :", invites, "| erreur :", inviteError);
 
       if (!inviteError && invites && invites.length > 0) setInvitation(invites[0]);
     };

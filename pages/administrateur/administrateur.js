@@ -75,7 +75,12 @@ export default function Administrateur() {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles").select("eglise_id").eq("id", user.id).single();
-      if (profileError) return;
+      if (profileError) {
+        console.error("❌ Erreur profile :", profileError);
+        return;
+      }
+
+      console.log("🔎 user.email :", user.email, "| profile.eglise_id :", profile?.eglise_id);
 
       // Tant que l'invitation n'a pas été ouverte une première fois,
       // supervisee_eglise_id est encore null (il est rempli par le RPC
@@ -86,12 +91,16 @@ export default function Administrateur() {
         orFilters.push(`supervisee_eglise_id.eq.${profile.eglise_id}`);
       }
 
+      console.log("🔎 filtre OR envoyé :", orFilters.join(","));
+
       const { data: invites, error: inviteError } = await supabase
         .from("eglise_supervisions")
         .select("*")
         .or(orFilters.join(","))
         .in("statut", ["pending", "refusee"])
         .limit(1);
+
+      console.log("🔎 résultat invites :", invites, "| erreur :", inviteError);
 
       if (!inviteError && invites && invites.length > 0) setInvitation(invites[0]);
     };

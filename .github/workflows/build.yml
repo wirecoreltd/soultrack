@@ -59,8 +59,7 @@ jobs:
       - name: Fix Android navigation bar
         run: |
           # Passer targetSdk à 34 pour désactiver l'edge-to-edge forcé
-          sed -i 's/targetSdkVersion = 35/targetSdkVersion = 34/' android/variables.gradle
-          sed -i 's/compileSdkVersion = 35/compileSdkVersion = 34/' android/variables.gradle
+          sed -i 's/targetSdkVersion = 35/targetSdkVersion = 34/' android/variables.gradle         
 
           # Patch styles.xml
           STYLES_FILE="android/app/src/main/res/values/styles.xml"

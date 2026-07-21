@@ -21,7 +21,7 @@ export default function AcceptInvitationConfirm() {
       return;
     }
 
-    econst updateInvitation = async () => {
+    const updateInvitation = async () => {
   try {
     // Appel sécurisé : la fonction RPC vérifie le token et met à jour
     // le statut sans exposer la table eglise_supervisions à un accès

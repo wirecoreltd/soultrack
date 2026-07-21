@@ -73,14 +73,11 @@ jobs:
 
       - name: Debug navigation bar
         run: |
-          echo "=== styles.xml ==="
-          cat android/app/src/main/res/values/styles.xml
+          echo "=== variables SDK dans build.gradle racine ==="
+          cat android/build.gradle
           echo ""
-          echo "=== MainActivity.java ==="
-          cat android/app/src/main/java/org/soultrack/app/MainActivity.java
-          echo ""
-          echo "=== build.gradle targetSdk ==="
-          grep -E "compileSdk|targetSdk|minSdk" android/app/build.gradle  
+          echo "=== variables SDK dans variables.gradle ==="
+          cat android/variables.gradle 2>/dev/null || echo "pas de variables.gradle"
           
       - name: Set version code
         run: |

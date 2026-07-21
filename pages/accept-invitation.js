@@ -5,9 +5,75 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import HeaderInvitation from "../components/HeaderInvitation";
 import Footer from "../components/Footer";
+import { useLang } from "../hooks/useLang";
+
+const translations = {
+  fr: {
+    titre: "Invitation de l'église",
+    titreAccent: "superviseur",
+    chargement: "Chargement…",
+    introuvable: "Invitation introuvable ou expirée.",
+    egliseSuperviseuse: "Église superviseuse",
+    branche: "Branche",
+    ville: "Ville",
+    pays: "Pays",
+    statutActuel: "Statut actuel",
+    labelDecision: "Votre décision",
+    choisir: "-- Choisir --",
+    accepter: "Accepter",
+    refuser: "Refuser",
+    enAttente: "En attente",
+    confirmer: "Confirmer",
+    envoiEnCours: "Traitement…",
+    redirection: "Redirection vers le tableau de bord…",
+    erreurTraitement: "Une erreur est survenue lors du traitement de l'invitation.",
+    msgAcceptee: (denom, nom) => `Vous êtes maintenant sous la supervision de ${denom} — ${nom}`,
+    msgRefusee: (denom) => `Vous avez refusé l'invitation de ${denom}`,
+    msgPending: "Invitation laissée en attente. Vous pourrez décider plus tard.",
+    statutLabels: {
+      pending: "En Attente",
+      acceptee: "Acceptée",
+      refusee: "Refusée",
+      lien_casse: "Lien Cassé",
+      expired: "Expirée",
+    },
+  },
+  en: {
+    titre: "Invitation from the",
+    titreAccent: "supervising church",
+    chargement: "Loading…",
+    introuvable: "Invitation not found or expired.",
+    egliseSuperviseuse: "Supervising church",
+    branche: "Branch",
+    ville: "City",
+    pays: "Country",
+    statutActuel: "Current status",
+    labelDecision: "Your decision",
+    choisir: "-- Choose --",
+    accepter: "Accept",
+    refuser: "Decline",
+    enAttente: "Pending",
+    confirmer: "Confirm",
+    envoiEnCours: "Processing…",
+    redirection: "Redirecting to the dashboard…",
+    erreurTraitement: "An error occurred while processing the invitation.",
+    msgAcceptee: (denom, nom) => `You are now under the supervision of ${denom} — ${nom}`,
+    msgRefusee: (denom) => `You have declined the invitation from ${denom}`,
+    msgPending: "Invitation left pending. You can decide later.",
+    statutLabels: {
+      pending: "Pending",
+      acceptee: "Accepted",
+      refusee: "Refused",
+      lien_casse: "Link Broken",
+      expired: "Expired",
+    },
+  },
+};
 
 export default function AcceptInvitation() {
   const router = useRouter();
+  const { lang } = useLang();
+  const t = translations[lang];
 
   const [token, setToken] = useState(null);
   const [invitation, setInvitation] = useState(null);
@@ -19,8 +85,8 @@ export default function AcceptInvitation() {
   // ── Lire le token depuis l'URL manuellement (compatible App Router) ──
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const t = params.get("token");
-    if (t) setToken(t);
+    const tok = params.get("token");
+    if (tok) setToken(tok);
   }, []);
 
   // ── Charger l'invitation + remplir supervisee_eglise_id (via RPC sécurisée) ──
@@ -30,7 +96,6 @@ export default function AcceptInvitation() {
     const fetchAndLink = async () => {
       setLoading(true);
       try {
-        // Récupérer l'église de l'utilisateur connecté (si connecté)
         const { data: { user } } = await supabase.auth.getUser();
         let egliseId = null;
 
@@ -70,6 +135,19 @@ export default function AcceptInvitation() {
     fetchAndLink();
   }, [token]);
 
+  const getStatusStyle = (statut) => {
+    switch (statut?.toLowerCase()) {
+      case "acceptee": return { text: "text-green-400", border: "border-green-500" };
+      case "refusee": return { text: "text-red-400", border: "border-red-500" };
+      case "lien_casse": return { text: "text-gray-400", border: "border-gray-400" };
+      case "pending": return { text: "text-orange-400", border: "border-orange-400" };
+      default: return { text: "text-white", border: "border-white/20" };
+    }
+  };
+
+  const getStatusLabel = (statut) =>
+    t.statutLabels[statut?.toLowerCase()] || statut;
+
   const handleSubmit = async () => {
     if (!choice || !invitation) return;
     setSubmitting(true);
@@ -88,86 +166,123 @@ export default function AcceptInvitation() {
       }
 
       if (choice === "acceptee") {
-        setMessage(`Vous êtes maintenant sous la supervision de ${invitation.eglise_denomination} — ${invitation.eglise_nom}`);
+        setMessage(t.msgAcceptee(invitation.eglise_denomination, invitation.eglise_nom));
       } else if (choice === "refusee") {
-        setMessage(`Vous avez refusé l'invitation de ${invitation.eglise_denomination}`);
+        setMessage(t.msgRefusee(invitation.eglise_denomination));
       } else if (choice === "pending") {
-        setMessage("Invitation laissée en attente. Vous pourrez décider plus tard.");
+        setMessage(t.msgPending);
       }
 
       setTimeout(() => router.push("/"), 3000);
 
     } catch (err) {
       console.error("Erreur :", err.message);
-      setMessage("Une erreur est survenue lors du traitement de l'invitation.");
+      setMessage(t.erreurTraitement);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) return <div className="p-10 text-white">Chargement…</div>;
-  if (!invitation) return <div className="p-10 text-red-400">Invitation introuvable ou expirée.</div>;
+  const statusStyle = invitation ? getStatusStyle(invitation.statut) : null;
 
   return (
-    <div className="min-h-screen bg-[#333699] flex flex-col items-center p-6">
+    <div className="min-h-screen bg-[#333699] text-white flex flex-col items-center p-4">
       <HeaderInvitation />
 
-      <div className="w-full max-w-md flex justify-between items-center mt-4 mb-6">
-        <h1 className="text-2xl font-bold text-white">
-          Invitation de l'église superviseur
+      <div className="w-full flex flex-col items-center mb-6 mt-4">
+        <h1 className="text-2xl font-bold text-center text-white">
+          {t.titre} <span className="text-emerald-300">{t.titreAccent}</span>
         </h1>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full space-y-4">
-        <div className="space-y-1">
-          <p><b>Église superviseuse :</b> {invitation.eglise_denomination} — {invitation.eglise_nom}</p>
-          <p><b>Branche :</b> {invitation.eglise_branche}</p>
-          <p><b>Ville :</b> {invitation.eglise_ville}</p>
-          <p><b>Pays :</b> {invitation.eglise_pays}</p>
+      {loading && (
+        <div className="w-full max-w-md bg-white/10 p-6 rounded-xl text-center text-white/80 italic">
+          {t.chargement}
         </div>
+      )}
 
-        <hr />
+      {!loading && !invitation && (
+        <div className="w-full max-w-md bg-white/10 p-6 rounded-xl text-center text-red-400 font-semibold">
+          {t.introuvable}
+        </div>
+      )}
 
-        <p>
-          <b>Statut actuel :</b>{" "}
-          <span className="capitalize">{invitation.statut}</span>
-        </p>
+      {!loading && invitation && (
+        <div className="w-full max-w-md bg-white/10 p-6 rounded-xl space-y-4">
 
-        {!message && (
-          <>
-            <div className="mt-4">
-              <label className="block font-semibold mb-1">Votre décision</label>
-              <select
-                value={choice}
-                onChange={(e) => setChoice(e.target.value)}
-                className="w-full border rounded-xl p-2"
-              >
-                <option value="">-- Choisir --</option>
-                <option value="acceptee">Accepter</option>
-                <option value="refusee">Refuser</option>
-                <option value="pending">En attente</option>
-              </select>
-            </div>
-
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || !choice}
-              className="w-full mt-4 bg-[#333699] text-white py-2 rounded-xl font-semibold disabled:opacity-50"
-            >
-              Confirmer
-            </button>
-          </>
-        )}
-
-        {message && (
-          <div className="mt-6 text-center font-semibold text-lg text-[#333699]">
-            {message}
-            <p className="text-sm mt-2 text-gray-500">
-              Redirection vers le dashboard…
+          <div className="border-b border-white/20 pb-3 space-y-1">
+            <p className="text-xs uppercase tracking-wide text-white/50">
+              {t.egliseSuperviseuse}
+            </p>
+            <p className="text-lg font-semibold text-emerald-300">
+              {[invitation.eglise_denomination, invitation.eglise_nom].filter(Boolean).join(" — ")}
             </p>
           </div>
-        )}
-      </div>
+
+          <div className="grid grid-cols-2 gap-y-2 text-sm">
+            {invitation.eglise_branche && (
+              <>
+                <span className="text-white/50">{t.branche}</span>
+                <span>{invitation.eglise_branche}</span>
+              </>
+            )}
+            {invitation.eglise_ville && (
+              <>
+                <span className="text-white/50">{t.ville}</span>
+                <span>{invitation.eglise_ville}</span>
+              </>
+            )}
+            {invitation.eglise_pays && (
+              <>
+                <span className="text-white/50">{t.pays}</span>
+                <span>{invitation.eglise_pays}</span>
+              </>
+            )}
+          </div>
+
+          <div className={`flex items-center justify-between border-l-4 ${statusStyle.border} bg-white/5 rounded-lg px-3 py-2`}>
+            <span className="text-white/70 text-sm">{t.statutActuel}</span>
+            <span className={`font-semibold ${statusStyle.text}`}>
+              {getStatusLabel(invitation.statut)}
+            </span>
+          </div>
+
+          {!message && (
+            <>
+              <div className="mt-2">
+                <label className="block text-sm text-white/70 mb-1">
+                  {t.labelDecision}
+                </label>
+                <select
+                  value={choice}
+                  onChange={(e) => setChoice(e.target.value)}
+                  className="w-full p-2 text-black rounded"
+                >
+                  <option value="">{t.choisir}</option>
+                  <option value="acceptee">{t.accepter}</option>
+                  <option value="refusee">{t.refuser}</option>
+                  <option value="pending">{t.enAttente}</option>
+                </select>
+              </div>
+
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || !choice}
+                className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded font-semibold transition-colors disabled:opacity-50"
+              >
+                {submitting ? t.envoiEnCours : t.confirmer}
+              </button>
+            </>
+          )}
+
+          {message && (
+            <div className="mt-4 text-center space-y-2">
+              <p className="font-semibold text-lg text-emerald-300">{message}</p>
+              <p className="text-sm text-white/50 italic">{t.redirection}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <Footer />
     </div>

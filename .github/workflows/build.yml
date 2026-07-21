@@ -58,28 +58,19 @@ jobs:
 
       - name: Fix Android navigation bar
         run: |
-          MAIN="android/app/src/main/java/org/soultrack/app/MainActivity.java"
-          cat > "$MAIN" << 'EOF'
-          package org.soultrack.app;
+          # Désactiver edge-to-edge dans build.gradle
+          sed -i 's/compileSdk = [0-9]*/compileSdk = 34/' android/app/build.gradle
+          sed -i 's/targetSdk = [0-9]*/targetSdk = 34/' android/app/build.gradle
           
-          import android.graphics.Color;
-          import android.os.Bundle;
-          import androidx.core.view.WindowCompat;
-          import androidx.core.view.WindowInsetsControllerCompat;
-          import com.getcapacitor.BridgeActivity;
+          # Patch styles.xml
+          STYLES_FILE="android/app/src/main/res/values/styles.xml"
+          sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:windowTranslucentNavigation">false</item>\n</style>|' "$STYLES_FILE"
           
-          public class MainActivity extends BridgeActivity {
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-                  WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
-                  getWindow().setNavigationBarColor(Color.parseColor("#333699"));
-                  getWindow().setStatusBarColor(Color.parseColor("#333699"));
-                  WindowInsetsControllerCompat controller = new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
-                  controller.setAppearanceLightNavigationBars(false);
-              }
-          }
-          EOF
+          echo "--- build.gradle ---"
+          grep -E "compileSdk|targetSdk" android/app/build.gradle
+          echo "--- styles.xml ---"
+          cat "$STYLES_FILE"
+          
       - name: Set version code
         run: |
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle

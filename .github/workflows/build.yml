@@ -41,29 +41,30 @@ jobs:
 
       - name: Fix Android navigation bar
         run: |
-          STYLES_FILE="android/app/src/main/res/values/styles.xml"
-          cat >> "$STYLES_FILE" << 'XMLEOF'
-          XMLEOF
+          MAIN_ACTIVITY="android/app/src/main/java/org/soultrack/app/MainActivity.java"
           python3 - << 'PYEOF'
-          import re
-          path = "android/app/src/main/res/values/styles.xml"
+          path = "android/app/src/main/java/org/soultrack/app/MainActivity.java"
           with open(path, "r") as f:
               content = f.read()
-          inject = '''    <item name="android:navigationBarColor">#333699</item>
-              <item name="android:windowTranslucentNavigation">false</item>
-              <item name="android:statusBarColor">#333699</item>
-          '''
-          content = content.replace('</resources>', f'</resources>', 1)
-          content = re.sub(
-              r'(<style name="AppTheme"[^>]*>)',
-              r'\1\n' + inject,
-              content
+          inject = """
+              @Override
+              protected void onCreate(android.os.Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                      getWindow().setNavigationBarColor(android.graphics.Color.parseColor("#333699"));
+                      getWindow().setStatusBarColor(android.graphics.Color.parseColor("#333699"));
+                  }
+              }
+          """
+          content = content.replace(
+              "public class MainActivity extends BridgeActivity {",
+              "public class MainActivity extends BridgeActivity {" + inject
           )
           with open(path, "w") as f:
               f.write(content)
-          print("styles.xml patched")
+          print("MainActivity.java patched")
           PYEOF
-          cat "$STYLES_FILE"
+          cat "$MAIN_ACTIVITY"
           
       - name: Generate app icons & splash
         run: |

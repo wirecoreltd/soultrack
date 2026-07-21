@@ -4,7 +4,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "org.soultrack.app",
-      "sha256_cert_fingerprints": ["AB:CD:EF:12:34:56:78:9A:BC:DE:F0:12:34:56:78:9A:BC:DE:F0:12:34:56:78:9A:BC:DE:F0:12:34:56"]
+      "sha256_cert_fingerprints": ["E9:99:8E:8A:F8:34:63:44:D3:1D:9F:F6:7B:50:24:9E:C4:39:79:58:D3:38:D3:87:7D:AB:15:BF:53:88:F7:0D"]
     }
   }
 ]

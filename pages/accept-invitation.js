@@ -126,14 +126,7 @@ export default function AcceptInvitation() {
         setInvitation(data.invitation);
 
         // Récupérer les vraies infos de l'église qui a envoyé l'invitation
-        if (data.invitation?.superviseur_eglise_id) {
-          const { data: egliseSup } = await supabase
-            .from("eglises")
-            .select("nom, denomination, ville, pays, branche, logo_url")
-            .eq("id", data.invitation.superviseur_eglise_id)
-            .single();
-          setEgliseSuperviseuse(egliseSup || null);
-        }
+        setEgliseSuperviseuse(data.eglise_superviseuse || null);
 
       } catch (err) {
         

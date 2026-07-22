@@ -291,7 +291,7 @@ export default function AcceptInvitation() {
         setMessage(t.msgPending);
       }
 
-      setTimeout(() => router.push("/dashboard"), 3000);
+      setTimeout(() => router.push("/hub"), 3000);
 
     } catch (err) {
       console.error("Erreur :", err.message);
@@ -409,7 +409,7 @@ export default function AcceptInvitation() {
 
           {!message && (
             <button
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/hub")}
               className="w-full mt-2 border border-white/30 text-white/80 py-2 rounded font-semibold hover:bg-white/10 transition-colors"
             >
               {t.retourDashboard}

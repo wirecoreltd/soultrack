@@ -44,16 +44,26 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // ✅ CORRECTIF : tant qu'on ne sait pas si une session existe déjà,
+  // on n'affiche RIEN (ni le formulaire, ni un flash) → évite le
+  // clignotement du login avant la redirection vers /hub.
+  const [checkingSession, setCheckingSession] = useState(true);
+
   // Vérifie si déjà connecté
-useEffect(() => {
-  const checkSession = async () => {
-    const { data } = await supabase.auth.getSession();
-    if (data?.session) {
-      router.replace("/hub");
-    }
-  };
-  checkSession();
-}, [router]);
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        router.replace("/hub");
+        // Pas besoin de setCheckingSession(false) ici :
+        // la redirection est en cours, on reste sur l'écran neutre
+        // jusqu'à ce que Next.js démonte cette page.
+        return;
+      }
+      setCheckingSession(false);
+    };
+    checkSession();
+  }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -122,6 +132,17 @@ useEffect(() => {
       setLoading(false);
     }
   };
+
+  // ✅ CORRECTIF : écran neutre (ou vide) tant qu'on vérifie la session.
+  // Remplace ce bloc par un spinner/logo si tu préfères un visuel,
+  // mais JAMAIS le formulaire tant que checkingSession est true.
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100">
+        <img src="/logo.png" alt="Logo SoulTrack" className="w-14 h-14 object-contain animate-pulse" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">

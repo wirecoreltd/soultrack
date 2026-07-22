@@ -574,14 +574,17 @@ export default function LinkEglise() {
         </div>
 
         <div>
-          <LabelField>{t.labelModeEnvoi}</LabelField>
-          <select className="w-full p-2 text-black rounded" value={canal}
+          <LabelField required>{t.labelModeEnvoi}</LabelField>
+          <select
+            className={`w-full p-2 text-black rounded ${errors.canal ? "border-2 border-red-500" : ""}`}
+            value={canal}
             onChange={(e) => setCanal(e.target.value)}
           >
             <option value="">{t.placeholderModeEnvoi}</option>
             <option value="whatsapp">{t.modeWhatsapp}</option>
             <option value="email">{t.modeEmail}</option>
           </select>
+          {errors.canal && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
         </div>
 
         <p className="text-white/50 text-xs">{t.champsObligatoires}</p>

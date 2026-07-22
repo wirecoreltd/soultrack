@@ -11,6 +11,12 @@
 // - eglises               (lecture) → nom, logo_url, denomination, ville, pays
 // - eglise_supervisions   (lecture) → lien de supervision accepté
 // - eglises (superviseur) (lecture) → infos de l'église superviseure
+//
+// ⚠️ CORRECTIF (juillet 2026) : le bloc "INFOS EGLISE" réserve
+// désormais toujours la même hauteur (skeleton pendant le chargement,
+// puis contenu réel) pour éviter que le reste de la page ne soit
+// poussé vers le bas quand le logo/nom/ville/pays s'affichent
+// après le fetch Supabase.
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
@@ -286,100 +292,121 @@ export default function HeaderPages() {
   };
 
   return (
-  <div
-    className="w-full max-w-5xl mx-auto px-4 pt-6 sm:pt-4"
-    style={{ paddingTop: "max(1.5rem, env(safe-area-inset-top))" }}
-  >
-    {/* HEADER */}
-    <div className="flex justify-between items-center mb-1">
-      <div className="flex items-center">
-        <button onClick={() => router.back()} className="text-amber-300 hover:text-gray-200 transition">
-          {t.back}
-        </button>
-      </div>
-
-      <div className="flex flex-col items-end text-right text-sm leading-tight">
-        <div className="flex items-center gap-3 mt-3">
-          {userRole?.includes("Administrateur") && invitationPending && (
-            <button onClick={handleClickInvitation} className="relative text-amber-300 text-lg hover:text-gray-200 transition">
-              📩
-              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
-            </button>
-          )}
-
-          {egliseId && userId && (
-            <NotificationBell egliseId={egliseId} userRole={userRole} userId={userId} />
-          )}
-
-          <button onClick={handleLogout} className="text-amber-300 text-sm hover:text-gray-200 transition">
-            {t.logout}
+    <div
+      className="w-full max-w-5xl mx-auto px-4 pt-6 sm:pt-4"
+      style={{ paddingTop: "max(1.5rem, env(safe-area-inset-top))" }}
+    >
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-1">
+        {/* LEFT — Retour aligné avec Déconnexion */}
+        <div className="flex items-center">
+          <button
+            onClick={() => router.back()}
+            className="text-amber-300 hover:text-gray-200 transition"
+          >
+            {t.back}
           </button>
         </div>
 
-        <p className="text-white text-sm mt-1">
-          {t.connected} <span className="font-semibold">{loading ? "..." : prenom}</span>
-        </p>
-
-        {/* Réserve la ligne "supervisé par" même si elle n'apparaît pas toujours */}
-        <p className="text-amber-300 text-sm mt-0.5 text-right leading-snug break-words max-w-[240px] min-h-[1.25rem]">
-          {supervision ? `${t.supervisedBy} ${getSupervisionLabel(supervision, lang)}` : ""}
-        </p>
-      </div>
-    </div>
-
-    {/* INFOS EGLISE — hauteur fixe garantie par min-h, peu importe l'état */}
-    <div className="flex flex-col items-center mb-4 min-h-[150px] justify-center">
-      {loading ? (
-        <div className="flex flex-col items-center animate-pulse">
-          <div className="w-12 h-12 rounded-full bg-white/10 mb-2" />
-          <div className="h-5 w-40 bg-white/10 rounded mt-2" />
-          <div className="h-4 w-24 bg-white/10 rounded mt-2" />
-          <div className="h-4 w-28 bg-white/10 rounded mt-2" />
-        </div>
-      ) : (
-        <>
-          <div
-            className="relative w-12 h-12 mb-2 cursor-pointer group"
-            onClick={() => router.push("/index")}
-          >
-            {logoUrl ? (
-              <>
-                <img
-                  src={logoUrl}
-                  className="w-12 h-12 object-contain group-hover:opacity-80 transition"
-                  alt="Logo église"
-                />
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-white border-[1.5px] border-[#333699]/50" />
-              </>
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:opacity-80 transition">
-                <span className="text-amber-300 text-xl">⛪</span>
-              </div>
+        {/* RIGHT */}
+        <div className="flex flex-col items-end text-right text-sm leading-tight">
+          <div className="flex items-center gap-3 mt-3">
+            {/* Invitation */}
+            {userRole?.includes("Administrateur") && invitationPending && (
+              <button
+                onClick={handleClickInvitation}
+                className="relative text-amber-300 text-lg hover:text-gray-200 transition"
+              >
+                📩
+                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
+              </button>
             )}
+
+            {/* Notifications */}
+            {egliseId && userId && (
+              <NotificationBell
+                egliseId={egliseId}
+                userRole={userRole}
+                userId={userId}
+              />
+            )}
+
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              className="text-amber-300 text-sm hover:text-gray-200 transition"
+            >
+              {t.logout}
+            </button>
           </div>
 
-          {(denomination || eglise) && (
-            <p className="text-white font-semibold text-lg mt-2">
-              {[denomination, eglise].filter(Boolean).join(" - ")}
-            </p>
-          )}
+          <p className="text-white text-sm mt-1">
+            {t.connected} <span className="font-semibold">{loading ? "..." : prenom}</span>
+          </p>
 
-          {ville && <p className="text-amber-300 mt-2 text-sm">{ville}</p>}
+          {/* Ligne "supervisé par" toujours présente (hauteur réservée),
+              contenu vide si pas de supervision → pas de saut de mise en page */}
+          <p className="text-amber-300 text-sm mt-0.5 text-right leading-snug break-words max-w-[240px] min-h-[1.25rem]">
+            {supervision ? `${t.supervisedBy} ${getSupervisionLabel(supervision, lang)}` : ""}
+          </p>
+        </div>
+      </div>
 
-          {pays && (
-            <p className="text-white mt-2 text-sm flex items-center gap-1">
-              <img
-                src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
-                width="20"
-                height="14"
-                alt={pays}
-              />
-              {getPaysLabel(pays, lang)}
-            </p>
-          )}
-        </>
-      )}
+      {/* INFOS EGLISE — hauteur fixe garantie par min-h, peu importe l'état */}
+      <div className="flex flex-col items-center mb-4 min-h-[150px] justify-center">
+        {loading ? (
+          // Skeleton complet : logo + nom + ville + pays, même hauteur que le contenu réel
+          <div className="flex flex-col items-center animate-pulse">
+            <div className="w-12 h-12 rounded-full bg-white/10 mb-2" />
+            <div className="h-5 w-40 bg-white/10 rounded mt-2" />
+            <div className="h-4 w-24 bg-white/10 rounded mt-2" />
+            <div className="h-4 w-28 bg-white/10 rounded mt-2" />
+          </div>
+        ) : (
+          <>
+            <div
+              className="relative w-12 h-12 mb-2 cursor-pointer group"
+              onClick={() => router.push("/index")}
+            >
+              {logoUrl ? (
+                <>
+                  <img
+                    src={logoUrl}
+                    className="w-12 h-12 object-contain group-hover:opacity-80 transition"
+                    alt="Logo église"
+                  />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-white border-[1.5px] border-[#333699]/50" />
+                </>
+              ) : (
+                // Pas de logo en base → visuel de remplacement fixe (pas de skeleton qui pulse)
+                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:opacity-80 transition">
+                  <span className="text-amber-300 text-xl">⛪</span>
+                </div>
+              )}
+            </div>
+
+            {(denomination || eglise) && (
+              <p className="text-white font-semibold text-lg mt-2">
+                {[denomination, eglise].filter(Boolean).join(" - ")}
+              </p>
+            )}
+
+            {ville && <p className="text-amber-300 mt-2 text-sm">{ville}</p>}
+
+            {pays && (
+              <p className="text-white mt-2 text-sm flex items-center gap-1">
+                <img
+                  src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
+                  width="20"
+                  height="14"
+                  alt={pays}
+                />
+                {getPaysLabel(pays, lang)}
+              </p>
+            )}
+          </>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 }

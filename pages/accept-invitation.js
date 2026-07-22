@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
-import HeaderInvitation from "../components/HeaderInvitation";
+import HeaderPages from "../components/HeaderPages";
 import Footer from "../components/Footer";
 import { useLang } from "../hooks/useLang";
 
@@ -75,8 +75,9 @@ export default function AcceptInvitation() {
   const { lang } = useLang();
   const t = translations[lang];
 
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(null);  
   const [invitation, setInvitation] = useState(null);
+  const [egliseSuperviseuse, setEgliseSuperviseuse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [choice, setChoice] = useState("");
@@ -116,7 +117,7 @@ export default function AcceptInvitation() {
           p_eglise_id: egliseId,
         });
 
-        if (error || !data?.success) {
+       if (error || !data?.success) {
           setInvitation(null);
           setLoading(false);
           return;
@@ -124,7 +125,18 @@ export default function AcceptInvitation() {
 
         setInvitation(data.invitation);
 
+        // Récupérer les vraies infos de l'église qui a envoyé l'invitation
+        if (data.invitation?.superviseur_eglise_id) {
+          const { data: egliseSup } = await supabase
+            .from("eglises")
+            .select("nom, denomination, ville, pays, branche, logo_url")
+            .eq("id", data.invitation.superviseur_eglise_id)
+            .single();
+          setEgliseSuperviseuse(egliseSup || null);
+        }
+
       } catch (err) {
+        
         console.error(err);
         setInvitation(null);
       } finally {
@@ -187,7 +199,7 @@ export default function AcceptInvitation() {
 
   return (
     <div className="min-h-screen bg-[#333699] text-white flex flex-col items-center p-4">
-      <HeaderInvitation />
+      <HeaderPages />
 
       <div className="w-full flex flex-col items-center mb-6 mt-4">
         <h1 className="text-2xl font-bold text-center text-white">
@@ -215,27 +227,27 @@ export default function AcceptInvitation() {
               {t.egliseSuperviseuse}
             </p>
             <p className="text-lg font-semibold text-emerald-300">
-              {[invitation.eglise_denomination, invitation.eglise_nom].filter(Boolean).join(" — ")}
+              {[egliseSuperviseuse?.denomination, egliseSuperviseuse?.nom].filter(Boolean).join(" — ")}
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-y-2 text-sm">
-            {invitation.eglise_branche && (
+            {egliseSuperviseuse?.branche && (
               <>
                 <span className="text-white/50">{t.branche}</span>
-                <span>{invitation.eglise_branche}</span>
+                <span>{egliseSuperviseuse.branche}</span>
               </>
             )}
-            {invitation.eglise_ville && (
+            {egliseSuperviseuse?.ville && (
               <>
                 <span className="text-white/50">{t.ville}</span>
-                <span>{invitation.eglise_ville}</span>
+                <span>{egliseSuperviseuse.ville}</span>
               </>
             )}
-            {invitation.eglise_pays && (
+            {egliseSuperviseuse?.pays && (
               <>
                 <span className="text-white/50">{t.pays}</span>
-                <span>{invitation.eglise_pays}</span>
+                <span>{egliseSuperviseuse.pays}</span>
               </>
             )}
           </div>

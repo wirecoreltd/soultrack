@@ -351,52 +351,59 @@ export default function HeaderPages() {
       </div>
 
       {/* INFOS EGLISE */}
-        <div className="flex flex-col items-center mb-4">
-          <div
-            className="relative w-12 h-12 mb-2 cursor-pointer group"
-            onClick={() => router.push("/index")}
-          >
-            {loading ? (
-              // 1. En cours de chargement → skeleton
-              <div className="w-12 h-12 rounded-full bg-white/10 animate-pulse" />
-            ) : logoUrl ? (
-              // 2. Logo trouvé → on l'affiche
-              <>
-                <img
-                  src={logoUrl}
-                  className="w-12 h-12 object-contain group-hover:opacity-80 transition"
-                  alt="Logo église"
-                />
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-white border-[1.5px] border-[#333699]/50" />
-              </>
-            ) : (
-              // 3. Pas de logo → visuel par défaut (icône générique)
-              <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:opacity-80 transition">
-                <span className="text-amber-300 text-xl">⛪</span>
-              </div>
-            )}
+<div className="flex flex-col items-center mb-4 min-h-[140px] justify-center">
+  {loading ? (
+    // Skeleton complet : logo + nom + ville + pays
+    <div className="flex flex-col items-center animate-pulse">
+      <div className="w-12 h-12 rounded-full bg-white/10 mb-2" />
+      <div className="h-5 w-40 bg-white/10 rounded mt-2" />
+      <div className="h-4 w-24 bg-white/10 rounded mt-2" />
+      <div className="h-4 w-28 bg-white/10 rounded mt-2" />
+    </div>
+  ) : (
+    <>
+      <div
+        className="relative w-12 h-12 mb-2 cursor-pointer group"
+        onClick={() => router.push("/index")}
+      >
+        {logoUrl ? (
+          <>
+            <img
+              src={logoUrl}
+              className="w-12 h-12 object-contain group-hover:opacity-80 transition"
+              alt="Logo église"
+            />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-white border-[1.5px] border-[#333699]/50" />
+          </>
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:opacity-80 transition">
+            <span className="text-amber-300 text-xl">⛪</span>
           </div>
-        
-          {(denomination || eglise) && (
-            <p className="text-white font-semibold text-lg mt-2">
-              {[denomination, eglise].filter(Boolean).join(" - ")}
-            </p>
-          )}
-        
-          {ville && <p className="text-amber-300 mt-2 text-sm">{ville}</p>}
-        
-          {pays && (
-            <p className="text-white mt-2 text-sm flex items-center gap-1">
-              <img
-                src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
-                width="20"
-                height="14"
-                alt={pays}
-              />
-              {getPaysLabel(pays, lang)}
-            </p>
-          )}
-        </div>
+        )}
+      </div>
+
+      {(denomination || eglise) && (
+        <p className="text-white font-semibold text-lg mt-2">
+          {[denomination, eglise].filter(Boolean).join(" - ")}
+        </p>
+      )}
+
+      {ville && <p className="text-amber-300 mt-2 text-sm">{ville}</p>}
+
+      {pays && (
+        <p className="text-white mt-2 text-sm flex items-center gap-1">
+          <img
+            src={`https://flagcdn.com/w20/${getIsoCode(pays)}.png`}
+            width="20"
+            height="14"
+            alt={pays}
+          />
+          {getPaysLabel(pays, lang)}
+        </p>
+      )}
+    </>
+  )}
+</div>
     </div>
   );
 }

@@ -341,7 +341,6 @@ export default function LinkEglise() {
     if (!responsable.nom.trim()) newErrors.nom = true;
     if (!eglise.denomination.trim()) newErrors.denomination = true;
     if (!eglise.pays.trim()) newErrors.pays = true;
-    if (!canal.trim()) newErrors.canal = true; 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -366,30 +365,6 @@ export default function LinkEglise() {
     }
   };
 
-  // Récupère l'eglise_id du superviseur connecté directement depuis la base,
-  // au moment de l'action, pour ne jamais dépendre d'un state React périmé
-  // (source de l'erreur RLS "new row violates row-level security policy").
-  const getEgliseSuperviseurId = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      alert("Session expirée, veuillez vous reconnecter.");
-      return null;
-    }
-
-    const { data: profil, error: profilError } = await supabase
-      .from("profiles")
-      .select("eglise_id")
-      .eq("id", user.id)
-      .single();
-
-    if (profilError || !profil?.eglise_id) {
-      alert("Impossible de récupérer votre église. Réessayez.");
-      return null;
-    }
-
-    return profil.eglise_id;
-  };
-
   const handleAction = async () => {
     if (!validate()) return;
 
@@ -399,7 +374,7 @@ export default function LinkEglise() {
       expireAt.setDate(expireAt.getDate() + 7);
 
       if (modeAction === "rappel" && selectedInvitation) {
-        const { error: updateError } = await supabase
+        await supabase
           .from("eglise_supervisions")
           .update({
             invitation_token: token,
@@ -407,12 +382,6 @@ export default function LinkEglise() {
             expire_at: expireAt.toISOString(),
           })
           .eq("id", selectedInvitation.id);
-
-        if (updateError) {
-          console.error("❌ Erreur rappel invitation :", updateError);
-          alert("Erreur lors de l'envoi du rappel : " + updateError.message);
-          return;
-        }
 
         const message = buildMessage(token, "rappel");
         sendMessage(message);
@@ -422,7 +391,7 @@ export default function LinkEglise() {
       }
 
       if (modeAction === "renvoyer" && selectedInvitation) {
-        const { error: updateError } = await supabase
+        await supabase
           .from("eglise_supervisions")
           .update({
             statut: "pending",
@@ -438,12 +407,6 @@ export default function LinkEglise() {
           })
           .eq("id", selectedInvitation.id);
 
-        if (updateError) {
-          console.error("❌ Erreur renvoi invitation :", updateError);
-          alert("Erreur lors du renvoi de l'invitation : " + updateError.message);
-          return;
-        }
-
         const message = buildMessage(token, "nouveau");
         sendMessage(message);
         resetForm();
@@ -451,14 +414,10 @@ export default function LinkEglise() {
         return;
       }
 
-      // Nouvelle invitation : on récupère un eglise_id frais et sûr avant tout
-      const egliseSuperviseurId = await getEgliseSuperviseurId();
-      if (!egliseSuperviseurId) return;
-
       const { data: existing } = await supabase
         .from("eglise_supervisions")
         .select("id, statut")
-        .eq("superviseur_eglise_id", egliseSuperviseurId)
+        .eq("superviseur_eglise_id", superviseur.eglise_id)
         .eq("eglise_denomination", eglise.denomination)
         .eq("eglise_pays", eglise.pays)
         .maybeSingle();
@@ -468,8 +427,8 @@ export default function LinkEglise() {
         return;
       }
 
-      const { error: insertError } = await supabase.from("eglise_supervisions").insert([{
-        superviseur_eglise_id: egliseSuperviseurId,
+      await supabase.from("eglise_supervisions").insert([{
+        superviseur_eglise_id: superviseur.eglise_id,
         responsable_prenom: responsable.prenom,
         responsable_nom: responsable.nom,
         eglise_nom: eglise.nom,
@@ -481,12 +440,6 @@ export default function LinkEglise() {
         invitation_token: token,
         expire_at: expireAt.toISOString(),
       }]);
-
-      if (insertError) {
-        console.error("❌ Erreur insert invitation :", insertError);
-        alert("Erreur lors de l'envoi de l'invitation : " + insertError.message);
-        return;
-      }
 
       const message = buildMessage(token, "nouveau");
       sendMessage(message);
@@ -620,17 +573,14 @@ export default function LinkEglise() {
         </div>
 
         <div>
-          <LabelField required>{t.labelModeEnvoi}</LabelField>
-          <select
-            className={`w-full p-2 text-black rounded ${errors.canal ? "border-2 border-red-500" : ""}`}
-            value={canal}
+          <LabelField>{t.labelModeEnvoi}</LabelField>
+          <select className="w-full p-2 text-black rounded" value={canal}
             onChange={(e) => setCanal(e.target.value)}
           >
             <option value="">{t.placeholderModeEnvoi}</option>
             <option value="whatsapp">{t.modeWhatsapp}</option>
             <option value="email">{t.modeEmail}</option>
           </select>
-          {errors.canal && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
         </div>
 
         <p className="text-white/50 text-xs">{t.champsObligatoires}</p>

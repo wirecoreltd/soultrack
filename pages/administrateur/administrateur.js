@@ -100,11 +100,11 @@ export default function Administrateur() {
       if (orFilters.length === 0) return;
 
       const { data: invites, error: inviteError } = await supabase
-        .from("eglise_supervisions")
-        .select("*")
-        .or(orFilters.join(","))
-        .in("statut", ["pending", "refusee"])
-        .limit(1);
+      .from("eglise_supervisions")
+      .select("*")
+      .or(orFilters.join(","))
+      .eq("statut", "pending")
+      .limit(1);
 
       if (!inviteError && invites && invites.length > 0) setInvitation(invites[0]);
     };
@@ -139,7 +139,7 @@ export default function Administrateur() {
               className={cardClass} style={{ borderTopColor: "#F59E0B" }}>
               <div className="text-4xl mb-1">📩</div>
               <div className="text-lg font-bold text-gray-800 text-center">
-                {invitation.statut === "pending" ? t.invitationPending : t.invitationRefused}
+                {t.invitationPending}
               </div>
             </Link>
           )}

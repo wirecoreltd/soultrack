@@ -341,6 +341,7 @@ export default function LinkEglise() {
     if (!responsable.nom.trim()) newErrors.nom = true;
     if (!eglise.denomination.trim()) newErrors.denomination = true;
     if (!eglise.pays.trim()) newErrors.pays = true;
+    if (!canal.trim()) newErrors.canal = true; 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -355,15 +356,15 @@ export default function LinkEglise() {
     const corps = mode === "rappel" ? t.msgRappelInvite(superviseurInfo) : t.msgNouveauInvite(superviseurInfo);
 
     return `${salut}\n\n${corps}\n\n${t.msgLien}\n${lien}\n\n${t.msgSignature}`;
-  };
-
-  const sendMessage = (message) => {
-    if (canal === "whatsapp") {
-      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-    } else if (canal === "email") {
-      window.location.href = `mailto:?subject=${encodeURIComponent(t.msgSujetEmail)}&body=${encodeURIComponent(message)}`;
-    }
-  };
+      };
+    
+      const sendMessage = (message) => {
+      if (canal === "whatsapp") {
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+      } else if (canal === "email") {
+        window.location.href = `mailto:?subject=${encodeURIComponent(t.msgSujetEmail)}&body=${encodeURIComponent(message)}`;
+      }
+    };
 
   const handleAction = async () => {
     if (!validate()) return;
@@ -573,14 +574,17 @@ export default function LinkEglise() {
         </div>
 
         <div>
-          <LabelField>{t.labelModeEnvoi}</LabelField>
-          <select className="w-full p-2 text-black rounded" value={canal}
+          <LabelField required>{t.labelModeEnvoi}</LabelField>
+          <select
+            className={`w-full p-2 text-black rounded ${errors.canal ? "border-2 border-red-500" : ""}`}
+            value={canal}
             onChange={(e) => setCanal(e.target.value)}
           >
             <option value="">{t.placeholderModeEnvoi}</option>
             <option value="whatsapp">{t.modeWhatsapp}</option>
             <option value="email">{t.modeEmail}</option>
           </select>
+          {errors.canal && <p className="text-red-400 text-xs mt-1">{t.erreurChamp}</p>}
         </div>
 
         <p className="text-white/50 text-xs">{t.champsObligatoires}</p>

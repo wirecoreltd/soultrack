@@ -397,9 +397,12 @@ export default function AddEvangelise({ onNewEvangelise }) {
 
     try {
       setLoading(true);
-      const { data: evangelise, error } = await supabase
-        .from("evangelises").insert([finalData]).select().single();
+      const generatedId = crypto.randomUUID();
+      const { error } = await supabase
+        .from("evangelises")
+        .insert([{ ...finalData, id: generatedId }]);
       if (error) throw error;
+      const evangelise = { ...finalData, id: generatedId };
 
       if (urlCelluleId) {
         const suiviData = {

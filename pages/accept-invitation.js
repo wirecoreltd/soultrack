@@ -407,12 +407,14 @@ export default function AcceptInvitation() {
             </div>
           )}
 
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="w-full mt-2 border border-white/30 text-white/80 py-2 rounded font-semibold hover:bg-white/10 transition-colors"
-          >
-            {t.retourDashboard}
-          </button>
+          {!message && (
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="w-full mt-2 border border-white/30 text-white/80 py-2 rounded font-semibold hover:bg-white/10 transition-colors"
+            >
+              {t.retourDashboard}
+            </button>
+          )}
         </div>
       )}
 

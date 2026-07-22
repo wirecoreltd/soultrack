@@ -428,7 +428,7 @@ export default function LinkEglise() {
         return;
       }
 
-      await supabase.from("eglise_supervisions").insert([{
+      const { error: insertError } = await supabase.from("eglise_supervisions").insert([{
         superviseur_eglise_id: superviseur.eglise_id,
         responsable_prenom: responsable.prenom,
         responsable_nom: responsable.nom,
@@ -441,6 +441,12 @@ export default function LinkEglise() {
         invitation_token: token,
         expire_at: expireAt.toISOString(),
       }]);
+      
+      if (insertError) {
+        console.error("❌ Erreur insert invitation :", insertError);
+        alert("Erreur lors de l'envoi de l'invitation : " + insertError.message);
+        return;
+      }
 
       const message = buildMessage(token, "nouveau");
       sendMessage(message);

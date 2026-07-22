@@ -341,6 +341,7 @@ export default function LinkEglise() {
     if (!responsable.nom.trim()) newErrors.nom = true;
     if (!eglise.denomination.trim()) newErrors.denomination = true;
     if (!eglise.pays.trim()) newErrors.pays = true;
+    if (!canal.trim()) newErrors.canal = true;
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };

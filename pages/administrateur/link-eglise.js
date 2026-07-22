@@ -228,8 +228,13 @@ export default function LinkEglise() {
 
   useEffect(() => {
     const loadSuperviseur = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: { session } } = await supabase.auth.getSession();
+console.log("SESSION AU CLIC:", session);
+if (!session) {
+  alert("Pas de session trouvée localement.");
+  return;
+}
+const user = session.user;
 
       const { data, error } = await supabase
         .from("profiles")

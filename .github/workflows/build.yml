@@ -84,8 +84,14 @@ jobs:
 
       - name: Set version code
         run: |
-          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
-          sed -i 's/versionName "1.0"/versionName "1.0.${{ github.run_number }}"/' android/app/build.gradle
+          # On combine run_number et run_attempt : run_attempt s'incrémente
+          # à chaque "Re-run" d'un même workflow, alors que run_number reste
+          # identique. Sans ça, relancer un ancien run régénère exactement
+          # le même versionCode déjà uploadé sur Play Console → rejet.
+          VERSION_CODE=$(( ${{ github.run_number }} * 10 + ${{ github.run_attempt }} ))
+          echo "Version code utilisé : $VERSION_CODE"
+          sed -i "s/versionCode 1/versionCode $VERSION_CODE/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"1.0.$VERSION_CODE\"/" android/app/build.gradle
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew

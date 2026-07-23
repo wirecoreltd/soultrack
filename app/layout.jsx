@@ -1,6 +1,7 @@
 import { Great_Vibes } from "next/font/google";
 import { MembersProvider } from "../context/MembersContext";
 import { FeaturesProvider } from "../components/FeaturesContext";
+import NavigationBarSync from "../components/NavigationBarSync";
 
 const greatVibes = Great_Vibes({
   subsets: ["latin"],
@@ -40,6 +41,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr" className={greatVibes.variable}>
       <body>
+        <NavigationBarSync />
         <MembersProvider>
           <FeaturesProvider>
             {children}

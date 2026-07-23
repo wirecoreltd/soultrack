@@ -133,7 +133,6 @@ const EN_HEADER_MAP = {
   "city":             "ville",
   "water_baptism":    "bapteme_eau",
   "spirit_baptism":   "bapteme_esprit",
-  "servant":          "serviteur",
   "conversion_type":  "type_conversion",
   "additional_info":  "infos_supplementaires",
 };
@@ -155,7 +154,7 @@ const TEMPLATE_CONFIG = {
       "venu *", "priere_salut *",
       "telephone", "ville", "is_whatsapp",
       "bapteme_eau", "bapteme_esprit",
-      "serviteur", "statut", "type_conversion",
+      "statut", "type_conversion",
       "infos_supplementaires",
     ],
     example: [
@@ -163,7 +162,7 @@ const TEMPLATE_CONFIG = {
       "invité", "Oui",
       "+336 12 34 56 78", "Paris", "Oui",
       "Oui", "Non",
-      "Oui", "nouveau", "",
+      "nouveau", "",
       "Info supplementaire ici",
     ],
     notes: [
@@ -177,7 +176,6 @@ const TEMPLATE_CONFIG = {
       "priere_salut: Oui | Non",
       "is_whatsapp: Oui | Non (ou vide)",
       "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
-      "serviteur: Oui | Non",
       "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur (optionnel)",
       "type_conversion: Nouveau converti | Réconciliation (optionnel, uniquement si priere_salut = Oui)",
     ],
@@ -189,7 +187,7 @@ const TEMPLATE_CONFIG = {
       "how_came *", "salvation_prayer *",
       "phone", "city", "is_whatsapp",
       "water_baptism", "spirit_baptism",
-      "servant", "status", "conversion_type",
+      "status", "conversion_type",
       "additional_info",
     ],
     example: [
@@ -197,7 +195,7 @@ const TEMPLATE_CONFIG = {
       "invited", "Yes",
       "+1 212 555 0147", "New York", "Yes",
       "Yes", "No",
-      "Yes", "new", "",
+      "new", "",
       "Additional info here",
     ],
     notes: [
@@ -211,7 +209,6 @@ const TEMPLATE_CONFIG = {
       "salvation_prayer: Yes | No",
       "is_whatsapp: Yes | No (or empty)",
       "water_baptism / spirit_baptism: Yes | No (or empty)",
-      "servant: Yes | No",
       "status: wants to join the church | already has a church | new | visitor (optional)",
       "conversion_type: New convert | Reconciliation (optional, only if salvation_prayer = Yes)",
     ],
@@ -330,7 +327,6 @@ export default function ImportMembresCelluleCSV({ user }) {
           const priereNorm     = norm(r.priere_salut,  BOOL_EN_TO_FR,  ["Oui", "Non"]);
           const bEauNorm       = norm(r.bapteme_eau,   BOOL_EN_TO_FR,  ["Oui", "Non"]);
           const bEspritNorm    = norm(r.bapteme_esprit,BOOL_EN_TO_FR,  ["Oui", "Non"]);
-          const serviteurNorm  = norm(r.serviteur,     BOOL_EN_TO_FR,  ["Oui", "Non"]);
           const venuNorm       = norm(r.venu,          VENU_EN_TO_FR,  VENU_FR);
           const statutNorm     = norm(r.statut,        STATUT_EN_TO_FR,STATUT_FR);
           const convNorm       = norm(r.type_conversion,CONV_EN_TO_FR, CONV_FR);
@@ -361,9 +357,6 @@ export default function ImportMembresCelluleCSV({ user }) {
           if (r.bapteme_esprit && !["Oui", "Non", ""].includes(bEspritNorm))
             errs.push("spirit_baptism / bapteme_esprit invalid");
 
-          if (r.serviteur && !["Oui", "Non", ""].includes(serviteurNorm))
-            errs.push("servant / serviteur invalid");
-
           if (r.statut && !STATUT_FR.includes(statutNorm))
             errs.push("status / statut invalid");
 
@@ -389,7 +382,6 @@ export default function ImportMembresCelluleCSV({ user }) {
             is_whatsapp:           isWaNorm === "Oui",
             bapteme_eau:           bEauNorm || null,
             bapteme_esprit:        bEspritNorm || null,
-            star:                  serviteurNorm === "Oui",
             statut:                statutNorm || null,
             type_conversion:       convNorm || null,
             infos_supplementaires: r.infos_supplementaires || null,
@@ -492,7 +484,7 @@ export default function ImportMembresCelluleCSV({ user }) {
             priere_salut: rowData.priere_salut, telephone: rowData.telephone,
             ville: rowData.ville, is_whatsapp: rowData.is_whatsapp,
             bapteme_eau: rowData.bapteme_eau, bapteme_esprit: rowData.bapteme_esprit,
-            star: rowData.star, statut: rowData.statut,
+            statut: rowData.statut,
             type_conversion: rowData.type_conversion,
             infos_supplementaires: rowData.infos_supplementaires,
           }).eq("id", existingId)
@@ -624,7 +616,7 @@ export default function ImportMembresCelluleCSV({ user }) {
           <div className="max-h-40 overflow-auto space-y-1">
             {data.slice(0, 5).map((row, i) => (
               <div key={i} className="text-white/80 text-sm bg-white/5 rounded px-3 py-1">
-                {row.prenom} {row.nom} — {row.age} — {row.date_venu}{row.star ? " ★" : ""}
+                {row.prenom} {row.nom} — {row.age} — {row.date_venu}
               </div>
             ))}
             {data.length > 5 && <p className="text-white/40 italic text-sm">...{t.andMore} {data.length - 5} {t.andOthers}</p>}

@@ -7,11 +7,13 @@ module.exports = {
   },
   android: {
     allowMixedContent: true,
-    // Gère proprement l'edge-to-edge forcé par Android 15+ (API 35+)
-    // sans avoir besoin de downgrader targetSdkVersion.
-    // 'auto' : Capacitor ajuste automatiquement les marges pour que
-    // le contenu ne passe pas sous la nav bar / status bar.
-    adjustMarginsForEdgeToEdge: 'auto',
+    // Sur Android 15+ (API 35+), la nav bar/status bar est transparente
+    // de façon forcée par l'OS. 'disable' laisse le WebView s'étendre
+    // vraiment derrière ces barres, pour que ce soit le fond de VOTRE
+    // page (gradient, #333699...) qui apparaisse à travers — au lieu
+    // d'un vide noir. On gère le décalage du contenu via CSS
+    // (env(safe-area-inset-*)) plutôt que via une marge native.
+    adjustMarginsForEdgeToEdge: 'disable',
   },
   plugins: {
     PushNotifications: {

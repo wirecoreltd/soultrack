@@ -89,16 +89,26 @@ const translations = {
   },
 };
 
+// ─── Valeurs DB (toujours en français) ───
+const BESOIN_FR = [
+  "Finances", "Santé", "Travail / Études", "Famille / Enfants",
+  "Miracle", "Délivrance", "Relations / Conflits",
+  "Addictions / Dépendances", "Guidance spirituelle",
+  "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
+];
+
 // Template examples per language
 const templateExamples = {
   fr: [
     "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
     "+336 12 34 56 78", "Paris", "Oui", "Non", "Oui",
+    "Finances;Santé",
     "Info supplementaire ici",
   ],
   en: [
     "Smith", "John", "Homme", "18-25 ans", "2026-01-15",
     "+1 212 555 0147", "New York", "Oui", "Non", "Oui",
+    "Finances;Santé",
     "Additional info here",
   ],
 };
@@ -114,6 +124,7 @@ const templateNotes = {
     "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
     "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
     "serviteur: Oui | Non",
+    "besoin: valeurs séparées par ; (ex: Finances;Santé;Travail / Études) — valeurs possibles : Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance | Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité | Communauté / Isolement | Dépression / Santé mentale",
   ],
   en: [
     "IMPORTANT: Delete all lines starting with # before importing the file.",
@@ -124,6 +135,7 @@ const templateNotes = {
     "date_venu: format YYYY-MM-DD or DD-MM-YY or DD-MM-YYYY",
     "bapteme_eau / bapteme_esprit: Oui | Non (or leave empty)",
     "serviteur: Oui | Non",
+    "besoin: values separated by ; (e.g.: Finances;Santé;Travail / Études) — possible values: Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance | Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité | Communauté / Isolement | Dépression / Santé mentale",
   ],
 };
 
@@ -173,6 +185,7 @@ export default function ImportMembresFamilleCSV({ user }) {
       "telephone", "ville",
       "bapteme_eau", "bapteme_esprit",
       "serviteur",
+      "besoin",
       "infos_supplementaires",
     ];
     const example = templateExamples[lang] ?? templateExamples.fr;
@@ -254,6 +267,15 @@ export default function ImportMembresFamilleCSV({ user }) {
           if (normalized.serviteur && !["Oui", "Non"].includes(normalized.serviteur))
             rowErrors.push(`Ligne ${index + 1}: serviteur invalide (Oui ou Non)`);
 
+          // ── Besoins : valider chaque valeur ──
+          const besoin = normalized.besoin
+            ? normalized.besoin.split(";").map((b) => b.trim()).filter(Boolean)
+            : [];
+          const invalidBesoin = besoin.filter((b) => !BESOIN_FR.includes(b));
+          if (invalidBesoin.length > 0) {
+            rowErrors.push(`Ligne ${index + 1}: besoin invalide : ${invalidBesoin.join(", ")}`);
+          }
+
           if (rowErrors.length === 0) {
             validData.push({
               nom: capitalize(normalized.nom),
@@ -266,6 +288,7 @@ export default function ImportMembresFamilleCSV({ user }) {
               bapteme_eau: normalized.bapteme_eau || null,
               bapteme_esprit: normalized.bapteme_esprit || null,
               star: normalized.serviteur === "Oui",
+              besoin: besoin.length > 0 ? besoin : null,
               infos_supplementaires: normalized.infos_supplementaires || null,
               eglise_id: user.eglise_id,
               famille_id: user.famille_id,
@@ -361,20 +384,21 @@ export default function ImportMembresFamilleCSV({ user }) {
 
     const dupsToUpdate = duplicates.filter((d) => depsToUpdate[d.telephone]);
     if (dupsToUpdate.length > 0) {
-  const updateResults = await Promise.all(
-    dupsToUpdate.map(({ existingId, rowData }) =>
-      supabase.from("membres_complets").update({
-        nom: rowData.nom, prenom: rowData.prenom, sexe: rowData.sexe,
-        age: rowData.age, date_venu: rowData.date_venu,
-        telephone: rowData.telephone, ville: rowData.ville,
-        bapteme_eau: rowData.bapteme_eau, bapteme_esprit: rowData.bapteme_esprit,
-        star: rowData.star, infos_supplementaires: rowData.infos_supplementaires,
-      }).eq("id", existingId)
-    )
-  );
-  const failed = updateResults.find((r) => r.error);
-  if (failed) { alert(t.errorUpdate + ": " + failed.error.message); setLoading(false); return; }
-}
+      const updateResults = await Promise.all(
+        dupsToUpdate.map(({ existingId, rowData }) =>
+          supabase.from("membres_complets").update({
+            nom: rowData.nom, prenom: rowData.prenom, sexe: rowData.sexe,
+            age: rowData.age, date_venu: rowData.date_venu,
+            telephone: rowData.telephone, ville: rowData.ville,
+            bapteme_eau: rowData.bapteme_eau, bapteme_esprit: rowData.bapteme_esprit,
+            star: rowData.star, besoin: rowData.besoin,
+            infos_supplementaires: rowData.infos_supplementaires,
+          }).eq("id", existingId)
+        )
+      );
+      const failed = updateResults.find((r) => r.error);
+      if (failed) { alert(t.errorUpdate + ": " + failed.error.message); setLoading(false); return; }
+    }
 
     setLoading(false);
     setImportCount(data.length + dupsToInsert.length + dupsToUpdate.length);

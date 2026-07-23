@@ -153,10 +153,9 @@ const translations = {
       "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
       "ministere: OBLIGATOIRE si serviteur = Oui — valeurs séparées par | : Intercession | Louange | Technique | Communication | Les Enfants | Les ados | Les jeunes | Finance | Nettoyage | Conseiller | Compassion | Visite | Berger | Modération",
       "type_conversion: Nouveau converti | Réconciliation (optionnel, uniquement si priere_salut = Oui)",
-      "besoin: valeurs separees par ; ex: Finances;Santé;Travail / Études",
-      "  valeurs possibles: Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance",
-      "  Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité",
-      "  Communauté / Isolement | Dépression / Santé mentale",
+      "besoin: valeurs separees par ; (ex: Finances;Santé;Travail / Études)",
+      "  valeurs possibles pour besoin: Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance | Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité | Communauté / Isolement | Dépression / Santé mentale",
+      
     ],
   },
   en: {
@@ -231,10 +230,9 @@ const translations = {
       "water_baptism / spirit_baptism: Yes | No (or empty)",
       "ministry: REQUIRED if servant = Yes — values separated by | : Intercession | Praise | Technical | Communication | Children | Teens | Youth | Finance | Cleaning | Counselor | Compassion | Visitation | Shepherd | Moderation",
       "conversion_type: New convert | Reconciliation (optional, only if salvation_prayer = Yes)",
-      "needs: values separated by ; e.g.: Finances;Health;Work / Studies",
-      "  possible values: Finances | Health | Work / Studies | Family / Children | Miracle | Deliverance",
-      "  Relationships / Conflicts | Addictions / Dependencies | Spiritual guidance | Housing / Safety",
-      "  Community / Isolation | Depression / Mental health",
+      "needs: values separated by ; (e.g.: Finances;Health;Work / Studies"),
+      "  possible values for needs: Finances | Health | Work / Studies | Family / Children | Miracle | Deliverance | Relationships / Conflicts | Addictions / Dependencies | Spiritual guidance | Housing / Safety | Community / Isolation | Depression / Mental health",      
+      
     ],
   },
 };

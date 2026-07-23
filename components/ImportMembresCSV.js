@@ -14,6 +14,13 @@ const MINISTERES_VALIDES = [
   "Berger", "Modération",
 ];
 
+const BESOIN_FR = [
+  "Finances", "Santé", "Travail / Études", "Famille / Enfants",
+  "Miracle", "Délivrance", "Relations / Conflits",
+  "Addictions / Dépendances", "Guidance spirituelle",
+  "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
+];
+
 const SEXE_EN_TO_FR     = { "Male": "Homme", "Female": "Femme" };
 const BOOL_EN_TO_FR     = { "Yes": "Oui", "No": "Non" };
 const AGE_EN_TO_FR      = {
@@ -406,11 +413,16 @@ export default function ImportMembresCSV({ user }) {
             rowErrors.push(`Ligne ${index + 1}: ministere invalide : ${invalidMin.join(", ")}`);
           }
 
-          if (rowErrors.length === 0) {
-            const besoin = normalized.besoin
-              ? normalized.besoin.split(";").map((b) => b.trim()).filter(Boolean)
-              : [];
+          // ── Besoins : normaliser + valider chaque valeur ──
+          const besoin = normalized.besoin
+            ? normalized.besoin.split(";").map((b) => b.trim()).filter(Boolean)
+            : [];
+          const invalidBesoin = besoin.filter((b) => !BESOIN_FR.includes(b));
+          if (invalidBesoin.length > 0) {
+            rowErrors.push(`Ligne ${index + 1}: besoin invalide : ${invalidBesoin.join(", ")}`);
+          }
 
+          if (rowErrors.length === 0) {
             validData.push({
               nom:                   capitalize(normalized.nom),
               prenom:                capitalize(normalized.prenom),

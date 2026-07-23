@@ -61,6 +61,33 @@ jobs:
         run: |
           sed -i 's|launchUrl = null|launchUrl = "https://www.soultrack.org/login"|g' android/app/src/main/java/org/soultrack/app/MainActivity.java 2>/dev/null || true
 
+      - name: Force dark nav bar icons (WindowInsetsController)
+        run: |
+          # L'attribut de thème android:windowLightNavigationBar n'est pas
+          # honoré par certains fabricants Android (Samsung, Xiaomi, etc.).
+          # On force donc l'apparence des icônes directement en code natif
+          # via l'API officielle WindowInsetsControllerCompat, qui fonctionne
+          # de façon fiable indépendamment du thème et du fabricant.
+          MAIN_ACTIVITY="android/app/src/main/java/org/soultrack/app/MainActivity.java"
+
+          if [ -f "$MAIN_ACTIVITY" ]; then
+            # Ajoute l'import nécessaire
+            sed -i '/import com.getcapacitor.BridgeActivity;/a import androidx.core.view.WindowInsetsControllerCompat;' "$MAIN_ACTIVITY"
+
+            # Force les icônes système (nav bar + status bar) en foncé,
+            # juste après l'initialisation de l'activité.
+            sed -i '/super.onCreate(savedInstanceState);/a \
+        WindowInsetsControllerCompat windowInsetsController =\
+            new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());\
+        windowInsetsController.setAppearanceLightNavigationBars(true);\
+        windowInsetsController.setAppearanceLightStatusBars(true);' "$MAIN_ACTIVITY"
+
+            echo "=== MainActivity.java ==="
+            cat "$MAIN_ACTIVITY"
+          else
+            echo "MainActivity.java introuvable à $MAIN_ACTIVITY — vérifiez le nom de package."
+          fi
+
       - name: Inject google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
 

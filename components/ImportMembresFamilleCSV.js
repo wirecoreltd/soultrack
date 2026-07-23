@@ -6,6 +6,80 @@ import { checkLimiteAtteinte } from "../lib/checkLimite";
 import Papa from "papaparse";
 import { useLang } from "../hooks/useLang";
 
+// ─── Constantes ───────────────────────────────────────────────────────────────
+const MINISTERES_VALIDES = [
+  "Intercession", "Louange", "Technique", "Communication",
+  "Les Enfants", "Les ados", "Les jeunes", "Finance",
+  "Nettoyage", "Conseiller", "Compassion", "Visite",
+  "Berger", "Modération",
+];
+
+const BESOIN_FR = [
+  "Finances", "Santé", "Travail / Études", "Famille / Enfants",
+  "Miracle", "Délivrance", "Relations / Conflits",
+  "Addictions / Dépendances", "Guidance spirituelle",
+  "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
+];
+
+const SEXE_EN_TO_FR     = { "Male": "Homme", "Female": "Femme" };
+const BOOL_EN_TO_FR     = { "Yes": "Oui", "No": "Non" };
+const AGE_EN_TO_FR      = {
+  "12-17 yrs": "12-17 ans", "18-25 yrs": "18-25 ans",
+  "26-30 yrs": "26-30 ans", "31-40 yrs": "31-40 ans",
+  "41-55 yrs": "41-55 ans", "56-69 yrs": "56-69 ans",
+  "70 yrs and over": "70 ans et plus",
+};
+const VENU_EN_TO_FR     = {
+  "invited": "invité", "social media": "réseaux",
+  "evangelization": "evangélisation", "other": "autre",
+};
+const STATUT_EN_TO_FR   = {
+  "wants to join the church": "veut rejoindre l'église",
+  "already has a church": "a déjà son église",
+  "new": "nouveau", "visitor": "visiteur",
+};
+const CONV_EN_TO_FR     = {
+  "New convert": "Nouveau converti", "Reconciliation": "Réconciliation",
+};
+const BESOIN_EN_TO_FR   = {
+  "Finances": "Finances", "Health": "Santé",
+  "Work / Studies": "Travail / Études", "Family / Children": "Famille / Enfants",
+  "Miracle": "Miracle", "Deliverance": "Délivrance",
+  "Relationships / Conflicts": "Relations / Conflits",
+  "Addictions / Dependencies": "Addictions / Dépendances",
+  "Spiritual guidance": "Guidance spirituelle",
+  "Housing / Safety": "Logement / Sécurité",
+  "Community / Isolation": "Communauté / Isolement",
+  "Depression / Mental health": "Dépression / Santé mentale",
+};
+const MINISTERES_EN_TO_FR = {
+  "Intercession": "Intercession", "Praise": "Louange",
+  "Technical": "Technique", "Communication": "Communication",
+  "Children": "Les Enfants", "Teens": "Les ados", "Youth": "Les jeunes",
+  "Finance": "Finance", "Cleaning": "Nettoyage", "Counselor": "Conseiller",
+  "Compassion": "Compassion", "Visitation": "Visite",
+  "Shepherd": "Berger", "Moderation": "Modération",
+};
+const EN_HEADER_MAP = {
+  "last_name": "nom", "first_name": "prenom",
+  "gender": "sexe", "date_joined": "date_venu",
+  "servant": "serviteur", "status": "statut",
+  "how_came": "venu", "salvation_prayer": "priere_salut",
+  "conversion_type": "type_conversion",
+  "phone": "telephone", "city": "ville",
+  "water_baptism": "bapteme_eau", "spirit_baptism": "bapteme_esprit",
+  "needs": "besoin", "additional_info": "infos_supplementaires",
+  "ministry": "ministere",
+};
+
+const norm = (value, enToFrMap, validFrValues) => {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (validFrValues.includes(trimmed)) return trimmed;
+  return enToFrMap[trimmed] ?? trimmed;
+};
+
+// ─── Traductions UI ───────────────────────────────────────────────────────────
 const translations = {
   fr: {
     beforeImport: "Avant d'importer",
@@ -39,13 +113,48 @@ const translations = {
     member: "membre(s)",
     successTitle: "Import reussi !",
     successMsg: "membre(s) ajoute(s) ou mis a jour avec succes.",
-    upgradeplan: "Upgradez votre plan.",
     limitReached: "Limite atteinte",
     limitExceeded: "Cet import dépasserait la limite : vous avez",
     membersAndWant: "membres et voulez en importer",
+    upgradeplan: "Upgradez votre plan.",
     errorInsert: "Erreur insert: ",
     errorInsertDup: "Erreur insert doublon: ",
     errorUpdate: "Erreur update",
+    templateHeaders: [
+      "nom *", "prenom *", "sexe *", "age *", "date_venu *", "serviteur *",
+      "statut *", "venu *", "priere_salut *", "type_conversion *",
+      "telephone", "ville", "is_whatsapp",
+      "bapteme_eau", "bapteme_esprit",
+      "ministere",
+      "besoin",
+      "infos_supplementaires",
+    ],
+    templateExample: [
+      "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15", "Oui",
+      "nouveau", "invité", "Oui", "Nouveau converti",
+      "+336 12 34 56 78", "Paris", "Oui",
+      "Oui", "Non",
+      "Louange|Intercession",
+      "Finances;Santé",
+      "Info supplementaire ici",
+    ],
+    templateNotes: [
+      "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
+      "Les colonnes avec * sont obligatoires.",
+      "sexe: Homme | Femme",
+      "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+      "Le préfixe téléphonique du pays doit être placé avant le numéro de téléphone",
+      "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
+      "serviteur: Oui | Non",
+      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur",
+      "venu: invité | réseaux | evangélisation | autre",
+      "priere_salut: Oui | Non",
+      "type_conversion: Nouveau converti | Réconciliation (optionnel- uniquement si priere_salut = Oui)",
+      "is_whatsapp: Oui | Non (ou vide)",
+      "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
+      "ministere: OBLIGATOIRE si serviteur = Oui — valeurs séparées par | : Intercession | Louange | Technique | Communication | Les Enfants | Les ados | Les jeunes | Finance | Nettoyage | Conseiller | Compassion | Visite | Berger | Modération",
+      "besoin: valeurs séparées par ; (ex: Finances;Santé;Travail / Études) — valeurs possibles : Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance | Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité | Communauté / Isolement | Dépression / Santé mentale",
+    ],
   },
   en: {
     beforeImport: "Before importing",
@@ -79,64 +188,49 @@ const translations = {
     member: "member(s)",
     successTitle: "Import successful!",
     successMsg: "member(s) added or updated successfully.",
-    upgradeplan: "Upgrade your plan.",
     limitReached: "Limit reached",
     limitExceeded: "This import would exceed the limit: you have",
     membersAndWant: "members and want to import",
+    upgradeplan: "Upgrade your plan.",
     errorInsert: "Insert error: ",
     errorInsertDup: "Duplicate insert error: ",
     errorUpdate: "Update error",
+    templateHeaders: [
+      "last_name *", "first_name *", "gender *", "age *", "date_joined *", "servant *",
+      "status *", "how_came *", "salvation_prayer *", "conversion_type *",
+      "phone", "city", "is_whatsapp",
+      "water_baptism", "spirit_baptism",
+      "ministry",
+      "needs",
+      "additional_info",
+    ],
+    templateExample: [
+      "Dupont", "Mary", "Female", "18-25 yrs", "2026-01-15", "Yes",
+      "new", "invited", "Yes", "New convert",
+      "+1 212 555 0147", "New York", "Yes",
+      "Yes", "No",
+      "Praise|Intercession",
+      "Finances;Health",
+      "Additional info here",
+    ],
+    templateNotes: [
+      "IMPORTANT: Delete all lines starting with # before importing the file.",
+      "Columns with * are required.",
+      "gender: Male | Female",
+      "age: 12-17 yrs | 18-25 yrs | 26-30 yrs | 31-40 yrs | 41-55 yrs | 56-69 yrs | 70 yrs and over",
+      "The country phone prefix must be placed before the phone number",
+      "date_joined: format YYYY-MM-DD or DD-MM-YY or DD-MM-YYYY",
+      "servant: Yes | No",
+      "status: wants to join the church | already has a church | new | visitor",
+      "how_came: invited | social media | evangelization | other",
+      "salvation_prayer: Yes | No",
+      "conversion_type: New convert | Reconciliation (optiona- only if salvation_prayer = Yes)",
+      "is_whatsapp: Yes | No (or empty)",
+      "water_baptism / spirit_baptism: Yes | No (or empty)",
+      "ministry: REQUIRED if servant = Yes — values separated by | : Intercession | Praise | Technical | Communication | Children | Teens | Youth | Finance | Cleaning | Counselor | Compassion | Visitation | Shepherd | Moderation",
+      "needs: values separated by ; (e.g.: Finances;Health;Work / Studies) — possible values: Finances | Health | Work / Studies | Family / Children | Miracle | Deliverance | Relationships / Conflicts | Addictions / Dependencies | Spiritual guidance | Housing / Safety | Community / Isolation | Depression / Mental health",
+    ],
   },
-};
-
-// ─── Valeurs DB (toujours en français) ───
-const BESOIN_FR = [
-  "Finances", "Santé", "Travail / Études", "Famille / Enfants",
-  "Miracle", "Délivrance", "Relations / Conflits",
-  "Addictions / Dépendances", "Guidance spirituelle",
-  "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
-];
-
-// Template examples per language
-const templateExamples = {
-  fr: [
-    "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15",
-    "+336 12 34 56 78", "Paris", "Oui", "Non", "Oui",
-    "Finances;Santé",
-    "Info supplementaire ici",
-  ],
-  en: [
-    "Smith", "John", "Homme", "18-25 ans", "2026-01-15",
-    "+1 212 555 0147", "New York", "Oui", "Non", "Oui",
-    "Finances;Santé",
-    "Additional info here",
-  ],
-};
-
-// Template notes per language
-const templateNotes = {
-  fr: [
-    "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
-    "Les colonnes avec * sont obligatoires.",
-    "civilite: Homme | Femme",
-    "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
-    "Le préfixe téléphonique du pays doit être placé avant le numéro de téléphone",
-    "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
-    "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
-    "serviteur: Oui | Non",
-    "besoin: valeurs séparées par ; (ex: Finances;Santé;Travail / Études) — valeurs possibles : Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance | Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité | Communauté / Isolement | Dépression / Santé mentale",
-  ],
-  en: [
-    "IMPORTANT: Delete all lines starting with # before importing the file.",
-    "Columns marked with * are required.",
-    "civilite: Homme | Femme",
-    "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
-    "The country phone prefix must be placed before the phone number",
-    "date_venu: format YYYY-MM-DD or DD-MM-YY or DD-MM-YYYY",
-    "bapteme_eau / bapteme_esprit: Oui | Non (or leave empty)",
-    "serviteur: Oui | Non",
-    "besoin: values separated by ; (e.g.: Finances;Santé;Travail / Études) — possible values: Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance | Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité | Communauté / Isolement | Dépression / Santé mentale",
-  ],
 };
 
 export default function ImportMembresFamilleCSV({ user }) {
@@ -153,7 +247,10 @@ export default function ImportMembresFamilleCSV({ user }) {
   const [success, setSuccess] = useState(false);
   const [importCount, setImportCount] = useState(0);
 
-  const requiredFields = ["nom", "prenom", "civilite", "age", "date_venu"];
+  const requiredFields = [
+    "nom", "prenom", "sexe", "age", "date_venu", "serviteur",
+    "statut", "venu", "priere_salut",
+  ];
 
   const capitalize = (str) =>
     str ? str.trim().replace(/\b\w/g, (c) => c.toUpperCase()) : "";
@@ -180,28 +277,19 @@ export default function ImportMembresFamilleCSV({ user }) {
   };
 
   const handleDownloadTemplate = () => {
-    const headers = [
-      "nom *", "prenom *", "civilite *", "age *", "date_venu *",
-      "telephone", "ville",
-      "bapteme_eau", "bapteme_esprit",
-      "serviteur",
-      "besoin",
-      "infos_supplementaires",
-    ];
-    const example = templateExamples[lang] ?? templateExamples.fr;
-    const notes = templateNotes[lang] ?? templateNotes.fr;
     const csvContent = [
-      headers.join(","),
-      example.join(","),
+      t.templateHeaders.join(","),
+      t.templateExample.join(","),
       "",
-      ...notes.map((n) => `# ${n}`),
+      ...t.templateNotes.map((n) => `# ${n}`),
     ].join("\n");
+
     const BOM = "\uFEFF";
     const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "template_import_membres_famille.csv";
+    link.download = lang === "en" ? "template_import_family_members.csv" : "template_import_membres_famille.csv";
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -228,29 +316,49 @@ export default function ImportMembresFamilleCSV({ user }) {
         rows.forEach((row, index) => {
           if (Object.values(row)[0]?.toString().trim().startsWith("#")) return;
 
+          // ── Normaliser les clés : enlever " *", mapper EN → FR ──
           const normalized = {};
           Object.keys(row).forEach((key) => {
             const cleanKey = key.replace(" *", "").trim();
-            const value = row[key]?.toString().trim();
-            if (cleanKey === "civilite") normalized["sexe"] = value;
-            else normalized[cleanKey] = value;
+            const mappedKey = EN_HEADER_MAP[cleanKey] ?? cleanKey;
+            normalized[mappedKey] = row[key]?.toString().trim() || "";
           });
+
+          // ── Normaliser les valeurs EN → FR ──
+          normalized.sexe           = norm(normalized.sexe, SEXE_EN_TO_FR, ["Homme", "Femme"]);
+          normalized.age            = norm(normalized.age, AGE_EN_TO_FR, ["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"]);
+          normalized.serviteur      = norm(normalized.serviteur, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          normalized.is_whatsapp    = norm(normalized.is_whatsapp, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          normalized.priere_salut   = norm(normalized.priere_salut, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          normalized.bapteme_eau    = norm(normalized.bapteme_eau, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          normalized.bapteme_esprit = norm(normalized.bapteme_esprit, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          normalized.statut         = norm(normalized.statut, STATUT_EN_TO_FR, ["veut rejoindre l'église","a déjà son église","nouveau","visiteur"]);
+          normalized.venu           = norm(normalized.venu, VENU_EN_TO_FR, ["invité","réseaux","evangélisation","autre"]);
+          normalized.type_conversion = norm(normalized.type_conversion, CONV_EN_TO_FR, ["Nouveau converti","Réconciliation"]);
+
+          // Besoins EN → FR
+          if (normalized.besoin) {
+            normalized.besoin = normalized.besoin
+              .split(";").map((b) => BESOIN_EN_TO_FR[b.trim()] ?? b.trim()).join(";");
+          }
 
           let rowErrors = [];
 
+          // ── Champs obligatoires ──
           requiredFields.forEach((field) => {
-            const checkField = field === "civilite" ? "sexe" : field;
-            if (!normalized[checkField])
+            if (!normalized[field])
               rowErrors.push(`Ligne ${index + 1}: ${field} manquant`);
           });
 
-          if (normalized.sexe && !["Homme", "Femme"].includes(normalized.sexe))
-            rowErrors.push(`Ligne ${index + 1}: civilite invalide (Homme ou Femme)`);
+          if (normalized.priere_salut === "Oui" && !normalized.type_conversion) {
+            rowErrors.push(`Ligne ${index + 1}: type_conversion manquant (requis si priere_salut = Oui)`);
+          }
 
-          const validAges = [
-            "12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans",
-            "41-55 ans", "56-69 ans", "70 ans et plus",
-          ];
+          // ── Validations des valeurs ──
+          if (normalized.sexe && !["Homme", "Femme"].includes(normalized.sexe))
+            rowErrors.push(`Ligne ${index + 1}: sexe invalide (Homme ou Femme)`);
+
+          const validAges = ["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"];
           if (normalized.age && !validAges.includes(normalized.age))
             rowErrors.push(`Ligne ${index + 1}: age invalide`);
 
@@ -258,16 +366,48 @@ export default function ImportMembresFamilleCSV({ user }) {
           if (normalized.date_venu && !dateVenu)
             rowErrors.push(`Ligne ${index + 1}: date_venu invalide`);
 
-          if (normalized.bapteme_eau && !["Oui", "Non"].includes(normalized.bapteme_eau))
-            rowErrors.push(`Ligne ${index + 1}: bapteme_eau invalide (Oui ou Non)`);
-
-          if (normalized.bapteme_esprit && !["Oui", "Non"].includes(normalized.bapteme_esprit))
-            rowErrors.push(`Ligne ${index + 1}: bapteme_esprit invalide (Oui ou Non)`);
-
           if (normalized.serviteur && !["Oui", "Non"].includes(normalized.serviteur))
             rowErrors.push(`Ligne ${index + 1}: serviteur invalide (Oui ou Non)`);
 
-          // ── Besoins : valider chaque valeur ──
+          const validStatuts = ["veut rejoindre l'église","a déjà son église","nouveau","visiteur"];
+          if (normalized.statut && !validStatuts.includes(normalized.statut))
+            rowErrors.push(`Ligne ${index + 1}: statut invalide`);
+
+          const validVenu = ["invité","réseaux","evangélisation","autre"];
+          if (normalized.venu && !validVenu.includes(normalized.venu))
+            rowErrors.push(`Ligne ${index + 1}: venu invalide (invité | réseaux | evangélisation | autre)`);
+
+          if (normalized.priere_salut && !["Oui", "Non"].includes(normalized.priere_salut))
+            rowErrors.push(`Ligne ${index + 1}: priere_salut invalide (Oui ou Non)`);
+
+          if (normalized.is_whatsapp && !["Oui", "Non", ""].includes(normalized.is_whatsapp))
+            rowErrors.push(`Ligne ${index + 1}: is_whatsapp invalide (Oui ou Non)`);
+
+          if (normalized.bapteme_eau && !["Oui", "Non", ""].includes(normalized.bapteme_eau))
+            rowErrors.push(`Ligne ${index + 1}: bapteme_eau invalide (Oui ou Non)`);
+
+          if (normalized.bapteme_esprit && !["Oui", "Non", ""].includes(normalized.bapteme_esprit))
+            rowErrors.push(`Ligne ${index + 1}: bapteme_esprit invalide (Oui ou Non)`);
+
+          const validConversions = ["Nouveau converti", "Réconciliation"];
+          if (normalized.type_conversion && !validConversions.includes(normalized.type_conversion))
+            rowErrors.push(`Ligne ${index + 1}: type_conversion invalide (Nouveau converti | Réconciliation)`);
+
+          // ── Ministère : normaliser EN → FR, obligatoire si serviteur = Oui ──
+          const ministeresRaw = normalized.ministere
+            ? normalized.ministere.split("|").map((m) => m.trim()).filter(Boolean)
+            : [];
+          const ministeres = ministeresRaw.map((m) => MINISTERES_EN_TO_FR[m] ?? m);
+
+          if (normalized.serviteur === "Oui" && ministeres.length === 0) {
+            rowErrors.push(`Ligne ${index + 1}: ministere obligatoire si serviteur = Oui`);
+          }
+          const invalidMin = ministeres.filter((m) => !MINISTERES_VALIDES.includes(m));
+          if (invalidMin.length > 0) {
+            rowErrors.push(`Ligne ${index + 1}: ministere invalide : ${invalidMin.join(", ")}`);
+          }
+
+          // ── Besoins : normaliser + valider chaque valeur ──
           const besoin = normalized.besoin
             ? normalized.besoin.split(";").map((b) => b.trim()).filter(Boolean)
             : [];
@@ -278,22 +418,28 @@ export default function ImportMembresFamilleCSV({ user }) {
 
           if (rowErrors.length === 0) {
             validData.push({
-              nom: capitalize(normalized.nom),
-              prenom: capitalize(normalized.prenom),
-              sexe: normalized.sexe,
-              age: normalized.age,
-              date_venu: dateVenu,
-              telephone: cleanPhone(normalized.telephone) || null,
-              ville: capitalize(normalized.ville) || null,
-              bapteme_eau: normalized.bapteme_eau || null,
-              bapteme_esprit: normalized.bapteme_esprit || null,
-              star: normalized.serviteur === "Oui",
-              besoin: besoin.length > 0 ? besoin : null,
+              nom:                   capitalize(normalized.nom),
+              prenom:                capitalize(normalized.prenom),
+              sexe:                  normalized.sexe,
+              age:                   normalized.age,
+              date_venu:             dateVenu,
+              star:                  normalized.serviteur === "Oui",
+              statut:                normalized.statut,
+              venu:                  normalized.venu,
+              priere_salut:          normalized.priere_salut,
+              telephone:             cleanPhone(normalized.telephone) || null,
+              ville:                 capitalize(normalized.ville) || null,
+              is_whatsapp:           normalized.is_whatsapp === "Oui",
+              bapteme_eau:           normalized.bapteme_eau || null,
+              bapteme_esprit:        normalized.bapteme_esprit || null,
+              Ministere:             ministeres.length > 0 ? JSON.stringify(ministeres) : null,
+              besoin:                besoin.length > 0 ? besoin : null,
+              type_conversion:       normalized.type_conversion || null,
               infos_supplementaires: normalized.infos_supplementaires || null,
-              eglise_id: user.eglise_id,
-              famille_id: user.famille_id,
-              statut_suivis: 3,
-              etat_contact: "existant",
+              eglise_id:             user.eglise_id,
+              famille_id:            user.famille_id,
+              statut_suivis:         3,
+              etat_contact:          "existant",
             });
           } else {
             errorList.push(...rowErrors);
@@ -388,10 +534,12 @@ export default function ImportMembresFamilleCSV({ user }) {
         dupsToUpdate.map(({ existingId, rowData }) =>
           supabase.from("membres_complets").update({
             nom: rowData.nom, prenom: rowData.prenom, sexe: rowData.sexe,
-            age: rowData.age, date_venu: rowData.date_venu,
-            telephone: rowData.telephone, ville: rowData.ville,
+            age: rowData.age, date_venu: rowData.date_venu, star: rowData.star,
+            statut: rowData.statut, venu: rowData.venu, priere_salut: rowData.priere_salut,
+            telephone: rowData.telephone, ville: rowData.ville, is_whatsapp: rowData.is_whatsapp,
             bapteme_eau: rowData.bapteme_eau, bapteme_esprit: rowData.bapteme_esprit,
-            star: rowData.star, besoin: rowData.besoin,
+            Ministere: rowData.Ministere,
+            besoin: rowData.besoin, type_conversion: rowData.type_conversion,
             infos_supplementaires: rowData.infos_supplementaires,
           }).eq("id", existingId)
         )
@@ -440,7 +588,9 @@ export default function ImportMembresFamilleCSV({ user }) {
           onChange={handleFileChange}
           className="text-white/80 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white/20 file:text-white hover:file:bg-white/30"
         />
-        {checking && <p className="text-blue-300 text-sm mt-2 animate-pulse">{t.checkingDuplicates}</p>}
+        {checking && (
+          <p className="text-blue-300 text-sm mt-2 animate-pulse">{t.checkingDuplicates}</p>
+        )}
       </div>
 
       {/* Resume */}
@@ -468,8 +618,12 @@ export default function ImportMembresFamilleCSV({ user }) {
       {errors.length > 0 && (
         <div className="bg-red-500/20 border border-red-400/40 text-red-200 p-4 rounded-xl">
           <p className="font-semibold mb-1">{errors.length} {t.errorsDetected}</p>
-          {errors.slice(0, 10).map((err, i) => <p key={i} className="text-sm">{err}</p>)}
-          {errors.length > 10 && <p className="text-sm mt-1 italic">{t.andMore} {errors.length - 10} {t.otherErrors}</p>}
+          {errors.slice(0, 10).map((err, i) => (
+            <p key={i} className="text-sm">{err}</p>
+          ))}
+          {errors.length > 10 && (
+            <p className="text-sm mt-1 italic">{t.andMore} {errors.length - 10} {t.otherErrors}</p>
+          )}
         </div>
       )}
 
@@ -482,8 +636,12 @@ export default function ImportMembresFamilleCSV({ user }) {
           {duplicates.map((d, i) => (
             <div key={i} className="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2">
               <div>
-                <p className="text-white font-semibold text-sm">{d.csv}<span className="text-white/50 font-normal"> · {d.telephone}</span></p>
-                <p className="text-orange-200/80 text-xs mt-0.5">{t.alreadyInBase} <span className="text-white font-semibold">{d.existing}</span></p>
+                <p className="text-white font-semibold text-sm">
+                  {d.csv}<span className="text-white/50 font-normal"> · {d.telephone}</span>
+                </p>
+                <p className="text-orange-200/80 text-xs mt-0.5">
+                  {t.alreadyInBase} <span className="text-white font-semibold">{d.existing}</span>
+                </p>
               </div>
               <div className="flex gap-3 flex-wrap">
                 <label className={`flex items-center gap-2 cursor-pointer text-sm px-3 py-1.5 rounded-lg border transition ${depsToUpdate[d.telephone] ? "bg-blue-400/20 border-blue-300/50 text-blue-200" : "bg-white/5 border-white/10 text-white/60"}`}>
@@ -505,10 +663,16 @@ export default function ImportMembresFamilleCSV({ user }) {
           ))}
 
           <div className="flex gap-4 pt-1 flex-wrap">
-            <button onClick={() => { const allChecked = duplicates.every((d) => depsToUpdate[d.telephone]); const next = {}; if (!allChecked) duplicates.forEach((d) => (next[d.telephone] = true)); setDepsToUpdate(next); setDepsToAdd({}); }} className="text-xs text-blue-300 underline">
+            <button
+              onClick={() => { const allChecked = duplicates.every((d) => depsToUpdate[d.telephone]); const next = {}; if (!allChecked) duplicates.forEach((d) => (next[d.telephone] = true)); setDepsToUpdate(next); setDepsToAdd({}); }}
+              className="text-xs text-blue-300 underline"
+            >
               {duplicates.every((d) => depsToUpdate[d.telephone]) ? t.uncheckAll : t.updateAll}
             </button>
-            <button onClick={() => { const allChecked = duplicates.every((d) => depsToAdd[d.telephone]); const next = {}; if (!allChecked) duplicates.forEach((d) => (next[d.telephone] = true)); setDepsToAdd(next); setDepsToUpdate({}); }} className="text-xs text-emerald-300 underline">
+            <button
+              onClick={() => { const allChecked = duplicates.every((d) => depsToAdd[d.telephone]); const next = {}; if (!allChecked) duplicates.forEach((d) => (next[d.telephone] = true)); setDepsToAdd(next); setDepsToUpdate({}); }}
+              className="text-xs text-emerald-300 underline"
+            >
               {duplicates.every((d) => depsToAdd[d.telephone]) ? t.uncheckAllAdd : t.addAllAnyway}
             </button>
           </div>
@@ -522,10 +686,13 @@ export default function ImportMembresFamilleCSV({ user }) {
           <div className="max-h-40 overflow-auto space-y-1">
             {data.slice(0, 5).map((row, i) => (
               <div key={i} className="text-white/80 text-sm bg-white/5 rounded px-3 py-1">
-                {row.prenom} {row.nom} — {row.age} — {row.date_venu}{row.star ? " ★" : ""}
+                {row.prenom} {row.nom} — {row.sexe} — {row.age} — {row.date_venu}
+                {row.star ? " ★" : ""}
               </div>
             ))}
-            {data.length > 5 && <p className="text-white/40 italic text-sm">...{t.andMore} {data.length - 5} {t.andOthers}</p>}
+            {data.length > 5 && (
+              <p className="text-white/40 italic text-sm">...{t.andMore} {data.length - 5} {t.andOthers}</p>
+            )}
           </div>
         </div>
       )}

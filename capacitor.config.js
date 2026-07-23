@@ -7,7 +7,7 @@ module.exports = {
   },
   android: {
     allowMixedContent: true,
-    // Edge-to-edge géré directement au niveau natif Android
+    // Edge-to-edge géré directement au niveau natif Android 
     // (voir android:windowOptOutEdgeToEdgeEnforcement dans le workflow).
   },
   plugins: {

@@ -224,7 +224,7 @@ const translations = {
       "status: wants to join the church | already has a church | new | visitor",
       "how_came: invited | social media | evangelization | other",
       "salvation_prayer: Yes | No",
-      "conversion_type: New convert | Reconciliation (optiona- only if salvation_prayer = Yes)",
+      "conversion_type: New convert | Reconciliation (optional- only if salvation_prayer = Yes)",
       "is_whatsapp: Yes | No (or empty)",
       "water_baptism / spirit_baptism: Yes | No (or empty)",
       "ministry: REQUIRED if servant = Yes — values separated by | : Intercession | Praise | Technical | Communication | Children | Teens | Youth | Finance | Cleaning | Counselor | Compassion | Visitation | Shepherd | Moderation",

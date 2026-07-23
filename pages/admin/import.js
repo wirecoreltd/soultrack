@@ -188,16 +188,7 @@ function ImportPageContent() {
 
       <div className="max-w-3xl w-full mb-6 text-center mx-auto">
         {getSubtitle()}
-      </div>
-
-      <div className="flex justify-end max-w-6xl mx-auto mb-4">
-        <button
-          onClick={() => router.back()}
-          className="text-white font-semibold px-4 py-2 rounded shadow text-sm"
-        >
-          {t.retour}
-        </button>
-      </div>
+      </div>      
 
       <div className="flex justify-center">
         <div className="w-full max-w-3xl">

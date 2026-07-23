@@ -7,6 +7,11 @@ module.exports = {
   },
   android: {
     allowMixedContent: true,
+    // Gère proprement l'edge-to-edge forcé par Android 15+ (API 35+)
+    // sans avoir besoin de downgrader targetSdkVersion.
+    // 'auto' : Capacitor ajuste automatiquement les marges pour que
+    // le contenu ne passe pas sous la nav bar / status bar.
+    adjustMarginsForEdgeToEdge: 'auto',
   },
   plugins: {
     PushNotifications: {

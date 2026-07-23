@@ -9,6 +9,14 @@ const greatVibes = Great_Vibes({
   variable: "--font-great-vibes",
 });
 
+export const viewport = {
+  // Nécessaire pour que le WebView s'étende derrière les barres système
+  // (status bar / nav bar transparentes sur Android 15+ et sous le notch iOS)
+  viewportFit: "cover",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata = {
   metadataBase: new URL("https://soultrack.org"),
   title: "SoulTrack",
@@ -40,7 +48,15 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="fr" className={greatVibes.variable}>
-      <body>
+      <body
+        style={{
+          // Empêche le contenu d'être masqué par la status bar / nav bar
+          // transparentes maintenant que le WebView s'étend derrière elles
+          // (Android 15+ edge-to-edge, notch iOS).
+          paddingTop: "env(safe-area-inset-top)",
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+      >
         <NavigationBarSync />
         <MembersProvider>
           <FeaturesProvider>

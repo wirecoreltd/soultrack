@@ -338,18 +338,12 @@ export default function HeaderPages() {
         </div>
       </div>
 
-      {/* HEADER — ligne 2 : identité connectée */}
-      <div className="py-2 border-b border-white/10">
+      {/* HEADER — ligne 2 : identité connectée, alignée à droite */}
+      <div className="py-2 border-b border-white/10 text-right">
         <p className="text-white text-xs">
           {t.connected} <span className="font-semibold">{loading ? "..." : prenom}</span>
         </p>
       </div>
-
-      {/* Ligne "supervisé par" toujours présente (hauteur réservée),
-          contenu vide si pas de supervision → pas de saut de mise en page */}
-      <p className="text-sky-300 text-xs mt-1 leading-snug break-words min-h-[1rem]">
-        {supervision ? `${t.supervisedBy} ${getSupervisionLabel(supervision, lang)}` : ""}
-      </p>
 
       {/* INFOS EGLISE — hauteur fixe garantie par min-h, peu importe l'état */}
       <div className="flex flex-col items-center mb-4 min-h-[150px] justify-center">
@@ -403,6 +397,12 @@ export default function HeaderPages() {
                 {getPaysLabel(pays, lang)}
               </p>
             )}
+
+            {/* Ligne "supervisé par" toujours présente (hauteur réservée),
+                contenu vide si pas de supervision → pas de saut de mise en page */}
+            <p className="text-sky-300 text-xs mt-2 text-center leading-snug break-words max-w-[260px] min-h-[1rem]">
+              {supervision ? `${t.supervisedBy} ${getSupervisionLabel(supervision, lang)}` : ""}
+            </p>
           </>
         )}
       </div>

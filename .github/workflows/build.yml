@@ -28,7 +28,7 @@ jobs:
           npm install @capacitor/android@7
           npm install @capacitor/push-notifications@7
           npm install @capacitor/splash-screen@7
-          npm install @capacitor-community/navigation-bar@7
+          npm install @capgo/capacitor-navigation-bar@7
 
       - name: Setup Java
         uses: actions/setup-java@v4

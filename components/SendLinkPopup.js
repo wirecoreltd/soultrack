@@ -72,6 +72,12 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
   const [churchName, setChurchName] = useState("");
   const [egliseId, setEgliseId] = useState(null);
 
+  // ✅ CORRECTIF : sait si les données nécessaires au lien (eglise_id, etc.)
+  // ont fini de charger. Tant que c'est en cours, on empêche l'envoi pour
+  // éviter un lien généré avec eglise_id=null (cas de l'administrateur qui
+  // clique très vite, sans <select> de cellule/famille pour le ralentir).
+  const [dataLoading, setDataLoading] = useState(true);
+
   const [groupesList, setGroupesList] = useState([]);
   const [selectedGroupeId, setSelectedGroupeId] = useState(null);
   const [selectedGroupeName, setSelectedGroupeName] = useState("");
@@ -84,6 +90,7 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setDataLoading(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
@@ -146,6 +153,8 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
         }
       } catch (err) {
         //console.error("Erreur fetchUserData :", err.message);
+      } finally {
+        setDataLoading(false);
       }
     };
 
@@ -187,6 +196,12 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
 
   const handleSend = () => {
     //console.log("[SendLinkPopup] handleSend → selectedGroupeId:", selectedGroupeId, "groupesList:", groupesList, "selectedGroupeName:", selectedGroupeName);
+
+    // ✅ CORRECTIF : sécurité supplémentaire si jamais le bouton était
+    // cliqué malgré l'état disabled (ex: soumission via Entrée).
+    if (dataLoading || !egliseId) {
+      return;
+    }
 
     if (needsGroupe && !selectedGroupeId) {
       alert(isFamille ? t.selectFamilleAlert : t.selectCelluleAlert);
@@ -284,9 +299,10 @@ export default function SendLinkPopup({ label, type, buttonColor, celluleId = nu
               </button>
               <button
                 onClick={handleSend}
-                className="flex-1 py-3 bg-green-500 hover:bg-green-600 text-white rounded-2xl font-semibold"
+                disabled={dataLoading}
+                className="flex-1 py-3 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-2xl font-semibold"
               >
-                {t.send}
+                {dataLoading ? "..." : t.send}
               </button>
             </div>
           </div>

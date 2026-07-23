@@ -296,61 +296,60 @@ export default function HeaderPages() {
       className="w-full max-w-5xl mx-auto px-4 pt-6 sm:pt-4"
       style={{ paddingTop: "max(1.5rem, env(safe-area-inset-top))" }}
     >
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-1">
-        {/* LEFT — Retour aligné avec Déconnexion */}
-        <div className="flex items-center">
-          <button
-            onClick={() => router.back()}
-            className="text-amber-300 hover:text-gray-200 transition"
-          >
-            {t.back}
-          </button>
-        </div>
+      {/* HEADER — ligne 1 : retour / cloche / déconnexion (fine, actions) */}
+      <div className="flex justify-between items-center pb-2 border-b border-white/10">
+        <button
+          onClick={() => router.back()}
+          className="text-amber-300 text-xs hover:text-gray-200 transition"
+        >
+          {t.back}
+        </button>
 
-        {/* RIGHT */}
-        <div className="flex flex-col items-end text-right text-sm leading-tight">
-          <div className="flex items-center gap-3 mt-3">
-            {/* Invitation */}
-            {userRole?.includes("Administrateur") && invitationPending && (
-              <button
-                onClick={handleClickInvitation}
-                className="relative text-amber-300 text-lg hover:text-gray-200 transition"
-              >
-                📩
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
-              </button>
-            )}
+        <div className="flex items-center gap-3">
+          {/* Invitation */}
+          {userRole?.includes("Administrateur") && invitationPending && (
+            <button
+              onClick={handleClickInvitation}
+              className="relative text-amber-300 text-sm hover:text-gray-200 transition"
+            >
+              📩
+              <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-red-500 rounded-full" />
+            </button>
+          )}
 
-            {/* Notifications */}
-            {egliseId && userId && (
+          {/* Notifications — taille réduite */}
+          {egliseId && userId && (
+            <div className="scale-75 origin-center">
               <NotificationBell
                 egliseId={egliseId}
                 userRole={userRole}
                 userId={userId}
               />
-            )}
+            </div>
+          )}
 
-            {/* Logout */}
-            <button
-              onClick={handleLogout}
-              className="text-amber-300 text-sm hover:text-gray-200 transition"
-            >
-              {t.logout}
-            </button>
-          </div>
-
-          <p className="text-white text-sm mt-1">
-            {t.connected} <span className="font-semibold">{loading ? "..." : prenom}</span>
-          </p>
-
-          {/* Ligne "supervisé par" toujours présente (hauteur réservée),
-              contenu vide si pas de supervision → pas de saut de mise en page */}
-          <p className="text-amber-300 text-sm mt-0.5 text-right leading-snug break-words max-w-[240px] min-h-[1.25rem]">
-            {supervision ? `${t.supervisedBy} ${getSupervisionLabel(supervision, lang)}` : ""}
-          </p>
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            className="text-amber-300 text-xs hover:text-gray-200 transition"
+          >
+            {t.logout}
+          </button>
         </div>
       </div>
+
+      {/* HEADER — ligne 2 : identité connectée */}
+      <div className="py-2 border-b border-white/10">
+        <p className="text-white text-xs">
+          {t.connected} <span className="font-semibold">{loading ? "..." : prenom}</span>
+        </p>
+      </div>
+
+      {/* Ligne "supervisé par" toujours présente (hauteur réservée),
+          contenu vide si pas de supervision → pas de saut de mise en page */}
+      <p className="text-sky-300 text-xs mt-1 leading-snug break-words min-h-[1rem]">
+        {supervision ? `${t.supervisedBy} ${getSupervisionLabel(supervision, lang)}` : ""}
+      </p>
 
       {/* INFOS EGLISE — hauteur fixe garantie par min-h, peu importe l'état */}
       <div className="flex flex-col items-center mb-4 min-h-[150px] justify-center">

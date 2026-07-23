@@ -70,14 +70,20 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Fix Android navigation bar
+      - name: Fix Android navigation bar (fallback color)
         run: |
-          # Passer targetSdk à 34 pour désactiver l'edge-to-edge forcé
-          sed -i 's/targetSdkVersion = 35/targetSdkVersion = 34/' android/variables.gradle         
-
-          # Patch styles.xml
+          # NOTE: on ne downgrade plus targetSdkVersion (34) — Google Play
+          # exige au minimum l'API 35 pour les apps existantes, et l'API 36
+          # à partir du 31 août 2026. Capacitor 7 cible nativement l'API 35,
+          # ce qui est conforme. L'edge-to-edge d'Android 15+ est désormais
+          # géré proprement via `adjustMarginsForEdgeToEdge: 'auto'` dans
+          # capacitor.config.js, combiné à @capgo/capacitor-navigation-bar
+          # qui pilote la couleur dynamiquement en JS (voir NavigationBarSync).
+          #
+          # Ce patch styles.xml ne sert plus que de couleur de secours,
+          # affichée une fraction de seconde avant que le JS ne prenne le relai.
           STYLES_FILE="android/app/src/main/res/values/styles.xml"
-          sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:windowTranslucentNavigation">false</item>\n</style>|' "$STYLES_FILE"
+          sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n</style>|' "$STYLES_FILE"
 
           echo "=== variables.gradle ==="
           cat android/variables.gradle

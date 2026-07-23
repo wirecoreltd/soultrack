@@ -98,6 +98,12 @@ const AGE_OPTIONS_FR = [
 const VENU_FR    = ["invité", "réseaux", "evangélisation", "autre"];
 const STATUT_FR  = ["veut rejoindre l'église", "a déjà son église", "nouveau", "visiteur"];
 const CONV_FR    = ["Nouveau converti", "Réconciliation"];
+const BESOIN_FR  = [
+  "Finances", "Santé", "Travail / Études", "Famille / Enfants",
+  "Miracle", "Délivrance", "Relations / Conflits",
+  "Addictions / Dépendances", "Guidance spirituelle",
+  "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
+];
 
 // ─── Mappings EN → FR ───
 const SEXE_EN_TO_FR = { "Male": "Homme", "Female": "Femme" };
@@ -120,6 +126,17 @@ const STATUT_EN_TO_FR = {
 const CONV_EN_TO_FR = {
   "New convert": "Nouveau converti", "Reconciliation": "Réconciliation",
 };
+const BESOIN_EN_TO_FR = {
+  "Finances": "Finances", "Health": "Santé",
+  "Work / Studies": "Travail / Études", "Family / Children": "Famille / Enfants",
+  "Miracle": "Miracle", "Deliverance": "Délivrance",
+  "Relationships / Conflicts": "Relations / Conflits",
+  "Addictions / Dependencies": "Addictions / Dépendances",
+  "Spiritual guidance": "Guidance spirituelle",
+  "Housing / Safety": "Logement / Sécurité",
+  "Community / Isolation": "Communauté / Isolement",
+  "Depression / Mental health": "Dépression / Santé mentale",
+};
 
 // Mapping headers EN → clés internes
 const EN_HEADER_MAP = {
@@ -134,6 +151,7 @@ const EN_HEADER_MAP = {
   "water_baptism":    "bapteme_eau",
   "spirit_baptism":   "bapteme_esprit",
   "conversion_type":  "type_conversion",
+  "needs":            "besoin",
   "additional_info":  "infos_supplementaires",
 };
 
@@ -155,6 +173,7 @@ const TEMPLATE_CONFIG = {
       "telephone", "ville", "is_whatsapp",
       "bapteme_eau", "bapteme_esprit",
       "statut", "type_conversion",
+      "besoin",
       "infos_supplementaires",
     ],
     example: [
@@ -163,6 +182,7 @@ const TEMPLATE_CONFIG = {
       "+336 12 34 56 78", "Paris", "Oui",
       "Oui", "Non",
       "nouveau", "",
+      "Finances;Santé",
       "Info supplementaire ici",
     ],
     notes: [
@@ -174,10 +194,11 @@ const TEMPLATE_CONFIG = {
       "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
       "venu: invité | réseaux | evangélisation | autre",
       "priere_salut: Oui | Non",
+      "type_conversion: Nouveau converti | Réconciliation (optionnel- uniquement si priere_salut = Oui)",
       "is_whatsapp: Oui | Non (ou vide)",
       "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
-      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur (optionnel)",
-      "type_conversion: Nouveau converti | Réconciliation (optionnel, uniquement si priere_salut = Oui)",
+      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur",      
+      "besoin: valeurs séparées par ; (ex: Finances;Santé;Travail / Études) — valeurs possibles : Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance | Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité | Communauté / Isolement | Dépression / Santé mentale",
     ],
   },
   en: {
@@ -188,6 +209,7 @@ const TEMPLATE_CONFIG = {
       "phone", "city", "is_whatsapp",
       "water_baptism", "spirit_baptism",
       "status", "conversion_type",
+      "needs",
       "additional_info",
     ],
     example: [
@@ -196,6 +218,7 @@ const TEMPLATE_CONFIG = {
       "+1 212 555 0147", "New York", "Yes",
       "Yes", "No",
       "new", "",
+      "Finances;Health",
       "Additional info here",
     ],
     notes: [
@@ -207,10 +230,11 @@ const TEMPLATE_CONFIG = {
       "date_joined: format YYYY-MM-DD or DD-MM-YY or DD-MM-YYYY",
       "how_came: invited | social media | evangelization | other",
       "salvation_prayer: Yes | No",
+      "conversion_type: New convert | Reconciliation (optional- only if salvation_prayer = Yes)",
       "is_whatsapp: Yes | No (or empty)",
       "water_baptism / spirit_baptism: Yes | No (or empty)",
-      "status: wants to join the church | already has a church | new | visitor (optional)",
-      "conversion_type: New convert | Reconciliation (optional, only if salvation_prayer = Yes)",
+      "status: wants to join the church | already has a church | new | visitor",      
+      "needs: values separated by ; (e.g.: Finances;Health;Work / Studies) — possible values: Finances | Health | Work / Studies | Family / Children | Miracle | Deliverance | Relationships / Conflicts | Addictions / Dependencies | Spiritual guidance | Housing / Safety | Community / Isolation | Depression / Mental health",
     ],
   },
 };
@@ -312,6 +336,12 @@ export default function ImportMembresCelluleCSV({ user }) {
             }
           });
 
+          // Besoins EN → FR
+          if (r.besoin) {
+            r.besoin = r.besoin
+              .split(";").map((b) => BESOIN_EN_TO_FR[b.trim()] ?? b.trim()).join(";");
+          }
+
           const lineNum = index + 2;
           const errs = [];
 
@@ -363,6 +393,15 @@ export default function ImportMembresCelluleCSV({ user }) {
           if (r.type_conversion && !CONV_FR.includes(convNorm))
             errs.push("conversion_type invalid");
 
+          // ── Besoins : normaliser + valider chaque valeur ──
+          const besoin = r.besoin
+            ? r.besoin.split(";").map((b) => b.trim()).filter(Boolean)
+            : [];
+          const invalidBesoin = besoin.filter((b) => !BESOIN_FR.includes(b));
+          if (invalidBesoin.length > 0) {
+            errs.push(`needs / besoin invalid: ${invalidBesoin.join(", ")}`);
+          }
+
           if (errs.length > 0) {
             errs.forEach((err) => errorList.push(`Row/Ligne ${lineNum}: ${err}`));
             return;
@@ -384,6 +423,7 @@ export default function ImportMembresCelluleCSV({ user }) {
             bapteme_esprit:        bEspritNorm || null,
             statut:                statutNorm || null,
             type_conversion:       convNorm || null,
+            besoin:                besoin.length > 0 ? besoin : null,
             infos_supplementaires: r.infos_supplementaires || null,
             eglise_id:             user.eglise_id,
             cellule_id:            user.cellule_id,
@@ -486,6 +526,7 @@ export default function ImportMembresCelluleCSV({ user }) {
             bapteme_eau: rowData.bapteme_eau, bapteme_esprit: rowData.bapteme_esprit,
             statut: rowData.statut,
             type_conversion: rowData.type_conversion,
+            besoin: rowData.besoin,
             infos_supplementaires: rowData.infos_supplementaires,
           }).eq("id", existingId)
         )

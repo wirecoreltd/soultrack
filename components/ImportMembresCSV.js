@@ -498,74 +498,40 @@ export default function ImportMembresCSV({ user }) {
     });
   };
 
-  // ─── NOUVEAU : construit les lignes stats_ministere_besoin pour les serviteurs ───
-  const buildMinistereRows = (id, rowData) => {
-    if (!rowData.star) return null;
-    let ministeres = [];
-    try {
-      ministeres = rowData.Ministere ? JSON.parse(rowData.Ministere) : [];
-    } catch {
-      ministeres = [];
-    }
-    if (ministeres.length === 0) return null;
-    return {
-      membre_id: id,
-      sexe: rowData.sexe,
-      type: "ministere",
-      valeur: ministeres.join(","),
-      eglise_id: user.eglise_id,
-      date_action: new Date().toISOString().split("T")[0],
-    };
-  };
+  // ─── Synchronise stats_ministere_besoin pour une liste {id, rowData} ───
+  // ⚠️ Pas de onConflict volontairement : chaque sauvegarde crée une nouvelle
+  // ligne "photo" datée du jour, pour conserver l'historique complet.
+  // RapportMinistere.js reconstruit l'état d'un membre à une date donnée en
+  // prenant la ligne la plus récente dont date_action <= date choisie.
+  // Ne JAMAIS ajouter onConflict ou faire un delete ici sans adapter
+  // RapportMinistere.js en conséquence.
+  const syncStatsMinistere = async (idRowPairs) => {
+    const rows = idRowPairs.map(({ id, rowData }) => {
+      let ministeres = [];
+      try {
+        ministeres = rowData.Ministere ? JSON.parse(rowData.Ministere) : [];
+      } catch {
+        ministeres = [];
+      }
 
-     // ─── NOUVEAU : synchronise stats_ministere_besoin pour une liste {id, rowData} ───
-      // ⚠️ Pas de onConflict volontairement : chaque sauvegarde crée une nouvelle
-      // ligne "photo" datée du jour, pour conserver l'historique complet.
-      // RapportMinistere.js reconstruit l'état d'un membre à une date donnée en
-      // prenant la ligne la plus récente dont date_action <= date choisie.
-      // Ne JAMAIS ajouter onConflict ou faire un delete ici sans adapter
-      // RapportMinistere.js en conséquence.
-      const syncStatsMinistere = async (idRowPairs) => {
-        const rows = idRowPairs.map(({ id, rowData }) => {
-          let ministeres = [];
-          try {
-            ministeres = rowData.Ministere ? JSON.parse(rowData.Ministere) : [];
-          } catch {
-            ministeres = [];
-          }
-    
-          return {
-            membre_id: id,
-            sexe: rowData.sexe,
-            type: "ministere",
-            // star=true avec ministeres -> liste des ministères
-            // star=false (ou pas de ministère) -> ligne "fin de service" (valeur vide),
-            // sans jamais toucher aux lignes historiques précédentes
-            valeur: rowData.star && ministeres.length > 0 ? ministeres.join(",") : "",
-            eglise_id: user.eglise_id,
-            date_action: new Date().toISOString().split("T")[0],
-          };
-        });
-    
-        if (rows.length > 0) {
-          const { error } = await supabase
-            .from("stats_ministere_besoin")
-            .upsert(rows); // pas de onConflict -> insert d'une nouvelle ligne à chaque fois
-          if (error) console.error("Erreur sync stats_ministere_besoin:", error);
-        }
+      return {
+        membre_id: id,
+        sexe: rowData.sexe,
+        type: "ministere",
+        // star=true avec ministeres -> liste des ministères
+        // star=false (ou pas de ministère) -> ligne "fin de service" (valeur vide),
+        // sans jamais toucher aux lignes historiques précédentes
+        valeur: rowData.star && ministeres.length > 0 ? ministeres.join(",") : "",
+        eglise_id: user.eglise_id,
+        date_action: new Date().toISOString().split("T")[0],
       };
+    });
 
-    // Cas star=false : retire l'ancienne ligne si elle existe (utile en update)
-    const toDeleteIds = idRowPairs
-      .filter(({ rowData }) => !rowData.star)
-      .map(({ id }) => id);
-    if (toDeleteIds.length > 0) {
+    if (rows.length > 0) {
       const { error } = await supabase
         .from("stats_ministere_besoin")
-        .delete()
-        .in("membre_id", toDeleteIds)
-        .eq("type", "ministere");
-      if (error) console.error("Erreur suppression stats_ministere_besoin:", error);
+        .upsert(rows); // pas de onConflict -> insert d'une nouvelle ligne à chaque fois
+      if (error) console.error("Erreur sync stats_ministere_besoin:", error);
     }
   };
 

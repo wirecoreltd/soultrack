@@ -490,25 +490,28 @@ useEffect(() => {
       const totalHommes = actifs.filter(m => m.sexe === "Homme").length;
       const totalFemmes = actifs.filter(m => m.sexe === "Femme").length;
 
-      // Stats ministères (période choisie)
-      let query = supabase
+      // ── Stats ministères : logique "photo instantanée" ──────────────
+      // Peu importe la date de début choisie : seule la date de fin détermine
+      // quelle est "la dernière ligne valide" pour chaque serviteur.
+      // Pour les boutons rapides (30j/90j/6 mois/1 an/tout), la date de fin
+      // est toujours "aujourd'hui". Seul le mode "Tranche de dates" avec une
+      // date de fin explicite permet de reconstruire un état passé.
+      const todayStr = new Date().toISOString().split("T")[0];
+      const effectiveDateFin = isPerso && dateFin ? dateFin : todayStr;
+
+      // On récupère toutes les lignes <= dateFin (sans borne basse : l'historique
+      // complet est nécessaire pour retrouver la dernière ligne valide de chaque
+      // serviteur, même si sa dernière mise à jour date d'avant la période affichée).
+      const { data: statsData, error } = await supabase
         .from("stats_ministere_besoin")
         .select("membre_id, valeur, type, date_action")
         .eq("eglise_id", egliseId)
-        .eq("type", "ministere");
-
-      if (isPerso) {
-        if (dateDebut) query = query.gte("date_action", dateDebut);
-        if (dateFin)   query = query.lte("date_action", dateFin);
-      } else if (filtrePeriode !== "tout") {
-        const depuis = new Date();
-        depuis.setDate(depuis.getDate() - Number(filtrePeriode));
-        query = query.gte("date_action", depuis.toISOString().split("T")[0]);
-      }
-      const { data: statsData, error } = await query;
+        .eq("type", "ministere")
+        .lte("date_action", effectiveDateFin)
+        .order("date_action", { ascending: false });
       if (error) throw error;
 
-      // Stats 30 derniers jours (pour fidélité — toujours fixe)
+      // Stats 30 derniers jours (pour fidélité — toujours fixe, indépendant de dateFin)
       const depuis30 = new Date();
       depuis30.setDate(depuis30.getDate() - 30);
       const { data: stats30 } = await supabase
@@ -530,33 +533,42 @@ useEffect(() => {
         }
       });
 
-      // Agrégation ministères (période choisie)
-      const seen = new Set();
+      // Pour chaque serviteur, ne garder que sa DERNIÈRE ligne <= dateFin.
+      // statsData est trié par date_action décroissante, donc la première
+      // occurrence rencontrée pour un membre_id donné est la bonne "photo".
+      const derniereLigneParMembre = {};
+      (statsData || []).forEach(s => {
+        if (!s.membre_id) return;
+        if (!membresStarIds.has(s.membre_id)) return;
+        if (!derniereLigneParMembre[s.membre_id]) {
+          derniereLigneParMembre[s.membre_id] = s;
+        }
+      });
+
+      // Agrégation ministères à partir de cette photo instantanée.
+      // Chaque ligne contient tous les ministères d'un serviteur en une seule
+      // chaîne comma-joined (ex. "Technique,Louange") : on la splitte ici.
       const counts = {};
       const ministereMembers = {};
       const membreMinistereSet = {};
       const membreDerniereDate = {};
 
-      (statsData || []).forEach(s => {
-        if (!s.membre_id || !s.valeur) return;
-        if (!membresStarIds.has(s.membre_id)) return;
+      Object.values(derniereLigneParMembre).forEach(s => {
+        if (!s.valeur) return;
         const ministeres = s.valeur.split(",").map(m => m.trim()).filter(Boolean);
+        if (ministeres.length === 0) return;
+
+        membreDerniereDate[s.membre_id] = s.date_action;
+        if (!membreMinistereSet[s.membre_id]) membreMinistereSet[s.membre_id] = new Set();
+
         ministeres.forEach(ministere => {
-          const key = `${s.membre_id}__${ministere}`;
-          if (seen.has(key)) return;
-          seen.add(key);
           counts[ministere] = (counts[ministere] || 0) + 1;
           if (!ministereMembers[ministere]) ministereMembers[ministere] = [];
           const membre = membreMap[s.membre_id];
           if (membre && !ministereMembers[ministere].find(x => x.id === s.membre_id)) {
             ministereMembers[ministere].push(membre);
           }
-          if (!membreMinistereSet[s.membre_id]) membreMinistereSet[s.membre_id] = new Set();
           membreMinistereSet[s.membre_id].add(ministere);
-          const d = s.date_action;
-          if (!membreDerniereDate[s.membre_id] || d > membreDerniereDate[s.membre_id]) {
-            membreDerniereDate[s.membre_id] = d;
-          }
         });
       });
 
@@ -572,6 +584,9 @@ useEffect(() => {
         .slice(0, 10);
 
       // serviteursData enrichi
+      // NB : un serviteur (star=true) sans aucune ligne stats_ministere_besoin
+      // avant dateFin n'apparaît dans aucun ministère ci-dessus (ministeresList
+      // vide), mais reste bien compté dans serviteurs.length / KPI "Serviteurs actifs".
       const serviteursData = serviteurs.map(m => {
         const nb30 = activites30[m.id] || 0;
         const dernDate = membreDerniereDate[m.id] || derniereDate30[m.id] || null;

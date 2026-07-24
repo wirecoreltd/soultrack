@@ -130,6 +130,7 @@ const translations = {
     errNom: "❌ Le nom est obligatoire.",
     errSave: "❌ Une erreur est survenue lors de l'enregistrement.",
     errMinistere: "❌ Veuillez sélectionner au moins un ministère.",
+    errStatsMinistere: "⚠️ Le profil a été sauvegardé, mais l'historique des ministères n'a pas pu être enregistré. Contactez un administrateur.",
   },
   en: {
     editProfile: "Edit profile",
@@ -230,6 +231,7 @@ const translations = {
     errNom: "❌ Last name is required.",
     errSave: "❌ An error occurred while saving.",
     errMinistere: "❌ Please select at least one ministry.",
+    errStatsMinistere: "⚠️ The profile was saved, but the ministry history could not be recorded. Please contact an administrator.",
   },
 };
 
@@ -394,6 +396,14 @@ export default function EditMemberPopup({
       veut_se_faire_baptiser: data?.veut_se_faire_baptiser || "",
       Commentaire_Suivi_Evangelisation:
         data?.Commentaire_Suivi_Evangelisation || "",
+      // ✅ FIX : on garde l'eglise_id venant des données FRAÎCHES (data),
+      // avec repli sur la prop `member` si jamais `data` ne l'a pas.
+      // Avant ce correctif, handleSubmit utilisait `member.eglise_id`
+      // (la prop d'origine, potentiellement incomplète si le parent ne
+      // sélectionne pas cette colonne), ce qui pouvait être `undefined`
+      // et faire échouer silencieusement l'insert dans
+      // stats_ministere_besoin (colonne eglise_id NOT NULL).
+      eglise_id: data?.eglise_id ?? member?.eglise_id ?? null,
     });
 
     // ✅ Utilise la même liste canonique que celle affichée pour éviter
@@ -490,26 +500,48 @@ export default function EditMemberPopup({
         finalMinistere.push(autreMinistere.trim());
       }
 
+      // ✅ FIX : eglise_id fiable, capturé une seule fois ici.
+      // On utilise formData.eglise_id (rempli dans initForm à partir des
+      // données fraîches), avec repli sur member.eglise_id par sécurité.
+      const egliseIdFinal = formData.eglise_id || member.eglise_id || null;
+
+      let statsMinistereError = null;
+
       if (isPrivileged) {
-        // ⚠️ IMPORTANT — pas de `onConflict` ici, intentionnellement.
-        // On veut conserver l'HISTORIQUE complet des changements de ministère :
-        // chaque sauvegarde crée une nouvelle ligne "photo" datée du jour, au lieu
-        // d'écraser la précédente. RapportMinistere.js reconstruit ensuite l'état
-        // d'un serviteur à n'importe quelle date en prenant, pour chaque membre,
-        // la ligne la plus récente dont `date_action` est ≤ à la date choisie
-        // (logique "photo instantanée", pas d'accumulation).
-        // ⚠️ Ne PAS ajouter `onConflict` sans adapter RapportMinistere.js en
-        // conséquence, sinon l'historique serait perdu et les rapports passés
-        // deviendraient incorrects.
-        if (formData.star) {
-          await supabase.from("stats_ministere_besoin").upsert({
-            membre_id: member.id,
-            sexe: formData.sexe,
-            type: "ministere",
-            valeur: finalMinistere.join(","),
-            eglise_id: member.eglise_id,
-            date_action: new Date().toISOString().split("T")[0],
-          });
+        if (!egliseIdFinal) {
+          // On ne tente même pas l'insert : sans eglise_id, la colonne
+          // NOT NULL ferait échouer la requête de toute façon. On le
+          // détecte ici pour donner un message clair au lieu d'un échec
+          // silencieux.
+          statsMinistereError = new Error(
+            "eglise_id introuvable pour ce membre — impossible d'enregistrer stats_ministere_besoin"
+          );
+          console.error(statsMinistereError);
+        } else if (formData.star) {
+          // ⚠️ IMPORTANT — pas de `onConflict` ici, intentionnellement.
+          // On veut conserver l'HISTORIQUE complet des changements de ministère :
+          // chaque sauvegarde crée une nouvelle ligne "photo" datée du jour, au lieu
+          // d'écraser la précédente. RapportMinistere.js reconstruit ensuite l'état
+          // d'un serviteur à n'importe quelle date en prenant, pour chaque membre,
+          // la ligne la plus récente dont `date_action` est ≤ à la date choisie
+          // (logique "photo instantanée", pas d'accumulation).
+          // ⚠️ Ne PAS ajouter `onConflict` sans adapter RapportMinistere.js en
+          // conséquence, sinon l'historique serait perdu et les rapports passés
+          // deviendraient incorrects.
+          const { error: upsertError } = await supabase
+            .from("stats_ministere_besoin")
+            .upsert({
+              membre_id: member.id,
+              sexe: formData.sexe,
+              type: "ministere",
+              valeur: finalMinistere.join(","),
+              eglise_id: egliseIdFinal,
+              date_action: new Date().toISOString().split("T")[0],
+            });
+          if (upsertError) {
+            statsMinistereError = upsertError;
+            console.error("Erreur upsert stats_ministere_besoin (star=true):", upsertError);
+          }
         } else {
           // ✅ On ne supprime plus l'historique des lignes passées : un serviteur
           // qui n'est plus "star" doit garder ses anciennes affectations intactes
@@ -517,14 +549,20 @@ export default function EditMemberPopup({
           // On enregistre à la place une ligne "fin de service" (valeur vide)
           // datée d'aujourd'hui : à partir de cette date il n'apparaîtra plus dans
           // aucun ministère dans les rapports, sans effacer ce qu'il a fait avant.
-          await supabase.from("stats_ministere_besoin").upsert({
-            membre_id: member.id,
-            sexe: formData.sexe,
-            type: "ministere",
-            valeur: "",
-            eglise_id: member.eglise_id,
-            date_action: new Date().toISOString().split("T")[0],
-          });
+          const { error: upsertError } = await supabase
+            .from("stats_ministere_besoin")
+            .upsert({
+              membre_id: member.id,
+              sexe: formData.sexe,
+              type: "ministere",
+              valeur: "",
+              eglise_id: egliseIdFinal,
+              date_action: new Date().toISOString().split("T")[0],
+            });
+          if (upsertError) {
+            statsMinistereError = upsertError;
+            console.error("Erreur upsert stats_ministere_besoin (star=false):", upsertError);
+          }
         }
       }
 
@@ -621,6 +659,16 @@ export default function EditMemberPopup({
       if (selectError) throw selectError;
 
       onUpdateMember(updatedMember, newStage);
+
+      // ✅ Si le profil principal est bien enregistré mais que
+      // stats_ministere_besoin a échoué, on le signale clairement au lieu
+      // de fermer le popup en silence comme si tout s'était bien passé.
+      if (statsMinistereError) {
+        setMessage(t.errStatsMinistere);
+        setLoading(false);
+        return;
+      }
+
       onClose();
     } catch (err) {
       console.error(err);

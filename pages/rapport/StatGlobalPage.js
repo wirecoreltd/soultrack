@@ -46,6 +46,10 @@ const translations = {
     filtrerEglise: "Filtrer par église",
     toutesEglises: "Toutes les églises",
     rechercherEglise: "Rechercher une église…",
+    besoinPrincipal: "Besoin principal",
+    aucunBesoin: "Aucun besoin",
+    superviseePar: "Supervisée par",
+    egliseSuperviseure: "Église superviseure",
     triAlphabetique: "Trier : Alphabétique",
     triParticipation: "Trier : Participation",
     voirDetail: "Voir le détail complet",
@@ -166,6 +170,10 @@ const translations = {
     filtrerEglise: "Filter by church",
     toutesEglises: "All churches",
     rechercherEglise: "Search a church…",
+    besoinPrincipal: "Top need",
+    aucunBesoin: "No need",
+    superviseePar: "Supervised by",
+    egliseSuperviseure: "Supervising church",
     triAlphabetique: "Sort: Alphabetical",
     triParticipation: "Sort: Attendance",
     voirDetail: "View full detail",
@@ -757,17 +765,24 @@ function BlocStatsEglise({ stats, t }) {
 // Collapsed : les 6 indicateurs choisis par le superviseur.
 // Expanded ("Voir le détail complet") : tout le reste, ventilé par église.
 function CarteEgliseCompacte({
-  eglise, membresActifs, tauxPresence, leaders, evangelises, conversions, besoins, t,
+  eglise, membresActifs, tauxPresence, leaders, evangelises, conversions, besoins, isRoot, parentNom, t,
 }) {
   const [expanded, setExpanded] = useState(false);
   const stats = eglise.stats;
   const serviteursTotal = stats.serviteurs.hommes + stats.serviteurs.femmes;
   const cellulesTotal = stats.cellules.total;
 
+  const topBesoinEntry =
+    besoins && Object.keys(besoins).length > 0
+      ? Object.entries(besoins).sort((a, b) => b[1].total - a[1].total)[0]
+      : null;
+  const topBesoinLabel = topBesoinEntry ? topBesoinEntry[0] : t.aucunBesoin;
+  const topBesoinValue = topBesoinEntry ? topBesoinEntry[1].total : 0;
+
   return (
     <div className="bg-white/10 rounded-2xl overflow-hidden">
       <div className="px-4 py-4">
-        <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center justify-between gap-3 mb-1">
           <span className="text-sm font-semibold text-white truncate">{eglise.nom}</span>
           <button
             onClick={() => setExpanded((v) => !v)}
@@ -776,18 +791,37 @@ function CarteEgliseCompacte({
             {expanded ? t.voirMoins : t.voirDetail} {expanded ? "▲" : "▼"}
           </button>
         </div>
+        <div className="mb-3">
+          {isRoot ? (
+            <Badge color="amber">{t.egliseSuperviseure}</Badge>
+          ) : (
+            parentNom && (
+              <span className="text-xs text-white/50">
+                {t.superviseePar} <span className="text-white/70 font-semibold">{parentNom}</span>
+              </span>
+            )
+          )}
+        </div>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           <StatChip label={t.kpiMembresActifs} value={membresActifs} accent="white" />
           <StatChip label={t.kpiCellules} value={cellulesTotal} accent="orange" />
           <StatChip label={t.serviteurs} value={serviteursTotal} accent="yellow" />
           <StatChip label={t.leadersTitle} value={leaders?.total || 0} accent="purple" />
           <StatChip label={t.evangelises} value={evangelises} accent="pink" />
-          <StatChip label={t.kpiTauxPresence} value={`${tauxPresence}%`} accent="green" />
+          <StatChip label={topBesoinLabel} value={topBesoinValue} accent="amber" />
         </div>
       </div>
 
       {expanded && (
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <KpiCard
+              label={t.kpiTauxPresence}
+              value={`${tauxPresence}%`}
+              sub={t.kpiTauxPresenceSub}
+              accent={tauxPresence >= 70 ? "green" : tauxPresence >= 40 ? "amber" : "red"}
+            />
+          </div>
           <BlocStatsEglise stats={stats} t={t} />
           <CarteLeadersDeveloppement leadersStats={leaders} t={t} />
           <CarteConversions cd={conversions} t={t} />
@@ -1446,15 +1480,30 @@ function StatGlobalPage() {
     { key: "eglises", label: t.ongletEglises },
   ];
 
-  // ── Liste plate, filtrée par recherche, triée alphabétique ou par participation ──
+  // ── Liste plate, filtrée par recherche : église superviseure toujours en
+  // tête, puis les autres triées (alphabétique par défaut ou participation) ──
   const eglisesFiltrees = allEglises
     .filter((e) => e.nom?.toLowerCase().includes(rechercheEglise.toLowerCase()))
     .sort((a, b) => {
+      if (a.id === rootId) return -1;
+      if (b.id === rootId) return 1;
       if (triEglise === "alphabetique") return a.nom.localeCompare(b.nom);
       const totA = a.stats.culte.hommes + a.stats.culte.femmes + a.stats.culte.jeunes + a.stats.culte.enfants + a.stats.culte.connectes;
       const totB = b.stats.culte.hommes + b.stats.culte.femmes + b.stats.culte.jeunes + b.stats.culte.enfants + b.stats.culte.connectes;
       return totB - totA;
     });
+
+  // ── Lookup pour retrouver le nom de l'église superviseure directe ──
+  // Hypothèse : la RPC get_descendant_eglises renvoie un champ de parenté
+  // (parent_id / eglise_mere_id / eglise_parent_id / superviseur_id). Si aucun
+  // de ces champs n'est présent, on considère par défaut que l'église est
+  // directement supervisée par l'église racine (rootId).
+  const eglisesMapById = {};
+  allEglises.forEach((e) => {
+    eglisesMapById[e.id] = e;
+  });
+  const getParentId = (e) =>
+    e.parent_id ?? e.eglise_mere_id ?? e.eglise_parent_id ?? e.superviseur_id ?? null;
 
   return (
     <div
@@ -1632,19 +1681,28 @@ function StatGlobalPage() {
               {eglisesFiltrees.length > 1 ? t.affichees : t.affichee}
             </SectionTitle>
 
-            {eglisesFiltrees.map((eglise) => (
-              <CarteEgliseCompacte
-                key={eglise.id}
-                eglise={eglise}
-                membresActifs={membresActifsParEglise[eglise.id] || 0}
-                tauxPresence={tauxPresenceParEglise[eglise.id] || 0}
-                leaders={leadersStatsParEglise[eglise.id]}
-                evangelises={eglise.stats.evangelisation.hommes + eglise.stats.evangelisation.femmes}
-                conversions={conversionsParEglise[eglise.id]}
-                besoins={besoinsParEglise[eglise.id]}
-                t={t}
-              />
-            ))}
+            {eglisesFiltrees.map((eglise) => {
+              const isRoot = eglise.id === rootId;
+              const parentId = getParentId(eglise);
+              const parentNom = isRoot
+                ? null
+                : eglisesMapById[parentId]?.nom || eglisesMapById[rootId]?.nom || null;
+              return (
+                <CarteEgliseCompacte
+                  key={eglise.id}
+                  eglise={eglise}
+                  isRoot={isRoot}
+                  parentNom={parentNom}
+                  membresActifs={membresActifsParEglise[eglise.id] || 0}
+                  tauxPresence={tauxPresenceParEglise[eglise.id] || 0}
+                  leaders={leadersStatsParEglise[eglise.id]}
+                  evangelises={eglise.stats.evangelisation.hommes + eglise.stats.evangelisation.femmes}
+                  conversions={conversionsParEglise[eglise.id]}
+                  besoins={besoinsParEglise[eglise.id]}
+                  t={t}
+                />
+              );
+            })}
           </div>
         )}
       </div>

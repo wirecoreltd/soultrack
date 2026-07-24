@@ -491,6 +491,16 @@ export default function EditMemberPopup({
       }
 
       if (isPrivileged) {
+        // ⚠️ IMPORTANT — pas de `onConflict` ici, intentionnellement.
+        // On veut conserver l'HISTORIQUE complet des changements de ministère :
+        // chaque sauvegarde crée une nouvelle ligne "photo" datée du jour, au lieu
+        // d'écraser la précédente. RapportMinistere.js reconstruit ensuite l'état
+        // d'un serviteur à n'importe quelle date en prenant, pour chaque membre,
+        // la ligne la plus récente dont `date_action` est ≤ à la date choisie
+        // (logique "photo instantanée", pas d'accumulation).
+        // ⚠️ Ne PAS ajouter `onConflict` sans adapter RapportMinistere.js en
+        // conséquence, sinon l'historique serait perdu et les rapports passés
+        // deviendraient incorrects.
         if (formData.star) {
           await supabase.from("stats_ministere_besoin").upsert({
             membre_id: member.id,
@@ -501,11 +511,20 @@ export default function EditMemberPopup({
             date_action: new Date().toISOString().split("T")[0],
           });
         } else {
-          await supabase
-            .from("stats_ministere_besoin")
-            .delete()
-            .eq("membre_id", member.id)
-            .eq("type", "ministere");
+          // ✅ On ne supprime plus l'historique des lignes passées : un serviteur
+          // qui n'est plus "star" doit garder ses anciennes affectations intactes
+          // pour que les rapports sur des périodes passées restent exacts.
+          // On enregistre à la place une ligne "fin de service" (valeur vide)
+          // datée d'aujourd'hui : à partir de cette date il n'apparaîtra plus dans
+          // aucun ministère dans les rapports, sans effacer ce qu'il a fait avant.
+          await supabase.from("stats_ministere_besoin").upsert({
+            membre_id: member.id,
+            sexe: formData.sexe,
+            type: "ministere",
+            valeur: "",
+            eglise_id: member.eglise_id,
+            date_action: new Date().toISOString().split("T")[0],
+          });
         }
       }
 

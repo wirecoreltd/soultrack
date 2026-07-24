@@ -791,17 +791,16 @@ function CarteEgliseCompacte({
             {expanded ? t.voirMoins : t.voirDetail} {expanded ? "▲" : "▼"}
           </button>
         </div>
-        <div className="mb-3">
-          {isRoot ? (
-            <Badge color="amber">{t.egliseSuperviseure}</Badge>
-          ) : (
-            parentNom && (
-              <span className="text-xs text-white/50">
-                {t.superviseePar} <span className="text-white/70 font-semibold">{parentNom}</span>
-              </span>
-            )
-          )}
-        </div>
+        {/* "Église superviseure" badge supprimé : le rang de l'église racine
+            est désormais visible via sa position en tête + l'indentation
+            en cascade des églises filles. */}
+        {!isRoot && parentNom && (
+          <div className="mb-3">
+            <span className="text-xs text-white/50">
+              {t.superviseePar} <span className="text-white/70 font-semibold">{parentNom}</span>
+            </span>
+          </div>
+        )}
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           <StatChip label={t.kpiMembresActifs} value={membresActifs} accent="white" />
           <StatChip label={t.kpiCellules} value={cellulesTotal} accent="orange" />
@@ -830,6 +829,91 @@ function CarteEgliseCompacte({
       )}
     </div>
   );
+}
+
+// ─── ARBRE HIÉRARCHIQUE DES ÉGLISES (onglet "Par église") ─────
+// Construit une liste plate ordonnée en profondeur (DFS) à partir de
+// parent_eglise_id : l'église du profil connecté (rootId) est toujours en
+// tête (profondeur 0), puis chaque église fille apparaît juste après sa
+// mère, à une profondeur +1 — d'où l'effet de cascade à l'affichage.
+// Quand une recherche est active, on ne garde que les églises qui
+// correspondent + leurs ancêtres (pour conserver le fil de la cascade).
+function getParentEgliseId(e) {
+  return (
+    e.parent_eglise_id ??
+    e.parent_id ??
+    e.eglise_mere_id ??
+    e.eglise_parent_id ??
+    e.superviseur_id ??
+    null
+  );
+}
+
+function buildEgliseHierarchy(eglises, rootId, triEglise, searchTerm) {
+  const byId = {};
+  eglises.forEach((e) => {
+    byId[e.id] = e;
+  });
+
+  const term = (searchTerm || "").trim().toLowerCase();
+  let visibleIds = null;
+  if (term) {
+    visibleIds = new Set();
+    eglises.forEach((e) => {
+      if (!e.nom?.toLowerCase().includes(term)) return;
+      let cur = e;
+      let guard = 0;
+      while (cur && guard < 50) {
+        visibleIds.add(cur.id);
+        if (cur.id === rootId) break;
+        const pid = getParentEgliseId(cur);
+        cur = pid ? byId[pid] : null;
+        guard++;
+      }
+    });
+    if (byId[rootId]) visibleIds.add(rootId);
+  }
+
+  const childrenMap = {};
+  eglises.forEach((e) => {
+    if (e.id === rootId) return;
+    if (visibleIds && !visibleIds.has(e.id)) return;
+    const pid = getParentEgliseId(e);
+    const parentKey = pid && byId[pid] ? pid : rootId;
+    if (!childrenMap[parentKey]) childrenMap[parentKey] = [];
+    childrenMap[parentKey].push(e);
+  });
+
+  const sortSiblings = (list) =>
+    [...list].sort((a, b) => {
+      if (triEglise === "alphabetique") return a.nom.localeCompare(b.nom);
+      const totA = a.stats.culte.hommes + a.stats.culte.femmes + a.stats.culte.jeunes + a.stats.culte.enfants + a.stats.culte.connectes;
+      const totB = b.stats.culte.hommes + b.stats.culte.femmes + b.stats.culte.jeunes + b.stats.culte.enfants + b.stats.culte.connectes;
+      return totB - totA;
+    });
+
+  const flat = [];
+  const visit = (id, depth) => {
+    const node = byId[id];
+    if (!node) return;
+    if (visibleIds && !visibleIds.has(id)) return;
+    flat.push({ eglise: node, depth });
+    sortSiblings(childrenMap[id] || []).forEach((k) => visit(k.id, depth + 1));
+  };
+  if (byId[rootId]) visit(rootId, 0);
+
+  // Filet de sécurité : église dont la chaîne de mères ne remonte pas
+  // jusqu'à rootId (ne devrait pas arriver, get_descendant_eglises étant
+  // déjà scopée sur ce réseau) — on l'affiche quand même plutôt que de la
+  // perdre silencieusement.
+  const dejaVisitees = new Set(flat.map((f) => f.eglise.id));
+  eglises.forEach((e) => {
+    if (dejaVisitees.has(e.id)) return;
+    if (visibleIds && !visibleIds.has(e.id)) return;
+    flat.push({ eglise: e, depth: 0 });
+  });
+
+  return flat;
 }
 
 // ─── PAGE PRINCIPALE ──────────────────────────────────────────
@@ -1480,30 +1564,15 @@ function StatGlobalPage() {
     { key: "eglises", label: t.ongletEglises },
   ];
 
-  // ── Liste plate, filtrée par recherche : église superviseure toujours en
-  // tête, puis les autres triées (alphabétique par défaut ou participation) ──
-  const eglisesFiltrees = allEglises
-    .filter((e) => e.nom?.toLowerCase().includes(rechercheEglise.toLowerCase()))
-    .sort((a, b) => {
-      if (a.id === rootId) return -1;
-      if (b.id === rootId) return 1;
-      if (triEglise === "alphabetique") return a.nom.localeCompare(b.nom);
-      const totA = a.stats.culte.hommes + a.stats.culte.femmes + a.stats.culte.jeunes + a.stats.culte.enfants + a.stats.culte.connectes;
-      const totB = b.stats.culte.hommes + b.stats.culte.femmes + b.stats.culte.jeunes + b.stats.culte.enfants + b.stats.culte.connectes;
-      return totB - totA;
-    });
+  // ── Liste en cascade (arbre), profondeur DFS : église racine en tête,
+  // puis chaque église fille juste après sa mère (parent_eglise_id) ──
+  const hierarchieEglises = buildEgliseHierarchy(allEglises, rootId, triEglise, rechercheEglise);
 
   // ── Lookup pour retrouver le nom de l'église superviseure directe ──
-  // Hypothèse : la RPC get_descendant_eglises renvoie un champ de parenté
-  // (parent_id / eglise_mere_id / eglise_parent_id / superviseur_id). Si aucun
-  // de ces champs n'est présent, on considère par défaut que l'église est
-  // directement supervisée par l'église racine (rootId).
   const eglisesMapById = {};
   allEglises.forEach((e) => {
     eglisesMapById[e.id] = e;
   });
-  const getParentId = (e) =>
-    e.parent_id ?? e.eglise_mere_id ?? e.eglise_parent_id ?? e.superviseur_id ?? null;
 
   return (
     <div
@@ -1676,31 +1745,36 @@ function StatGlobalPage() {
             </div>
 
             <SectionTitle>
-              {eglisesFiltrees.length}{" "}
-              {eglisesFiltrees.length > 1 ? t.eglises : t.eglise}{" "}
-              {eglisesFiltrees.length > 1 ? t.affichees : t.affichee}
+              {hierarchieEglises.length}{" "}
+              {hierarchieEglises.length > 1 ? t.eglises : t.eglise}{" "}
+              {hierarchieEglises.length > 1 ? t.affichees : t.affichee}
             </SectionTitle>
 
-            {eglisesFiltrees.map((eglise) => {
+            {hierarchieEglises.map(({ eglise, depth }) => {
               const isRoot = eglise.id === rootId;
-              const parentId = getParentId(eglise);
+              const parentId = getParentEgliseId(eglise);
               const parentNom = isRoot
                 ? null
                 : eglisesMapById[parentId]?.nom || eglisesMapById[rootId]?.nom || null;
               return (
-                <CarteEgliseCompacte
+                <div
                   key={eglise.id}
-                  eglise={eglise}
-                  isRoot={isRoot}
-                  parentNom={parentNom}
-                  membresActifs={membresActifsParEglise[eglise.id] || 0}
-                  tauxPresence={tauxPresenceParEglise[eglise.id] || 0}
-                  leaders={leadersStatsParEglise[eglise.id]}
-                  evangelises={eglise.stats.evangelisation.hommes + eglise.stats.evangelisation.femmes}
-                  conversions={conversionsParEglise[eglise.id]}
-                  besoins={besoinsParEglise[eglise.id]}
-                  t={t}
-                />
+                  style={depth > 0 ? { marginLeft: depth * 20 } : undefined}
+                  className={depth > 0 ? "border-l-2 border-white/10 pl-3" : ""}
+                >
+                  <CarteEgliseCompacte
+                    eglise={eglise}
+                    isRoot={isRoot}
+                    parentNom={parentNom}
+                    membresActifs={membresActifsParEglise[eglise.id] || 0}
+                    tauxPresence={tauxPresenceParEglise[eglise.id] || 0}
+                    leaders={leadersStatsParEglise[eglise.id]}
+                    evangelises={eglise.stats.evangelisation.hommes + eglise.stats.evangelisation.femmes}
+                    conversions={conversionsParEglise[eglise.id]}
+                    besoins={besoinsParEglise[eglise.id]}
+                    t={t}
+                  />
+                </div>
               );
             })}
           </div>

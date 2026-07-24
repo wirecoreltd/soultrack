@@ -224,7 +224,7 @@ const translations = {
       "status: wants to join the church | already has a church | new | visitor",
       "how_came: invited | social media | evangelization | other",
       "salvation_prayer: Yes | No",
-      "conversion_type: New convert | Reconciliation (optional- only if salvation_prayer = Yes)",
+      "conversion_type: New convert | Reconciliation (optiona- only if salvation_prayer = Yes)",
       "is_whatsapp: Yes | No (or empty)",
       "water_baptism / spirit_baptism: Yes | No (or empty)",
       "ministry: REQUIRED if servant = Yes — values separated by | : Intercession | Praise | Technical | Communication | Children | Teens | Youth | Finance | Cleaning | Counselor | Compassion | Visitation | Shepherd | Moderation",
@@ -316,7 +316,6 @@ export default function ImportMembresFamilleCSV({ user }) {
         rows.forEach((row, index) => {
           if (Object.values(row)[0]?.toString().trim().startsWith("#")) return;
 
-          // ── Normaliser les clés : enlever " *", mapper EN → FR ──
           const normalized = {};
           Object.keys(row).forEach((key) => {
             const cleanKey = key.replace(" *", "").trim();
@@ -324,7 +323,6 @@ export default function ImportMembresFamilleCSV({ user }) {
             normalized[mappedKey] = row[key]?.toString().trim() || "";
           });
 
-          // ── Normaliser les valeurs EN → FR ──
           normalized.sexe           = norm(normalized.sexe, SEXE_EN_TO_FR, ["Homme", "Femme"]);
           normalized.age            = norm(normalized.age, AGE_EN_TO_FR, ["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"]);
           normalized.serviteur      = norm(normalized.serviteur, BOOL_EN_TO_FR, ["Oui", "Non"]);
@@ -336,7 +334,6 @@ export default function ImportMembresFamilleCSV({ user }) {
           normalized.venu           = norm(normalized.venu, VENU_EN_TO_FR, ["invité","réseaux","evangélisation","autre"]);
           normalized.type_conversion = norm(normalized.type_conversion, CONV_EN_TO_FR, ["Nouveau converti","Réconciliation"]);
 
-          // Besoins EN → FR
           if (normalized.besoin) {
             normalized.besoin = normalized.besoin
               .split(";").map((b) => BESOIN_EN_TO_FR[b.trim()] ?? b.trim()).join(";");
@@ -344,7 +341,6 @@ export default function ImportMembresFamilleCSV({ user }) {
 
           let rowErrors = [];
 
-          // ── Champs obligatoires ──
           requiredFields.forEach((field) => {
             if (!normalized[field])
               rowErrors.push(`Ligne ${index + 1}: ${field} manquant`);
@@ -354,7 +350,6 @@ export default function ImportMembresFamilleCSV({ user }) {
             rowErrors.push(`Ligne ${index + 1}: type_conversion manquant (requis si priere_salut = Oui)`);
           }
 
-          // ── Validations des valeurs ──
           if (normalized.sexe && !["Homme", "Femme"].includes(normalized.sexe))
             rowErrors.push(`Ligne ${index + 1}: sexe invalide (Homme ou Femme)`);
 
@@ -393,7 +388,6 @@ export default function ImportMembresFamilleCSV({ user }) {
           if (normalized.type_conversion && !validConversions.includes(normalized.type_conversion))
             rowErrors.push(`Ligne ${index + 1}: type_conversion invalide (Nouveau converti | Réconciliation)`);
 
-          // ── Ministère : normaliser EN → FR, obligatoire si serviteur = Oui ──
           const ministeresRaw = normalized.ministere
             ? normalized.ministere.split("|").map((m) => m.trim()).filter(Boolean)
             : [];
@@ -407,7 +401,6 @@ export default function ImportMembresFamilleCSV({ user }) {
             rowErrors.push(`Ligne ${index + 1}: ministere invalide : ${invalidMin.join(", ")}`);
           }
 
-          // ── Besoins : normaliser + valider chaque valeur ──
           const besoin = normalized.besoin
             ? normalized.besoin.split(";").map((b) => b.trim()).filter(Boolean)
             : [];
@@ -499,6 +492,52 @@ export default function ImportMembresFamilleCSV({ user }) {
     });
   };
 
+  // ─── NOUVEAU : construit la ligne stats_ministere_besoin pour un serviteur ───
+  const buildMinistereRow = (id, rowData) => {
+    if (!rowData.star) return null;
+    let ministeres = [];
+    try {
+      ministeres = rowData.Ministere ? JSON.parse(rowData.Ministere) : [];
+    } catch {
+      ministeres = [];
+    }
+    if (ministeres.length === 0) return null;
+    return {
+      membre_id: id,
+      sexe: rowData.sexe,
+      type: "ministere",
+      valeur: ministeres.join(","),
+      eglise_id: user.eglise_id,
+      date_action: new Date().toISOString().split("T")[0],
+    };
+  };
+
+  // ─── NOUVEAU : synchronise stats_ministere_besoin pour une liste {id, rowData} ───
+  const syncStatsMinistere = async (idRowPairs) => {
+    const toUpsert = idRowPairs
+      .map(({ id, rowData }) => buildMinistereRow(id, rowData))
+      .filter(Boolean);
+
+    if (toUpsert.length > 0) {
+      const { error } = await supabase
+        .from("stats_ministere_besoin")
+        .upsert(toUpsert, { onConflict: "membre_id,type" });
+      if (error) console.error("Erreur sync stats_ministere_besoin:", error);
+    }
+
+    const toDeleteIds = idRowPairs
+      .filter(({ rowData }) => !rowData.star)
+      .map(({ id }) => id);
+    if (toDeleteIds.length > 0) {
+      const { error } = await supabase
+        .from("stats_ministere_besoin")
+        .delete()
+        .in("membre_id", toDeleteIds)
+        .eq("type", "ministere");
+      if (error) console.error("Erreur suppression stats_ministere_besoin:", error);
+    }
+  };
+
   const handleImport = async () => {
     setLoading(true);
 
@@ -515,19 +554,32 @@ export default function ImportMembresFamilleCSV({ user }) {
       return;
     }
 
+    // ── Nouveaux membres ──
     if (data.length > 0) {
-      const { error } = await supabase.from("membres_complets").insert(data);
+      const { data: inserted, error } = await supabase
+        .from("membres_complets")
+        .insert(data)
+        .select("id");
       if (error) { alert(t.errorInsert + error.message); setLoading(false); return; }
+
+      const pairs = inserted.map((row, i) => ({ id: row.id, rowData: data[i] }));
+      await syncStatsMinistere(pairs);
     }
 
+    // ── Doublons ajoutés quand même ──
     const dupsToInsert = duplicates.filter((d) => depsToAdd[d.telephone]);
     if (dupsToInsert.length > 0) {
-      const { error } = await supabase
+      const { data: insertedDups, error } = await supabase
         .from("membres_complets")
-        .insert(dupsToInsert.map((d) => d.rowData));
+        .insert(dupsToInsert.map((d) => d.rowData))
+        .select("id");
       if (error) { alert(t.errorInsertDup + error.message); setLoading(false); return; }
+
+      const pairs = insertedDups.map((row, i) => ({ id: row.id, rowData: dupsToInsert[i].rowData }));
+      await syncStatsMinistere(pairs);
     }
 
+    // ── Doublons mis à jour ──
     const dupsToUpdate = duplicates.filter((d) => depsToUpdate[d.telephone]);
     if (dupsToUpdate.length > 0) {
       const updateResults = await Promise.all(
@@ -546,6 +598,9 @@ export default function ImportMembresFamilleCSV({ user }) {
       );
       const failed = updateResults.find((r) => r.error);
       if (failed) { alert(t.errorUpdate + ": " + failed.error.message); setLoading(false); return; }
+
+      const pairs = dupsToUpdate.map((d) => ({ id: d.existingId, rowData: d.rowData }));
+      await syncStatsMinistere(pairs);
     }
 
     setLoading(false);

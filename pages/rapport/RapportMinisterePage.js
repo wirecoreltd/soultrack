@@ -431,7 +431,7 @@ useEffect(() => {
 
   loadCellulesFamilles();
 }, [egliseId, cellulesActive, famillesActive]);
-  
+
   // ─── FETCH RAPPORT ───────────────────────────────────────────
   const fetchRapport = async (overrideModePerso = null) => {
     if (!egliseId) return;
@@ -453,13 +453,14 @@ useEffect(() => {
       const membresActifs = (membresData || []).filter(
         m => m.etat_contact?.toLowerCase() !== "supprime"
       );
+      const membresActifsIds = new Set(membresActifs.map(m => m.id));
 
       const piliers = membresActifs.filter(m => m.pilier === true);
-      
+
       // ── Leaders en développement ──
       const leadersMembres = membresActifs.filter(m => m.leader_developpement === true);
       let leadersDeveloppement = [];
-      
+
       if (leadersMembres.length > 0) {
         const leaderIds = leadersMembres.map(m => m.id);
         const { data: evalsLeader } = await supabase
@@ -467,7 +468,7 @@ useEffect(() => {
           .select("membre_id, parcours_etape, date_action")
           .in("membre_id", leaderIds)
           .order("date_action", { ascending: false });
-      
+
         const leadersParcoursMap = {};
         (evalsLeader || []).forEach(e => {
           if (!leadersParcoursMap[e.membre_id]) {
@@ -477,26 +478,21 @@ useEffect(() => {
             };
           }
         });
-      
+
         leadersDeveloppement = leadersMembres.map(m => ({
           membre: m,
           etape: leadersParcoursMap[m.id]?.etape || null,
           derniereDate: leadersParcoursMap[m.id]?.date || null,
         }));
-      }      
+      }
 
       const actifs = (membresData || []).filter(m =>
         ["existant", "nouveau"].includes(m.etat_contact?.toLowerCase())
       );
       setTotalMembres(actifs.length);
 
-      const serviteurs = (membresData || []).filter(m => m.star === true);
-      const membresStarIds = new Set(serviteurs.map(m => m.id));
       const membreMap = {};
       (membresData || []).forEach(m => { membreMap[m.id] = m; });
-
-      const totalHommes = actifs.filter(m => m.sexe === "Homme").length;
-      const totalFemmes = actifs.filter(m => m.sexe === "Femme").length;
 
       // ── Stats ministères : logique "photo instantanée" ──────────────
       // Peu importe la date de début choisie : seule la date de fin détermine
@@ -509,15 +505,51 @@ useEffect(() => {
 
       // On récupère toutes les lignes <= dateFin (sans borne basse : l'historique
       // complet est nécessaire pour retrouver la dernière ligne valide de chaque
-      // serviteur, même si sa dernière mise à jour date d'avant la période affichée).
+      // membre, même si sa dernière mise à jour date d'avant la période affichée).
+      // On récupère aussi created_at : deux lignes peuvent partager la même
+      // date_action (ex. import + modification manuelle le même jour) — sans
+      // colonne de départage, l'ordre entre elles n'est pas garanti par Postgres.
       const { data: statsData, error } = await supabase
         .from("stats_ministere_besoin")
-        .select("membre_id, valeur, type, date_action")
+        .select("membre_id, valeur, type, date_action, created_at")
         .eq("eglise_id", egliseId)
         .eq("type", "ministere")
         .lte("date_action", effectiveDateFin)
-        .order("date_action", { ascending: false });
+        .order("date_action", { ascending: false })
+        .order("created_at", { ascending: false });
       if (error) throw error;
+
+      // Pour chaque membre actif (non supprimé), ne garder que sa DERNIÈRE ligne
+      // <= dateFin. statsData est trié par date_action desc PUIS created_at desc,
+      // donc la première occurrence rencontrée pour un membre_id donné est la
+      // bonne "photo" même en cas de doublon de date le même jour.
+      const derniereLigneParMembre = {};
+      (statsData || []).forEach(s => {
+        if (!s.membre_id) return;
+        if (!membresActifsIds.has(s.membre_id)) return;
+        if (!derniereLigneParMembre[s.membre_id]) {
+          derniereLigneParMembre[s.membre_id] = s;
+        }
+      });
+
+      // ── Serviteurs réels ──────────────────────────────────────────
+      // Un membre est "serviteur actif" si sa dernière ligne stats a une
+      // valeur non vide (au moins un ministère assigné). C'est cette logique
+      // (et non plus le simple flag star=true) qui pilote tous les KPIs,
+      // la fidélité, les alertes et la vue Berger — un décochage de
+      // "serviteur" dans EditMemberPopup se traduit par une ligne valeur: ""
+      // et fait donc immédiatement disparaître le membre de tous les calculs.
+      const serviteursReelsIds = new Set(
+        Object.entries(derniereLigneParMembre)
+          .filter(([, s]) => s.valeur && s.valeur.trim() !== "")
+          .map(([membreId]) => membreId)
+      );
+      const serviteursReels = membresActifs.filter(m => serviteursReelsIds.has(m.id));
+
+      const totalHommes = actifs.filter(m => m.sexe === "Homme").length;
+      const totalFemmes = actifs.filter(m => m.sexe === "Femme").length;
+      const hommesServiteurs = serviteursReels.filter(m => m.sexe === "Homme").length;
+      const femmesServiteurs = serviteursReels.filter(m => m.sexe === "Femme").length;
 
       // Stats 30 derniers jours (pour fidélité — toujours fixe, indépendant de dateFin)
       const depuis30 = new Date();
@@ -529,11 +561,11 @@ useEffect(() => {
         .eq("type", "ministere")
         .gte("date_action", depuis30.toISOString().split("T")[0]);
 
-      // Comptage activités 30j par membre
+      // Comptage activités 30j par membre (parmi les serviteurs réels uniquement)
       const activites30 = {};
       const derniereDate30 = {};
       (stats30 || []).forEach(s => {
-        if (!membresStarIds.has(s.membre_id)) return;
+        if (!serviteursReelsIds.has(s.membre_id)) return;
         activites30[s.membre_id] = (activites30[s.membre_id] || 0) + 1;
         const d = s.date_action;
         if (!derniereDate30[s.membre_id] || d > derniereDate30[s.membre_id]) {
@@ -541,19 +573,7 @@ useEffect(() => {
         }
       });
 
-      // Pour chaque serviteur, ne garder que sa DERNIÈRE ligne <= dateFin.
-      // statsData est trié par date_action décroissante, donc la première
-      // occurrence rencontrée pour un membre_id donné est la bonne "photo".
-      const derniereLigneParMembre = {};
-      (statsData || []).forEach(s => {
-        if (!s.membre_id) return;
-        if (!membresStarIds.has(s.membre_id)) return;
-        if (!derniereLigneParMembre[s.membre_id]) {
-          derniereLigneParMembre[s.membre_id] = s;
-        }
-      });
-
-      // Agrégation ministères à partir de cette photo instantanée.
+      // Agrégation ministères à partir de la photo instantanée.
       // Chaque ligne contient tous les ministères d'un serviteur en une seule
       // chaîne comma-joined (ex. "Technique,Louange") : on la splitte ici.
       const counts = {};
@@ -591,11 +611,8 @@ useEffect(() => {
         .sort((a, b) => b.count - a.count)
         .slice(0, 10);
 
-      // serviteursData enrichi
-      // NB : un serviteur (star=true) sans aucune ligne stats_ministere_besoin
-      // avant dateFin n'apparaît dans aucun ministère ci-dessus (ministeresList
-      // vide), mais reste bien compté dans serviteurs.length / KPI "Serviteurs actifs".
-      const serviteursData = serviteurs.map(m => {
+      // serviteursData enrichi (basé sur les serviteurs réels)
+      const serviteursData = serviteursReels.map(m => {
         const nb30 = activites30[m.id] || 0;
         const dernDate = membreDerniereDate[m.id] || derniereDate30[m.id] || null;
         const ministeresList = membreMinistereSet[m.id] ? [...membreMinistereSet[m.id]] : [];
@@ -607,9 +624,9 @@ useEffect(() => {
 
       setRapports({
         lignes,
-        serviteursCount: serviteurs.length,
-        hommes: totalHommes,
-        femmes: totalFemmes,
+        serviteursCount: serviteursReels.length,
+        hommes: hommesServiteurs,
+        femmes: femmesServiteurs,
         polyvalents,
         serviteursData,
         piliers,
@@ -852,12 +869,12 @@ const leadersParFamille = useMemo(() => {
                 <SectionTitle icon="📈">Vue d'ensemble</SectionTitle>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   <KpiCard colorClass="blue"   label={t.serviteursActifs} value={rapports.serviteursCount} sub={`${pctEngages}% ${t.pctMembres}`} />
-                  <KpiCard colorClass="teal"   label={t.totalMembres}     value={totalMembres}             sub="existants + nouveaux" />
                   <KpiCard colorClass="purple" label={t.hommes}           value={rapports.hommes}          sub={`${pctH}%`} />
                   <KpiCard colorClass="pink"   label={t.femmes}           value={rapports.femmes}          sub={`${pctF}%`} />
                   <KpiCard colorClass="amber"  label={t.piliers}          value={rapports.piliers.length}
                     sub={totalMembres > 0 ? `${Math.round((rapports.piliers.length / totalMembres) * 100)}% ${t.pctMembres}` : ""}                  
                   />
+                  <KpiCard colorClass="teal"   label={t.totalMembres}     value={totalMembres}             sub="existants + nouveaux" />
                 </div>
               </div>
 

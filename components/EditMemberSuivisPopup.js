@@ -173,7 +173,8 @@ export default function EditMemberSuivisPopup({
   const t = translations[lang];
 
   const isPrivileged = (currentUserRoles || []).some(r => ["Administrateur", "ResponsableIntegration"].includes(r));  
-  const isLeaderManager = (currentUserRoles || []).some(r => ["Administrateur", "SuperviseurCellule", "ResponsableCellule", "ResponsableFamille", "SuperviseurFamilles"].includes(r));
+  const isLeaderManager = (currentUserRoles || []).some(r => ["Administrateur", "SuperviseurCellule", "ResponsableCellule", "ResponsableFamilles", "SuperviseurFamilles"].includes(r)
+);
 
   const [autreMinistere, setAutreMinistere] = useState("");
   const [search, setSearch] = useState("");
@@ -577,7 +578,7 @@ export default function EditMemberSuivisPopup({
             <textarea name="Formation" value={formData.Formation} onChange={handleChange} className="inp" rows={2} />
           </Field>         
           
-          {isLeaderManager && (
+          {isLeaderManager && formData.star && (
             <div className="flex flex-col gap-2 py-2">
               <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-gray-700">
                 <input

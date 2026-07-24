@@ -445,11 +445,19 @@ useEffect(() => {
   .from("membres_complets")
   .select("id, etat_contact, star, pilier, sexe, prenom, nom, leader_developpement, cellule_id, famille_id")
   .eq("eglise_id", egliseId);
-      
-      const piliers = (membresData || []).filter(m => m.pilier === true);
+
+      // ⚠️ On exclut les membres supprimés (etat_contact = "supprime") dès ici,
+      // avant tout calcul dérivé (piliers, leaders, serviteurs, ministères...).
+      // Sans ce filtre, un membre supprimé mais encore star=true / pilier=true /
+      // leader_developpement=true continuerait d'être compté dans les KPIs.
+      const membresActifs = (membresData || []).filter(
+        m => m.etat_contact?.toLowerCase() !== "supprime"
+      );
+
+      const piliers = membresActifs.filter(m => m.pilier === true);
       
       // ── Leaders en développement ──
-      const leadersMembres = (membresData || []).filter(m => m.leader_developpement === true);
+      const leadersMembres = membresActifs.filter(m => m.leader_developpement === true);
       let leadersDeveloppement = [];
       
       if (leadersMembres.length > 0) {

@@ -5,6 +5,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
+import ProtectedRoute from "../../components/ProtectedRoute";
 import { useMembers } from "../../context/MembersContext";
 import Footer from "../../components/Footer";
 import FooterHub from "../../components/FooterHub";

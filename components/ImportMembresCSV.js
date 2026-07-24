@@ -520,16 +520,34 @@ export default function ImportMembresCSV({ user }) {
 
   // ─── NOUVEAU : synchronise stats_ministere_besoin pour une liste {id, rowData} ───
   const syncStatsMinistere = async (idRowPairs) => {
-    const toUpsert = idRowPairs
-      .map(({ id, rowData }) => buildMinistereRows(id, rowData))
-      .filter(Boolean);
-
-    if (toUpsert.length > 0) {
-      const { error } = await supabase
-        .from("stats_ministere_besoin")
-        .upsert(toUpsert, { onConflict: "membre_id,type" });
-      if (error) console.error("Erreur sync stats_ministere_besoin:", error);
+  const rows = idRowPairs.map(({ id, rowData }) => {
+    let ministeres = [];
+    try {
+      ministeres = rowData.Ministere ? JSON.parse(rowData.Ministere) : [];
+    } catch {
+      ministeres = [];
     }
+
+    return {
+      membre_id: id,
+      sexe: rowData.sexe,
+      type: "ministere",
+      // star=true avec ministeres -> liste des ministères
+      // star=false (ou pas de ministère) -> ligne "fin de service" (valeur vide),
+      // sans jamais toucher aux lignes historiques précédentes
+      valeur: rowData.star && ministeres.length > 0 ? ministeres.join(",") : "",
+      eglise_id: user.eglise_id,
+      date_action: new Date().toISOString().split("T")[0],
+    };
+  });
+
+  if (rows.length > 0) {
+    const { error } = await supabase
+      .from("stats_ministere_besoin")
+      .upsert(rows); // pas de onConflict -> insert d'une nouvelle ligne à chaque fois
+    if (error) console.error("Erreur sync stats_ministere_besoin:", error);
+  }
+};
 
     // Cas star=false : retire l'ancienne ligne si elle existe (utile en update)
     const toDeleteIds = idRowPairs

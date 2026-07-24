@@ -498,6 +498,53 @@ export default function ImportMembresCSV({ user }) {
     });
   };
 
+  // ─── NOUVEAU : construit les lignes stats_ministere_besoin pour les serviteurs ───
+  const buildMinistereRows = (id, rowData) => {
+    if (!rowData.star) return null;
+    let ministeres = [];
+    try {
+      ministeres = rowData.Ministere ? JSON.parse(rowData.Ministere) : [];
+    } catch {
+      ministeres = [];
+    }
+    if (ministeres.length === 0) return null;
+    return {
+      membre_id: id,
+      sexe: rowData.sexe,
+      type: "ministere",
+      valeur: ministeres.join(","),
+      eglise_id: user.eglise_id,
+      date_action: new Date().toISOString().split("T")[0],
+    };
+  };
+
+  // ─── NOUVEAU : synchronise stats_ministere_besoin pour une liste {id, rowData} ───
+  const syncStatsMinistere = async (idRowPairs) => {
+    const toUpsert = idRowPairs
+      .map(({ id, rowData }) => buildMinistereRows(id, rowData))
+      .filter(Boolean);
+
+    if (toUpsert.length > 0) {
+      const { error } = await supabase
+        .from("stats_ministere_besoin")
+        .upsert(toUpsert, { onConflict: "membre_id,type" });
+      if (error) console.error("Erreur sync stats_ministere_besoin:", error);
+    }
+
+    // Cas star=false : retire l'ancienne ligne si elle existe (utile en update)
+    const toDeleteIds = idRowPairs
+      .filter(({ rowData }) => !rowData.star)
+      .map(({ id }) => id);
+    if (toDeleteIds.length > 0) {
+      const { error } = await supabase
+        .from("stats_ministere_besoin")
+        .delete()
+        .in("membre_id", toDeleteIds)
+        .eq("type", "ministere");
+      if (error) console.error("Erreur suppression stats_ministere_besoin:", error);
+    }
+  };
+
   const handleImport = async () => {
     setLoading(true);
 
@@ -514,19 +561,32 @@ export default function ImportMembresCSV({ user }) {
       return;
     }
 
+    // ── Nouveaux membres ──
     if (data.length > 0) {
-      const { error } = await supabase.from("membres_complets").insert(data);
+      const { data: inserted, error } = await supabase
+        .from("membres_complets")
+        .insert(data)
+        .select("id");
       if (error) { alert(t.errorInsert + error.message); setLoading(false); return; }
+
+      const pairs = inserted.map((row, i) => ({ id: row.id, rowData: data[i] }));
+      await syncStatsMinistere(pairs);
     }
 
+    // ── Doublons ajoutés quand même ──
     const dupsToInsert = duplicates.filter((d) => depsToAdd[d.telephone]);
     if (dupsToInsert.length > 0) {
-      const { error } = await supabase
+      const { data: insertedDups, error } = await supabase
         .from("membres_complets")
-        .insert(dupsToInsert.map((d) => d.rowData));
+        .insert(dupsToInsert.map((d) => d.rowData))
+        .select("id");
       if (error) { alert(t.errorInsertDup + error.message); setLoading(false); return; }
+
+      const pairs = insertedDups.map((row, i) => ({ id: row.id, rowData: dupsToInsert[i].rowData }));
+      await syncStatsMinistere(pairs);
     }
 
+    // ── Doublons mis à jour ──
     const dupsToUpdate = duplicates.filter((d) => depsToUpdate[d.telephone]);
     if (dupsToUpdate.length > 0) {
       const updateResults = await Promise.all(
@@ -545,6 +605,9 @@ export default function ImportMembresCSV({ user }) {
       );
       const failed = updateResults.find((r) => r.error);
       if (failed) { alert(t.errorUpdate + ": " + failed.error.message); setLoading(false); return; }
+
+      const pairs = dupsToUpdate.map((d) => ({ id: d.existingId, rowData: d.rowData }));
+      await syncStatsMinistere(pairs);
     }
 
     setLoading(false);

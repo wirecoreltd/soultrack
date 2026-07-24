@@ -949,9 +949,52 @@ function StatGlobalPage() {
     return { egliseNC, egliseRecon, evangNC, evangRecon, total, parEglise };
   };
 
+  // ── Serviteurs actifs — calculés EXCLUSIVEMENT à partir de stats_ministere_besoin ──
+  // Pour chaque membre valide (actif, non supprimé), on ne garde que sa DERNIÈRE
+  // ligne <= dateFin (triée par date_action desc, created_at desc pour départager
+  // les doublons de date le même jour — voir la même logique dans le rapport
+  // Ministère par église). Un membre n'est compté "serviteur" que si cette
+  // dernière ligne a une valeur non vide. On regroupe par l'église ACTUELLE du
+  // membre (membreEgliseMap, issu de membres_complets) plutôt que par l'eglise_id
+  // stocké sur la ligne stats, pour rester correct même après un transfert d'église.
+  const getServiteursSnapshot = async (dateFinSnapshot, membresValidesIds, membreEgliseMap) => {
+    if (!membresValidesIds || membresValidesIds.size === 0) return {};
+    const effectiveFin = dateFinSnapshot || new Date().toISOString().split("T")[0];
+
+    const { data: statsData } = await supabase
+      .from("stats_ministere_besoin")
+      .select("membre_id, valeur, sexe, type, date_action, created_at")
+      .in("membre_id", [...membresValidesIds])
+      .eq("type", "ministere")
+      .lte("date_action", effectiveFin)
+      .order("date_action", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    const derniereLigneParMembre = {};
+    (statsData || []).forEach((s) => {
+      if (!s.membre_id) return;
+      if (!derniereLigneParMembre[s.membre_id]) {
+        derniereLigneParMembre[s.membre_id] = s;
+      }
+    });
+
+    const snapshot = {};
+    Object.values(derniereLigneParMembre).forEach((s) => {
+      if (!s.valeur || s.valeur.trim() === "") return;
+      const egId = membreEgliseMap[s.membre_id];
+      if (!egId) return;
+      if (!snapshot[egId]) snapshot[egId] = { hommes: 0, femmes: 0 };
+      const sexe = (s.sexe || "").trim().toLowerCase();
+      if (sexe === "homme") snapshot[egId].hommes += 1;
+      else if (sexe === "femme") snapshot[egId].femmes += 1;
+    });
+
+    return snapshot;
+  };
+
   const buildStatsFromData = (
     egliseIds, attendanceData, formationData, baptemeData,
-    evangeData, cellulesActivesData, serviteurData
+    evangeData, cellulesActivesData
   ) => {
     const statsMap = {};
     egliseIds.forEach((id) => {
@@ -960,6 +1003,9 @@ function StatGlobalPage() {
         formation: { hommes: 0, femmes: 0 },
         bapteme: { hommes: 0, femmes: 0 },
         evangelisation: { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
+        // Serviteurs : non calculés ici. Voir getServiteursSnapshot, qui
+        // interroge exclusivement stats_ministere_besoin et est fusionné
+        // dans statsMap par l'appelant (fetchStats).
         serviteurs: { hommes: 0, femmes: 0 },
         cellules: { total: 0 },
       };
@@ -1001,21 +1047,6 @@ function StatGlobalPage() {
       ev.nouveau_converti += Number(e.nouveau_converti) || 0;
       ev.reconciliation += Number(e.reconciliation) || 0;
       ev.moissonneurs += Number(e.moissonneurs) || 0;
-    });
-
-    const unique = new Map();
-    serviteurData?.forEach((row) => {
-      if (row.type !== "ministere") return;
-      const key = `${row.eglise_id}_${row.membre_id}`;
-      if (!unique.has(key)) unique.set(key, row);
-    });
-    unique.forEach((row) => {
-      if (!row.sexe) return;
-      const serv = statsMap[row.eglise_id]?.serviteurs;
-      if (!serv) return;
-      const sexe = row.sexe.trim().toLowerCase();
-      if (sexe === "homme") serv.hommes += 1;
-      else if (sexe === "femme") serv.femmes += 1;
     });
 
     cellulesActivesData.forEach((c) => {
@@ -1111,6 +1142,16 @@ function StatGlobalPage() {
         membresActifsMap[m.eglise_id] = (membresActifsMap[m.eglise_id] || 0) + 1;
       });
       setMembresActifsParEglise(membresActifsMap);
+
+      // ── Set des membres valides + map membre → église actuelle ──
+      // Sert exclusivement au calcul des serviteurs (getServiteursSnapshot),
+      // pour ne compter que des membres actifs, non supprimés, rattachés à
+      // leur église courante (et non l'eglise_id figé sur la ligne stats).
+      const membresActifsIdsSet = new Set((membresActifsData || []).map((m) => m.id));
+      const membreEgliseMap = {};
+      (membresActifsData || []).forEach((m) => {
+        membreEgliseMap[m.id] = m.eglise_id;
+      });
 
       const tableFetch = async (table, dateField, deb, fi) => {
         let query = supabase.from(table).select("*").in("eglise_id", egliseIds);
@@ -1257,24 +1298,44 @@ function StatGlobalPage() {
       });
       setTauxPresenceParEglise(tauxParEgliseMap);
 
-      const { data: serviteurData } = await supabase
-        .from("stats_ministere_besoin")
-        .select("membre_id, eglise_id, sexe, type")
-        .in("eglise_id", egliseIds);
+      // ── Serviteurs — snapshot "photo instantanée" au niveau réseau ──
+      // Indépendant de la plage debut/fin choisie pour le culte/formation/etc :
+      // seule la date de fin compte (mode Tranche de dates avec fin explicite),
+      // sinon la snapshot est prise à aujourd'hui.
+      const todayStr = new Date().toISOString().split("T")[0];
+      const effectiveDateFinServiteurs = isPerso && fin ? fin : todayStr;
+      const servSnapshot = await getServiteursSnapshot(
+        effectiveDateFinServiteurs, membresActifsIdsSet, membreEgliseMap
+      );
 
       const statsMap = buildStatsFromData(
         egliseIds, attendanceData, formationData, baptemeData,
-        evangeData, cellulesActivesData, serviteurData
+        evangeData, cellulesActivesData
       );
+      egliseIds.forEach((id) => {
+        const sv = servSnapshot[id] || { hommes: 0, femmes: 0 };
+        if (statsMap[id]) {
+          statsMap[id].serviteurs.hommes = sv.hommes;
+          statsMap[id].serviteurs.femmes = sv.femmes;
+        }
+      });
 
       if (prevDebut && prevFin) {
-        const [pAtt, pForm, pBap, pEvang] = await Promise.all([
+        const [pAtt, pForm, pBap, pEvang, prevServSnapshot] = await Promise.all([
           tableFetch("attendance_stats", "mois", prevDebut, prevFin),
           tableFetch("formations", "date_debut", prevDebut, prevFin),
           tableFetch("baptemes", "date", prevDebut, prevFin),
           tableFetch("rapport_evangelisation", "date", prevDebut, prevFin),
+          getServiteursSnapshot(prevFin, membresActifsIdsSet, membreEgliseMap),
         ]);
-        const prevMap = buildStatsFromData(egliseIds, pAtt, pForm, pBap, pEvang, [], serviteurData);
+        const prevMap = buildStatsFromData(egliseIds, pAtt, pForm, pBap, pEvang, []);
+        egliseIds.forEach((id) => {
+          const sv = prevServSnapshot[id] || { hommes: 0, femmes: 0 };
+          if (prevMap[id]) {
+            prevMap[id].serviteurs.hommes = sv.hommes;
+            prevMap[id].serviteurs.femmes = sv.femmes;
+          }
+        });
         const pt = {
           culteHommes: 0, culteFemmes: 0, culteJeunes: 0, culteEnfants: 0, culteConnectes: 0,
           baptemeH: 0, baptemeF: 0, evangH: 0, evangF: 0, servH: 0, servF: 0,

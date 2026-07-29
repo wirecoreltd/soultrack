@@ -454,6 +454,8 @@ const user = session.user;
   };
 
     const handleCasser = async (inv) => {
+      console.log("INVITATION A CASSER:", inv); // ← ajoutez ça
+      console.log("supervisee_eglise_id:", inv.supervisee_eglise_id);
     // 1. Marquer l'invitation comme cassée
     const { error: errInv } = await supabase
       .from("eglise_supervisions")

@@ -141,6 +141,12 @@ const translations = {
       lien_casse: "Lien Cassé",
       expired: "Expirée",
     },
+    // Blocage : église déjà supervisée par une autre église
+    dejaSuperviseeTitre: "⚠️ Votre église est déjà supervisée",
+    dejaSuperviseeTexte: (denom, nom) =>
+      `Votre église est déjà sous la supervision de ${denom} — ${nom}.`,
+    dejaSuperviseeAction:
+      "Une église ne peut être supervisée que par une seule autre église à la fois. Merci de contacter votre administrateur pour casser le lien existant avant d'accepter une nouvelle invitation.",
   },
   en: {
     titre: "Invitation from the",
@@ -172,6 +178,12 @@ const translations = {
       lien_casse: "Link Broken",
       expired: "Expired",
     },
+    // Blocking: church already supervised by another church
+    dejaSuperviseeTitre: "⚠️ Your church is already supervised",
+    dejaSuperviseeTexte: (denom, nom) =>
+      `Your church is already under the supervision of ${denom} — ${nom}.`,
+    dejaSuperviseeAction:
+      "A church can only be supervised by one other church at a time. Please contact your administrator to break the existing link before accepting a new invitation.",
   },
 };
 
@@ -183,6 +195,8 @@ export default function AcceptInvitation() {
   const [token, setToken] = useState(null);
   const [invitation, setInvitation] = useState(null);
   const [egliseSuperviseuse, setEgliseSuperviseuse] = useState(null);
+  const [dejaSupervisee, setDejaSupervisee] = useState(false);
+  const [egliseSuperviseurActuel, setEgliseSuperviseurActuel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [choice, setChoice] = useState("");
@@ -215,9 +229,10 @@ export default function AcceptInvitation() {
         }
 
         // Appel sécurisé : lit l'invitation par token, remplit supervisee_eglise_id
-        // si besoin, et renvoie aussi les infos de l'église superviseuse
-        // (contourne le RLS via SECURITY DEFINER, nécessaire car l'invité
-        // n'appartient pas encore à cette église).
+        // si besoin, vérifie si l'église est déjà supervisée (règle : un seul
+        // superviseur par église), et renvoie aussi les infos de l'église
+        // superviseuse (contourne le RLS via SECURITY DEFINER, nécessaire car
+        // l'invité n'appartient pas encore à cette église).
         const { data, error } = await supabase.rpc("get_invitation_par_token", {
           p_token: token,
           p_eglise_id: egliseId,
@@ -231,6 +246,8 @@ export default function AcceptInvitation() {
 
         setInvitation(data.invitation);
         setEgliseSuperviseuse(data.eglise_superviseuse || null);
+        setDejaSupervisee(!!data.deja_supervisee);
+        setEgliseSuperviseurActuel(data.eglise_superviseur_actuel || null);
 
       } catch (err) {
         console.error(err);
@@ -258,11 +275,16 @@ export default function AcceptInvitation() {
 
   // Retrouve le pays dans PAYS_DATA à partir du nom FR stocké en base,
   // pour afficher le nom traduit + le drapeau correspondant.
-  const paysInfo = egliseSuperviseuse?.pays
-    ? PAYS_DATA.find((p) => p.fr === egliseSuperviseuse.pays)
-    : null;
-  const paysAffiche = paysInfo ? paysInfo[lang] : egliseSuperviseuse?.pays;
-  const paysFlagCode = paysInfo?.flagCode || paysInfo?.code;
+  const resolvePaysAffiche = (paysFr) => {
+    const info = paysFr ? PAYS_DATA.find((p) => p.fr === paysFr) : null;
+    return {
+      libelle: info ? info[lang] : paysFr,
+      flagCode: info?.flagCode || info?.code,
+    };
+  };
+
+  const paysSuperviseuse = resolvePaysAffiche(egliseSuperviseuse?.pays);
+  const paysSuperviseurActuel = resolvePaysAffiche(egliseSuperviseurActuel?.pays);
 
   const handleSubmit = async () => {
     if (!choice || !invitation) return;
@@ -271,12 +293,18 @@ export default function AcceptInvitation() {
     try {
       // Appel sécurisé : met à jour le statut de l'invitation et, si acceptée,
       // met à jour parent_eglise_id dans eglises — le tout côté serveur.
+      // Le serveur revérifie aussi la règle "un seul superviseur par église"
+      // (garde-fou indépendant du blocage déjà affiché côté frontend).
       const { data, error } = await supabase.rpc("repondre_invitation_complet", {
         p_token: token,
         p_choice: choice,
       });
 
       if (error || !data?.success) {
+        if (data?.error === "deja_supervisee") {
+          setDejaSupervisee(true);
+          return;
+        }
         throw new Error(error?.message || data?.error || "Erreur inconnue");
       }
 
@@ -353,14 +381,14 @@ export default function AcceptInvitation() {
             {egliseSuperviseuse?.pays && (
               <div className="flex items-center gap-1.5">
                 <span className="text-white/50">{t.pays} :</span>
-                {paysFlagCode && (
+                {paysSuperviseuse.flagCode && (
                   <img
-                    src={`https://flagcdn.com/w40/${paysFlagCode}.png`}
-                    alt={paysAffiche}
+                    src={`https://flagcdn.com/w40/${paysSuperviseuse.flagCode}.png`}
+                    alt={paysSuperviseuse.libelle}
                     className="w-5 h-3.5 rounded-sm"
                   />
                 )}
-                <span>{paysAffiche}</span>
+                <span>{paysSuperviseuse.libelle}</span>
               </div>
             )}
           </div>
@@ -372,7 +400,37 @@ export default function AcceptInvitation() {
             </span>
           </div>
 
-          {!message && (
+          {/* Blocage : l'église destinataire a déjà un superviseur actuel
+              (règle : un seul superviseur par église). On affiche ce bloc à
+              la place du formulaire de décision, quel que soit le statut de
+              l'invitation, tant que le lien existant n'a pas été cassé. */}
+          {dejaSupervisee && !message && (
+            <div className="border-l-4 border-red-500 bg-red-950/40 rounded-lg px-4 py-3 space-y-2">
+              <p className="font-semibold text-red-300">{t.dejaSuperviseeTitre}</p>
+              <p className="text-sm text-white/90">
+                {t.dejaSuperviseeTexte(
+                  egliseSuperviseurActuel?.denomination || "?",
+                  egliseSuperviseurActuel?.nom || "?"
+                )}
+              </p>
+              {egliseSuperviseurActuel?.pays && (
+                <div className="flex items-center gap-1.5 text-sm">
+                  <span className="text-white/50">{t.pays} :</span>
+                  {paysSuperviseurActuel.flagCode && (
+                    <img
+                      src={`https://flagcdn.com/w40/${paysSuperviseurActuel.flagCode}.png`}
+                      alt={paysSuperviseurActuel.libelle}
+                      className="w-5 h-3.5 rounded-sm"
+                    />
+                  )}
+                  <span>{paysSuperviseurActuel.libelle}</span>
+                </div>
+              )}
+              <p className="text-sm text-white/70">{t.dejaSuperviseeAction}</p>
+            </div>
+          )}
+
+          {!dejaSupervisee && !message && (
             <>
               <div className="mt-2">
                 <label className="block text-sm text-white/70 mb-1">

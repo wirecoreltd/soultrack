@@ -57,7 +57,7 @@ const translations = {
     kpiEglisesSup: "Églises supervisées",
     kpiEglisesSubSup: "dans le réseau",
     kpiMembresActifs: "Membres actifs",
-    kpiMembresActifsSub: "dans le réseau",
+    kpiMembresActifsSub: "de votre église",
     kpiTauxPresence: "Taux de présence",
     kpiTauxPresenceSub: "moyenne par culte",
     kpiTotalCulte: "Participation totale aux services",
@@ -181,7 +181,7 @@ const translations = {
     kpiEglisesSup: "Supervised churches",
     kpiEglisesSubSup: "in the network",
     kpiMembresActifs: "Active members",
-    kpiMembresActifsSub: "in the network",
+    kpiMembresActifsSub: "in your church",
     kpiTauxPresence: "Attendance rate",
     kpiTauxPresenceSub: "average per service",
     kpiTotalCulte: "Total Service Attendance",
@@ -275,6 +275,14 @@ function calcDelta(current, previous) {
 function toYearMonth(dateStr) {
   if (!dateStr) return dateStr;
   return dateStr.substring(0, 7) + "-01";
+}
+
+// Total culte "global" (H+F+J+Enfants+Connectés) d'une église, à partir de
+// son objet stats. Centralisé ici pour éviter les 3 recalculs dispersés
+// (KPI réseau, classement, tri) qui existaient auparavant.
+function culteGlobalDe(eglise) {
+  const c = eglise.stats.culte;
+  return c.hommes + c.femmes + c.jeunes + c.enfants + c.connectes;
 }
 
 // ─── FORMAT NOM / DÉNOMINATION DES ÉGLISES ─────────────────────
@@ -562,8 +570,14 @@ function CarteConversions({ cd, t }) {
 }
 
 // ─── BLOC VUE D'ENSEMBLE ─────────────────────────────────────
+// IMPORTANT : ce bloc affiche désormais les statistiques de l'ÉGLISE
+// CONNECTÉE UNIQUEMENT (rootEglise), pas la somme du réseau. Seuls le
+// nombre d'"Églises supervisées" et le classement restent des informations
+// de niveau réseau (ils ont besoin de voir toutes les églises pour
+// comparer / dénombrer, mais ne combinent pas les stats individuelles).
 function BlocVueEnsemble({
   allEglises,
+  rootEglise,
   besoinsGlobaux,
   totalMembresActifs,
   tauxPresenceMoyen,
@@ -576,34 +590,32 @@ function BlocVueEnsemble({
   leadersStats,
   t,
 }) {
-  const totaux = allEglises.reduce(
-    (acc, e) => {
-      const s = e.stats;
-      acc.culteHommes += s.culte.hommes;
-      acc.culteFemmes += s.culte.femmes;
-      acc.culteJeunes += s.culte.jeunes;
-      acc.culteEnfants += s.culte.enfants;
-      acc.culteConnectes += s.culte.connectes;
-      acc.culteNV += s.culte.nouveaux_venus;
-      acc.culteNC += s.culte.nouveau_converti;
-      acc.baptemeH += s.bapteme.hommes;
-      acc.baptemeF += s.bapteme.femmes;
-      acc.evangH += s.evangelisation.hommes;
-      acc.evangF += s.evangelisation.femmes;
-      acc.evangNC += s.evangelisation.nouveau_converti;
-      acc.servH += s.serviteurs.hommes;
-      acc.servF += s.serviteurs.femmes;
-      acc.cellules += s.cellules.total;
-      return acc;
-    },
-    {
-      culteHommes: 0, culteFemmes: 0, culteJeunes: 0, culteEnfants: 0,
-      culteConnectes: 0, culteNV: 0, culteNC: 0,
-      baptemeH: 0, baptemeF: 0,
-      evangH: 0, evangF: 0, evangNC: 0,
-      servH: 0, servF: 0, cellules: 0,
-    }
-  );
+  const s = rootEglise?.stats;
+  const totaux = s
+    ? {
+        culteHommes: s.culte.hommes,
+        culteFemmes: s.culte.femmes,
+        culteJeunes: s.culte.jeunes,
+        culteEnfants: s.culte.enfants,
+        culteConnectes: s.culte.connectes,
+        culteNV: s.culte.nouveaux_venus,
+        culteNC: s.culte.nouveau_converti,
+        baptemeH: s.bapteme.hommes,
+        baptemeF: s.bapteme.femmes,
+        evangH: s.evangelisation.hommes,
+        evangF: s.evangelisation.femmes,
+        evangNC: s.evangelisation.nouveau_converti,
+        servH: s.serviteurs.hommes,
+        servF: s.serviteurs.femmes,
+        cellules: s.cellules.total,
+      }
+    : {
+        culteHommes: 0, culteFemmes: 0, culteJeunes: 0, culteEnfants: 0,
+        culteConnectes: 0, culteNV: 0, culteNC: 0,
+        baptemeH: 0, baptemeF: 0,
+        evangH: 0, evangF: 0, evangNC: 0,
+        servH: 0, servF: 0, cellules: 0,
+      };
 
   const totalCulte = totaux.culteHommes + totaux.culteFemmes + totaux.culteJeunes;
   const totalCulteGlobal = totalCulte + totaux.culteEnfants + totaux.culteConnectes;
@@ -612,6 +624,13 @@ function BlocVueEnsemble({
   const totalServiteurs = totaux.servH + totaux.servF;
 
   const nbEglisesSupervisees = allEglises.filter((e) => e.id !== rootId).length;
+
+  // Total réseau (toutes les églises, y compris l'église connectée) — utilisé
+  // uniquement pour calculer les pourcentages de la barre du classement,
+  // qui est une comparaison entre églises et doit donc rester sur une base
+  // réseau, distincte du KPI "Participation totale" ci-dessus (qui lui est
+  // limité à l'église connectée).
+  const totalReseauCulteGlobal = allEglises.reduce((acc, e) => acc + culteGlobalDe(e), 0);
 
   const cd = conversionsDetail || { egliseNC: 0, egliseRecon: 0, evangNC: 0, evangRecon: 0, total: 0 };
   const tauxEngagement =
@@ -697,14 +716,10 @@ function BlocVueEnsemble({
         <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-2">
           <p className="text-sm text-white/70 font-semibold mb-1">{t.classementTitle}</p>
           {[...allEglises]
-            .sort((a, b) => {
-              const totA = a.stats.culte.hommes + a.stats.culte.femmes + a.stats.culte.jeunes + a.stats.culte.enfants + a.stats.culte.connectes;
-              const totB = b.stats.culte.hommes + b.stats.culte.femmes + b.stats.culte.jeunes + b.stats.culte.enfants + b.stats.culte.connectes;
-              return totB - totA;
-            })
+            .sort((a, b) => culteGlobalDe(b) - culteGlobalDe(a))
             .map((e, index) => {
-              const tot = e.stats.culte.hommes + e.stats.culte.femmes + e.stats.culte.jeunes + e.stats.culte.enfants + e.stats.culte.connectes;
-              const pct = totalCulteGlobal > 0 ? Math.round((tot / totalCulteGlobal) * 100) : 0;
+              const tot = culteGlobalDe(e);
+              const pct = totalReseauCulteGlobal > 0 ? Math.round((tot / totalReseauCulteGlobal) * 100) : 0;
               return (
                 <div key={e.id} className="flex items-center gap-3">
                   <span className="text-sm font-bold text-white w-4 flex-shrink-0">#{index + 1}</span>
@@ -916,9 +931,7 @@ function buildEgliseHierarchy(eglises, rootId, triEglise, searchTerm) {
   const sortSiblings = (list) =>
     [...list].sort((a, b) => {
       if (triEglise === "alphabetique") return formatEgliseTitre(a).localeCompare(formatEgliseTitre(b));
-      const totA = a.stats.culte.hommes + a.stats.culte.femmes + a.stats.culte.jeunes + a.stats.culte.enfants + a.stats.culte.connectes;
-      const totB = b.stats.culte.hommes + b.stats.culte.femmes + b.stats.culte.jeunes + b.stats.culte.enfants + b.stats.culte.connectes;
-      return totB - totA;
+      return culteGlobalDe(b) - culteGlobalDe(a);
     });
 
   const flat = [];
@@ -959,22 +972,19 @@ function StatGlobalPage() {
   const [modePerso, setModePerso] = useState(false);
   const [filtrePeriode, setFiltrePeriode] = useState("30");
   const [hasData, setHasData] = useState(false);
-  const [besoinsGlobaux, setBesoinsGlobaux] = useState({});
-  const [totalMembresActifs, setTotalMembresActifs] = useState(0);
   const [prevTotaux, setPrevTotaux] = useState(null);
-  const [tauxPresenceMoyen, setTauxPresenceMoyen] = useState(0);
-  const [conversionsDetail, setConversionsDetail] = useState(null);
 
   const [totalFamillesActives, setTotalFamillesActives] = useState(0);
   const [totalPiliers, setTotalPiliers] = useState(0);
   const [famillesFeatureActive, setFamillesFeatureActive] = useState(false);
-  const [leadersStats, setLeadersStats] = useState(null);
 
   // ── Recherche / tri pour l'onglet "Par église" ──
   const [rechercheEglise, setRechercheEglise] = useState("");
   const [triEglise, setTriEglise] = useState("alphabetique"); // "alphabetique" | "participation"
 
-  // ── Données ventilées par eglise_id (pour l'onglet "Par église") ──
+  // ── Données ventilées par eglise_id (source unique de vérité : utilisées
+  // à la fois par l'onglet "Par église" ET par la "Vue d'ensemble", qui
+  // pioche désormais uniquement l'entrée [rootId] de chaque map) ──
   const [membresActifsParEglise, setMembresActifsParEglise] = useState({});
   const [tauxPresenceParEglise, setTauxPresenceParEglise] = useState({});
   const [leadersStatsParEglise, setLeadersStatsParEglise] = useState({});
@@ -1256,11 +1266,7 @@ function StatGlobalPage() {
 
       if (!filteredEglisesData?.length) {
         setAllEglises([]);
-        setBesoinsGlobaux({});
-        setTotalMembresActifs(0);
         setPrevTotaux(null);
-        setTauxPresenceMoyen(0);
-        setConversionsDetail(null);
         setHasData(false);
         setLoading(false);
         setTotalFamillesActives(0);
@@ -1276,13 +1282,12 @@ function StatGlobalPage() {
 
       const egliseIds = filteredEglisesData.map((e) => e.id);
 
-      // ── Membres actifs (réseau + par église) ──
+      // ── Membres actifs (par église) ──
       const { data: membresActifsData } = await supabase
         .from("membres_complets")
         .select("id, eglise_id, sexe")
         .in("eglise_id", egliseIds)
         .in("etat_contact", ["existant", "nouveau"]);
-      setTotalMembresActifs(membresActifsData?.length || 0);
 
       const membresActifsMap = {};
       (membresActifsData || []).forEach((m) => {
@@ -1316,15 +1321,19 @@ function StatGlobalPage() {
         .eq("feature", "familles")
         .eq("active", true);
       const egliseIdsAvecFamilles = (familleFeatureData || []).map((r) => r.eglise_id);
-      setFamillesFeatureActive(egliseIdsAvecFamilles.length > 0);
+
+      // Familles/Piliers : uniquement pour l'église connectée (rootIdValue),
+      // pas pour l'ensemble du réseau.
+      const familleActiveSurRoot = egliseIdsAvecFamilles.includes(rootIdValue);
+      setFamillesFeatureActive(familleActiveSurRoot);
 
       let totalFamActives = 0;
       let totalPil = 0;
-      if (egliseIdsAvecFamilles.length > 0) {
+      if (familleActiveSurRoot) {
         const { data: membresAvecFamille } = await supabase
           .from("membres_complets")
-          .select("id, eglise_id, famille_id, etat_contact")
-          .in("eglise_id", egliseIdsAvecFamilles)
+          .select("id, famille_id, etat_contact")
+          .eq("eglise_id", rootIdValue)
           .not("famille_id", "is", null)
           .in("etat_contact", ["existant", "nouveau"]);
 
@@ -1333,8 +1342,8 @@ function StatGlobalPage() {
 
         const { data: piliersData } = await supabase
           .from("membres_complets")
-          .select("id, eglise_id")
-          .in("eglise_id", egliseIdsAvecFamilles)
+          .select("id")
+          .eq("eglise_id", rootIdValue)
           .eq("pilier", true)
           .in("etat_contact", ["existant", "nouveau"]);
         totalPil = piliersData?.length || 0;
@@ -1351,17 +1360,15 @@ function StatGlobalPage() {
           getCellulesActives(egliseIds),
           getConversions(egliseIds, debut, fin),
         ]);
-      setConversionsDetail(conversionsData);
       setConversionsParEglise(conversionsData.parEglise || {});
 
-      // ── Leaders en développement (réseau + par église) ──
+      // ── Leaders en développement (par église) ──
       const { data: leadersMembresData } = await supabase
         .from("membres_complets")
         .select("id, eglise_id")
         .in("eglise_id", egliseIds)
         .eq("leader_developpement", true);
 
-      let leadersStatsValue = { total: 0, potentiel: 0, croissance: 0, developpement: 0, mature: 0, sansEvaluation: 0 };
       const leadersParEgliseValue = {};
       if (leadersMembresData?.length) {
         const leaderIds = leadersMembresData.map((m) => m.id);
@@ -1376,11 +1383,8 @@ function StatGlobalPage() {
           if (!etapeMap[e.membre_id]) etapeMap[e.membre_id] = e.parcours_etape || null;
         });
 
-        const counts = { potentiel: 0, croissance: 0, developpement: 0, mature: 0, sansEvaluation: 0 };
         leadersMembresData.forEach((m) => {
           const etape = etapeMap[m.id];
-          if (etape && counts[etape] !== undefined) counts[etape]++;
-          else counts.sansEvaluation++;
 
           if (!leadersParEgliseValue[m.eglise_id]) {
             leadersParEgliseValue[m.eglise_id] = { total: 0, potentiel: 0, croissance: 0, developpement: 0, mature: 0, sansEvaluation: 0 };
@@ -1392,13 +1396,10 @@ function StatGlobalPage() {
             leadersParEgliseValue[m.eglise_id].sansEvaluation++;
           }
         });
-
-        leadersStatsValue = { total: leadersMembresData.length, ...counts };
       }
-      setLeadersStats(leadersStatsValue);
       setLeadersStatsParEglise(leadersParEgliseValue);
 
-      // ── Taux de présence (réseau + par église), basé sur `presences` ──
+      // ── Taux de présence (par église), basé sur `presences` ──
       const { data: sessionsData } = await supabase
         .from("attendance")
         .select("id, date, eglise_id")
@@ -1413,9 +1414,7 @@ function StatGlobalPage() {
         nombreCultesParEglise[s.eglise_id] = (nombreCultesParEglise[s.eglise_id] || 0) + 1;
       });
       const sessionIds = sessionsData?.map((s) => s.id) || [];
-      const nombreCultes = sessionIds.length;
 
-      let totalPresents = 0;
       const presentsParEglise = {};
       if (sessionIds.length > 0) {
         const { data: presData } = await supabase
@@ -1424,17 +1423,10 @@ function StatGlobalPage() {
           .in("attendance_id", sessionIds);
         (presData || []).forEach((p) => {
           if (p.statut !== "present") return;
-          totalPresents++;
           const egId = sessionIdToEglise[p.attendance_id];
           if (egId) presentsParEglise[egId] = (presentsParEglise[egId] || 0) + 1;
         });
       }
-
-      const tauxCalcule =
-        membresActifsData?.length > 0 && nombreCultes > 0
-          ? Math.round((totalPresents / (membresActifsData.length * nombreCultes)) * 100)
-          : 0;
-      setTauxPresenceMoyen(tauxCalcule);
 
       const tauxParEgliseMap = {};
       egliseIds.forEach((id) => {
@@ -1483,35 +1475,37 @@ function StatGlobalPage() {
             prevMap[id].serviteurs.femmes = sv.femmes;
           }
         });
-        const pt = {
-          culteHommes: 0, culteFemmes: 0, culteJeunes: 0, culteEnfants: 0, culteConnectes: 0,
-          baptemeH: 0, baptemeF: 0, evangH: 0, evangF: 0, servH: 0, servF: 0,
+        // La comparaison "vs période précédente" ne porte que sur l'église
+        // connectée (rootIdValue), en cohérence avec le reste de la Vue
+        // d'ensemble — pas sur la somme du réseau.
+        const rootPrev = prevMap[rootIdValue] || {
+          culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0 },
+          bapteme: { hommes: 0, femmes: 0 },
+          evangelisation: { hommes: 0, femmes: 0 },
+          serviteurs: { hommes: 0, femmes: 0 },
         };
-        Object.values(prevMap).forEach((s) => {
-          pt.culteHommes += s.culte.hommes;
-          pt.culteFemmes += s.culte.femmes;
-          pt.culteJeunes += s.culte.jeunes;
-          pt.culteEnfants += s.culte.enfants;
-          pt.culteConnectes += s.culte.connectes;
-          pt.baptemeH += s.bapteme.hommes;
-          pt.baptemeF += s.bapteme.femmes;
-          pt.evangH += s.evangelisation.hommes;
-          pt.evangF += s.evangelisation.femmes;
-          pt.servH += s.serviteurs.hommes;
-          pt.servF += s.serviteurs.femmes;
+        setPrevTotaux({
+          culteHommes: rootPrev.culte.hommes,
+          culteFemmes: rootPrev.culte.femmes,
+          culteJeunes: rootPrev.culte.jeunes,
+          culteEnfants: rootPrev.culte.enfants,
+          culteConnectes: rootPrev.culte.connectes,
+          baptemeH: rootPrev.bapteme.hommes,
+          baptemeF: rootPrev.bapteme.femmes,
+          evangH: rootPrev.evangelisation.hommes,
+          evangF: rootPrev.evangelisation.femmes,
+          servH: rootPrev.serviteurs.hommes,
+          servF: rootPrev.serviteurs.femmes,
         });
-        setPrevTotaux(pt);
       } else {
         setPrevTotaux(null);
       }
 
-      // ── Besoins (réseau + par église) ──
+      // ── Besoins (par église) ──
       if (membresActifsData?.length) {
         const membreIds = membresActifsData.map((m) => m.id);
-        const sexeMap = {};
         const egliseMap = {};
         membresActifsData.forEach((m) => {
-          sexeMap[m.id] = m.sexe?.toLowerCase() === "homme" ? "hommes" : "femmes";
           egliseMap[m.id] = m.eglise_id;
         });
         let suivisQuery = supabase
@@ -1521,11 +1515,9 @@ function StatGlobalPage() {
         if (debut) suivisQuery = suivisQuery.gte("date_action", debut);
         if (fin) suivisQuery = suivisQuery.lte("date_action", fin);
         const { data: suivisData } = await suivisQuery;
-        const count = {};
         const countParEglise = {};
         (suivisData || []).forEach((s) => {
           if (!s.besoin) return;
-          const sexe = sexeMap[s.membre_id] || "femmes";
           const egId = egliseMap[s.membre_id];
           let items = [];
           try {
@@ -1535,13 +1527,6 @@ function StatGlobalPage() {
             const label = typeof item === "string" ? item.trim() : item?.label?.trim();
             const statut = typeof item === "string" ? null : item?.statut;
             if (!label) return;
-            if (!count[label]) count[label] = { total: 0, hommes: 0, femmes: 0, enSuivi: 0, resolu: 0 };
-            count[label].total++;
-            if (sexe === "hommes") count[label].hommes++;
-            else count[label].femmes++;
-            if (statut === "Résolu") count[label].resolu++;
-            else count[label].enSuivi++;
-
             if (egId) {
               if (!countParEglise[egId]) countParEglise[egId] = {};
               if (!countParEglise[egId][label]) countParEglise[egId][label] = { total: 0, resolu: 0 };
@@ -1550,10 +1535,8 @@ function StatGlobalPage() {
             }
           });
         });
-        setBesoinsGlobaux(count);
         setBesoinsParEglise(countParEglise);
       } else {
-        setBesoinsGlobaux({});
         setBesoinsParEglise({});
       }
 
@@ -1567,12 +1550,7 @@ function StatGlobalPage() {
     } catch (err) {
       console.error("Erreur fetch stats:", err);
       setAllEglises([]);
-      setBesoinsGlobaux({});
-      setTotalMembresActifs(0);
       setPrevTotaux(null);
-      setTauxPresenceMoyen(0);
-      setConversionsDetail(null);
-      setLeadersStats(null);
       setMembresActifsParEglise({});
       setTauxPresenceParEglise({});
       setLeadersStatsParEglise({});
@@ -1602,6 +1580,8 @@ function StatGlobalPage() {
   allEglises.forEach((e) => {
     eglisesMapById[e.id] = e;
   });
+
+  const rootEglise = eglisesMapById[rootId] || null;
 
   return (
     <div
@@ -1740,16 +1720,17 @@ function StatGlobalPage() {
             </SectionTitle>
             <BlocVueEnsemble
               allEglises={allEglises}
-              besoinsGlobaux={besoinsGlobaux}
-              totalMembresActifs={totalMembresActifs}
-              tauxPresenceMoyen={tauxPresenceMoyen}
-              conversionsDetail={conversionsDetail}
+              rootEglise={rootEglise}
+              besoinsGlobaux={besoinsParEglise[rootId] || {}}
+              totalMembresActifs={membresActifsParEglise[rootId] || 0}
+              tauxPresenceMoyen={tauxPresenceParEglise[rootId] || 0}
+              conversionsDetail={conversionsParEglise[rootId]}
               prevTotaux={prevTotaux}
               rootId={rootId}
               totalFamillesActives={totalFamillesActives}
               totalPiliers={totalPiliers}
               famillesFeatureActive={famillesFeatureActive}
-              leadersStats={leadersStats}
+              leadersStats={leadersStatsParEglise[rootId]}
               t={t}
             />
           </div>

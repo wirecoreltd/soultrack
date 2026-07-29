@@ -272,11 +272,6 @@ function calcDelta(current, previous) {
   return Math.round(((current - previous) / previous) * 100);
 }
 
-function toYearMonth(dateStr) {
-  if (!dateStr) return dateStr;
-  return dateStr.substring(0, 7) + "-01";
-}
-
 // Total culte "global" (H+F+J+Enfants+Connectés) d'une église, à partir de
 // son objet stats. Centralisé ici pour éviter les 3 recalculs dispersés
 // (KPI réseau, classement, tri) qui existaient auparavant.
@@ -996,221 +991,71 @@ function StatGlobalPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const getCellulesActives = async (egliseIds) => {
-    const { data: toutesCellules } = await supabase
-      .from("cellules")
+  // ── Besoins (par église) — seule partie encore calculée en JS, le champ
+  // `besoin` de la table `suivis` étant un JSON hétérogène (text ou déjà
+  // array/objet selon la ligne) trop fragile à parser fiablement en SQL.
+  // Volume faible (quelques centaines de lignes max), donc coût négligeable. ──
+  const fetchBesoins = async (egliseIds, debut, fin) => {
+    const { data: membresActifsData } = await supabase
+      .from("membres_complets")
       .select("id, eglise_id")
-      .in("eglise_id", egliseIds);
-
-    if (!toutesCellules?.length) return [];
-
-    const celluleIds = toutesCellules.map((c) => c.id);
-
-    const { data: membresActifs } = await supabase
-      .from("membres_complets")
-      .select("cellule_id")
-      .in("cellule_id", celluleIds)
-      .eq("statut_suivis", 3)
-      .neq("etat_contact", "supprime");
-
-    const cellulesAvecMembres = new Set((membresActifs || []).map((m) => m.cellule_id));
-    return toutesCellules.filter((c) => cellulesAvecMembres.has(c.id));
-  };
-
-  // ── Conversions (prière du salut) — total réseau + ventilation par église ──
-  const getConversions = async (egliseIds, debut, fin) => {
-    let membresQuery = supabase
-      .from("membres_complets")
-      .select("id, eglise_id, priere_salut, type_conversion, created_at, evangelise_member_id_uuid")
       .in("eglise_id", egliseIds)
-      .eq("priere_salut", "Oui")
-      .is("evangelise_member_id_uuid", null);
-    if (debut) membresQuery = membresQuery.gte("created_at", debut);
-    if (fin) membresQuery = membresQuery.lte("created_at", fin);
-    const { data: membresData } = await membresQuery;
+      .in("etat_contact", ["existant", "nouveau"]);
 
-    let egliseNC = 0;
-    let egliseRecon = 0;
-    const parEgliseEglise = {};
-    (membresData || []).forEach((m) => {
-      if (!parEgliseEglise[m.eglise_id]) parEgliseEglise[m.eglise_id] = { nc: 0, recon: 0 };
-      if (m.type_conversion === "Nouveau converti") {
-        egliseNC++;
-        parEgliseEglise[m.eglise_id].nc++;
-      } else if (m.type_conversion === "Réconciliation") {
-        egliseRecon++;
-        parEgliseEglise[m.eglise_id].recon++;
-      }
+    if (!membresActifsData?.length) return {};
+
+    const membreIds = membresActifsData.map((m) => m.id);
+    const egliseMap = {};
+    membresActifsData.forEach((m) => {
+      egliseMap[m.id] = m.eglise_id;
     });
 
-    let evangQuery = supabase
-      .from("evangelises")
-      .select("id, eglise_id, priere_salut, type_conversion, date_evangelise")
-      .in("eglise_id", egliseIds)
-      .eq("priere_salut", true);
-    if (debut) evangQuery = evangQuery.gte("date_evangelise", debut);
-    if (fin) evangQuery = evangQuery.lte("date_evangelise", fin);
-    const { data: evangData } = await evangQuery;
-
     let suivisQuery = supabase
-      .from("suivis_des_evangelises")
-      .select("id, evangelise_id, eglise_id, priere_salut, type_conversion, date_action")
-      .in("eglise_id", egliseIds)
-      .eq("priere_salut", true)
-      .not("evangelise_id", "is", null);
+      .from("suivis")
+      .select("membre_id, besoin, date_action")
+      .in("membre_id", membreIds);
     if (debut) suivisQuery = suivisQuery.gte("date_action", debut);
     if (fin) suivisQuery = suivisQuery.lte("date_action", fin);
     const { data: suivisData } = await suivisQuery;
 
-    const evangMap = new Map();
-    (evangData || []).forEach((e) => {
-      evangMap.set(e.id, { type_conversion: e.type_conversion, date: e.date_evangelise, eglise_id: e.eglise_id });
-    });
+    const countParEglise = {};
     (suivisData || []).forEach((s) => {
-      const existing = evangMap.get(s.evangelise_id);
-      if (!existing || new Date(s.date_action) > new Date(existing.date)) {
-        evangMap.set(s.evangelise_id, { type_conversion: s.type_conversion, date: s.date_action, eglise_id: s.eglise_id });
+      if (!s.besoin) return;
+      const egId = egliseMap[s.membre_id];
+      let items = [];
+      try {
+        items = Array.isArray(s.besoin) ? s.besoin : JSON.parse(s.besoin);
+      } catch {
+        return;
       }
+      items.forEach((item) => {
+        const label = typeof item === "string" ? item.trim() : item?.label?.trim();
+        const statut = typeof item === "string" ? null : item?.statut;
+        if (!label) return;
+        if (egId) {
+          if (!countParEglise[egId]) countParEglise[egId] = {};
+          if (!countParEglise[egId][label]) countParEglise[egId][label] = { total: 0, resolu: 0 };
+          countParEglise[egId][label].total++;
+          if (statut === "Résolu") countParEglise[egId][label].resolu++;
+        }
+      });
     });
 
-    let evangNC = 0;
-    let evangRecon = 0;
-    const parEgliseEvang = {};
-    evangMap.forEach((v) => {
-      const tc = (v.type_conversion || "").toLowerCase();
-      if (!parEgliseEvang[v.eglise_id]) parEgliseEvang[v.eglise_id] = { nc: 0, recon: 0 };
-      if (tc === "nouveau converti") {
-        evangNC++;
-        parEgliseEvang[v.eglise_id].nc++;
-      } else if (tc === "réconciliation" || tc === "reconciliation") {
-        evangRecon++;
-        parEgliseEvang[v.eglise_id].recon++;
-      }
-    });
-
-    const total = egliseNC + egliseRecon + evangNC + evangRecon;
-
-    const parEglise = {};
-    egliseIds.forEach((id) => {
-      const eg = parEgliseEglise[id] || { nc: 0, recon: 0 };
-      const ev = parEgliseEvang[id] || { nc: 0, recon: 0 };
-      parEglise[id] = {
-        egliseNC: eg.nc,
-        egliseRecon: eg.recon,
-        evangNC: ev.nc,
-        evangRecon: ev.recon,
-        total: eg.nc + eg.recon + ev.nc + ev.recon,
-      };
-    });
-
-    return { egliseNC, egliseRecon, evangNC, evangRecon, total, parEglise };
+    return countParEglise;
   };
 
-  // ── Serviteurs actifs — calculés EXCLUSIVEMENT à partir de stats_ministere_besoin ──
-  // Pour chaque membre valide (actif, non supprimé), on ne garde que sa DERNIÈRE
-  // ligne <= dateFin (triée par date_action desc, created_at desc pour départager
-  // les doublons de date le même jour — voir la même logique dans le rapport
-  // Ministère par église). Un membre n'est compté "serviteur" que si cette
-  // dernière ligne a une valeur non vide. On regroupe par l'église ACTUELLE du
-  // membre (membreEgliseMap, issu de membres_complets) plutôt que par l'eglise_id
-  // stocké sur la ligne stats, pour rester correct même après un transfert d'église.
-  const getServiteursSnapshot = async (dateFinSnapshot, membresValidesIds, membreEgliseMap) => {
-    if (!membresValidesIds || membresValidesIds.size === 0) return {};
-    const effectiveFin = dateFinSnapshot || new Date().toISOString().split("T")[0];
-
-    const { data: statsData } = await supabase
-      .from("stats_ministere_besoin")
-      .select("membre_id, valeur, sexe, type, date_action, created_at")
-      .in("membre_id", [...membresValidesIds])
-      .eq("type", "ministere")
-      .lte("date_action", effectiveFin)
-      .order("date_action", { ascending: false })
-      .order("created_at", { ascending: false });
-
-    const derniereLigneParMembre = {};
-    (statsData || []).forEach((s) => {
-      if (!s.membre_id) return;
-      if (!derniereLigneParMembre[s.membre_id]) {
-        derniereLigneParMembre[s.membre_id] = s;
-      }
-    });
-
-    const snapshot = {};
-    Object.values(derniereLigneParMembre).forEach((s) => {
-      if (!s.valeur || s.valeur.trim() === "") return;
-      const egId = membreEgliseMap[s.membre_id];
-      if (!egId) return;
-      if (!snapshot[egId]) snapshot[egId] = { hommes: 0, femmes: 0 };
-      const sexe = (s.sexe || "").trim().toLowerCase();
-      if (sexe === "homme") snapshot[egId].hommes += 1;
-      else if (sexe === "femme") snapshot[egId].femmes += 1;
-    });
-
-    return snapshot;
-  };
-
-  const buildStatsFromData = (
-    egliseIds, attendanceData, formationData, baptemeData,
-    evangeData, cellulesActivesData
-  ) => {
-    const statsMap = {};
-    egliseIds.forEach((id) => {
-      statsMap[id] = {
-        culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0, nouveaux_venus: 0, nouveau_converti: 0, moissonneurs: 0 },
-        formation: { hommes: 0, femmes: 0 },
-        bapteme: { hommes: 0, femmes: 0 },
-        evangelisation: { hommes: 0, femmes: 0, priere: 0, nouveau_converti: 0, reconciliation: 0, moissonneurs: 0 },
-        // Serviteurs : non calculés ici. Voir getServiteursSnapshot, qui
-        // interroge exclusivement stats_ministere_besoin et est fusionné
-        // dans statsMap par l'appelant (fetchStats).
-        serviteurs: { hommes: 0, femmes: 0 },
-        cellules: { total: 0 },
-      };
-    });
-
-    attendanceData.forEach((s) => {
-      const a = statsMap[s.eglise_id]?.culte;
-      if (!a) return;
-      a.hommes += Number(s.hommes) || 0;
-      a.femmes += Number(s.femmes) || 0;
-      a.jeunes += Number(s.jeunes) || 0;
-      a.enfants += Number(s.enfants) || 0;
-      a.connectes += Number(s.connectes) || 0;
-      a.nouveaux_venus += Number(s.nouveaux_venus) || 0;
-      a.nouveau_converti += Number(s.nouveau_converti) || 0;
-      a.moissonneurs += Number(s.moissonneurs) || 0;
-    });
-
-    formationData.forEach((f) => {
-      const form = statsMap[f.eglise_id]?.formation;
-      if (!form) return;
-      form.hommes += Number(f.hommes) || 0;
-      form.femmes += Number(f.femmes) || 0;
-    });
-
-    baptemeData.forEach((b) => {
-      const bap = statsMap[b.eglise_id]?.bapteme;
-      if (!bap) return;
-      bap.hommes += Number(b.hommes) || 0;
-      bap.femmes += Number(b.femmes) || 0;
-    });
-
-    evangeData.forEach((e) => {
-      const ev = statsMap[e.eglise_id]?.evangelisation;
-      if (!ev) return;
-      ev.hommes += Number(e.hommes) || 0;
-      ev.femmes += Number(e.femmes) || 0;
-      ev.priere += Number(e.priere) || 0;
-      ev.nouveau_converti += Number(e.nouveau_converti) || 0;
-      ev.reconciliation += Number(e.reconciliation) || 0;
-      ev.moissonneurs += Number(e.moissonneurs) || 0;
-    });
-
-    cellulesActivesData.forEach((c) => {
-      if (c.eglise_id && statsMap[c.eglise_id]) statsMap[c.eglise_id].cellules.total++;
-    });
-
-    return statsMap;
+  const resetState = () => {
+    setAllEglises([]);
+    setPrevTotaux(null);
+    setHasData(false);
+    setTotalFamillesActives(0);
+    setTotalPiliers(0);
+    setFamillesFeatureActive(false);
+    setMembresActifsParEglise({});
+    setTauxPresenceParEglise({});
+    setLeadersStatsParEglise({});
+    setConversionsParEglise({});
+    setBesoinsParEglise({});
   };
 
   const fetchStats = async (overrideModePerso = null) => {
@@ -1248,6 +1093,12 @@ function StatGlobalPage() {
       prevFin = finPrec.toISOString().split("T")[0];
     }
 
+    // Snapshot serviteurs : indépendant de la plage debut/fin choisie pour
+    // le culte/formation/etc. Seule la date de fin compte (mode Tranche de
+    // dates avec fin explicite), sinon la snapshot est prise à aujourd'hui.
+    const todayStr = new Date().toISOString().split("T")[0];
+    const effectiveDateFinServiteurs = isPerso && fin ? fin : todayStr;
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profileData } = await supabase
@@ -1259,304 +1110,91 @@ function StatGlobalPage() {
       const rootIdValue = profileData.eglise_id;
       setRootId(rootIdValue);
 
-      const { data: filteredEglisesData } = await supabase.rpc(
-        "get_descendant_eglises",
-        { root_id: rootIdValue }
+      // ── Appel RPC unique : remplace ~15 requêtes (culte, formation,
+      // bapteme, evangelisation, cellules actives, serviteurs, présences,
+      // leaders, conversions, familles, piliers) par 1 aller-retour ──
+      const { data: reseauData, error: reseauError } = await supabase.rpc(
+        "get_stats_reseau",
+        {
+          p_root_id: rootIdValue,
+          p_debut: debut || null,
+          p_fin: fin || null,
+          p_serviteurs_fin: effectiveDateFinServiteurs,
+        }
       );
+      if (reseauError) throw reseauError;
 
-      if (!filteredEglisesData?.length) {
-        setAllEglises([]);
-        setPrevTotaux(null);
-        setHasData(false);
+      const eglisesMap = reseauData?.eglises || {};
+      const egliseIds = Object.keys(eglisesMap);
+
+      if (!egliseIds.length) {
+        resetState();
+        setRootId(rootIdValue);
         setLoading(false);
-        setTotalFamillesActives(0);
-        setTotalPiliers(0);
-        setFamillesFeatureActive(false);
-        setMembresActifsParEglise({});
-        setTauxPresenceParEglise({});
-        setLeadersStatsParEglise({});
-        setConversionsParEglise({});
-        setBesoinsParEglise({});
         return;
       }
 
-      const egliseIds = filteredEglisesData.map((e) => e.id);
-
-      // ── Membres actifs (par église) ──
-      const { data: membresActifsData } = await supabase
-        .from("membres_complets")
-        .select("id, eglise_id, sexe")
-        .in("eglise_id", egliseIds)
-        .in("etat_contact", ["existant", "nouveau"]);
-
+      // ── Reconstruction de allEglises directement depuis le JSON RPC
+      // (plus besoin d'un appel séparé à get_descendant_eglises : le RPC
+      // renvoie déjà nom/denomination/ville/pays/parent_eglise_id) ──
       const membresActifsMap = {};
-      (membresActifsData || []).forEach((m) => {
-        membresActifsMap[m.eglise_id] = (membresActifsMap[m.eglise_id] || 0) + 1;
-      });
-      setMembresActifsParEglise(membresActifsMap);
-
-      // ── Set des membres valides + map membre → église actuelle ──
-      // Sert exclusivement au calcul des serviteurs (getServiteursSnapshot),
-      // pour ne compter que des membres actifs, non supprimés, rattachés à
-      // leur église courante (et non l'eglise_id figé sur la ligne stats).
-      const membresActifsIdsSet = new Set((membresActifsData || []).map((m) => m.id));
-      const membreEgliseMap = {};
-      (membresActifsData || []).forEach((m) => {
-        membreEgliseMap[m.id] = m.eglise_id;
-      });
-
-      const tableFetch = async (table, dateField, deb, fi) => {
-        let query = supabase.from(table).select("*").in("eglise_id", egliseIds);
-        const fmt = (d) => table === "attendance_stats" && d ? toYearMonth(d) : d;
-        if (deb) query = query.gte(dateField, fmt(deb));
-        if (fi) query = query.lte(dateField, fmt(fi));
-        const { data } = await query;
-        return data || [];
-      };
-
-      const { data: familleFeatureData } = await supabase
-        .from("eglise_features")
-        .select("eglise_id")
-        .in("eglise_id", egliseIds)
-        .eq("feature", "familles")
-        .eq("active", true);
-      const egliseIdsAvecFamilles = (familleFeatureData || []).map((r) => r.eglise_id);
-
-      // Familles/Piliers : uniquement pour l'église connectée (rootIdValue),
-      // pas pour l'ensemble du réseau.
-      const familleActiveSurRoot = egliseIdsAvecFamilles.includes(rootIdValue);
-      setFamillesFeatureActive(familleActiveSurRoot);
-
-      let totalFamActives = 0;
-      let totalPil = 0;
-      if (familleActiveSurRoot) {
-        const { data: membresAvecFamille } = await supabase
-          .from("membres_complets")
-          .select("id, famille_id, etat_contact")
-          .eq("eglise_id", rootIdValue)
-          .not("famille_id", "is", null)
-          .in("etat_contact", ["existant", "nouveau"]);
-
-        const famillesActivesSet = new Set((membresAvecFamille || []).map((m) => m.famille_id));
-        totalFamActives = famillesActivesSet.size;
-
-        const { data: piliersData } = await supabase
-          .from("membres_complets")
-          .select("id")
-          .eq("eglise_id", rootIdValue)
-          .eq("pilier", true)
-          .in("etat_contact", ["existant", "nouveau"]);
-        totalPil = piliersData?.length || 0;
-      }
-      setTotalFamillesActives(totalFamActives);
-      setTotalPiliers(totalPil);
-
-      const [attendanceData, formationData, baptemeData, evangeData, cellulesActivesData, conversionsData] =
-        await Promise.all([
-          tableFetch("attendance_stats", "mois", debut, fin),
-          tableFetch("formations", "date_debut", debut, fin),
-          tableFetch("baptemes", "date", debut, fin),
-          tableFetch("rapport_evangelisation", "date", debut, fin),
-          getCellulesActives(egliseIds),
-          getConversions(egliseIds, debut, fin),
-        ]);
-      setConversionsParEglise(conversionsData.parEglise || {});
-
-      // ── Leaders en développement (par église) ──
-      const { data: leadersMembresData } = await supabase
-        .from("membres_complets")
-        .select("id, eglise_id")
-        .in("eglise_id", egliseIds)
-        .eq("leader_developpement", true);
-
-      const leadersParEgliseValue = {};
-      if (leadersMembresData?.length) {
-        const leaderIds = leadersMembresData.map((m) => m.id);
-        const { data: evalsLeaderData } = await supabase
-          .from("evaluations_leader")
-          .select("membre_id, parcours_etape, date_action")
-          .in("membre_id", leaderIds)
-          .order("date_action", { ascending: false });
-
-        const etapeMap = {};
-        (evalsLeaderData || []).forEach((e) => {
-          if (!etapeMap[e.membre_id]) etapeMap[e.membre_id] = e.parcours_etape || null;
-        });
-
-        leadersMembresData.forEach((m) => {
-          const etape = etapeMap[m.id];
-
-          if (!leadersParEgliseValue[m.eglise_id]) {
-            leadersParEgliseValue[m.eglise_id] = { total: 0, potentiel: 0, croissance: 0, developpement: 0, mature: 0, sansEvaluation: 0 };
-          }
-          leadersParEgliseValue[m.eglise_id].total++;
-          if (etape && leadersParEgliseValue[m.eglise_id][etape] !== undefined) {
-            leadersParEgliseValue[m.eglise_id][etape]++;
-          } else {
-            leadersParEgliseValue[m.eglise_id].sansEvaluation++;
-          }
-        });
-      }
-      setLeadersStatsParEglise(leadersParEgliseValue);
-
-      // ── Taux de présence (par église), basé sur `presences` ──
-      const { data: sessionsData } = await supabase
-        .from("attendance")
-        .select("id, date, eglise_id")
-        .in("eglise_id", egliseIds)
-        .gte("date", debut || "1900-01-01")
-        .lte("date", fin || "2100-01-01");
-
-      const sessionIdToEglise = {};
-      const nombreCultesParEglise = {};
-      (sessionsData || []).forEach((s) => {
-        sessionIdToEglise[s.id] = s.eglise_id;
-        nombreCultesParEglise[s.eglise_id] = (nombreCultesParEglise[s.eglise_id] || 0) + 1;
-      });
-      const sessionIds = sessionsData?.map((s) => s.id) || [];
-
-      const presentsParEglise = {};
-      if (sessionIds.length > 0) {
-        const { data: presData } = await supabase
-          .from("presences")
-          .select("statut, attendance_id")
-          .in("attendance_id", sessionIds);
-        (presData || []).forEach((p) => {
-          if (p.statut !== "present") return;
-          const egId = sessionIdToEglise[p.attendance_id];
-          if (egId) presentsParEglise[egId] = (presentsParEglise[egId] || 0) + 1;
-        });
-      }
-
       const tauxParEgliseMap = {};
-      egliseIds.forEach((id) => {
-        const nb = nombreCultesParEglise[id] || 0;
-        const membres = membresActifsMap[id] || 0;
-        const presents = presentsParEglise[id] || 0;
-        tauxParEgliseMap[id] = membres > 0 && nb > 0 ? Math.round((presents / (membres * nb)) * 100) : 0;
-      });
-      setTauxPresenceParEglise(tauxParEgliseMap);
-
-      // ── Serviteurs — snapshot "photo instantanée" au niveau réseau ──
-      // Indépendant de la plage debut/fin choisie pour le culte/formation/etc :
-      // seule la date de fin compte (mode Tranche de dates avec fin explicite),
-      // sinon la snapshot est prise à aujourd'hui.
-      const todayStr = new Date().toISOString().split("T")[0];
-      const effectiveDateFinServiteurs = isPerso && fin ? fin : todayStr;
-      const servSnapshot = await getServiteursSnapshot(
-        effectiveDateFinServiteurs, membresActifsIdsSet, membreEgliseMap
-      );
-
-      const statsMap = buildStatsFromData(
-        egliseIds, attendanceData, formationData, baptemeData,
-        evangeData, cellulesActivesData
-      );
-      egliseIds.forEach((id) => {
-        const sv = servSnapshot[id] || { hommes: 0, femmes: 0 };
-        if (statsMap[id]) {
-          statsMap[id].serviteurs.hommes = sv.hommes;
-          statsMap[id].serviteurs.femmes = sv.femmes;
-        }
-      });
-
-      if (prevDebut && prevFin) {
-        const [pAtt, pForm, pBap, pEvang, prevServSnapshot] = await Promise.all([
-          tableFetch("attendance_stats", "mois", prevDebut, prevFin),
-          tableFetch("formations", "date_debut", prevDebut, prevFin),
-          tableFetch("baptemes", "date", prevDebut, prevFin),
-          tableFetch("rapport_evangelisation", "date", prevDebut, prevFin),
-          getServiteursSnapshot(prevFin, membresActifsIdsSet, membreEgliseMap),
-        ]);
-        const prevMap = buildStatsFromData(egliseIds, pAtt, pForm, pBap, pEvang, []);
-        egliseIds.forEach((id) => {
-          const sv = prevServSnapshot[id] || { hommes: 0, femmes: 0 };
-          if (prevMap[id]) {
-            prevMap[id].serviteurs.hommes = sv.hommes;
-            prevMap[id].serviteurs.femmes = sv.femmes;
-          }
-        });
-        // La comparaison "vs période précédente" ne porte que sur l'église
-        // connectée (rootIdValue), en cohérence avec le reste de la Vue
-        // d'ensemble — pas sur la somme du réseau.
-        const rootPrev = prevMap[rootIdValue] || {
-          culte: { hommes: 0, femmes: 0, jeunes: 0, enfants: 0, connectes: 0 },
-          bapteme: { hommes: 0, femmes: 0 },
-          evangelisation: { hommes: 0, femmes: 0 },
-          serviteurs: { hommes: 0, femmes: 0 },
+      const leadersParEgliseValue = {};
+      const conversionsParEgliseValue = {};
+      const allEglisesValue = egliseIds.map((id) => {
+        const e = eglisesMap[id];
+        membresActifsMap[id] = e.membresActifs || 0;
+        tauxParEgliseMap[id] = e.tauxPresence || 0;
+        leadersParEgliseValue[id] = e.leadersStats;
+        conversionsParEgliseValue[id] = e.conversions;
+        return {
+          id,
+          nom: e.nom,
+          denomination: e.denomination,
+          ville: e.ville,
+          pays: e.pays,
+          parent_eglise_id: e.parent_eglise_id,
+          stats: e.stats,
         };
-        setPrevTotaux({
-          culteHommes: rootPrev.culte.hommes,
-          culteFemmes: rootPrev.culte.femmes,
-          culteJeunes: rootPrev.culte.jeunes,
-          culteEnfants: rootPrev.culte.enfants,
-          culteConnectes: rootPrev.culte.connectes,
-          baptemeH: rootPrev.bapteme.hommes,
-          baptemeF: rootPrev.bapteme.femmes,
-          evangH: rootPrev.evangelisation.hommes,
-          evangF: rootPrev.evangelisation.femmes,
-          servH: rootPrev.serviteurs.hommes,
-          servF: rootPrev.serviteurs.femmes,
-        });
+      });
+
+      setMembresActifsParEglise(membresActifsMap);
+      setTauxPresenceParEglise(tauxParEgliseMap);
+      setLeadersStatsParEglise(leadersParEgliseValue);
+      setConversionsParEglise(conversionsParEgliseValue);
+      setAllEglises(allEglisesValue);
+
+      const rootData = eglisesMap[rootIdValue];
+      setFamillesFeatureActive(!!rootData?.famillesFeatureActive);
+      setTotalFamillesActives(rootData?.famillesActives || 0);
+      setTotalPiliers(rootData?.piliers || 0);
+
+      // ── Période précédente : uniquement pour l'église connectée (seule
+      // église réellement utilisée pour le delta "vs période précédente") ──
+      if (prevDebut && prevFin) {
+        const { data: prevData, error: prevError } = await supabase.rpc(
+          "get_stats_eglise_precedente",
+          {
+            p_eglise_id: rootIdValue,
+            p_debut: prevDebut,
+            p_fin: prevFin,
+            p_serviteurs_fin: prevFin,
+          }
+        );
+        if (prevError) throw prevError;
+        setPrevTotaux(prevData || null);
       } else {
         setPrevTotaux(null);
       }
 
-      // ── Besoins (par église) ──
-      if (membresActifsData?.length) {
-        const membreIds = membresActifsData.map((m) => m.id);
-        const egliseMap = {};
-        membresActifsData.forEach((m) => {
-          egliseMap[m.id] = m.eglise_id;
-        });
-        let suivisQuery = supabase
-          .from("suivis")
-          .select("membre_id, besoin, date_action")
-          .in("membre_id", membreIds);
-        if (debut) suivisQuery = suivisQuery.gte("date_action", debut);
-        if (fin) suivisQuery = suivisQuery.lte("date_action", fin);
-        const { data: suivisData } = await suivisQuery;
-        const countParEglise = {};
-        (suivisData || []).forEach((s) => {
-          if (!s.besoin) return;
-          const egId = egliseMap[s.membre_id];
-          let items = [];
-          try {
-            items = Array.isArray(s.besoin) ? s.besoin : JSON.parse(s.besoin);
-          } catch { return; }
-          items.forEach((item) => {
-            const label = typeof item === "string" ? item.trim() : item?.label?.trim();
-            const statut = typeof item === "string" ? null : item?.statut;
-            if (!label) return;
-            if (egId) {
-              if (!countParEglise[egId]) countParEglise[egId] = {};
-              if (!countParEglise[egId][label]) countParEglise[egId][label] = { total: 0, resolu: 0 };
-              countParEglise[egId][label].total++;
-              if (statut === "Résolu") countParEglise[egId][label].resolu++;
-            }
-          });
-        });
-        setBesoinsParEglise(countParEglise);
-      } else {
-        setBesoinsParEglise({});
-      }
+      // ── Besoins (reste en JS, voir fetchBesoins) ──
+      const besoinsData = await fetchBesoins(egliseIds, debut, fin);
+      setBesoinsParEglise(besoinsData);
 
-      const map = {};
-      filteredEglisesData.forEach((e) => {
-        map[e.id] = { ...e, stats: statsMap[e.id] };
-      });
-
-      setAllEglises(Object.values(map));
       setHasData(true);
     } catch (err) {
       console.error("Erreur fetch stats:", err);
-      setAllEglises([]);
-      setPrevTotaux(null);
-      setMembresActifsParEglise({});
-      setTauxPresenceParEglise({});
-      setLeadersStatsParEglise({});
-      setConversionsParEglise({});
-      setBesoinsParEglise({});
-      setHasData(false);
+      resetState();
     }
     setLoading(false);
   };

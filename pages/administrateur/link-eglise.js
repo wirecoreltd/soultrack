@@ -455,49 +455,43 @@ const user = session.user;
 
     const handleCasser = async (inv) => {
       console.log("=== DEBUT CASSER ===");
-  console.log("inv.supervisee_eglise_id:", inv.supervisee_eglise_id);
-  // 1. Retirer le superviseur sur l'église concernée
-  // (fait AVANT le changement de statut, car la policy RLS exige
-  // que la supervision soit encore "acceptee" pour autoriser l'update)
-  const handleCasser = async (inv) => {
-  console.log("=== DEBUT CASSER ===");
-  console.log("inv.supervisee_eglise_id:", inv.supervisee_eglise_id);
-
-  // 1. Retirer le superviseur sur l'église concernée
-  // (fait AVANT le changement de statut, car la policy RLS exige
-  // que la supervision soit encore "acceptee" pour autoriser l'update)
-  if (inv.supervisee_eglise_id) {
-    const { data: dataEglise, error: errEglise } = await supabase
-      .from("eglises")
-      .update({ parent_eglise_id: null })
-      .eq("id", inv.supervisee_eglise_id)
-      .select();
-
-    console.log("dataEglise:", dataEglise);
-    console.log("errEglise:", errEglise);
-
-    if (errEglise) {
-      console.error(errEglise);
-      return;
-    }
-  }
-
-  // 2. Marquer l'invitation comme cassée
-  const { error: errInv } = await supabase
-    .from("eglise_supervisions")
-    .update({ statut: "lien_casse" })
-    .eq("id", inv.id);
-
-  console.log("errInv:", errInv);
-
-  if (errInv) {
-    console.error(errInv);
-    return;
-  }
-
-  setConfirmCasser(null);
-  loadInvitations();
-};
+      console.log("inv.supervisee_eglise_id:", inv.supervisee_eglise_id);
+    
+      // 1. Retirer le superviseur sur l'église concernée
+      // (fait AVANT le changement de statut, car la policy RLS exige
+      // que la supervision soit encore "acceptee" pour autoriser l'update)
+      if (inv.supervisee_eglise_id) {
+        const { data: dataEglise, error: errEglise } = await supabase
+          .from("eglises")
+          .update({ parent_eglise_id: null })
+          .eq("id", inv.supervisee_eglise_id)
+          .select();
+    
+        console.log("dataEglise:", dataEglise);
+        console.log("errEglise:", errEglise);
+    
+        if (errEglise) {
+          console.error(errEglise);
+          return;
+        }
+      }
+    
+      // 2. Marquer l'invitation comme cassée
+      const { error: errInv } = await supabase
+        .from("eglise_supervisions")
+        .update({ statut: "lien_casse" })
+        .eq("id", inv.id);
+    
+      console.log("errInv:", errInv);
+    
+      if (errInv) {
+        console.error(errInv);
+        return;
+      }
+    
+      setConfirmCasser(null);
+      loadInvitations();
+    };
 
   // 2. Marquer l'invitation comme cassée
   const { error: errInv } = await supabase

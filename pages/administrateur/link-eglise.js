@@ -150,6 +150,11 @@ const translations = {
     placeholderModeEnvoi: "Choisir un mode d'envoi",
     modeWhatsapp: "WhatsApp",
     modeEmail: "Email",
+    
+    modalCasserTitre: "🔗 Confirmer la rupture du lien",
+    modalCasserTexte: "Le lien avec cette église sera rompu et vous ne verrez plus ses statistiques dans Stats Globales. Cette action est réversible : vous pourrez renvoyer une invitation plus tard.",
+    modalCasserConfirmer: "Casser le lien",
+    
     champsObligatoires: "* Champs obligatoires",
     erreurChamp: "Ce champ est obligatoire",
 
@@ -241,7 +246,10 @@ const translations = {
     labelModeEnvoi: "Sending method",
     placeholderModeEnvoi: "Choose a sending method",
     modeWhatsapp: "WhatsApp",
-    modeEmail: "Email",
+    modeEmail: "Email",   
+    modalCasserTitre: "🔗 Confirm breaking the link",
+    modalCasserTexte: "The link with this church will be broken and you will no longer see its statistics in Global Stats. This action is reversible: you can send a new invitation later.",
+    modalCasserConfirmer: "Break the link",
     champsObligatoires: "* Required fields",
     erreurChamp: "This field is required",
 
@@ -325,6 +333,7 @@ export default function LinkEglise() {
   const [selectedInvitation, setSelectedInvitation] = useState(null);
   const [errors, setErrors] = useState({});
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [confirmCasser, setConfirmCasser] = useState(null);
 
   const [paysOpen, setPaysOpen] = useState(false);
   const [paysSearch, setPaysSearch] = useState("");
@@ -444,12 +453,15 @@ const user = session.user;
     }
   };
 
-  const handleCasser = async (inv) => {
+    const handleCasser = async (inv) => {
     const { error } = await supabase
       .from("eglise_supervisions")
       .update({ statut: "lien_casse" })
       .eq("id", inv.id);
-    if (!error) loadInvitations();
+    if (!error) {
+      setConfirmCasser(null);
+      loadInvitations();
+    }
   };
 
   const validate = () => {
@@ -847,14 +859,14 @@ const user = session.user;
                     </button>
                   </>
                 )}
-                {inv.statut === "acceptee" && (
-                  <button
-                    onClick={() => handleCasser(inv)}
-                    className="text-gray-300 hover:underline whitespace-nowrap"
-                  >
-                    {t.actionCasser}
-                  </button>
-                )}
+                  {inv.statut === "acceptee" && (
+                    <button
+                      onClick={() => setConfirmCasser(inv)}
+                      className="text-gray-300 hover:underline whitespace-nowrap"
+                    >
+                      {t.actionCasser}
+                    </button>
+                  )}
                 {(inv.statut === "refusee" || inv.statut === "lien_casse") && (
                   <button
                     onClick={() => handleSelectInvitation(inv, "renvoyer")}
@@ -892,6 +904,30 @@ const user = session.user;
           </div>
         </div>
       )}
+
+      {/* MODAL CASSER LE LIEN */}
+        {confirmCasser && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+            <div className="bg-[#1e2a7a] border border-orange-400 rounded-xl p-6 max-w-sm w-full text-center space-y-4">
+              <p className="text-lg font-semibold text-white">{t.modalCasserTitre}</p>
+              <p className="text-white/70 text-sm">{t.modalCasserTexte}</p>
+              <div className="flex gap-3 justify-center mt-2">
+                <button
+                  onClick={() => setConfirmCasser(null)}
+                  className="px-4 py-2 rounded bg-white/10 hover:bg-white/20 text-white text-sm"
+                >
+                  {t.modalAnnuler}
+                </button>
+                <button
+                  onClick={() => handleCasser(confirmCasser)}
+                  className="px-4 py-2 rounded bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold"
+                >
+                  {t.modalCasserConfirmer}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       <Footer />
     </div>

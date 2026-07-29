@@ -349,7 +349,7 @@ export default function LinkEglise() {
   useEffect(() => {
     const loadSuperviseur = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-console.log("SESSION AU CLIC:", session);
+
 if (!session) {
   alert("Pas de session trouvée localement.");
   return;
@@ -456,9 +456,7 @@ const user = session.user;
     const handleCasser = async (inv) => {
   const { data, error } = await supabase.rpc("casser_lien_supervision", {
     p_invitation_id: inv.id,
-  });
-
-  console.log("RESULTAT casser_lien_supervision:", data, error);
+  });  
 
   if (error || !data?.success) {
     console.error(error || data?.error);

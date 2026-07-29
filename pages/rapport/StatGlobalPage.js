@@ -841,7 +841,7 @@ function CarteEgliseCompacte({
         {!isRoot && parentLabel && (
           <div className="mb-3">
             <span className="text-xs text-white/50">
-              {t.superviseePar} <span className="text-white/70 font-semibold">{parentLabel}</span>
+              {t.superviseePar} <span className="text-yellow-400 font-semibold">{parentLabel}</span>
             </span>
           </div>
         )}

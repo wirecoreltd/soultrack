@@ -840,7 +840,7 @@ function CarteEgliseCompacte({
             en cascade des églises filles. */}
         {!isRoot && parentLabel && (
           <div className="mb-3">
-            <span className="text-xs text-white/50">
+            <span className="text-xs text-yellow-400">
               {t.superviseePar} <span className="text-yellow-400 font-semibold">{parentLabel}</span>
             </span>
           </div>

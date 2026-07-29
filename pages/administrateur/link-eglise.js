@@ -867,7 +867,7 @@ const user = session.user;
                       {t.actionCasser}
                     </button>
                   )}
-                {(inv.statut === "refusee" || inv.statut === "lien_casse") && (
+                {(inv.statut === "refusee" || inv.statut === "lien_casse" || inv.statut === "expired") && (
                   <button
                     onClick={() => handleSelectInvitation(inv, "renvoyer")}
                     className="text-green-300 hover:underline whitespace-nowrap"

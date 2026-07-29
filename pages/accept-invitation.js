@@ -146,7 +146,8 @@ const translations = {
     dejaSuperviseeTexte: (denom, nom) =>
       `Votre église est déjà sous la supervision de ${denom} — ${nom}.`,
     dejaSuperviseeAction:
-      "Une église ne peut être supervisée que par une seule autre église à la fois. Merci de contacter votre administrateur pour casser le lien existant avant d'accepter une nouvelle invitation.",
+      "Une église ne peut être supervisée que par une seule autre église à la fois. Vous ne pouvez pas accepter cette invitation tant que ce lien n'est pas cassé — vous pouvez toutefois la refuser ou la laisser en attente. Merci de contacter votre administrateur pour casser le lien existant si vous souhaitez changer de superviseur.",
+    dejaSuperviseeLabelDecision: "Que souhaitez-vous faire de cette invitation ?",
   },
   en: {
     titre: "Invitation from the",
@@ -183,7 +184,8 @@ const translations = {
     dejaSuperviseeTexte: (denom, nom) =>
       `Your church is already under the supervision of ${denom} — ${nom}.`,
     dejaSuperviseeAction:
-      "A church can only be supervised by one other church at a time. Please contact your administrator to break the existing link before accepting a new invitation.",
+      "A church can only be supervised by one other church at a time. You cannot accept this invitation until that link is broken — you can still decline it or leave it pending. Please contact your administrator to break the existing link if you wish to change supervisor.",
+    dejaSuperviseeLabelDecision: "What would you like to do with this invitation?",
   },
 };
 
@@ -294,7 +296,9 @@ export default function AcceptInvitation() {
       // Appel sécurisé : met à jour le statut de l'invitation et, si acceptée,
       // met à jour parent_eglise_id dans eglises — le tout côté serveur.
       // Le serveur revérifie aussi la règle "un seul superviseur par église"
-      // (garde-fou indépendant du blocage déjà affiché côté frontend).
+      // (garde-fou indépendant du blocage déjà affiché côté frontend). Note :
+      // ce garde-fou ne bloque que le choix "acceptee" — "refusee" et
+      // "pending" passent normalement même si dejaSupervisee est vrai.
       const { data, error } = await supabase.rpc("repondre_invitation_complet", {
         p_token: token,
         p_choice: choice,
@@ -400,12 +404,13 @@ export default function AcceptInvitation() {
             </span>
           </div>
 
-          {/* Blocage : l'église destinataire a déjà un superviseur actuel
-              (règle : un seul superviseur par église). On affiche ce bloc à
-              la place du formulaire de décision, quel que soit le statut de
-              l'invitation, tant que le lien existant n'a pas été cassé. */}
+          {/* Blocage partiel : l'église destinataire a déjà un superviseur
+              actuel (règle : un seul superviseur par église). "Accepter"
+              reste impossible tant que ce lien n'est pas cassé, mais on
+              permet quand même de refuser ou de laisser en attente, pour ne
+              pas laisser l'invitation traîner indéfiniment côté émetteur. */}
           {dejaSupervisee && !message && (
-            <div className="border-l-4 border-red-500 bg-red-950/40 rounded-lg px-4 py-3 space-y-2">
+            <div className="border-l-4 border-red-500 bg-red-950/40 rounded-lg px-4 py-3 space-y-3">
               <p className="font-semibold text-red-300">{t.dejaSuperviseeTitre}</p>
               <p className="text-sm text-white/90">
                 {t.dejaSuperviseeTexte(
@@ -427,6 +432,29 @@ export default function AcceptInvitation() {
                 </div>
               )}
               <p className="text-sm text-white/70">{t.dejaSuperviseeAction}</p>
+
+              <div className="pt-2 border-t border-white/10">
+                <label className="block text-sm text-white/70 mb-1">
+                  {t.dejaSuperviseeLabelDecision}
+                </label>
+                <select
+                  value={choice}
+                  onChange={(e) => setChoice(e.target.value)}
+                  className="w-full p-2 text-black rounded"
+                >
+                  <option value="">{t.choisir}</option>
+                  <option value="refusee">{t.refuser}</option>
+                  <option value="pending">{t.enAttente}</option>
+                </select>
+
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting || !choice}
+                  className="w-full mt-2 bg-blue-600 hover:bg-blue-700 py-2 rounded font-semibold transition-colors disabled:opacity-50"
+                >
+                  {submitting ? t.envoiEnCours : t.confirmer}
+                </button>
+              </div>
             </div>
           )}
 

@@ -277,6 +277,34 @@ function toYearMonth(dateStr) {
   return dateStr.substring(0, 7) + "-01";
 }
 
+// ─── FORMAT NOM / DÉNOMINATION DES ÉGLISES ─────────────────────
+// Abrège une dénomination en initiales quand elle contient plusieurs mots
+// ("Love of God" → "LOG", "Christ Church" → "CC"). Un seul mot reste
+// inchangé, car il s'agit déjà d'un sigle/nom court ("ADD" → "ADD").
+function abbreviateDenomination(denomination) {
+  if (!denomination) return "";
+  const mots = denomination.trim().split(/\s+/).filter(Boolean);
+  if (mots.length <= 1) return mots[0] || "";
+  return mots.map((m) => m[0].toUpperCase()).join("");
+}
+
+// Titre complet d'une carte église : "{Dénomination} - {Ville} - {Pays}".
+// Repli sur le nom brut si les champs dénomination/ville/pays sont absents.
+function formatEgliseTitre(eglise) {
+  if (!eglise) return "";
+  const parts = [eglise.denomination, eglise.ville, eglise.pays].filter(Boolean);
+  return parts.length > 0 ? parts.join(" - ") : (eglise.nom || "");
+}
+
+// Libellé "Supervisée par" : dénomination ABRÉGÉE de l'église parente
+// + ville + pays. Repli sur le nom brut si les champs sont absents.
+function formatSupervisionLabel(parentEglise) {
+  if (!parentEglise) return null;
+  const abbrev = abbreviateDenomination(parentEglise.denomination);
+  const parts = [abbrev, parentEglise.ville, parentEglise.pays].filter(Boolean);
+  return parts.length > 0 ? parts.join(" - ") : (parentEglise.nom || null);
+}
+
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
   return (
@@ -680,7 +708,7 @@ function BlocVueEnsemble({
               return (
                 <div key={e.id} className="flex items-center gap-3">
                   <span className="text-sm font-bold text-white w-4 flex-shrink-0">#{index + 1}</span>
-                  <p className="text-sm text-white w-32 flex-shrink-0 truncate">{e.nom}</p>
+                  <p className="text-sm text-white w-32 flex-shrink-0 truncate">{formatEgliseTitre(e)}</p>
                   <BarreProgression pct={pct} color="bg-blue-400" />
                   <span className="text-lg text-white font-semibold w-8 text-right">{tot}</span>
                 </div>
@@ -765,12 +793,13 @@ function BlocStatsEglise({ stats, t }) {
 // Collapsed : les 6 indicateurs choisis par le superviseur.
 // Expanded ("Voir le détail complet") : tout le reste, ventilé par église.
 function CarteEgliseCompacte({
-  eglise, membresActifs, tauxPresence, leaders, evangelises, conversions, besoins, isRoot, parentNom, t,
+  eglise, membresActifs, tauxPresence, leaders, evangelises, conversions, besoins, isRoot, parentLabel, t,
 }) {
   const [expanded, setExpanded] = useState(false);
   const stats = eglise.stats;
   const serviteursTotal = stats.serviteurs.hommes + stats.serviteurs.femmes;
   const cellulesTotal = stats.cellules.total;
+  const titre = formatEgliseTitre(eglise);
 
   const topBesoinEntry =
     besoins && Object.keys(besoins).length > 0
@@ -783,7 +812,7 @@ function CarteEgliseCompacte({
     <div className="bg-white/10 rounded-2xl overflow-hidden">
       <div className="px-4 py-4">
         <div className="flex items-center justify-between gap-3 mb-1">
-          <span className="text-sm font-semibold text-white truncate">{eglise.nom}</span>
+          <span className="text-sm font-semibold text-white truncate">{titre}</span>
           <button
             onClick={() => setExpanded((v) => !v)}
             className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition flex-shrink-0"
@@ -794,10 +823,10 @@ function CarteEgliseCompacte({
         {/* "Église superviseure" badge supprimé : le rang de l'église racine
             est désormais visible via sa position en tête + l'indentation
             en cascade des églises filles. */}
-        {!isRoot && parentNom && (
+        {!isRoot && parentLabel && (
           <div className="mb-3">
             <span className="text-xs text-white/50">
-              {t.superviseePar} <span className="text-white/70 font-semibold">{parentNom}</span>
+              {t.superviseePar} <span className="text-white/70 font-semibold">{parentLabel}</span>
             </span>
           </div>
         )}
@@ -860,7 +889,7 @@ function buildEgliseHierarchy(eglises, rootId, triEglise, searchTerm) {
   if (term) {
     visibleIds = new Set();
     eglises.forEach((e) => {
-      if (!e.nom?.toLowerCase().includes(term)) return;
+      if (!formatEgliseTitre(e)?.toLowerCase().includes(term)) return;
       let cur = e;
       let guard = 0;
       while (cur && guard < 50) {
@@ -886,7 +915,7 @@ function buildEgliseHierarchy(eglises, rootId, triEglise, searchTerm) {
 
   const sortSiblings = (list) =>
     [...list].sort((a, b) => {
-      if (triEglise === "alphabetique") return a.nom.localeCompare(b.nom);
+      if (triEglise === "alphabetique") return formatEgliseTitre(a).localeCompare(formatEgliseTitre(b));
       const totA = a.stats.culte.hommes + a.stats.culte.femmes + a.stats.culte.jeunes + a.stats.culte.enfants + a.stats.culte.connectes;
       const totB = b.stats.culte.hommes + b.stats.culte.femmes + b.stats.culte.jeunes + b.stats.culte.enfants + b.stats.culte.connectes;
       return totB - totA;
@@ -1568,7 +1597,7 @@ function StatGlobalPage() {
   // puis chaque église fille juste après sa mère (parent_eglise_id) ──
   const hierarchieEglises = buildEgliseHierarchy(allEglises, rootId, triEglise, rechercheEglise);
 
-  // ── Lookup pour retrouver le nom de l'église superviseure directe ──
+  // ── Lookup pour retrouver l'église parente directe (nom + dénomination) ──
   const eglisesMapById = {};
   allEglises.forEach((e) => {
     eglisesMapById[e.id] = e;
@@ -1753,9 +1782,10 @@ function StatGlobalPage() {
             {hierarchieEglises.map(({ eglise, depth }) => {
               const isRoot = eglise.id === rootId;
               const parentId = getParentEgliseId(eglise);
-              const parentNom = isRoot
+              const parentEglise = isRoot
                 ? null
-                : eglisesMapById[parentId]?.nom || eglisesMapById[rootId]?.nom || null;
+                : eglisesMapById[parentId] || eglisesMapById[rootId] || null;
+              const parentLabel = formatSupervisionLabel(parentEglise);
               return (
                 <div
                   key={eglise.id}
@@ -1765,7 +1795,7 @@ function StatGlobalPage() {
                   <CarteEgliseCompacte
                     eglise={eglise}
                     isRoot={isRoot}
-                    parentNom={parentNom}
+                    parentLabel={parentLabel}
                     membresActifs={membresActifsParEglise[eglise.id] || 0}
                     tauxPresence={tauxPresenceParEglise[eglise.id] || 0}
                     leaders={leadersStatsParEglise[eglise.id]}

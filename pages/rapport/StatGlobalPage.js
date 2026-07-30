@@ -91,10 +91,12 @@ const translations = {
     kpiServiteurs: "Serviteurs",
     kpiServiteursSubFn: (pct) => `${pct}% des membres`,
     vsPeriodePrecedente: "vs période préc.",
-    repartitionTitle: "H / F / J (Participation Services)",
+    repartitionTitle: "H / F / Enfants",
     hommes: "Hommes",
     femmes: "Femmes",
     jeunes: "Jeunes",
+    enfants: "Enfants",
+    enfantsNote: "moins de 16 ans",
     entonnoirTitle: "Entonnoir de croissance (réseau)",
     entonnoirReseau: "Entonnoir",
     presencesCulte: "Présences culte",
@@ -215,10 +217,12 @@ const translations = {
     leadersMature: "Established Leader",
     leadersSansEvaluation: "No evaluation",
     vsPeriodePrecedente: "vs prev. period",
-    repartitionTitle: "M / F / Y Attendance Breakdown",
+    repartitionTitle: "M / F / Children",
     hommes: "Men",
     femmes: "Women",
     jeunes: "Youth",
+    enfants: "Children",
+    enfantsNote: "under 16",
     entonnoirTitle: "Growth funnel (network)",
     entonnoirReseau: "Funnel",
     presencesCulte: "Worship attendance",
@@ -566,15 +570,17 @@ function CarteConversions({ cd, t }) {
 
 // ─── BLOC VUE D'ENSEMBLE ─────────────────────────────────────
 // IMPORTANT : ce bloc affiche désormais les statistiques de l'ÉGLISE
-// CONNECTÉE UNIQUEMENT (rootEglise), pas la somme du réseau. Seuls le
-// nombre d'"Églises supervisées" et le classement restent des informations
-// de niveau réseau (ils ont besoin de voir toutes les églises pour
-// comparer / dénombrer, mais ne combinent pas les stats individuelles).
+// CONNECTÉE UNIQUEMENT (rootEglise), pas la somme du réseau. Seul le
+// nombre d'"Églises supervisées" reste une information de niveau réseau
+// (il a besoin de voir toutes les églises pour les dénombrer, mais ne
+// combine pas les stats individuelles).
 function BlocVueEnsemble({
   allEglises,
   rootEglise,
   besoinsGlobaux,
   totalMembresActifs,
+  membresParSexe,
+  totalEnfants,
   tauxPresenceMoyen,
   conversionsDetail,
   prevTotaux,
@@ -620,13 +626,6 @@ function BlocVueEnsemble({
 
   const nbEglisesSupervisees = allEglises.filter((e) => e.id !== rootId).length;
 
-  // Total réseau (toutes les églises, y compris l'église connectée) — utilisé
-  // uniquement pour calculer les pourcentages de la barre du classement,
-  // qui est une comparaison entre églises et doit donc rester sur une base
-  // réseau, distincte du KPI "Participation totale" ci-dessus (qui lui est
-  // limité à l'église connectée).
-  const totalReseauCulteGlobal = allEglises.reduce((acc, e) => acc + culteGlobalDe(e), 0);
-
   const cd = conversionsDetail || { egliseNC: 0, egliseRecon: 0, evangNC: 0, evangRecon: 0, total: 0 };
   const tauxEngagement =
     totalMembresActifs > 0 ? Math.round((totalServiteurs / totalMembresActifs) * 100) : 0;
@@ -638,6 +637,13 @@ function BlocVueEnsemble({
     ? d.culteHommes + d.culteFemmes + d.culteJeunes + d.culteEnfants + d.culteConnectes
     : null;
   const prevServiteurs = d ? d.servH + d.servF : null;
+
+  // ── Répartition H / F / Enfants des membres actifs (et non plus des
+  // présences aux cultes). "membresParSexe" vient de membres_complets,
+  // "totalEnfants" vient de la table dédiée "enfants" (< 16 ans). ──
+  const mps = membresParSexe || { hommes: 0, femmes: 0 };
+  const nbEnfants = totalEnfants || 0;
+  const totalRepartition = mps.hommes + mps.femmes + nbEnfants;
 
   return (
     <div className="flex flex-col gap-4">
@@ -689,15 +695,16 @@ function BlocVueEnsemble({
         <p className="text-sm text-white font-semibold">{t.repartitionTitle}</p>
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: t.hommes, val: totaux.culteHommes, color: "text-blue-300", bg: "bg-blue-900/40" },
-            { label: t.femmes, val: totaux.culteFemmes, color: "text-pink-300", bg: "bg-pink-900/40" },
-            { label: t.jeunes, val: totaux.culteJeunes, color: "text-amber-300", bg: "bg-amber-900/40" },
-          ].map(({ label, val, color, bg }) => {
-            const pct = totalCulte > 0 ? Math.round((val / totalCulte) * 100) : 0;
+            { label: t.hommes, val: mps.hommes, color: "text-blue-300", bg: "bg-blue-900/40" },
+            { label: t.femmes, val: mps.femmes, color: "text-pink-300", bg: "bg-pink-900/40" },
+            { label: t.enfants, note: t.enfantsNote, val: nbEnfants, color: "text-amber-300", bg: "bg-amber-900/40" },
+          ].map(({ label, note, val, color, bg }) => {
+            const pct = totalRepartition > 0 ? Math.round((val / totalRepartition) * 100) : 0;
             return (
               <div key={label} className={`${bg} rounded-xl px-3 py-3 text-center`}>
                 <p className={`text-lg font-bold ${color}`}> {val}</p>
                 <p className="text-sm text-white mt-1"> {label}</p>
+                {note && <p className="text-xs text-white/60 mt-0.5">{note}</p>}
                 <p className="text-sm text-white mt-0.5"> {pct}%</p>
               </div>
             );
@@ -705,7 +712,7 @@ function BlocVueEnsemble({
         </div>
       </div>
 
-      <CarteTop5Besoins besoinsGlobaux={besoinsGlobaux} t={t} />      
+      <CarteTop5Besoins besoinsGlobaux={besoinsGlobaux} t={t} />
     </div>
   );
 }
@@ -966,6 +973,11 @@ function StatGlobalPage() {
   const [conversionsParEglise, setConversionsParEglise] = useState({});
   const [besoinsParEglise, setBesoinsParEglise] = useState({});
 
+  // ── Répartition H / F des membres actifs (membres_complets.sexe) et
+  // nombre d'enfants (< 16 ans, table dédiée "enfants") — par eglise_id ──
+  const [membresParSexeParEglise, setMembresParSexeParEglise] = useState({});
+  const [enfantsParEglise, setEnfantsParEglise] = useState({});
+
   useEffect(() => {
     fetchStats(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1024,6 +1036,64 @@ function StatGlobalPage() {
     return countParEglise;
   };
 
+  // ── Hommes / Femmes parmi les membres actifs (même logique que le bloc
+  // "Répartition par genre" du rapport de présences : m.sexe.toLowerCase()) ──
+  const fetchMembresParSexe = async (egliseIds) => {
+    const { data, error } = await supabase
+      .from("membres_complets")
+      .select("id, eglise_id, sexe")
+      .in("eglise_id", egliseIds)
+      .in("etat_contact", ["existant", "nouveau"]);
+
+    if (error) {
+      console.error("Erreur fetch membres par sexe:", error);
+      return {};
+    }
+
+    const result = {};
+    (data || []).forEach((m) => {
+      if (!m.eglise_id) return;
+      if (!result[m.eglise_id]) result[m.eglise_id] = { hommes: 0, femmes: 0 };
+      const sexe = m.sexe?.toLowerCase();
+      if (sexe === "homme") result[m.eglise_id].hommes++;
+      else if (sexe === "femme") result[m.eglise_id].femmes++;
+    });
+    return result;
+  };
+
+  // ── Enfants (< 16 ans), table dédiée "enfants" (eglise_id, date_naissance) ──
+  const fetchEnfantsCount = async (egliseIds) => {
+    const { data, error } = await supabase
+      .from("enfants")
+      .select("id, eglise_id, date_naissance")
+      .in("eglise_id", egliseIds);
+
+    if (error) {
+      console.error("Erreur fetch enfants:", error);
+      return {};
+    }
+
+    const today = new Date();
+    const result = {};
+    (data || []).forEach((e) => {
+      if (!e.eglise_id) return;
+      if (!result[e.eglise_id]) result[e.eglise_id] = 0;
+
+      let compte = true;
+      if (e.date_naissance) {
+        const naissance = new Date(e.date_naissance);
+        let age = today.getFullYear() - naissance.getFullYear();
+        const pasEncoreAnniversaire =
+          today.getMonth() < naissance.getMonth() ||
+          (today.getMonth() === naissance.getMonth() && today.getDate() < naissance.getDate());
+        if (pasEncoreAnniversaire) age--;
+        compte = age < 16;
+      }
+      if (compte) result[e.eglise_id]++;
+    });
+    return result;
+  };
+
   const resetState = () => {
     setAllEglises([]);
     setPrevTotaux(null);
@@ -1036,6 +1106,8 @@ function StatGlobalPage() {
     setLeadersStatsParEglise({});
     setConversionsParEglise({});
     setBesoinsParEglise({});
+    setMembresParSexeParEglise({});
+    setEnfantsParEglise({});
   };
 
   const fetchStats = async (overrideModePerso = null) => {
@@ -1170,6 +1242,14 @@ function StatGlobalPage() {
       // ── Besoins (reste en JS, voir fetchBesoins) ──
       const besoinsData = await fetchBesoins(egliseIds, debut, fin);
       setBesoinsParEglise(besoinsData);
+
+      // ── Répartition H/F des membres actifs + nombre d'enfants (< 16 ans) ──
+      const [membresParSexeData, enfantsData] = await Promise.all([
+        fetchMembresParSexe(egliseIds),
+        fetchEnfantsCount(egliseIds),
+      ]);
+      setMembresParSexeParEglise(membresParSexeData);
+      setEnfantsParEglise(enfantsData);
 
       setHasData(true);
     } catch (err) {
@@ -1341,6 +1421,8 @@ function StatGlobalPage() {
               rootEglise={rootEglise}
               besoinsGlobaux={besoinsParEglise[rootId] || {}}
               totalMembresActifs={membresActifsParEglise[rootId] || 0}
+              membresParSexe={membresParSexeParEglise[rootId] || { hommes: 0, femmes: 0 }}
+              totalEnfants={enfantsParEglise[rootId] || 0}
               tauxPresenceMoyen={tauxPresenceParEglise[rootId] || 0}
               conversionsDetail={conversionsParEglise[rootId]}
               prevTotaux={prevTotaux}

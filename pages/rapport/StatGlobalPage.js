@@ -106,7 +106,9 @@ const translations = {
     top5Resolus: (pct) => `${pct}% résolus`,
     top5Aggrege: "Agrégé sur toutes les églises supervisées",
     top5EgliseSeule: "Basé sur les suivis de cette église",
+    top5Description: "Difficultés et besoins exprimés par les membres suivis pendant la période",
     besoinPlusFrequentFn: (b) => `Le besoin le plus fréquent est : ${b}`,
+    totauxReseauTitle: "Totaux (réseau)",
     classementTitle: "Classement des églises (présences culte)",
     egliseBadgeFn: (n) => `${n} église${n > 1 ? "s" : ""}`,
     totalGeneral: "Total général",
@@ -232,7 +234,9 @@ const translations = {
     top5Resolus: (pct) => `${pct}% resolved`,
     top5Aggrege: "Aggregated across all supervised churches",
     top5EgliseSeule: "Based on this church's follow-ups",
+    top5Description: "Difficulties and needs expressed by tracked members during the period",
     besoinPlusFrequentFn: (b) => `Most frequent need: ${b}`,
+    totauxReseauTitle: "Totals (network)",
     classementTitle: "Church ranking (worship attendance)",
     egliseBadgeFn: (n) => `${n} church${n > 1 ? "es" : ""}`,
     totalGeneral: "Overall total",
@@ -515,6 +519,7 @@ function CarteTop5Besoins({ besoinsGlobaux, modeReseau = true, t }) {
           <Badge color={tauxGlobal >= 50 ? "green" : "amber"}>{t.top5Resolus(tauxGlobal)}</Badge>
         </div>
       </div>
+      <p className="text-xs text-white/50 -mt-2">{t.top5Description}</p>
       <div className="flex flex-col gap-2">
         {top5.map(([besoin, data], index) => {
           const cfg = getCfg(besoin);
@@ -773,6 +778,28 @@ function BlocVueEnsemble({
   );
 }
 
+// ─── CARTE TOTAUX (RÉSEAU) ─────────────────────────────────────
+// Carte séparée, affichée UNE SEULE FOIS au-dessus de la liste en
+// cascade (parent / enfant / enfants). Elle montre les totaux agrégés
+// (l'église connectée + toutes ses églises supervisées), bien distincts
+// des chiffres propres à chaque église affichés ensuite dans leur carte
+// individuelle.
+function CarteTotauxReseau({ totals, t }) {
+  if (!totals) return null;
+  return (
+    <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3 border border-white/20">
+      <p className="text-sm font-semibold tracking-widest text-white">{t.totauxReseauTitle}</p>
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+        <StatChip label={t.kpiMembresActifs} value={totals.membresActifs} accent="white" />
+        <StatChip label={t.kpiCellules} value={totals.cellules} accent="orange" />
+        <StatChip label={t.serviteurs} value={totals.serviteurs} accent="yellow" />
+        <StatChip label={t.leadersTitle} value={totals.leadersTotal} accent="purple" />
+        <StatChip label={t.evangelises} value={totals.evangelises} accent="pink" />
+      </div>
+    </div>
+  );
+}
+
 // ─── BLOC STATS EGLISE (détail complet, réutilisé par église) ─
 function BlocStatsEglise({ stats, t }) {
   const totalCulte = stats.culte.hommes + stats.culte.femmes + stats.culte.jeunes;
@@ -843,19 +870,21 @@ function BlocStatsEglise({ stats, t }) {
 }
 
 // ─── CARTE ÉGLISE COMPACTE (liste plate, scalable à 100+ églises) ──
-// Collapsed : 6 indicateurs — dont, pour Membres actifs / Cellules
-// actives / Serviteurs / Leaders / Évangélisés, les TOTAUX PAR PARENT
-// (l'église + toutes ses églises filles en cascade, point 3). Seul le
-// "Besoin principal" reste propre à l'église elle-même, sans agrégation
-// (point 6).
+// Chaque carte n'affiche QUE les chiffres propres à cette église (pas de
+// cumul avec ses filles) : les totaux agrégés par parent sont séparés
+// dans leur propre carte "Totaux (réseau)" au-dessus de la liste, afin de
+// ne jamais mélanger un total de sous-réseau avec le chiffre individuel
+// d'une église précise.
 // Expanded ("Voir le détail complet") : détail complet, propre à
-// l'église uniquement (pas de cumul), bouton repositionné à droite sous
-// les cartes KPI (point 2).
+// l'église uniquement, bouton repositionné à droite sous les cartes KPI
+// (point 2).
 function CarteEgliseCompacte({
-  eglise, totals, tauxPresence, leaders, conversions, besoins, isRoot, parentLabel, t,
+  eglise, membresActifs, tauxPresence, leaders, evangelises, conversions, besoins, isRoot, parentLabel, t,
 }) {
   const [expanded, setExpanded] = useState(false);
   const stats = eglise.stats;
+  const serviteursTotal = stats.serviteurs.hommes + stats.serviteurs.femmes;
+  const cellulesTotal = stats.cellules.total;
   const titre = formatEgliseTitre(eglise);
 
   const topBesoinEntry =
@@ -882,11 +911,11 @@ function CarteEgliseCompacte({
           </div>
         )}
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
-          <StatChip label={t.kpiMembresActifs} value={totals.membresActifs} accent="white" />
-          <StatChip label={t.kpiCellules} value={totals.cellules} accent="orange" />
-          <StatChip label={t.serviteurs} value={totals.serviteurs} accent="yellow" />
-          <StatChip label={t.leadersTitle} value={totals.leadersTotal} accent="purple" />
-          <StatChip label={t.evangelises} value={totals.evangelises} accent="pink" />
+          <StatChip label={t.kpiMembresActifs} value={membresActifs} accent="white" />
+          <StatChip label={t.kpiCellules} value={cellulesTotal} accent="orange" />
+          <StatChip label={t.serviteurs} value={serviteursTotal} accent="yellow" />
+          <StatChip label={t.leadersTitle} value={leaders?.total || 0} accent="purple" />
+          <StatChip label={t.evangelises} value={evangelises} accent="pink" />
           <StatChip label={topBesoinLabel} value={topBesoinValue} accent="amber" />
         </div>
         <div className="flex justify-end">
@@ -1228,9 +1257,14 @@ function StatGlobalPage() {
 
   const rootEglise = eglisesMapById[rootId] || null;
 
-  // ── Map { parentId -> [enfants] } + totaux "par parent" (point 3),
-  // recalculée à chaque rendu de l'onglet "Par église" (volume faible). ──
+  // ── Map { parentId -> [enfants] } + totaux réseau (racine + toutes ses
+  // filles en cascade), calculés UNE FOIS et affichés dans leur propre
+  // carte "Totaux (réseau)" — séparée des cartes individuelles, qui elles
+  // n'affichent que les chiffres propres à chaque église. ──
   const childrenMapGlobal = buildChildrenMap(allEglises, rootId);
+  const totauxReseau = rootEglise
+    ? computeSubtreeTotals(rootEglise, childrenMapGlobal, membresActifsParEglise, leadersStatsParEglise)
+    : null;
 
   return (
     <div
@@ -1403,6 +1437,8 @@ function StatGlobalPage() {
               </select>
             </div>
 
+            <CarteTotauxReseau totals={totauxReseau} t={t} />
+
             <SectionTitle>
               {hierarchieEglises.length}{" "}
               {hierarchieEglises.length > 1 ? t.eglises : t.eglise}{" "}
@@ -1417,15 +1453,6 @@ function StatGlobalPage() {
                 : eglisesMapById[parentId] || eglisesMapById[rootId] || null;
               const parentLabel = formatSupervisionLabel(parentEglise);
 
-              // Point 3 : totaux "par parent" (église + toutes ses filles),
-              // hors besoins (point 6).
-              const totals = computeSubtreeTotals(
-                eglise,
-                childrenMapGlobal,
-                membresActifsParEglise,
-                leadersStatsParEglise
-              );
-
               return (
                 <div
                   key={eglise.id}
@@ -1436,9 +1463,10 @@ function StatGlobalPage() {
                     eglise={eglise}
                     isRoot={isRoot}
                     parentLabel={parentLabel}
-                    totals={totals}
+                    membresActifs={membresActifsParEglise[eglise.id] || 0}
                     tauxPresence={tauxPresenceParEglise[eglise.id] || 0}
                     leaders={leadersStatsParEglise[eglise.id]}
+                    evangelises={eglise.stats.evangelisation.hommes + eglise.stats.evangelisation.femmes}
                     conversions={conversionsParEglise[eglise.id]}
                     besoins={besoinsParEglise[eglise.id]}
                     t={t}

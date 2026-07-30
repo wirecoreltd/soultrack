@@ -705,30 +705,7 @@ function BlocVueEnsemble({
         </div>
       </div>
 
-      <CarteTop5Besoins besoinsGlobaux={besoinsGlobaux} t={t} />
-
-      {allEglises.length > 1 && (
-        <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-2">
-          <p className="text-sm text-white/70 font-semibold mb-1">{t.classementTitle}</p>
-          {[...allEglises]
-            .sort((a, b) => culteGlobalDe(b) - culteGlobalDe(a))
-            .map((e, index) => {
-              const tot = culteGlobalDe(e);
-              const pct = totalReseauCulteGlobal > 0 ? Math.round((tot / totalReseauCulteGlobal) * 100) : 0;
-              return (
-                <div key={e.id} className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-white w-4 flex-shrink-0">#{index + 1}</span>
-                  <p className="text-sm text-white w-32 flex-shrink-0 truncate">{formatEgliseTitre(e)}</p>
-                  <BarreProgression pct={pct} color="bg-blue-400" />
-                  <span className="text-lg text-white font-semibold w-8 text-right">{tot}</span>
-                </div>
-              );
-            })}
-        </div>
-      )}
-    </div>
-  );
-}
+      <CarteTop5Besoins besoinsGlobaux={besoinsGlobaux} t={t} />      
 
 // ─── BLOC STATS EGLISE (détail complet, réutilisé par église) ─
 function BlocStatsEglise({ stats, t }) {

@@ -706,6 +706,9 @@ function BlocVueEnsemble({
       </div>
 
       <CarteTop5Besoins besoinsGlobaux={besoinsGlobaux} t={t} />      
+    </div>
+  );
+}
 
 // ─── BLOC STATS EGLISE (détail complet, réutilisé par église) ─
 function BlocStatsEglise({ stats, t }) {

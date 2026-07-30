@@ -101,14 +101,12 @@ const translations = {
     evangelises: "Évangélisés",
     baptises: "Baptisés",
     serviteurs: "Serviteurs",
-    top5Title: "🆘 Top 5 difficultés",
+    top5Title: "🆘 Top besoins",
     top5Cas: (n) => `${n} cas`,
     top5Resolus: (pct) => `${pct}% résolus`,
-    top5Aggrege: "Agrégé sur toutes les églises supervisées",
-    top5EgliseSeule: "Basé sur les suivis de cette église",
-    top5Description: "Difficultés et besoins exprimés par les membres suivis pendant la période",
-    besoinPlusFrequentFn: (b) => `Le besoin le plus fréquent est : ${b}`,
-    totauxReseauTitle: "Totaux (réseau)",
+    besoinPlusFrequentFn: (b) => `Besoin dominant : ${b}`,
+    totalGeneralFn: (nom) => `Total général ${nom}`,
+    totalProprefn: (nom) => `Total ${nom}`,
     classementTitle: "Classement des églises (présences culte)",
     egliseBadgeFn: (n) => `${n} église${n > 1 ? "s" : ""}`,
     totalGeneral: "Total général",
@@ -229,14 +227,12 @@ const translations = {
     evangelises: "Evangelized",
     baptises: "Baptized",
     serviteurs: "Servants",
-    top5Title: "🆘 Top 5 needs",
+    top5Title: "🆘 Top needs",
     top5Cas: (n) => `${n} cases`,
     top5Resolus: (pct) => `${pct}% resolved`,
-    top5Aggrege: "Aggregated across all supervised churches",
-    top5EgliseSeule: "Based on this church's follow-ups",
-    top5Description: "Difficulties and needs expressed by tracked members during the period",
-    besoinPlusFrequentFn: (b) => `Most frequent need: ${b}`,
-    totauxReseauTitle: "Totals (network)",
+    besoinPlusFrequentFn: (b) => `Top need: ${b}`,
+    totalGeneralFn: (nom) => `Overall total ${nom}`,
+    totalProprefn: (nom) => `Total ${nom}`,
     classementTitle: "Church ranking (worship attendance)",
     egliseBadgeFn: (n) => `${n} church${n > 1 ? "es" : ""}`,
     totalGeneral: "Overall total",
@@ -493,13 +489,14 @@ function getCfg(b) {
   return BESOIN_CONFIG[b] || BESOIN_CONFIG["Autres"];
 }
 
-// ─── CARTE TOP 5 BESOINS ──────────────────────────────────────
-// `modeReseau` distingue le contexte d'affichage : true = agrégé sur tout
-// le réseau supervisé (Vue d'ensemble), false = propre à une église
-// unique (carte "Par église"). Dans les deux cas, aucun total "par
-// parent" n'est appliqué ici (point 6) : les besoins affichés sont
-// toujours ceux de `besoinsGlobaux` tel que fourni par l'appelant.
-function CarteTop5Besoins({ besoinsGlobaux, modeReseau = true, t }) {
+// ─── CARTE TOP BESOINS ────────────────────────────────────────
+// Titre générique "Top besoins" (le nombre affiché varie selon les
+// données, pas forcément 5). Carte volontairement compacte : une seule
+// indication en pied de carte (le besoin dominant), pas de sous-titre
+// ni de mention du périmètre. Aucun total "par parent" n'est appliqué
+// ici : les besoins affichés sont toujours ceux de `besoinsGlobaux` tel
+// que fourni par l'appelant (propre au réseau ou à une église seule).
+function CarteTop5Besoins({ besoinsGlobaux, t }) {
   if (!besoinsGlobaux || Object.keys(besoinsGlobaux).length === 0) return null;
   const top5 = Object.entries(besoinsGlobaux)
     .sort((a, b) => b[1].total - a[1].total)
@@ -511,23 +508,22 @@ function CarteTop5Besoins({ besoinsGlobaux, modeReseau = true, t }) {
   const topBesoinNom = top5[0]?.[0] || null;
 
   return (
-    <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
-      <div className="flex items-center justify-between mb-1">
+    <div className="bg-white/10 rounded-2xl px-3 py-3 flex flex-col gap-2">
+      <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-white/70">{t.top5Title}</p>
         <div className="flex items-center gap-2">
           <Badge color="orange">{t.top5Cas(totalTous)}</Badge>
           <Badge color={tauxGlobal >= 50 ? "green" : "amber"}>{t.top5Resolus(tauxGlobal)}</Badge>
         </div>
       </div>
-      <p className="text-xs text-white/50 -mt-2">{t.top5Description}</p>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1.5">
         {top5.map(([besoin, data], index) => {
           const cfg = getCfg(besoin);
           const pct = Math.round((data.total / maxTotal) * 100);
           const pctResolu =
             data.total > 0 ? Math.round(((data.resolu || 0) / data.total) * 100) : 0;
           return (
-            <div key={besoin} className="flex flex-col gap-1">
+            <div key={besoin} className="flex flex-col gap-0.5">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-bold text-white/70 w-4 flex-shrink-0">
                   #{index + 1}
@@ -539,16 +535,13 @@ function CarteTop5Besoins({ besoinsGlobaux, modeReseau = true, t }) {
                   <Badge color={pctResolu >= 50 ? "green" : "amber"}>{pctResolu}%✓</Badge>
                 </div>
               </div>
-              <div className="ml-9 flex items-center gap-2">
+              <div className="ml-7 flex items-center gap-2">
                 <BarreProgression pct={pct} color={cfg.bar} />
               </div>
             </div>
           );
         })}
       </div>
-      <p className="text-sm text-white/70 text-center mt-1">
-        {modeReseau ? t.top5Aggrege : t.top5EgliseSeule}
-      </p>
       {topBesoinNom && (
         <p className="text-sm text-amber-300 text-center font-semibold">
           {t.besoinPlusFrequentFn(topBesoinNom)}

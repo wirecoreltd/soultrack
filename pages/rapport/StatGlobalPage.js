@@ -101,12 +101,10 @@ const translations = {
     evangelises: "Évangélisés",
     baptises: "Baptisés",
     serviteurs: "Serviteurs",
-    top5Title: "🆘 Top besoins",
+    top5Title: "🆘 Top 5 difficultés",
     top5Cas: (n) => `${n} cas`,
     top5Resolus: (pct) => `${pct}% résolus`,
-    besoinPlusFrequentFn: (b) => `Besoin dominant : ${b}`,
-    totalGeneralFn: (nom) => `Total général ${nom}`,
-    totalProprefn: (nom) => `Total ${nom}`,
+    top5Aggrege: "Agrégé sur toutes les églises supervisées",
     classementTitle: "Classement des églises (présences culte)",
     egliseBadgeFn: (n) => `${n} église${n > 1 ? "s" : ""}`,
     totalGeneral: "Total général",
@@ -227,12 +225,10 @@ const translations = {
     evangelises: "Evangelized",
     baptises: "Baptized",
     serviteurs: "Servants",
-    top5Title: "🆘 Top needs",
+    top5Title: "🆘 Top 5 needs",
     top5Cas: (n) => `${n} cases`,
     top5Resolus: (pct) => `${pct}% resolved`,
-    besoinPlusFrequentFn: (b) => `Top need: ${b}`,
-    totalGeneralFn: (nom) => `Overall total ${nom}`,
-    totalProprefn: (nom) => `Total ${nom}`,
+    top5Aggrege: "Aggregated across all supervised churches",
     classementTitle: "Church ranking (worship attendance)",
     egliseBadgeFn: (n) => `${n} church${n > 1 ? "es" : ""}`,
     totalGeneral: "Overall total",
@@ -277,13 +273,17 @@ function calcDelta(current, previous) {
 }
 
 // Total culte "global" (H+F+J+Enfants+Connectés) d'une église, à partir de
-// son objet stats. Centralisé ici pour éviter les recalculs dispersés.
+// son objet stats. Centralisé ici pour éviter les 3 recalculs dispersés
+// (KPI réseau, classement, tri) qui existaient auparavant.
 function culteGlobalDe(eglise) {
   const c = eglise.stats.culte;
   return c.hommes + c.femmes + c.jeunes + c.enfants + c.connectes;
 }
 
 // ─── FORMAT NOM / DÉNOMINATION DES ÉGLISES ─────────────────────
+// Abrège une dénomination en initiales quand elle contient plusieurs mots
+// ("Love of God" → "LOG", "Christ Church" → "CC"). Un seul mot reste
+// inchangé, car il s'agit déjà d'un sigle/nom court ("ADD" → "ADD").
 function abbreviateDenomination(denomination) {
   if (!denomination) return "";
   const mots = denomination.trim().split(/\s+/).filter(Boolean);
@@ -291,75 +291,21 @@ function abbreviateDenomination(denomination) {
   return mots.map((m) => m[0].toUpperCase()).join("");
 }
 
+// Titre complet d'une carte église : "{Dénomination} - {Ville} - {Pays}".
+// Repli sur le nom brut si les champs dénomination/ville/pays sont absents.
 function formatEgliseTitre(eglise) {
   if (!eglise) return "";
   const parts = [eglise.denomination, eglise.ville, eglise.pays].filter(Boolean);
   return parts.length > 0 ? parts.join(" - ") : (eglise.nom || "");
 }
 
+// Libellé "Supervisée par" : dénomination ABRÉGÉE de l'église parente
+// + ville + pays. Repli sur le nom brut si les champs sont absents.
 function formatSupervisionLabel(parentEglise) {
   if (!parentEglise) return null;
   const abbrev = abbreviateDenomination(parentEglise.denomination);
   const parts = [abbrev, parentEglise.ville, parentEglise.pays].filter(Boolean);
   return parts.length > 0 ? parts.join(" - ") : (parentEglise.nom || null);
-}
-
-// ─── ARBRE : parent + regroupement enfants (partagé hiérarchie / totaux) ──
-function getParentEgliseId(e) {
-  return (
-    e.parent_eglise_id ??
-    e.parent_id ??
-    e.eglise_mere_id ??
-    e.eglise_parent_id ??
-    e.superviseur_id ??
-    null
-  );
-}
-
-// Construit une map { parentId -> [enfants] } sur l'ensemble du réseau
-// (rootId inclus comme parent racine par défaut si aucun parent résolu).
-function buildChildrenMap(eglises, rootId) {
-  const byId = {};
-  eglises.forEach((e) => {
-    byId[e.id] = e;
-  });
-  const childrenMap = {};
-  eglises.forEach((e) => {
-    if (e.id === rootId) return;
-    const pid = getParentEgliseId(e);
-    const parentKey = pid && byId[pid] ? pid : rootId;
-    if (!childrenMap[parentKey]) childrenMap[parentKey] = [];
-    childrenMap[parentKey].push(e);
-  });
-  return childrenMap;
-}
-
-// ── Totaux "par parent" (une église + toutes ses églises filles, en
-// cascade) pour les indicateurs globaux de la carte compacte : Membres
-// actifs, Cellules actives, Serviteurs, Leaders, Évangélisés. Les besoins
-// (point 6) restent volontairement EXCLUS de cette agrégation : ils
-// continuent à être affichés uniquement au niveau de l'église elle-même. ──
-function computeSubtreeTotals(eglise, childrenMap, membresActifsParEglise, leadersStatsParEglise) {
-  const stats = eglise.stats;
-  let totals = {
-    membresActifs: membresActifsParEglise[eglise.id] || 0,
-    cellules: stats.cellules.total,
-    serviteurs: stats.serviteurs.hommes + stats.serviteurs.femmes,
-    evangelises: stats.evangelisation.hommes + stats.evangelisation.femmes,
-    leadersTotal: leadersStatsParEglise[eglise.id]?.total || 0,
-  };
-
-  const enfants = childrenMap[eglise.id] || [];
-  enfants.forEach((enfant) => {
-    const t = computeSubtreeTotals(enfant, childrenMap, membresActifsParEglise, leadersStatsParEglise);
-    totals.membresActifs += t.membresActifs;
-    totals.cellules += t.cellules;
-    totals.serviteurs += t.serviteurs;
-    totals.evangelises += t.evangelises;
-    totals.leadersTotal += t.leadersTotal;
-  });
-
-  return totals;
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
@@ -489,13 +435,7 @@ function getCfg(b) {
   return BESOIN_CONFIG[b] || BESOIN_CONFIG["Autres"];
 }
 
-// ─── CARTE TOP BESOINS ────────────────────────────────────────
-// Titre générique "Top besoins" (le nombre affiché varie selon les
-// données, pas forcément 5). Carte volontairement compacte : une seule
-// indication en pied de carte (le besoin dominant), pas de sous-titre
-// ni de mention du périmètre. Aucun total "par parent" n'est appliqué
-// ici : les besoins affichés sont toujours ceux de `besoinsGlobaux` tel
-// que fourni par l'appelant (propre au réseau ou à une église seule).
+// ─── CARTE TOP 5 BESOINS ──────────────────────────────────────
 function CarteTop5Besoins({ besoinsGlobaux, t }) {
   if (!besoinsGlobaux || Object.keys(besoinsGlobaux).length === 0) return null;
   const top5 = Object.entries(besoinsGlobaux)
@@ -505,25 +445,23 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
   const totalTous = top5.reduce((a, [, v]) => a + v.total, 0);
   const totalResolus = top5.reduce((a, [, v]) => a + (v.resolu || 0), 0);
   const tauxGlobal = totalTous > 0 ? Math.round((totalResolus / totalTous) * 100) : 0;
-  const topBesoinNom = top5[0]?.[0] || null;
-
   return (
-    <div className="bg-white/10 rounded-2xl px-3 py-3 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
+    <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between mb-1">
         <p className="text-sm font-semibold text-white/70">{t.top5Title}</p>
         <div className="flex items-center gap-2">
           <Badge color="orange">{t.top5Cas(totalTous)}</Badge>
           <Badge color={tauxGlobal >= 50 ? "green" : "amber"}>{t.top5Resolus(tauxGlobal)}</Badge>
         </div>
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         {top5.map(([besoin, data], index) => {
           const cfg = getCfg(besoin);
           const pct = Math.round((data.total / maxTotal) * 100);
           const pctResolu =
             data.total > 0 ? Math.round(((data.resolu || 0) / data.total) * 100) : 0;
           return (
-            <div key={besoin} className="flex flex-col gap-0.5">
+            <div key={besoin} className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-bold text-white/70 w-4 flex-shrink-0">
                   #{index + 1}
@@ -535,18 +473,14 @@ function CarteTop5Besoins({ besoinsGlobaux, t }) {
                   <Badge color={pctResolu >= 50 ? "green" : "amber"}>{pctResolu}%✓</Badge>
                 </div>
               </div>
-              <div className="ml-7 flex items-center gap-2">
+              <div className="ml-9 flex items-center gap-2">
                 <BarreProgression pct={pct} color={cfg.bar} />
               </div>
             </div>
           );
         })}
       </div>
-      {topBesoinNom && (
-        <p className="text-sm text-amber-300 text-center font-semibold">
-          {t.besoinPlusFrequentFn(topBesoinNom)}
-        </p>
-      )}
+      <p className="text-sm text-white/70 text-center mt-1">{t.top5Aggrege}</p>
     </div>
   );
 }
@@ -631,10 +565,11 @@ function CarteConversions({ cd, t }) {
 }
 
 // ─── BLOC VUE D'ENSEMBLE ─────────────────────────────────────
-// IMPORTANT : ce bloc affiche les statistiques de l'ÉGLISE CONNECTÉE
-// UNIQUEMENT (rootEglise), pas la somme du réseau. Seul le nombre
-// d'"Églises supervisées" reste une info de niveau réseau (comptage).
-// Le classement des églises a été retiré (point 1).
+// IMPORTANT : ce bloc affiche désormais les statistiques de l'ÉGLISE
+// CONNECTÉE UNIQUEMENT (rootEglise), pas la somme du réseau. Seuls le
+// nombre d'"Églises supervisées" et le classement restent des informations
+// de niveau réseau (ils ont besoin de voir toutes les églises pour
+// comparer / dénombrer, mais ne combinent pas les stats individuelles).
 function BlocVueEnsemble({
   allEglises,
   rootEglise,
@@ -684,6 +619,13 @@ function BlocVueEnsemble({
   const totalServiteurs = totaux.servH + totaux.servF;
 
   const nbEglisesSupervisees = allEglises.filter((e) => e.id !== rootId).length;
+
+  // Total réseau (toutes les églises, y compris l'église connectée) — utilisé
+  // uniquement pour calculer les pourcentages de la barre du classement,
+  // qui est une comparaison entre églises et doit donc rester sur une base
+  // réseau, distincte du KPI "Participation totale" ci-dessus (qui lui est
+  // limité à l'église connectée).
+  const totalReseauCulteGlobal = allEglises.reduce((acc, e) => acc + culteGlobalDe(e), 0);
 
   const cd = conversionsDetail || { egliseNC: 0, egliseRecon: 0, evangNC: 0, evangRecon: 0, total: 0 };
   const tauxEngagement =
@@ -739,9 +681,6 @@ function BlocVueEnsemble({
         )}
       </div>
 
-      {/* Point 4 : la carte besoins passe avant "Leaders en développement" */}
-      <CarteTop5Besoins besoinsGlobaux={besoinsGlobaux} modeReseau={true} t={t} />
-
       <CarteLeadersDeveloppement leadersStats={leadersStats} t={t} />
 
       <CarteConversions cd={cd} t={t} />
@@ -766,29 +705,27 @@ function BlocVueEnsemble({
         </div>
       </div>
 
-      {/* Point 1 : section "Classement des églises (présences culte)" supprimée */}
-    </div>
-  );
-}
+      <CarteTop5Besoins besoinsGlobaux={besoinsGlobaux} t={t} />
 
-// ─── CARTE TOTAUX (RÉSEAU) ─────────────────────────────────────
-// Carte séparée, affichée UNE SEULE FOIS au-dessus de la liste en
-// cascade (parent / enfant / enfants). Elle montre les totaux agrégés
-// (l'église connectée + toutes ses églises supervisées), bien distincts
-// des chiffres propres à chaque église affichés ensuite dans leur carte
-// individuelle.
-function CarteTotauxReseau({ totals, t }) {
-  if (!totals) return null;
-  return (
-    <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-3 border border-white/20">
-      <p className="text-sm font-semibold tracking-widest text-white">{t.totauxReseauTitle}</p>
-      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-        <StatChip label={t.kpiMembresActifs} value={totals.membresActifs} accent="white" />
-        <StatChip label={t.kpiCellules} value={totals.cellules} accent="orange" />
-        <StatChip label={t.serviteurs} value={totals.serviteurs} accent="yellow" />
-        <StatChip label={t.leadersTitle} value={totals.leadersTotal} accent="purple" />
-        <StatChip label={t.evangelises} value={totals.evangelises} accent="pink" />
-      </div>
+      {allEglises.length > 1 && (
+        <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-2">
+          <p className="text-sm text-white/70 font-semibold mb-1">{t.classementTitle}</p>
+          {[...allEglises]
+            .sort((a, b) => culteGlobalDe(b) - culteGlobalDe(a))
+            .map((e, index) => {
+              const tot = culteGlobalDe(e);
+              const pct = totalReseauCulteGlobal > 0 ? Math.round((tot / totalReseauCulteGlobal) * 100) : 0;
+              return (
+                <div key={e.id} className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-white w-4 flex-shrink-0">#{index + 1}</span>
+                  <p className="text-sm text-white w-32 flex-shrink-0 truncate">{formatEgliseTitre(e)}</p>
+                  <BarreProgression pct={pct} color="bg-blue-400" />
+                  <span className="text-lg text-white font-semibold w-8 text-right">{tot}</span>
+                </div>
+              );
+            })}
+        </div>
+      )}
     </div>
   );
 }
@@ -863,14 +800,8 @@ function BlocStatsEglise({ stats, t }) {
 }
 
 // ─── CARTE ÉGLISE COMPACTE (liste plate, scalable à 100+ églises) ──
-// Chaque carte n'affiche QUE les chiffres propres à cette église (pas de
-// cumul avec ses filles) : les totaux agrégés par parent sont séparés
-// dans leur propre carte "Totaux (réseau)" au-dessus de la liste, afin de
-// ne jamais mélanger un total de sous-réseau avec le chiffre individuel
-// d'une église précise.
-// Expanded ("Voir le détail complet") : détail complet, propre à
-// l'église uniquement, bouton repositionné à droite sous les cartes KPI
-// (point 2).
+// Collapsed : les 6 indicateurs choisis par le superviseur.
+// Expanded ("Voir le détail complet") : tout le reste, ventilé par église.
 function CarteEgliseCompacte({
   eglise, membresActifs, tauxPresence, leaders, evangelises, conversions, besoins, isRoot, parentLabel, t,
 }) {
@@ -890,8 +821,14 @@ function CarteEgliseCompacte({
   return (
     <div className="bg-white/10 rounded-2xl overflow-hidden">
       <div className="px-4 py-4">
-        <div className="mb-1">
+        <div className="flex items-center justify-between gap-3 mb-1">
           <span className="text-sm font-semibold text-white truncate">{titre}</span>
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition flex-shrink-0"
+          >
+            {expanded ? t.voirMoins : t.voirDetail} {expanded ? "▲" : "▼"}
+          </button>
         </div>
         {/* "Église superviseure" badge supprimé : le rang de l'église racine
             est désormais visible via sa position en tête + l'indentation
@@ -903,21 +840,13 @@ function CarteEgliseCompacte({
             </span>
           </div>
         )}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           <StatChip label={t.kpiMembresActifs} value={membresActifs} accent="white" />
           <StatChip label={t.kpiCellules} value={cellulesTotal} accent="orange" />
           <StatChip label={t.serviteurs} value={serviteursTotal} accent="yellow" />
           <StatChip label={t.leadersTitle} value={leaders?.total || 0} accent="purple" />
           <StatChip label={t.evangelises} value={evangelises} accent="pink" />
           <StatChip label={topBesoinLabel} value={topBesoinValue} accent="amber" />
-        </div>
-        <div className="flex justify-end">
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition flex-shrink-0"
-          >
-            {expanded ? t.voirMoins : t.voirDetail} {expanded ? "▲" : "▼"}
-          </button>
         </div>
       </div>
 
@@ -932,11 +861,9 @@ function CarteEgliseCompacte({
             />
           </div>
           <BlocStatsEglise stats={stats} t={t} />
-          {/* Point 4 : carte besoins avant "Leaders en développement".
-              Point 6 : besoins propres à cette église, non cumulés. */}
-          <CarteTop5Besoins besoinsGlobaux={besoins} modeReseau={false} t={t} />
           <CarteLeadersDeveloppement leadersStats={leaders} t={t} />
           <CarteConversions cd={conversions} t={t} />
+          <CarteTop5Besoins besoinsGlobaux={besoins} t={t} />
         </div>
       )}
     </div>
@@ -944,6 +871,23 @@ function CarteEgliseCompacte({
 }
 
 // ─── ARBRE HIÉRARCHIQUE DES ÉGLISES (onglet "Par église") ─────
+// Construit une liste plate ordonnée en profondeur (DFS) à partir de
+// parent_eglise_id : l'église du profil connecté (rootId) est toujours en
+// tête (profondeur 0), puis chaque église fille apparaît juste après sa
+// mère, à une profondeur +1 — d'où l'effet de cascade à l'affichage.
+// Quand une recherche est active, on ne garde que les églises qui
+// correspondent + leurs ancêtres (pour conserver le fil de la cascade).
+function getParentEgliseId(e) {
+  return (
+    e.parent_eglise_id ??
+    e.parent_id ??
+    e.eglise_mere_id ??
+    e.eglise_parent_id ??
+    e.superviseur_id ??
+    null
+  );
+}
+
 function buildEgliseHierarchy(eglises, rootId, triEglise, searchTerm) {
   const byId = {};
   eglises.forEach((e) => {
@@ -995,6 +939,10 @@ function buildEgliseHierarchy(eglises, rootId, triEglise, searchTerm) {
   };
   if (byId[rootId]) visit(rootId, 0);
 
+  // Filet de sécurité : église dont la chaîne de mères ne remonte pas
+  // jusqu'à rootId (ne devrait pas arriver, get_descendant_eglises étant
+  // déjà scopée sur ce réseau) — on l'affiche quand même plutôt que de la
+  // perdre silencieusement.
   const dejaVisitees = new Set(flat.map((f) => f.eglise.id));
   eglises.forEach((e) => {
     if (dejaVisitees.has(e.id)) return;
@@ -1025,9 +973,13 @@ function StatGlobalPage() {
   const [totalPiliers, setTotalPiliers] = useState(0);
   const [famillesFeatureActive, setFamillesFeatureActive] = useState(false);
 
+  // ── Recherche / tri pour l'onglet "Par église" ──
   const [rechercheEglise, setRechercheEglise] = useState("");
   const [triEglise, setTriEglise] = useState("alphabetique"); // "alphabetique" | "participation"
 
+  // ── Données ventilées par eglise_id (source unique de vérité : utilisées
+  // à la fois par l'onglet "Par église" ET par la "Vue d'ensemble", qui
+  // pioche désormais uniquement l'entrée [rootId] de chaque map) ──
   const [membresActifsParEglise, setMembresActifsParEglise] = useState({});
   const [tauxPresenceParEglise, setTauxPresenceParEglise] = useState({});
   const [leadersStatsParEglise, setLeadersStatsParEglise] = useState({});
@@ -1039,6 +991,10 @@ function StatGlobalPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Besoins (par église) — seule partie encore calculée en JS, le champ
+  // `besoin` de la table `suivis` étant un JSON hétérogène (text ou déjà
+  // array/objet selon la ligne) trop fragile à parser fiablement en SQL.
+  // Volume faible (quelques centaines de lignes max), donc coût négligeable. ──
   const fetchBesoins = async (egliseIds, debut, fin) => {
     const { data: membresActifsData } = await supabase
       .from("membres_complets")
@@ -1137,6 +1093,9 @@ function StatGlobalPage() {
       prevFin = finPrec.toISOString().split("T")[0];
     }
 
+    // Snapshot serviteurs : indépendant de la plage debut/fin choisie pour
+    // le culte/formation/etc. Seule la date de fin compte (mode Tranche de
+    // dates avec fin explicite), sinon la snapshot est prise à aujourd'hui.
     const todayStr = new Date().toISOString().split("T")[0];
     const effectiveDateFinServiteurs = isPerso && fin ? fin : todayStr;
 
@@ -1151,6 +1110,9 @@ function StatGlobalPage() {
       const rootIdValue = profileData.eglise_id;
       setRootId(rootIdValue);
 
+      // ── Appel RPC unique : remplace ~15 requêtes (culte, formation,
+      // bapteme, evangelisation, cellules actives, serviteurs, présences,
+      // leaders, conversions, familles, piliers) par 1 aller-retour ──
       const { data: reseauData, error: reseauError } = await supabase.rpc(
         "get_stats_reseau",
         {
@@ -1172,6 +1134,9 @@ function StatGlobalPage() {
         return;
       }
 
+      // ── Reconstruction de allEglises directement depuis le JSON RPC
+      // (plus besoin d'un appel séparé à get_descendant_eglises : le RPC
+      // renvoie déjà nom/denomination/ville/pays/parent_eglise_id) ──
       const membresActifsMap = {};
       const tauxParEgliseMap = {};
       const leadersParEgliseValue = {};
@@ -1204,6 +1169,8 @@ function StatGlobalPage() {
       setTotalFamillesActives(rootData?.famillesActives || 0);
       setTotalPiliers(rootData?.piliers || 0);
 
+      // ── Période précédente : uniquement pour l'église connectée (seule
+      // église réellement utilisée pour le delta "vs période précédente") ──
       if (prevDebut && prevFin) {
         const { data: prevData, error: prevError } = await supabase.rpc(
           "get_stats_eglise_precedente",
@@ -1220,6 +1187,7 @@ function StatGlobalPage() {
         setPrevTotaux(null);
       }
 
+      // ── Besoins (reste en JS, voir fetchBesoins) ──
       const besoinsData = await fetchBesoins(egliseIds, debut, fin);
       setBesoinsParEglise(besoinsData);
 
@@ -1241,23 +1209,17 @@ function StatGlobalPage() {
     { key: "eglises", label: t.ongletEglises },
   ];
 
+  // ── Liste en cascade (arbre), profondeur DFS : église racine en tête,
+  // puis chaque église fille juste après sa mère (parent_eglise_id) ──
   const hierarchieEglises = buildEgliseHierarchy(allEglises, rootId, triEglise, rechercheEglise);
 
+  // ── Lookup pour retrouver l'église parente directe (nom + dénomination) ──
   const eglisesMapById = {};
   allEglises.forEach((e) => {
     eglisesMapById[e.id] = e;
   });
 
   const rootEglise = eglisesMapById[rootId] || null;
-
-  // ── Map { parentId -> [enfants] } + totaux réseau (racine + toutes ses
-  // filles en cascade), calculés UNE FOIS et affichés dans leur propre
-  // carte "Totaux (réseau)" — séparée des cartes individuelles, qui elles
-  // n'affichent que les chiffres propres à chaque église. ──
-  const childrenMapGlobal = buildChildrenMap(allEglises, rootId);
-  const totauxReseau = rootEglise
-    ? computeSubtreeTotals(rootEglise, childrenMapGlobal, membresActifsParEglise, leadersStatsParEglise)
-    : null;
 
   return (
     <div
@@ -1430,8 +1392,6 @@ function StatGlobalPage() {
               </select>
             </div>
 
-            <CarteTotauxReseau totals={totauxReseau} t={t} />
-
             <SectionTitle>
               {hierarchieEglises.length}{" "}
               {hierarchieEglises.length > 1 ? t.eglises : t.eglise}{" "}
@@ -1445,7 +1405,6 @@ function StatGlobalPage() {
                 ? null
                 : eglisesMapById[parentId] || eglisesMapById[rootId] || null;
               const parentLabel = formatSupervisionLabel(parentEglise);
-
               return (
                 <div
                   key={eglise.id}

@@ -161,6 +161,17 @@ console.log("roles:", roles);
         console.error("Erreur assignation superviseur cellules:", superviseurError);
     }
 
+    // ── SuperviseurFamilles → assigner toutes les familles de l'église ──
+if (roles.includes("SuperviseurFamilles")) {
+  const { error: superviseurFamillesError } = await supabaseAdmin
+    .from("familles")
+    .update({ superviseur_id: newUserId })
+    .eq("eglise_id", eglise_id);
+
+  if (superviseurFamillesError)
+    console.error("Erreur assignation superviseur familles:", superviseurFamillesError);
+}
+
     // ── 5️⃣ Création famille si ResponsableFamilles ── ← NOUVEAU
     if (roles.includes("ResponsableFamilles") && famille_nom && famille_secteur) {
       const { error: familleError } = await supabaseAdmin

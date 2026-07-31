@@ -789,7 +789,8 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
                         setDoublonsDetected((prev) => prev.filter((c) => c.id !== d.id));
                         setShowDoublonPopup(false);
                       }}
-                      className="bg-green-500 text-white px-3 py-1 rounded font-semibold"
+                      disabled={loadingSend}
+                      className="bg-green-500 text-white px-3 py-1 rounded font-semibold disabled:opacity-50"
                     >
                       {t.envoyer}
                     </button>
@@ -836,17 +837,19 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
             />
             <div className="flex gap-3">
               <button
-                onClick={() => { setShowWhatsappPopup(false); setPhoneNumber(""); setTargetName(""); }}
-                className="flex-1 py-3 bg-gray-300 rounded-2xl font-semibold"
-              >
-                {t.annuler}
-              </button>
-              <button
-                onClick={() => sendToWhatsapp(contactsToSendRef.current, selectedTargetTypeRef.current, selectedTargetRef.current)}
-                className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold"
-              >
-                {t.envoyerBtn}
-              </button>
+              onClick={() => { setShowWhatsappPopup(false); setPhoneNumber(""); setTargetName(""); }}
+              disabled={loadingSend}
+              className="flex-1 py-3 bg-gray-300 rounded-2xl font-semibold disabled:opacity-50"
+            >
+              {t.annuler}
+            </button>
+            <button
+              onClick={() => sendToWhatsapp(contactsToSendRef.current, selectedTargetTypeRef.current, selectedTargetRef.current)}
+              disabled={loadingSend}
+              className="flex-1 py-3 bg-green-500 text-white rounded-2xl font-semibold disabled:opacity-50"
+            >
+              {loadingSend ? t.envoiLoading : t.envoyerBtn}
+            </button>
             </div>
           </div>
         </div>

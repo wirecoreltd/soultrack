@@ -420,6 +420,9 @@ export default function AddEvangelise({ onNewEvangelise }) {
           date_suivi: new Date().toISOString(),
           eglise_id: evangelise.eglise_id,
           type_evangelisation: evangelise.type_evangelisation,
+          // ✅ CORRECTIF : sans ce champ, send-push ignore l'insertion
+          // (sa condition exige notification_responsable === true/"true")
+          notification_responsable: true,
         };
         const { error: suiviError } = await supabase.from("suivis_des_evangelises").insert([suiviData]);
         if (suiviError) console.error("Erreur insertion suivis (cellule):", suiviError);
@@ -441,6 +444,8 @@ export default function AddEvangelise({ onNewEvangelise }) {
           date_suivi: new Date().toISOString(),
           eglise_id: evangelise.eglise_id,
           type_evangelisation: evangelise.type_evangelisation,
+          // ✅ CORRECTIF : idem, requis pour que send-push détecte l'insertion
+          notification_responsable: true,
         };
         const { error: suiviError } = await supabase.from("suivis_des_evangelises").insert([suiviData]);
         if (suiviError) console.error("Erreur insertion suivis (famille):", suiviError);

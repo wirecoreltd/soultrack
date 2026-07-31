@@ -481,15 +481,27 @@ const urlFamilleFull = router.query.famille_full
         type_conversion: formData.type_conversion || null,
       };
 
-      const { data: newMember, error } = await supabase
-        .from("membres_complets")
-        .insert([newMemberData])
-        .select()
-        .single();
+      // Flux "lien public" : pas de session → auth.uid() est null,
+      // donc les policies SELECT bloquent le RETURNING d'un .select().
+      // On insère sans demander le retour de la ligne dans ce cas.
+      if (isFromLink) {
+        const { error } = await supabase
+          .from("membres_complets")
+          .insert([newMemberData]);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { data: newMember, error } = await supabase
+          .from("membres_complets")
+          .insert([newMemberData])
+          .select()
+          .single();
 
-      setAllMembers((prev) => [...prev, newMember]);
+        if (error) throw error;
+
+        setAllMembers((prev) => [...prev, newMember]);
+      }
+
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
 

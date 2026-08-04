@@ -35,10 +35,10 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
   const canSeeNewInCellule = ROLES_NEW_IN_CELLULE.some(r => Array.isArray(userRole) ? userRole.includes(r) : userRole === r);
 
   const totalCount =
-      (canSeeMembres                          ? countMembres         : 0)
-    + (canSeeEvangelises                      ? countEvangelises     : 0)
-    + (canSeeSuperviseur || canSeeResponsable ? countCellule         : 0)
-    + (canSeeNewInCellule                     ? countNewInCellule    : 0)
+      (canSeeMembres                             ? countMembres         : 0)
+    + (canSeeEvangelises                         ? countEvangelises     : 0)
+    + (canSeeSuperviseur || canSeeResponsable    ? countCellule         : 0)
+    + (canSeeNewInCellule || canSeeResponsable   ? countNewInCellule    : 0)
     + countAssignes
     + countAssignesEvang
     + countInvitations;
@@ -106,6 +106,7 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
     }
 
     // 5. is_new_in_cellule
+    // Admin + SuperviseurCellule → tous les ajouts en cellule de l'église
     if (canSeeNewInCellule) {
       const { count } = await supabase
         .from("membres_complets")
@@ -113,6 +114,23 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         .eq("eglise_id", egliseId)
         .eq("is_new_in_cellule", "true");
       setCountNewInCellule(count || 0);
+    }
+
+    // ResponsableCellule (sans Admin/Superviseur) → uniquement SES propres cellules
+    if (canSeeResponsable && !canSeeNewInCellule) {
+      const { data: cellulesResp } = await supabase
+        .from("cellules")
+        .select("id")
+        .eq("responsable_id", userId);
+      const idsResp = (cellulesResp || []).map((c) => c.id);
+      if (idsResp.length > 0) {
+        const { count } = await supabase
+          .from("membres_complets")
+          .select("id", { count: "exact", head: true })
+          .in("cellule_id", idsResp)
+          .eq("is_new_in_cellule", "true");
+        setCountNewInCellule(count || 0);
+      }
     }
 
     // 6. Membres assignés
@@ -283,6 +301,24 @@ export default function NotificationBell({ egliseId, userRole, userId }) {
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "membres_complets" }, (payload) => {
           const row = payload.new;
           if (row.eglise_id === egliseId && row.is_new_in_cellule !== "true") {
+            setCountNewInCellule((prev) => Math.max(0, prev - 1));
+          }
+        });
+    }
+
+    // ResponsableCellule (sans Admin/Superviseur) → temps réel scopé à ses cellules
+    if (canSeeResponsable && !canSeeNewInCellule && celluleIds.length > 0) {
+      channel
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "membres_complets" }, (payload) => {
+          const row = payload.new;
+          if (celluleIds.includes(row.cellule_id) && row.is_new_in_cellule === "true") {
+            setCountNewInCellule((prev) => prev + 1);
+            setIsNew(true); setTimeout(() => setIsNew(false), 2000);
+          }
+        })
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "membres_complets" }, (payload) => {
+          const row = payload.new;
+          if (celluleIds.includes(row.cellule_id) && row.is_new_in_cellule !== "true") {
             setCountNewInCellule((prev) => Math.max(0, prev - 1));
           }
         });

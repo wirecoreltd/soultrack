@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
+import { useFeature } from "../components/FeaturesContext";
 
 // ✅ Liste canonique unique des ministères (valeurs stockées en base, en français)
 const MINISTERE_KEYS = [
@@ -248,7 +249,6 @@ export default function EditMemberPopup({
   cellules,
   familles,
   conseillers,
-  famillesFeatureActive = true,
   onClose,
   onUpdateMember,
   currentUserRoles,
@@ -256,6 +256,7 @@ export default function EditMemberPopup({
 }) {
   const { lang } = useLang();
   const t = translations[lang];
+  const famillesFeatureActive = useFeature("familles");
 
   const isPrivileged = (currentUserRoles || []).some((r) =>
     ["Administrateur", "ResponsableIntegration"].includes(r)

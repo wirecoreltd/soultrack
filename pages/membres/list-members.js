@@ -1706,12 +1706,11 @@ useEffect(() => {
         </>
       )}
 
-      <EditMemberPopup
+       <EditMemberPopup
         member={editMember}
         cellules={cellulesActive ? cellules : []}
         familles={famillesActive ? familles : []}
         conseillers={conseillerActive ? conseillers : []}
-        famillesFeatureActive={famillesActive}
         currentUserRoles={getRoles(userProfile)}
         user={userProfile}
         onClose={() => setEditMember(null)}

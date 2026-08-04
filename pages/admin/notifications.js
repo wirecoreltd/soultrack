@@ -200,11 +200,23 @@ function NotificationsContent() {
     }
 
     // ── 3. Ajoutés en cellule/famille ──
+    // Admin + SuperviseurCellule → toute l'église
     if (isAdmin || isSuperviseurCellule) {
       const { data } = await supabase.from("membres_complets")
         .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id, is_new_in_cellule")
         .eq("eglise_id", profile.eglise_id).eq("is_new_in_cellule", "true").order("created_at", { ascending: false });
       allNotifs = [...allNotifs, ...(data || []).map((m) => ({ ...m, _type: "new_in_cellule", _date: m.created_at }))];
+    }
+    // ResponsableCellule (sans Admin/Superviseur) → uniquement ses propres cellules
+    else if (isResponsableCellule) {
+      const { data: cellulesResp } = await supabase.from("cellules").select("id").eq("responsable_id", profile.id);
+      const idsResp = (cellulesResp || []).map((c) => c.id);
+      if (idsResp.length > 0) {
+        const { data } = await supabase.from("membres_complets")
+          .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id, is_new_in_cellule")
+          .in("cellule_id", idsResp).eq("is_new_in_cellule", "true").order("created_at", { ascending: false });
+        allNotifs = [...allNotifs, ...(data || []).map((m) => ({ ...m, _type: "new_in_cellule", _date: m.created_at }))];
+      }
     }
 
     // ── 4. Membres assignés ──

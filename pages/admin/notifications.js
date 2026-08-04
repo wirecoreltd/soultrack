@@ -21,6 +21,11 @@
 //
 // Realtime : membres_complets, evangelises, suivis_des_evangelises,
 // eglise_supervisions (INSERT/UPDATE)
+//
+// Perf : les 6 sections de fetchNotifications sont exécutées en
+// parallèle via Promise.all (au lieu d'un enchaînement séquentiel
+// d'await), et les sous-requêtes internes (cellules/familles du
+// responsable) sont elles aussi parallélisées.
 // ═══════════════════════════════════════════════════════════════
 
 import { useEffect, useState, useRef } from "react";
@@ -42,6 +47,9 @@ const translations = {
     newLabel: (count) => `${count} nouveau${count > 1 ? "x" : ""}`,
     clickInvitation: "📩 Cliquez pour répondre à l'invitation",
     fromEvang: "📣 Vient de l'évangélisation",
+    markAllRead: "✓ Tout marquer comme lu",
+    markingAll: "Traitement...",
+    confirmMarkAll: "Marquer toutes les notifications comme lues ? Les invitations en attente resteront visibles car elles nécessitent une réponse.",
     badges: {
       nouveau:              "Nouveau membre",
       existant:             "Existant",
@@ -61,6 +69,9 @@ const translations = {
     newLabel: (count) => `${count} new`,
     clickInvitation: "📩 Click to respond to the invitation",
     fromEvang: "📣 From evangelisation",
+    markAllRead: "✓ Mark all as read",
+    markingAll: "Processing...",
+    confirmMarkAll: "Mark all notifications as read? Pending invitations will remain visible since they require a response.",
     badges: {
       nouveau:              "New member",
       existant:             "Existing",
@@ -140,6 +151,7 @@ function NotificationsContent() {
   const [notifications, setNotifications] = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [search,        setSearch]        = useState("");
+  const [markingAll,    setMarkingAll]    = useState(false);
   const channelRef = useRef(null);
 
   useEffect(() => {
@@ -157,6 +169,7 @@ function NotificationsContent() {
     init();
   }, []);
 
+  // ─── fetchNotifications : les 6 sections tournent en parallèle ───────────
   const fetchNotifications = async (profile) => {
     if (!profile) return;
     const roles = getRoles(profile);
@@ -167,124 +180,155 @@ function NotificationsContent() {
     const isResponsableCellule = roles.includes("ResponsableCellule");
     const isConseiller         = roles.includes("Conseiller");
 
-    let allNotifs = [];
-
     // ── 1. Nouveaux membres ──
-    if (isAdmin || isResponsableInteg || isConseiller || isResponsableCellule) {
-      let query = supabase.from("membres_complets")
-        .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id")
-        .eq("eglise_id", profile.eglise_id).eq("etat_contact", "nouveau").order("created_at", { ascending: false });
+    const fetchNouveaux = async () => {
+      if (!(isAdmin || isResponsableInteg || isConseiller || isResponsableCellule)) return [];
 
       if (isConseiller && !isAdmin && !isResponsableInteg) {
         const { data: assignments } = await supabase.from("suivi_assignments").select("membre_id").eq("conseiller_id", profile.id);
         const ids = (assignments || []).map((a) => a.membre_id);
-        if (ids.length === 0) query = null; else query = query.in("id", ids);
+        if (ids.length === 0) return [];
+        const { data } = await supabase.from("membres_complets")
+          .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id")
+          .eq("eglise_id", profile.eglise_id).eq("etat_contact", "nouveau").in("id", ids).order("created_at", { ascending: false });
+        return (data || []).map((m) => ({ ...m, _type: "nouveau", _date: m.created_at }));
       }
+
       if (isResponsableCellule && !isAdmin && !isResponsableInteg && !isConseiller) {
         const { data: cellules } = await supabase.from("cellules").select("id").eq("responsable_id", profile.id);
         const celluleIds = (cellules || []).map((c) => c.id);
-        if (celluleIds.length === 0) query = null; else query = query.in("cellule_id", celluleIds);
+        if (celluleIds.length === 0) return [];
+        const { data } = await supabase.from("membres_complets")
+          .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id")
+          .eq("eglise_id", profile.eglise_id).eq("etat_contact", "nouveau").in("cellule_id", celluleIds).order("created_at", { ascending: false });
+        return (data || []).map((m) => ({ ...m, _type: "nouveau", _date: m.created_at }));
       }
-      if (query) {
-        const { data } = await query;
-        allNotifs = [...allNotifs, ...(data || []).map((m) => ({ ...m, _type: "nouveau", _date: m.created_at }))];
-      }
-    }
+
+      const { data } = await supabase.from("membres_complets")
+        .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id")
+        .eq("eglise_id", profile.eglise_id).eq("etat_contact", "nouveau").order("created_at", { ascending: false });
+      return (data || []).map((m) => ({ ...m, _type: "nouveau", _date: m.created_at }));
+    };
 
     // ── 2. Évangélisés non envoyés ──
-    if (isAdmin || isResponsableEvang) {
+    const fetchEvangelises = async () => {
+      if (!(isAdmin || isResponsableEvang)) return [];
       const { data } = await supabase.from("evangelises")
         .select("id, prenom, nom, created_at, eglise_id")
         .eq("eglise_id", profile.eglise_id).eq("status_suivi", "Non envoyé").order("created_at", { ascending: false });
-      allNotifs = [...allNotifs, ...(data || []).map((e) => ({ ...e, _type: "evangelise", _date: e.created_at }))];
-    }
+      return (data || []).map((e) => ({ ...e, _type: "evangelise", _date: e.created_at }));
+    };
 
     // ── 3. Ajoutés en cellule/famille ──
-    // Admin + SuperviseurCellule → toute l'église
-    if (isAdmin || isSuperviseurCellule) {
-      const { data } = await supabase.from("membres_complets")
-        .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id, is_new_in_cellule")
-        .eq("eglise_id", profile.eglise_id).eq("is_new_in_cellule", "true").order("created_at", { ascending: false });
-      allNotifs = [...allNotifs, ...(data || []).map((m) => ({ ...m, _type: "new_in_cellule", _date: m.created_at }))];
-    }
-    // ResponsableCellule (sans Admin/Superviseur) → uniquement ses propres cellules
-    else if (isResponsableCellule) {
-      const { data: cellulesResp } = await supabase.from("cellules").select("id").eq("responsable_id", profile.id);
-      const idsResp = (cellulesResp || []).map((c) => c.id);
-      if (idsResp.length > 0) {
+    const fetchNewInCellule = async () => {
+      if (isAdmin || isSuperviseurCellule) {
+        const { data } = await supabase.from("membres_complets")
+          .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id, is_new_in_cellule")
+          .eq("eglise_id", profile.eglise_id).eq("is_new_in_cellule", "true").order("created_at", { ascending: false });
+        return (data || []).map((m) => ({ ...m, _type: "new_in_cellule", _date: m.created_at }));
+      }
+      if (isResponsableCellule) {
+        const { data: cellulesResp } = await supabase.from("cellules").select("id").eq("responsable_id", profile.id);
+        const idsResp = (cellulesResp || []).map((c) => c.id);
+        if (idsResp.length === 0) return [];
         const { data } = await supabase.from("membres_complets")
           .select("id, prenom, nom, ville, etat_contact, created_at, cellule_id, eglise_id, is_new_in_cellule")
           .in("cellule_id", idsResp).eq("is_new_in_cellule", "true").order("created_at", { ascending: false });
-        allNotifs = [...allNotifs, ...(data || []).map((m) => ({ ...m, _type: "new_in_cellule", _date: m.created_at }))];
+        return (data || []).map((m) => ({ ...m, _type: "new_in_cellule", _date: m.created_at }));
       }
-    }
+      return [];
+    };
 
     // ── 4. Membres assignés ──
-    {
-      let assignesNotifs = [];
-      const { data: parConseiller } = await supabase.from("membres_complets")
-        .select("id, prenom, nom, ville, created_at, date_envoi_suivi, eglise_id, suivi_cellule_nom, famille_id, cellule_id")
-        .eq("suivi_responsable_id", profile.id).eq("notification_responsable", true).order("date_envoi_suivi", { ascending: false });
-      assignesNotifs = [...assignesNotifs, ...(parConseiller || [])];
-
-      const { data: cellulesDuResp } = await supabase.from("cellules").select("id").eq("responsable_id", profile.id);
-      const idsCellules = (cellulesDuResp || []).map((c) => c.id);
-      if (idsCellules.length > 0) {
-        const { data: parCellule } = await supabase.from("membres_complets")
+    const fetchAssignes = async () => {
+      const [parConseillerRes, cellulesDuResp, famillesDuResp] = await Promise.all([
+        supabase.from("membres_complets")
           .select("id, prenom, nom, ville, created_at, date_envoi_suivi, eglise_id, suivi_cellule_nom, famille_id, cellule_id")
-          .in("cellule_id", idsCellules).eq("notification_responsable", true).order("date_envoi_suivi", { ascending: false });
-        assignesNotifs = [...assignesNotifs, ...(parCellule || [])];
-      }
+          .eq("suivi_responsable_id", profile.id).eq("notification_responsable", true).order("date_envoi_suivi", { ascending: false }),
+        supabase.from("cellules").select("id").eq("responsable_id", profile.id),
+        supabase.from("familles").select("id").eq("responsable_id", profile.id),
+      ]);
 
-      const { data: famillesDuResp } = await supabase.from("familles").select("id").eq("responsable_id", profile.id);
-      const idsFamilles = (famillesDuResp || []).map((f) => f.id);
-      if (idsFamilles.length > 0) {
-        const { data: parFamille } = await supabase.from("membres_complets")
-          .select("id, prenom, nom, ville, created_at, date_envoi_suivi, eglise_id, suivi_cellule_nom, famille_id, cellule_id")
-          .in("famille_id", idsFamilles).eq("notification_responsable", true).order("date_envoi_suivi", { ascending: false });
-        assignesNotifs = [...assignesNotifs, ...(parFamille || [])];
-      }
-      allNotifs = [...allNotifs, ...assignesNotifs.map((m) => ({ ...m, _type: "membre_assigne", _date: m.date_envoi_suivi || m.created_at }))];
-    }
+      const idsCellules = (cellulesDuResp.data || []).map((c) => c.id);
+      const idsFamilles = (famillesDuResp.data || []).map((f) => f.id);
+
+      const [parCelluleRes, parFamilleRes] = await Promise.all([
+        idsCellules.length > 0
+          ? supabase.from("membres_complets")
+              .select("id, prenom, nom, ville, created_at, date_envoi_suivi, eglise_id, suivi_cellule_nom, famille_id, cellule_id")
+              .in("cellule_id", idsCellules).eq("notification_responsable", true).order("date_envoi_suivi", { ascending: false })
+          : Promise.resolve({ data: [] }),
+        idsFamilles.length > 0
+          ? supabase.from("membres_complets")
+              .select("id, prenom, nom, ville, created_at, date_envoi_suivi, eglise_id, suivi_cellule_nom, famille_id, cellule_id")
+              .in("famille_id", idsFamilles).eq("notification_responsable", true).order("date_envoi_suivi", { ascending: false })
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      const assignesNotifs = [
+        ...(parConseillerRes.data || []),
+        ...(parCelluleRes.data || []),
+        ...(parFamilleRes.data || []),
+      ];
+      return assignesNotifs.map((m) => ({ ...m, _type: "membre_assigne", _date: m.date_envoi_suivi || m.created_at }));
+    };
 
     // ── 5. Évangélisés assignés ──
-    {
-      let assignesEvangNotifs = [];
-      const { data: parConseiller } = await supabase.from("suivis_des_evangelises")
-        .select("id, prenom, nom, ville, date_suivi, date_evangelise, eglise_id, conseiller_id, cellule_id, famille_id")
-        .eq("conseiller_id", profile.id).eq("notification_responsable", true).order("date_suivi", { ascending: false });
-      assignesEvangNotifs = [...assignesEvangNotifs, ...(parConseiller || [])];
-
-      const { data: cellulesDuResp } = await supabase.from("cellules").select("id").eq("responsable_id", profile.id);
-      const idsCellules = (cellulesDuResp || []).map((c) => c.id);
-      if (idsCellules.length > 0) {
-        const { data: parCellule } = await supabase.from("suivis_des_evangelises")
+    const fetchAssignesEvang = async () => {
+      const [parConseillerRes, cellulesDuResp, famillesDuResp] = await Promise.all([
+        supabase.from("suivis_des_evangelises")
           .select("id, prenom, nom, ville, date_suivi, date_evangelise, eglise_id, conseiller_id, cellule_id, famille_id")
-          .in("cellule_id", idsCellules).eq("notification_responsable", true).order("date_suivi", { ascending: false });
-        assignesEvangNotifs = [...assignesEvangNotifs, ...(parCellule || [])];
-      }
+          .eq("conseiller_id", profile.id).eq("notification_responsable", true).order("date_suivi", { ascending: false }),
+        supabase.from("cellules").select("id").eq("responsable_id", profile.id),
+        supabase.from("familles").select("id").eq("responsable_id", profile.id),
+      ]);
 
-      const { data: famillesDuResp } = await supabase.from("familles").select("id").eq("responsable_id", profile.id);
-      const idsFamilles = (famillesDuResp || []).map((f) => f.id);
-      if (idsFamilles.length > 0) {
-        const { data: parFamille } = await supabase.from("suivis_des_evangelises")
-          .select("id, prenom, nom, ville, date_suivi, date_evangelise, eglise_id, conseiller_id, cellule_id, famille_id")
-          .in("famille_id", idsFamilles).eq("notification_responsable", true).order("date_suivi", { ascending: false });
-        assignesEvangNotifs = [...assignesEvangNotifs, ...(parFamille || [])];
-      }
-      allNotifs = [...allNotifs, ...assignesEvangNotifs.map((m) => ({ ...m, _type: "membre_assigne_evang", _date: m.date_suivi || m.date_evangelise }))];
-    }
+      const idsCellules = (cellulesDuResp.data || []).map((c) => c.id);
+      const idsFamilles = (famillesDuResp.data || []).map((f) => f.id);
+
+      const [parCelluleRes, parFamilleRes] = await Promise.all([
+        idsCellules.length > 0
+          ? supabase.from("suivis_des_evangelises")
+              .select("id, prenom, nom, ville, date_suivi, date_evangelise, eglise_id, conseiller_id, cellule_id, famille_id")
+              .in("cellule_id", idsCellules).eq("notification_responsable", true).order("date_suivi", { ascending: false })
+          : Promise.resolve({ data: [] }),
+        idsFamilles.length > 0
+          ? supabase.from("suivis_des_evangelises")
+              .select("id, prenom, nom, ville, date_suivi, date_evangelise, eglise_id, conseiller_id, cellule_id, famille_id")
+              .in("famille_id", idsFamilles).eq("notification_responsable", true).order("date_suivi", { ascending: false })
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      const assignesEvangNotifs = [
+        ...(parConseillerRes.data || []),
+        ...(parCelluleRes.data || []),
+        ...(parFamilleRes.data || []),
+      ];
+      return assignesEvangNotifs.map((m) => ({ ...m, _type: "membre_assigne_evang", _date: m.date_suivi || m.date_evangelise }));
+    };
 
     // ── 6. Invitations en attente ──
-    {
+    const fetchInvitations = async () => {
       const { data } = await supabase.from("eglise_supervisions")
         .select("id, eglise_nom, eglise_denomination, eglise_ville, eglise_pays, invitation_token, created_at, statut, superviseur_eglise_id")
         .eq("supervisee_eglise_id", profile.eglise_id).eq("statut", "pending").order("created_at", { ascending: false });
-      allNotifs = [...allNotifs, ...(data || []).map((inv) => ({
+      return (data || []).map((inv) => ({
         ...inv, prenom: inv.eglise_denomination || "", nom: inv.eglise_nom || "",
         ville: inv.eglise_ville || "", _type: "invitation", _date: inv.created_at, _token: inv.invitation_token,
-      }))];
-    }
+      }));
+    };
+
+    // Les 6 sections partent en même temps au lieu de s'enchaîner
+    const results = await Promise.all([
+      fetchNouveaux(),
+      fetchEvangelises(),
+      fetchNewInCellule(),
+      fetchAssignes(),
+      fetchAssignesEvang(),
+      fetchInvitations(),
+    ]);
+
+    const allNotifs = results.flat();
 
     allNotifs.sort((a, b) => new Date(b._date) - new Date(a._date));
     const seen = new Set();
@@ -446,6 +490,45 @@ function NotificationsContent() {
     router.push(`/membres/list-members?highlight=${n.id}`);
   };
 
+  // ─── Tout marquer comme lu ─────────────────────────────────────────────────
+  const handleMarkAllAsRead = async () => {
+    if (notifications.length === 0 || markingAll) return;
+    if (!window.confirm(t.confirmMarkAll)) return;
+
+    setMarkingAll(true);
+
+    // Les invitations exigent une réponse explicite : elles ne sont pas effacées ici
+    const toProcess = notifications.filter((n) => n._type !== "invitation");
+
+    const nouveauIds            = toProcess.filter((n) => n._type === "nouveau").map((n) => n.id);
+    const membreAssigneIds      = toProcess.filter((n) => n._type === "membre_assigne").map((n) => n.id);
+    const membreAssigneEvangIds = toProcess.filter((n) => n._type === "membre_assigne_evang").map((n) => n.id);
+    const evangeliseIds         = toProcess.filter((n) => n._type === "evangelise").map((n) => n.id);
+    const newInCelluleIds       = toProcess.filter((n) => n._type === "new_in_cellule").map((n) => n.id);
+
+    // "nouveau" est géré en local (localStorage), pas besoin d'appel réseau
+    nouveauIds.forEach((id) => markAsSeen(id));
+
+    const updates = [];
+    if (membreAssigneIds.length)
+      updates.push(supabase.from("membres_complets").update({ notification_responsable: false }).in("id", membreAssigneIds));
+    if (membreAssigneEvangIds.length)
+      updates.push(supabase.from("suivis_des_evangelises").update({ notification_responsable: false }).in("id", membreAssigneEvangIds));
+    if (evangeliseIds.length)
+      updates.push(supabase.from("evangelises").update({ status_suivi: "vu" }).in("id", evangeliseIds));
+    if (newInCelluleIds.length)
+      updates.push(supabase.from("membres_complets").update({ is_new_in_cellule: false }).in("id", newInCelluleIds));
+
+    try {
+      await Promise.all(updates);
+    } catch (err) {
+      console.error("Erreur lors du marquage global comme lu :", err);
+    }
+
+    setNotifications((prev) => prev.filter((n) => n._type === "invitation"));
+    setMarkingAll(false);
+  };
+
   const getIcon = (type) => {
     switch (type) {
       case "evangelise":           return "💗";
@@ -477,12 +560,37 @@ function NotificationsContent() {
           </span>
         </div>
         <p className="text-white/60 text-sm mb-4">{t.subtitle}</p>
-        <input
-          type="text" placeholder={t.searchPlaceholder} value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-4 py-2 rounded-lg border-0 text-black text-sm mb-4"
-          style={{ outline: "none" }}
-        />
+
+        <div className="flex items-center gap-2 mb-4">
+          <input
+            type="text" placeholder={t.searchPlaceholder} value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1 px-4 py-2 rounded-lg border-0 text-black text-sm"
+            style={{ outline: "none" }}
+          />
+          {notifications.length > 0 && (
+            <button
+              onClick={handleMarkAllAsRead}
+              disabled={markingAll}
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                color: "#fff",
+                fontSize: "12px",
+                fontWeight: "600",
+                borderRadius: "8px",
+                padding: "0 14px",
+                height: "38px",
+                whiteSpace: "nowrap",
+                border: "1px solid rgba(255,255,255,0.25)",
+                cursor: markingAll ? "default" : "pointer",
+                opacity: markingAll ? 0.6 : 1,
+              }}
+            >
+              {markingAll ? t.markingAll : t.markAllRead}
+            </button>
+          )}
+        </div>
+
         {loading ? (
           <p className="text-white text-center py-10">{t.loading}</p>
         ) : filtered.length === 0 ? (

@@ -3,8 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
-import Image from "next/image";
 import ProtectedRoute from "../../components/ProtectedRoute";
+import FooterHub from "../../components/FooterHub";
 import { useFeature } from "../../components/FeaturesContext";
 import { useLang } from "../../hooks/useLang";
 import { getPrefixForPays } from "../../lib/phonePrefix";
@@ -206,6 +206,99 @@ const translations = {
   },
 };
 
+// ─── Liste des pays (identique à ajouter-membre-cellule) ───
+const PAYS_DATA = [
+  { code: "af", fr: "Afghanistan", en: "Afghanistan" },
+  { code: "za", fr: "Afrique du Sud", en: "South Africa" },
+  { code: "dz", fr: "Algérie", en: "Algeria" },
+  { code: "de", fr: "Allemagne", en: "Germany" },
+  { code: "ao", fr: "Angola", en: "Angola" },
+  { code: "sa", fr: "Arabie Saoudite", en: "Saudi Arabia" },
+  { code: "ae", fr: "Émirats Arabes Unis", en: "United Arab Emirates" },
+  { code: "ar", fr: "Argentine", en: "Argentina" },
+  { code: "au", fr: "Australie", en: "Australia" },
+  { code: "be", fr: "Belgique", en: "Belgium" },
+  { code: "bj", fr: "Bénin", en: "Benin" },
+  { code: "br", fr: "Brésil", en: "Brazil" },
+  { code: "bf", fr: "Burkina Faso", en: "Burkina Faso" },
+  { code: "bi", fr: "Burundi", en: "Burundi" },
+  { code: "cm", fr: "Cameroun", en: "Cameroon" },
+  { code: "ca", fr: "Canada", en: "Canada" },
+  { code: "cl", fr: "Chili", en: "Chile" },
+  { code: "cn", fr: "Chine", en: "China" },
+  { code: "co", fr: "Colombie", en: "Colombia" },
+  { code: "cg", fr: "Congo", en: "Congo" },
+  { code: "kr", fr: "Corée du Sud", en: "South Korea" },
+  { code: "ci", fr: "Côte d'Ivoire", en: "Ivory Coast" },
+  { code: "dk", fr: "Danemark", en: "Denmark" },
+  { code: "eg", fr: "Egypte", en: "Egypt" },
+  { code: "es", fr: "Espagne", en: "Spain" },
+  { code: "us", fr: "États-Unis", en: "United States" },
+  { code: "et", fr: "Ethiopie", en: "Ethiopia" },
+  { code: "fi", fr: "Finlande", en: "Finland" },
+  { code: "fr", fr: "France", en: "France" },
+  { code: "ga", fr: "Gabon", en: "Gabon" },
+  { code: "gh", fr: "Ghana", en: "Ghana" },
+  { code: "gn", fr: "Guinée", en: "Guinea" },
+  { code: "ht", fr: "Haïti", en: "Haiti" },
+  { code: "in", fr: "Inde", en: "India" },
+  { code: "id", fr: "Indonésie", en: "Indonesia" },
+  { code: "ie", fr: "Irlande", en: "Ireland" },
+  { code: "il", fr: "Israël", en: "Israel" },
+  { code: "it", fr: "Italie", en: "Italy" },
+  { code: "jp", fr: "Japon", en: "Japan" },
+  { code: "ke", fr: "Kenya", en: "Kenya" },
+  { code: "lb", fr: "Liban", en: "Lebanon" },
+  { code: "lu", fr: "Luxembourg", en: "Luxembourg" },
+  { code: "mg", fr: "Madagascar", en: "Madagascar" },
+  { code: "ml", fr: "Mali", en: "Mali" },
+  { code: "ma", fr: "Maroc", en: "Morocco" },
+  { code: "mq", fr: "Martinique", en: "Martinique" },
+  { code: "mu", fr: "Maurice", en: "Mauritius" },
+  { code: "mr", fr: "Mauritanie", en: "Mauritania" },
+  { code: "mx", fr: "Mexique", en: "Mexico" },
+  { code: "mz", fr: "Mozambique", en: "Mozambique" },
+  { code: "na", fr: "Namibie", en: "Namibia" },
+  { code: "ne", fr: "Niger", en: "Niger" },
+  { code: "ng", fr: "Nigeria", en: "Nigeria" },
+  { code: "no", fr: "Norvège", en: "Norway" },
+  { code: "nz", fr: "Nouvelle-Zélande", en: "New Zealand" },
+  { code: "ug", fr: "Ouganda", en: "Uganda" },
+  { code: "pk", fr: "Pakistan", en: "Pakistan" },
+  { code: "nl", fr: "Pays-Bas", en: "Netherlands" },
+  { code: "pe", fr: "Pérou", en: "Peru" },
+  { code: "ph", fr: "Philippines", en: "Philippines" },
+  { code: "pl", fr: "Pologne", en: "Poland" },
+  { code: "pt", fr: "Portugal", en: "Portugal" },
+  { code: "cd", fr: "RDC", en: "DR Congo" },
+  { code: "do", fr: "République Dominicaine", en: "Dominican Republic" },
+  { code: "ro", fr: "Roumanie", en: "Romania" },
+  { code: "gb", fr: "Royaume-Uni", en: "United Kingdom" },
+  { code: "rw", fr: "Rwanda", en: "Rwanda" },
+  { code: "sn", fr: "Sénégal", en: "Senegal" },
+  { code: "sl", fr: "Sierra Leone", en: "Sierra Leone" },
+  { code: "sg", fr: "Singapour", en: "Singapore" },
+  { code: "so", fr: "Somalie", en: "Somalia" },
+  { code: "sd", fr: "Soudan", en: "Sudan" },
+  { code: "se", fr: "Suède", en: "Sweden" },
+  { code: "ch", fr: "Suisse", en: "Switzerland" },
+  { code: "tz", fr: "Tanzanie", en: "Tanzania" },
+  { code: "td", fr: "Tchad", en: "Chad" },
+  { code: "tg", fr: "Togo", en: "Togo" },
+  { code: "tn", fr: "Tunisie", en: "Tunisia" },
+  { code: "tr", fr: "Turquie", en: "Turkey" },
+  { code: "ua", fr: "Ukraine", en: "Ukraine" },
+  { code: "uy", fr: "Uruguay", en: "Uruguay" },
+  { code: "ve", fr: "Venezuela", en: "Venezuela" },
+  { code: "vn", fr: "Vietnam", en: "Vietnam" },
+  { code: "zw", fr: "Zimbabwe", en: "Zimbabwe" },
+];
+
+function getIsoCode(countryName) {
+  const found = PAYS_DATA.find(p => p.fr === countryName || p.en === countryName);
+  return found?.code || "un";
+}
+
 // ─── Helper: valeur initiale du formulaire ───
 const initialFormData = () => ({
   date_venu: new Date().toISOString().slice(0, 10),
@@ -258,6 +351,10 @@ function CreateInternalUserContent() {
   const [rolesToHide, setRolesToHide]           = useState([]);
   const [cellules, setCellules]                 = useState([]);
 
+  // ── État pour le header église (identique à ajouter-membre-cellule) ──
+  const [egliseId, setEgliseId]     = useState(null);
+  const [egliseInfo, setEgliseInfo] = useState(null);
+
   const [formData, setFormData] = useState(initialFormData());
 
   // ─── Navigation logo ───
@@ -280,7 +377,7 @@ function CreateInternalUserContent() {
     return t.roles.filter(r => !r.feature || featureMap[r.feature]);
   }, [String(cellulesActive), String(conseillerActive), String(famillesActive), lang]);
 
-  // ─── Fetch membres + cellules ───
+  // ─── Fetch membres + cellules + eglise_id ───
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -294,6 +391,7 @@ function CreateInternalUserContent() {
           .single();
 
         if (!profile) return;
+        setEgliseId(profile.eglise_id);
 
         const { data: cellulesData } = await supabase
           .from("cellules")
@@ -318,39 +416,26 @@ function CreateInternalUserContent() {
     fetchData();
   }, []);
 
-  // ─── Prefix ───
-    useEffect(() => {
-      const fetchPrefix = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return;
-    
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("eglise_id")
-          .eq("id", session.user.id)
-          .single();
-    
-        if (!profile?.eglise_id) return;
-    
-        const { data: eglise } = await supabase
-          .from("eglises")
-          .select("pays")
-          .eq("id", profile.eglise_id)
-          .single();
-    
-        if (eglise?.pays) {
-          const prefix = getPrefixForPays(eglise.pays);
-          if (prefix) {
-            setPhonePrefix(prefix);
-            setFormData(prev => ({
-              ...prev,
-              telephone: prev.telephone || prefix,
-            }));
-          }
+  // ─── Infos église (logo, nom, ville, pays) + préfixe téléphonique ───
+  useEffect(() => {
+    if (!egliseId) return;
+    const fetchEglise = async () => {
+      const { data, error } = await supabase
+        .from("eglises")
+        .select("nom, branche, ville, pays, logo_url, denomination")
+        .eq("id", egliseId)
+        .single();
+      if (!error && data) {
+        setEgliseInfo(data);
+        const prefix = getPrefixForPays(data.pays);
+        if (prefix) {
+          setPhonePrefix(prefix);
+          setFormData(prev => ({ ...prev, telephone: prev.telephone || prefix }));
         }
-      };  // ← fermeture de fetchPrefix
-      fetchPrefix();
-    }, []);
+      }
+    };
+    fetchEglise();
+  }, [egliseId]);
 
   // ─── Pré-remplissage membre sélectionné ───
   useEffect(() => {
@@ -563,8 +648,63 @@ function CreateInternalUserContent() {
           {t.retour}
         </button>
 
-        <div className="flex justify-center mb-6 cursor-pointer" onClick={handleLogoClick}>
-          <Image src="/logo.png" alt="Logo SoulTrack" width={40} height={40} className="cursor-pointer hover:opacity-80 transition" />
+        {/* ══════════════════════════════════════════
+            HEADER (logo + infos église) — identique à ajouter-membre-cellule
+        ══════════════════════════════════════════ */}
+        <div
+          className="flex flex-col items-center mb-3 sm:mb-6 gap-2 cursor-pointer"
+          onClick={handleLogoClick}
+        >
+          {egliseInfo?.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={egliseInfo.logo_url}
+              alt={egliseInfo.nom || "Logo"}
+              style={{ width: 50, height: 50, objectFit: "contain" }}
+            />
+          )}
+
+          {(egliseInfo?.denomination || egliseInfo?.nom) && (
+            <p className="font-semibold text-base text-[#c31850] text-center w-full break-words px-2">
+              {[egliseInfo.denomination, egliseInfo.nom]
+                .filter(Boolean)
+                .join(" - ")}
+            </p>
+          )}
+
+          {egliseInfo?.branche && (
+            <p className="text-sm text-[#c31850] text-center">
+              {egliseInfo.branche}
+            </p>
+          )}
+
+          {(egliseInfo?.ville || egliseInfo?.pays) && (
+            <div className="text-sm text-[#c31850] flex items-center justify-center gap-1">
+              {egliseInfo?.ville && (
+                <span>{egliseInfo.ville}{egliseInfo?.pays ? " •" : ""}</span>
+              )}
+              {egliseInfo?.pays && (
+                <>
+                  <img
+                    src={`https://flagcdn.com/w20/${getIsoCode(egliseInfo.pays)}.png`}
+                    width="20"
+                    height="14"
+                    alt={egliseInfo.pays}
+                  />
+                  <span>
+                    {(() => {
+                      const found = PAYS_DATA.find(
+                        p => p.fr === egliseInfo.pays || p.en === egliseInfo.pays
+                      );
+                      return lang === "en"
+                        ? (found?.en || egliseInfo.pays)
+                        : (found?.fr || egliseInfo.pays);
+                    })()}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <h1 className="text-2xl font-bold mt-4 mb-6 text-center text-black">
@@ -1015,6 +1155,8 @@ function CreateInternalUserContent() {
             background: white;
           }
         `}</style>
+
+        <FooterHub />
       </div>
     </div>
   );

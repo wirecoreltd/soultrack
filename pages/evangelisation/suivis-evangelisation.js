@@ -228,8 +228,10 @@ export default function SuivisEvangelisation() {
       allowedRoles={[
         "Administrateur",
         "ResponsableEvangelisation",
+        "SuperviseurCellule",
         "ResponsableCellule",
         "ResponsableFamilles",
+        "SuperviseurFamilles",
         "Conseiller",
       ]}
     >

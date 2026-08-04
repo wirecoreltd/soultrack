@@ -204,11 +204,18 @@ function CreateCelluleContent() {
 
     const { data, error } = await supabase
       .from("cellules")
-      .select("id, nom")
+      .select("id, cellule, ville")
       .eq("responsable_id", responsableId)
       .eq("eglise_id", egliseId);
 
-    if (!error && data && data.length > 0) {
+    if (error) {
+      console.error("Erreur vérification responsable déjà assigné :", error);
+      setExistingCelluleResponsable(null);
+      setShowResponsableWarning(false);
+      return;
+    }
+
+    if (data && data.length > 0) {
       setExistingCelluleResponsable(data[0]);
       setShowResponsableWarning(true);
     } else {
@@ -401,7 +408,11 @@ function CreateCelluleContent() {
             <div className="rounded-xl border border-yellow-400 bg-yellow-50 p-4 text-sm text-yellow-800">
               <p className="mb-3">
                 ⚠️ Ce responsable est déjà responsable de la cellule «{" "}
-                <strong>{existingCelluleResponsable?.nom}</strong> ». Voulez-vous continuer quand même ?
+                <strong>
+                  {existingCelluleResponsable?.ville ? `${existingCelluleResponsable.ville} - ` : ""}
+                  {existingCelluleResponsable?.cellule}
+                </strong>
+                {" "}». Voulez-vous continuer quand même ?
               </p>
               <div className="flex gap-3">
                 <button

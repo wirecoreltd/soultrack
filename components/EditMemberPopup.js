@@ -830,31 +830,29 @@ export default function EditMemberPopup({
                       )}
                     </Field>
                 
-                    <Field label={t.famille}>
-                      {!famillesFeatureActive ? (
-                        <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
-                          {t.familleFeatureDisabled}
-                        </p>
-                      ) : showFamilles ? (
-                        <select
-                          name="famille_id"
-                          value={formData.famille_id ?? ""}
-                          onChange={handleChange}
-                          className="inp"
-                        >
-                          <option value="">{t.chooseFamille}</option>
-                          {familles.map((f) => (
-                            <option key={f.id} value={f.id}>
-                              {f.famille_full}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
-                          {t.noFamilleAvailable}
-                        </p>
-                      )}
-                    </Field>
+                    {famillesFeatureActive && (
+                      <Field label={t.famille}>
+                        {showFamilles ? (
+                          <select
+                            name="famille_id"
+                            value={formData.famille_id ?? ""}
+                            onChange={handleChange}
+                            className="inp"
+                          >
+                            <option value="">{t.chooseFamille}</option>
+                            {familles.map((f) => (
+                              <option key={f.id} value={f.id}>
+                                {f.famille_full}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
+                            {t.noFamilleAvailable}
+                          </p>
+                        )}
+                      </Field>
+                    )}
                 
                     <Field label={t.addConseiller}>
                       {showConseillers ? (

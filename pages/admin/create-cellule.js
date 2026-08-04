@@ -194,36 +194,6 @@ function CreateCelluleContent() {
     fetchProfiles();
   }, [egliseId]);
 
-  // ─── Vérifie si le responsable sélectionné a déjà une cellule ────────────
-  const checkResponsableDejaAssigne = async (responsableId) => {
-    if (!responsableId || !egliseId) {
-      setShowResponsableWarning(false);
-      setExistingCelluleResponsable(null);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("cellules")
-      .select("id, cellule, ville")
-      .eq("responsable_id", responsableId)
-      .eq("eglise_id", egliseId);
-
-    if (error) {
-      console.error("Erreur vérification responsable déjà assigné :", error);
-      setExistingCelluleResponsable(null);
-      setShowResponsableWarning(false);
-      return;
-    }
-
-    if (data && data.length > 0) {
-      setExistingCelluleResponsable(data[0]);
-      setShowResponsableWarning(true);
-    } else {
-      setExistingCelluleResponsable(null);
-      setShowResponsableWarning(false);
-    }
-  };
-
   // ─── Handlers ─────────────────────────────────────────────────────────────
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -238,32 +208,18 @@ function CreateCelluleContent() {
       telephone: selected ? selected.telephone || "" : "",
     });
 
-    checkResponsableDejaAssigne(e.target.value);
-  };
-
-  const handleAnnulerResponsable = () => {
-    setFormData((prev) => ({
-      ...prev,
-      responsable_id: "",
-      responsable_nom: "",
-      telephone: "",
-    }));
+    // On réinitialise l'avertissement si l'utilisateur change de responsable
     setShowResponsableWarning(false);
     setExistingCelluleResponsable(null);
   };
 
-  const handleProcederResponsable = () => {
+  const handleAnnulerResponsable = () => {
     setShowResponsableWarning(false);
+    setExistingCelluleResponsable(null);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!egliseId) {
-      setMessage("❌ Contexte église introuvable");
-      return;
-    }
-
+  // ─── Appel API de création (utilisé par les 2 chemins) ────────────────────
+  const creerCellule = async () => {
     setLoading(true);
     setMessage("⏳ Création en cours...");
 
@@ -299,6 +255,54 @@ function CreateCelluleContent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ─── Clic sur "Créer" : on vérifie d'abord le responsable ────────────────
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!egliseId) {
+      setMessage("❌ Contexte église introuvable");
+      return;
+    }
+
+    if (!formData.responsable_id) {
+      setMessage("❌ Veuillez sélectionner un responsable");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
+    const { data, error } = await supabase
+      .from("cellules")
+      .select("id, cellule, ville")
+      .eq("responsable_id", formData.responsable_id)
+      .eq("eglise_id", egliseId);
+
+    if (error) {
+      console.error("Erreur vérification responsable déjà assigné :", error);
+      setLoading(false);
+      setMessage("❌ Erreur lors de la vérification du responsable");
+      return;
+    }
+
+    if (data && data.length > 0) {
+      // Conflit détecté → on bloque la création et on affiche l'avertissement
+      setExistingCelluleResponsable(data[0]);
+      setShowResponsableWarning(true);
+      setLoading(false);
+      return;
+    }
+
+    // Pas de conflit → création directe
+    await creerCellule();
+  };
+
+  // ─── Clic sur "Procéder et créer" : on confirme et on crée en un clic ────
+  const handleProcederEtCreer = async () => {
+    setShowResponsableWarning(false);
+    await creerCellule();
   };
 
   // ─── UI ───────────────────────────────────────────────────────────────────
@@ -403,7 +407,7 @@ function CreateCelluleContent() {
             ))}
           </select>
 
-          {/* Avertissement : responsable déjà assigné à une cellule */}
+          {/* Avertissement : responsable déjà assigné à une cellule (déclenché au clic sur Créer) */}
           {showResponsableWarning && (
             <div className="rounded-xl border border-yellow-400 bg-yellow-50 p-4 text-sm text-yellow-800">
               <p className="mb-3">
@@ -424,10 +428,11 @@ function CreateCelluleContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={handleProcederResponsable}
+                  onClick={handleProcederEtCreer}
+                  disabled={loading}
                   className="flex-1 bg-indigo-500 text-white py-2 rounded-xl"
                 >
-                  Procéder
+                  {loading ? "Création..." : "Procéder et créer"}
                 </button>
               </div>
             </div>
@@ -459,22 +464,25 @@ function CreateCelluleContent() {
             </select>
           )}
 
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="flex-1 bg-gray-400 text-white py-2 rounded-2xl"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-indigo-500 text-white py-2 rounded-2xl"
-            >
-              {loading ? "Création..." : "Créer"}
-            </button>
-          </div>
+          {/* Boutons standards masqués pendant l'avertissement pour éviter la confusion */}
+          {!showResponsableWarning && (
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="flex-1 bg-gray-400 text-white py-2 rounded-2xl"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-indigo-500 text-white py-2 rounded-2xl"
+              >
+                {loading ? "Création..." : "Créer"}
+              </button>
+            </div>
+          )}
         </form>
 
         {message && <p className="mt-4 text-center text-sm">{message}</p>}

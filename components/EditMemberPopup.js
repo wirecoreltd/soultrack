@@ -944,12 +944,6 @@ export default function EditMemberPopup({
                     {t.lockedMessageNoAccess}
                   </p>
                 )}
-                </>
-              ) : (
-                <p className="text-sm text-gray-400 italic bg-gray-50 rounded-xl px-4 py-3">
-                  {t.lockedMessage}
-                </p>
-              )}
 
               <SectionTitle>{t.suivi}</SectionTitle>
 

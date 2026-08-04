@@ -165,7 +165,7 @@ export default function EditCelluleModal({ cellule, onClose, onUpdated }) {
         cellule_mere_id: selectedParentResponsableId || null,
       })
       .eq("id", cellule.id)
-      .select("*, superviseur:superviseur_id(nom, prenom)")
+      .select("*")
       .single();
 
     setLoading(false);

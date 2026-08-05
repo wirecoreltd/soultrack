@@ -81,6 +81,25 @@ const translations = {
       { value: "Nouveau converti", label: "Nouveau converti" },
       { value: "Réconciliation",   label: "Réconciliation" },
     ],
+    needsOptions: [
+      { value: "Finances", label: "Finances" },
+      { value: "Santé", label: "Santé physique" },
+      { value: "Dépression / Santé mentale", label: "Dépression / Santé mentale" },
+      { value: "Travail / Études", label: "Travail / Études" },
+      { value: "Famille / Enfants", label: "Famille / Enfants" },
+      { value: "Couple / Mariage", label: "Couple / Mariage" },
+      { value: "Relations / Conflits", label: "Relations / Conflits" },
+      { value: "Addictions / Dépendances", label: "Addictions / Dépendances" },
+      { value: "Vie spirituelle", label: "Vie spirituelle" },
+      { value: "Miracle", label: "Miracle" },
+      { value: "Délivrance", label: "Délivrance" },
+      { value: "Deuil / Perte", label: "Deuil / Perte" },
+      { value: "Logement / Sécurité", label: "Logement / Sécurité" },
+      { value: "Immigration / Documents", label: "Immigration / Documents" },
+      { value: "Justice / Protection", label: "Justice / Protection" },
+      { value: "Communauté / Isolement", label: "Communauté / Isolement" },
+      { value: "Besoins essentiels", label: "Besoins essentiels" },
+    ],
     soinPastoral: "❤️‍🩹 Soin pastoral",
     besoins: "❓ Difficultés / Besoins :",
     infosSup: "📝 Infos supplémentaires :",
@@ -177,6 +196,25 @@ const translations = {
     conversionOptions: [
       { value: "Nouveau converti", label: "New convert" },
       { value: "Réconciliation",   label: "Reconciliation" },
+    ],
+    needsOptions: [
+      { value: "Finances", label: "Finances" },
+      { value: "Santé", label: "Physical Health" },
+      { value: "Dépression / Santé mentale", label: "Mental Health / Depression" },
+      { value: "Travail / Études", label: "Work / Education" },
+      { value: "Famille / Enfants", label: "Family / Children" },
+      { value: "Couple / Mariage", label: "Marriage / Relationships" },
+      { value: "Relations / Conflits", label: "Relationships / Conflict" },
+      { value: "Addictions / Dépendances", label: "Addictions / Dependencies" },
+      { value: "Vie spirituelle", label: "Spiritual life" },
+      { value: "Miracle", label: "Miracle" },
+      { value: "Délivrance", label: "Deliverance" },
+      { value: "Deuil / Perte", label: "Grief / Loss" },
+      { value: "Logement / Sécurité", label: "Housing / Safety" },
+      { value: "Immigration / Documents", label: "Immigration / Documentation" },
+      { value: "Justice / Protection", label: "Legal / Protection" },
+      { value: "Communauté / Isolement", label: "Community / Isolation" },
+      { value: "Besoins essentiels", label: "Basic Needs" },
     ],
     soinPastoral: "❤️‍🩹 Pastoral care",
     besoins: "❓ Difficulties / Needs:",
@@ -391,13 +429,20 @@ function EvangelisationContent() {
     setCheckedContacts((prev) => ({ ...prev, [id]: !prev[id] }));
 
   const formatBesoin = (b) => {
-    if (!b) return "—";
-    if (Array.isArray(b)) return b.join(", ");
+  if (!b) return "—";
+  let arr = b;
+  if (!Array.isArray(b)) {
     try {
-      const arr = JSON.parse(b);
-      return Array.isArray(arr) ? arr.join(", ") : b;
-    } catch { return b; }
-  };
+      arr = JSON.parse(b);
+    } catch {
+      return b;
+    }
+  }
+  if (!Array.isArray(arr)) return b;
+  // getLabel() traduit chaque valeur ; si c'est un texte libre ("Autre"),
+  // getLabel le renvoie tel quel car il ne matche aucune option connue
+  return arr.map((v) => getLabel(t.needsOptions, v)).join(", ");
+};
 
   const selectedContacts = contacts?.filter((c) => checkedContacts[c.id]) || [];
   const hasSelectedContacts = selectedContacts.length > 0;

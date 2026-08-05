@@ -235,11 +235,24 @@ export default function AddContact() {
   const [egliseInfo, setEgliseInfo] = useState(null);
 
   const besoinsOptions = [
-    "Finances", "Santé", "Travail / Études", "Famille / Enfants",
-    "Relations / Conflits", "Addictions / Dépendances", "Miracle", "Délivrance",
-    "Guidance spirituelle", "Logement / Sécurité", "Communauté / Isolement",
-    "Dépression / Santé mentale",
-  ];
+  { value: "Finances", fr: "Finances", en: "Finances" },
+  { value: "Santé physique", fr: "Santé physique", en: "Physical health" },
+  { value: "Santé mentale / Dépression", fr: "Santé mentale / Dépression", en: "Mental health / Depression" },
+  { value: "Travail / Études", fr: "Travail / Études", en: "Work / Studies" },
+  { value: "Famille / Enfants", fr: "Famille / Enfants", en: "Family / Children" },
+  { value: "Couple / Mariage", fr: "Couple / Mariage", en: "Marriage / Relationship" },
+  { value: "Relations / Conflits", fr: "Relations / Conflits", en: "Relationships / Conflicts" },
+  { value: "Addictions / Dépendances", fr: "Addictions / Dépendances", en: "Addictions / Dependencies" },
+  { value: "Vie spirituelle", fr: "Vie spirituelle", en: "Spiritual life" },
+  { value: "Miracle", fr: "Miracle", en: "Miracle" },
+  { value: "Délivrance", fr: "Délivrance", en: "Deliverance" },
+  { value: "Deuil / Perte", fr: "Deuil / Perte", en: "Grief / Loss" },
+  { value: "Logement / Sécurité", fr: "Logement / Sécurité", en: "Housing / Safety" },
+  { value: "Immigration / Documents", fr: "Immigration / Documents", en: "Immigration / Documents" },
+  { value: "Justice / Protection", fr: "Justice / Protection", en: "Justice / Protection" },
+  { value: "Communauté / Isolement", fr: "Communauté / Isolement", en: "Community / Isolation" },
+  { value: "Besoins essentiels", fr: "Besoins essentiels", en: "Essential needs" },
+];
 
   useEffect(() => {
     const fetchUserEglise = async () => {
@@ -613,15 +626,15 @@ export default function AddContact() {
           <label className="text-sm sm:text-base font-bold mb-1">{t.besoins}</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {besoinsOptions.map((item) => (
-              <label key={item} className="flex items-center gap-1 text-sm">
+              <label key={item.value} className="flex items-center gap-1 text-sm">
                 <input
                   type="checkbox"
-                  value={item}
-                  checked={formData.besoin.includes(item)}
+                  value={item.value}
+                  checked={formData.besoin.includes(item.value)}
                   onChange={handleBesoinChange}
                   className="w-4 h-4 sm:w-5 sm:h-5"
                 />
-                {item}
+                {t.besoinsList?.[item.value] || item[lang]}
               </label>
             ))}
             <label className="flex items-center gap-1 text-sm">

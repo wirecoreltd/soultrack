@@ -40,6 +40,28 @@ const translations = {
     typeConversionDefault: "Type de conversion",
     nouveauConverti: "Nouveau converti",
     reconciliation: "Réconciliation",
+      sectionBesoins: "❓ Difficultés / Besoins",
+      needsOptions: [
+        { value: "Finances", label: "Finances" },
+        { value: "Santé", label: "Santé physique" },
+        { value: "Dépression / Santé mentale", label: "Dépression / Santé mentale" },
+        { value: "Travail / Études", label: "Travail / Études" },
+        { value: "Famille / Enfants", label: "Famille / Enfants" },
+        { value: "Couple / Mariage", label: "Couple / Mariage" },
+        { value: "Relations / Conflits", label: "Relations / Conflits" },
+        { value: "Addictions / Dépendances", label: "Addictions / Dépendances" },
+        { value: "Vie spirituelle", label: "Vie spirituelle" },
+        { value: "Miracle", label: "Miracle" },
+        { value: "Délivrance", label: "Délivrance" },
+        { value: "Deuil / Perte", label: "Deuil / Perte" },
+        { value: "Logement / Sécurité", label: "Logement / Sécurité" },
+        { value: "Immigration / Documents", label: "Immigration / Documents" },
+        { value: "Justice / Protection", label: "Justice / Protection" },
+        { value: "Communauté / Isolement", label: "Communauté / Isolement" },
+        { value: "Besoins essentiels", label: "Besoins essentiels" },
+      ],
+    other: "Autre",
+    specifyNeed: "Précisez le besoin...",
     sectionInfos: "📝 Informations",
     infosSupp: "Informations supplémentaires",
     cancel: "Annuler",
@@ -83,6 +105,28 @@ const translations = {
     typeConversionDefault: "Conversion type",
     nouveauConverti: "New convert",
     reconciliation: "Reconciliation",
+    sectionBesoins: "❓ Difficulties / Needs",
+    needsOptions: [
+      { value: "Finances", label: "Finances" },
+      { value: "Santé", label: "Physical Health" },
+      { value: "Dépression / Santé mentale", label: "Mental Health / Depression" },
+      { value: "Travail / Études", label: "Work / Education" },
+      { value: "Famille / Enfants", label: "Family / Children" },
+      { value: "Couple / Mariage", label: "Marriage / Relationships" },
+      { value: "Relations / Conflits", label: "Relationships / Conflict" },
+      { value: "Addictions / Dépendances", label: "Addictions / Dependencies" },
+      { value: "Vie spirituelle", label: "Spiritual life" },
+      { value: "Miracle", label: "Miracle" },
+      { value: "Délivrance", label: "Deliverance" },
+      { value: "Deuil / Perte", label: "Grief / Loss" },
+      { value: "Logement / Sécurité", label: "Housing / Safety" },
+      { value: "Immigration / Documents", label: "Immigration / Documentation" },
+      { value: "Justice / Protection", label: "Legal / Protection" },
+      { value: "Communauté / Isolement", label: "Community / Isolation" },
+      { value: "Besoins essentiels", label: "Basic Needs" },
+    ],
+    other: "Other",
+    specifyNeed: "Please specify the need...",
     sectionInfos: "📝 Information",
     infosSupp: "Additional information",
     cancel: "Cancel",
@@ -107,6 +151,14 @@ const TYPE_EVANG_VALUES_FR = [
 
 const TYPE_CONVERSION_VALUES_FR = ["Nouveau converti", "Réconciliation"];
 
+const NEEDS_VALUES_FR = [
+  "Finances", "Santé", "Dépression / Santé mentale", "Travail / Études",
+  "Famille / Enfants", "Couple / Mariage", "Relations / Conflits",
+  "Addictions / Dépendances", "Vie spirituelle", "Miracle", "Délivrance",
+  "Deuil / Perte", "Logement / Sécurité", "Immigration / Documents",
+  "Justice / Protection", "Communauté / Isolement", "Besoins essentiels",
+];
+
 export default function EditEvangelisePopup({
   member,
   cellules = [],
@@ -118,10 +170,13 @@ export default function EditEvangelisePopup({
   const { lang } = useLang();
   const t = translations[lang];
 
-  const initialBesoin =
-    typeof member.besoin === "string"
-      ? JSON.parse(member.besoin || "[]")
-      : member.besoin || [];
+  const rawInitialBesoin =
+  typeof member.besoin === "string"
+    ? JSON.parse(member.besoin || "[]")
+    : member.besoin || [];
+
+  const initialBesoin = rawInitialBesoin.filter((b) => NEEDS_VALUES_FR.includes(b));
+  const initialCustomBesoin = rawInitialBesoin.filter((b) => !NEEDS_VALUES_FR.includes(b));
 
   const [formData, setFormData] = useState({
     prenom: member.prenom || "",
@@ -138,7 +193,11 @@ export default function EditEvangelisePopup({
     type_conversion: member.type_conversion || "",
     is_whatsapp: member.is_whatsapp || false,
     date_evangelise: member.date_evangelise || "",
+    besoin: initialBesoin,
+    autreBesoin: initialCustomBesoin.join(", "),
   });
+
+  const [showOtherField, setShowOtherField] = useState(initialCustomBesoin.length > 0);
 
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -151,6 +210,15 @@ export default function EditEvangelisePopup({
     }));
   };
 
+  const handleBesoinToggle = (value) => {
+  setFormData((prev) => ({
+    ...prev,
+    besoin: prev.besoin.includes(value)
+      ? prev.besoin.filter((b) => b !== value)
+      : [...prev.besoin, value],
+  }));
+};
+  
   const handleSubmit = async () => {
     if (loading) return;
     setLoading(true);
@@ -164,7 +232,11 @@ export default function EditEvangelisePopup({
       ville: formData.ville || null,
       type_evangelisation: formData.type_evangelisation,
       infos_supplementaires: formData.infos_supplementaires || null,
-      besoin: JSON.stringify(formData.besoin),
+      besoin: JSON.stringify(
+        showOtherField && formData.autreBesoin.trim()
+          ? [...formData.besoin, formData.autreBesoin.trim()]
+          : formData.besoin
+      ),
       priere_salut: formData.priere_salut,
       type_conversion: formData.type_conversion,
       is_whatsapp: formData.is_whatsapp,
@@ -337,6 +409,43 @@ export default function EditEvangelisePopup({
               </select>
             )}
           </Field>
+
+          {/* Section: Besoins */}
+            <SectionTitle>{t.sectionBesoins}</SectionTitle>
+            
+            <Field label="">
+              <div className="flex flex-col gap-2">
+                {t.needsOptions.map((opt) => (
+                  <label key={opt.value} className="flex items-center gap-3 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={formData.besoin.includes(opt.value)}
+                      onChange={() => handleBesoinToggle(opt.value)}
+                      className="w-4 h-4 accent-[#2E3192] cursor-pointer"
+                    />
+                    {opt.label}
+                  </label>
+                ))}
+                <label className="flex items-center gap-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={showOtherField}
+                    onChange={() => setShowOtherField(!showOtherField)}
+                    className="w-4 h-4 accent-[#2E3192] cursor-pointer"
+                  />
+                  {t.other}
+                </label>
+                {showOtherField && (
+                  <input
+                    type="text"
+                    placeholder={t.specifyNeed}
+                    value={formData.autreBesoin}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, autreBesoin: e.target.value }))}
+                    className="inp"
+                  />
+                )}
+              </div>
+            </Field>
 
           {/* Section: Infos */}
           <SectionTitle>{t.sectionInfos}</SectionTitle>

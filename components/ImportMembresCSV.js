@@ -56,7 +56,7 @@ const BESOIN_EN_TO_FR   = {
   "Grief / Loss":"Deuil / Perte",
   "Housing / Safety": "Logement / Sécurité",
   "Immigration / Documentation": "Immigration / Documents",
-  "Justice / Protection": "Legal / Protection"
+  "Justice / Protection": "Legal / Protection",
   "Community / Isolation": "Communauté / Isolement",
   "Basic Needs": "Besoins essentiels",  
 };

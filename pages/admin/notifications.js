@@ -144,7 +144,7 @@ export default function NotificationsPage() {
 
 function NotificationsContent() {
   const router = useRouter();
-  const { markAsSeen } = useNotificationsContext();
+  const { markAsSeen, triggerRefresh } = useNotificationsContext();
   const { lang } = useLang();
   const t = translations[lang];
   const [userProfile,   setUserProfile]   = useState(null);
@@ -436,28 +436,24 @@ function NotificationsContent() {
     if (n._type === "nouveau") {
       markAsSeen(n.id);
       setNotifications((prev) => prev.filter((notif) => !(notif._type === "nouveau" && notif.id === n.id)));
-      return;
-    }
-    if (n._type === "membre_assigne") {
+    } else if (n._type === "membre_assigne") {
       await supabase.from("membres_complets").update({ notification_responsable: false }).eq("id", n.id);
       setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id)));
-      return;
-    }
-    if (n._type === "membre_assigne_evang") {
+    } else if (n._type === "membre_assigne_evang") {
       await supabase.from("suivis_des_evangelises").update({ notification_responsable: false }).eq("id", n.id);
       setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne_evang" && notif.id === n.id)));
-      return;
-    }
-    if (n._type === "evangelise") {
+    } else if (n._type === "evangelise") {
       await supabase.from("evangelises").update({ status_suivi: "vu" }).eq("id", n.id);
       setNotifications((prev) => prev.filter((notif) => !(notif._type === "evangelise" && notif.id === n.id)));
-      return;
-    }
-    if (n._type === "new_in_cellule") {
+    } else if (n._type === "new_in_cellule") {
       await supabase.from("membres_complets").update({ is_new_in_cellule: false }).eq("id", n.id);
       setNotifications((prev) => prev.filter((notif) => !(notif._type === "new_in_cellule" && notif.id === n.id)));
-      return;
     }
+
+    // Le realtime du bell dépend de payload.old, qui peut être incomplet
+    // (REPLICA IDENTITY) et ne pas déclencher la décrémentation. On force
+    // donc un refetch immédiat et fiable du compteur via le contexte partagé.
+    triggerRefresh();
   };
 
   // ─── Bouton ✓ sur une notification : marque comme lu SANS naviguer ────────
@@ -558,6 +554,7 @@ function NotificationsContent() {
     }
 
     setNotifications((prev) => prev.filter((n) => n._type === "invitation"));
+    triggerRefresh();
     setMarkingAll(false);
   };
 

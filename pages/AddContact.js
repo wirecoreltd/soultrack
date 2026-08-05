@@ -234,12 +234,9 @@ export default function AddContact() {
   const [success, setSuccess] = useState(false);
   const [egliseInfo, setEgliseInfo] = useState(null);
 
-  const besoinsOptions = [
-    "Finances", "Santé", "Travail / Études", "Famille / Enfants",
-    "Relations / Conflits", "Addictions / Dépendances", "Miracle", "Délivrance",
-    "Guidance spirituelle", "Logement / Sécurité", "Communauté / Isolement",
-    "Dépression / Santé mentale",
-  ];
+  const besoinsOptions = [  "Finances",  "Santé physique",  "Santé mentale / Dépression",  "Travail / Études",  "Famille / Enfants",  "Couple / Mariage",  "Relations / Conflits",
+    "Addictions / Dépendances",  "Vie spirituelle",  "Miracle",  "Délivrance",  "Deuil / Perte",  "Logement / Sécurité",  "Immigration / Documents",  "Justice / Protection",
+    "Communauté / Isolement",  "Besoins essentiels"];
 
   useEffect(() => {
     const fetchUserEglise = async () => {

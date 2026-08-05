@@ -125,7 +125,7 @@ const translations = {
     ],
     needs: "Difficulties / Needs",
     needsOptions: [  "Financial Needs",  "Physical Health",  "Mental Health / Depression",  "Work / Education",  "Family / Children",  "Marriage / Relationships",
-    "Relationships / Conflict",  "Addictions",  "Spiritual Growth",  "Miracle",  "Deliverance",  "Grief / Loss",  "Housing / Safety",  "Immigration / Documentation",
+    "Relationships / Conflict",  "Addictions / Dependencies",  "Spiritual life",  "Miracle",  "Deliverance",  "Grief / Loss",  "Housing / Safety",  "Immigration / Documentation",
     "Legal / Protection",  "Community / Isolation",  "Basic Needs"],
     other: "Other",
     specify: "Please specify...",

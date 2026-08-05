@@ -23,9 +23,11 @@ const translations = {
     typeMessage: "Message",
     sectionBesoins: "🙏 Besoins",
     besoinsOptions: [
-      "Finances", "Santé", "Travail / Études", "Famille / Enfants",
-      "Relations / Conflits", "Addictions / Dépendances", "Guidance spirituelle",
-      "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
+      "Finances", "Santé", "Dépression / Santé mentale", "Travail / Études",
+      "Famille / Enfants", "Couple / Mariage", "Relations / Conflits",
+      "Addictions / Dépendances", "Vie spirituelle", "Miracle", "Délivrance",
+      "Deuil / Perte", "Logement / Sécurité", "Immigration / Documents",
+      "Justice / Protection", "Communauté / Isolement", "Besoins essentiels",
     ],
     statutResolu: "✓ Résolu",
     statutEnSuivi: "En suivi",
@@ -82,9 +84,11 @@ const translations = {
     typeMessage: "Message",
     sectionBesoins: "🙏 Needs",
     besoinsOptions: [
-      "Finances", "Health", "Work / Studies", "Family / Children",
-      "Relationships / Conflicts", "Addictions / Dependencies", "Spiritual guidance",
-      "Housing / Safety", "Community / Isolation", "Depression / Mental health",
+      "Finances", "Physical Health", "Mental Health / Depression", "Work / Education",
+      "Family / Children", "Marriage / Relationships", "Relationships / Conflict",
+      "Addictions / Dependencies", "Spiritual life", "Miracle", "Deliverance",
+      "Grief / Loss", "Housing / Safety", "Immigration / Documentation",
+      "Legal / Protection", "Community / Isolation", "Basic Needs",
     ],
     statutResolu: "✓ Resolved",
     statutEnSuivi: "In follow-up",
@@ -138,6 +142,10 @@ export const besoinTranslationMap = translations.fr.besoinsOptions.reduce((acc, 
   acc[enLabel] = { fr: frLabel, en: enLabel };
   return acc;
 }, {});
+
+// Alias rétrocompatibilité : anciennes entrées enregistrées sous cet ancien libellé
+// avant l'élargissement de la liste des besoins (10 → 17 valeurs).
+besoinTranslationMap["Guidance spirituelle"] = { fr: "Vie spirituelle", en: "Spiritual life" };
 
 export const translateBesoin = (label, lang) => besoinTranslationMap[label]?.[lang] || label;
 

@@ -425,7 +425,55 @@ function NotificationsContent() {
     `${n.prenom || ""} ${n.nom || ""} ${n.ville || ""}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ─── Navigation au clic ───────────────────────────────────────────────────
+  // ─── Marquage individuel (partagé entre le clic-navigation et le bouton ✓) ─
+  // Pas de navigation ici : uniquement la mise à jour DB/local + retrait de la liste.
+  // Les invitations ne sont pas concernées (elles exigent une réponse explicite).
+  const [markingIds, setMarkingIds] = useState([]);
+
+  const markNotificationAsRead = async (n) => {
+    if (n._type === "invitation") return;
+
+    if (n._type === "nouveau") {
+      markAsSeen(n.id);
+      setNotifications((prev) => prev.filter((notif) => !(notif._type === "nouveau" && notif.id === n.id)));
+      return;
+    }
+    if (n._type === "membre_assigne") {
+      await supabase.from("membres_complets").update({ notification_responsable: false }).eq("id", n.id);
+      setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id)));
+      return;
+    }
+    if (n._type === "membre_assigne_evang") {
+      await supabase.from("suivis_des_evangelises").update({ notification_responsable: false }).eq("id", n.id);
+      setNotifications((prev) => prev.filter((notif) => !(notif._type === "membre_assigne_evang" && notif.id === n.id)));
+      return;
+    }
+    if (n._type === "evangelise") {
+      await supabase.from("evangelises").update({ status_suivi: "vu" }).eq("id", n.id);
+      setNotifications((prev) => prev.filter((notif) => !(notif._type === "evangelise" && notif.id === n.id)));
+      return;
+    }
+    if (n._type === "new_in_cellule") {
+      await supabase.from("membres_complets").update({ is_new_in_cellule: false }).eq("id", n.id);
+      setNotifications((prev) => prev.filter((notif) => !(notif._type === "new_in_cellule" && notif.id === n.id)));
+      return;
+    }
+  };
+
+  // ─── Bouton ✓ sur une notification : marque comme lu SANS naviguer ────────
+  const handleMarkOneAsRead = async (n, e) => {
+    e.stopPropagation();
+    const key = `${n._type}-${n.id}`;
+    if (markingIds.includes(key)) return;
+    setMarkingIds((prev) => [...prev, key]);
+    try {
+      await markNotificationAsRead(n);
+    } finally {
+      setMarkingIds((prev) => prev.filter((k) => k !== key));
+    }
+  };
+
+  // ─── Navigation au clic sur la carte (marque comme lu PUIS navigue) ───────
   const handleClick = async (n) => {
     if (n._type === "invitation") {
       router.push(`/accept-invitation?token=${n._token}`);
@@ -433,13 +481,11 @@ function NotificationsContent() {
     }
 
     if (n._type === "nouveau") {
-      markAsSeen(n.id);
-      setNotifications((prev) =>
-        prev.filter((notif) => !(notif._type === "nouveau" && notif.id === n.id))
-      );
+      const celluleId = n.cellule_id;
+      await markNotificationAsRead(n);
       // ── Si le membre a une cellule → membres-cellule, sinon → list-members ──
-      if (n.cellule_id) {
-        router.push(`/cellule/membres-cellule?highlight=${n.id}&celluleId=${n.cellule_id}`);
+      if (celluleId) {
+        router.push(`/cellule/membres-cellule?highlight=${n.id}&celluleId=${celluleId}`);
       } else {
         router.push(`/membres/list-members?highlight=${n.id}`);
       }
@@ -447,42 +493,28 @@ function NotificationsContent() {
     }
 
     if (n._type === "membre_assigne") {
-      await supabase.from("membres_complets").update({ notification_responsable: false }).eq("id", n.id);
-      setNotifications((prev) =>
-        prev.filter((notif) => !(notif._type === "membre_assigne" && notif.id === n.id))
-      );
+      await markNotificationAsRead(n);
       router.push(`/membres/suivis-membres?highlight=${n.id}`);
       return;
     }
 
     if (n._type === "membre_assigne_evang") {
-      await supabase.from("suivis_des_evangelises").update({ notification_responsable: false }).eq("id", n.id);
-      setNotifications((prev) =>
-        prev.filter((notif) => !(notif._type === "membre_assigne_evang" && notif.id === n.id))
-      );
+      await markNotificationAsRead(n);
       router.push(`/evangelisation/suivis-evangelisation?highlight=${n.id}`);
       return;
     }
 
     if (n._type === "evangelise") {
-      await supabase
-        .from("evangelises")
-        .update({ status_suivi: "vu" })
-        .eq("id", n.id);
-      setNotifications((prev) =>
-        prev.filter((notif) => !(notif._type === "evangelise" && notif.id === n.id))
-      );
+      await markNotificationAsRead(n);
       router.push(`/evangelisation/evangelisation?highlight=${n.id}`);
       return;
     }
 
     if (n._type === "new_in_cellule") {
-      await supabase.from("membres_complets").update({ is_new_in_cellule: false }).eq("id", n.id);
-      setNotifications((prev) =>
-        prev.filter((notif) => !(notif._type === "new_in_cellule" && notif.id === n.id))
-      );
+      const celluleId = n.cellule_id;
+      await markNotificationAsRead(n);
       const params = new URLSearchParams({ highlight: n.id });
-      if (n.cellule_id) params.set("celluleId", n.cellule_id);
+      if (celluleId) params.set("celluleId", celluleId);
       router.push(`/cellule/membres-cellule?${params.toString()}`);
       return;
     }
@@ -626,6 +658,31 @@ function NotificationsContent() {
                   {n._type === "invitation" && n.ville && <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0" }}>🏙️ {n.ville}</p>}
                   <p style={{ fontSize: "11px", color: "#9ca3af", margin: "2px 0 0" }}>📅 {formatDateFr(n._date)}</p>
                 </div>
+                {n._type !== "invitation" && (
+                  <button
+                    onClick={(e) => handleMarkOneAsRead(n, e)}
+                    disabled={markingIds.includes(`${n._type}-${n.id}`)}
+                    title={lang === "fr" ? "Marquer comme lu" : "Mark as read"}
+                    style={{
+                      flexShrink: 0,
+                      width: "28px",
+                      height: "28px",
+                      borderRadius: "50%",
+                      border: "1px solid #d1fae5",
+                      background: "#f0fdf4",
+                      color: "#16a34a",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: markingIds.includes(`${n._type}-${n.id}`) ? "default" : "pointer",
+                      opacity: markingIds.includes(`${n._type}-${n.id}`) ? 0.5 : 1,
+                    }}
+                  >
+                    ✓
+                  </button>
+                )}
                 <span style={{ color: "#d1d5db", fontSize: "18px", flexShrink: 0 }}>›</span>
               </div>
             ))}

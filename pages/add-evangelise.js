@@ -57,7 +57,7 @@ const translations = {
       { value: "Couple / Mariage", label: "Couple / Mariage" },
       { value: "Relations / Conflits", label: "Relations / Conflits" },
       { value: "Addictions / Dépendances", label: "Addictions / Dépendances" },
-      { value: "Vie spirituelle"", label: "Vie spirituelle" },
+      { value: "Vie spirituelle", label: "Vie spirituelle" },
       { value: "Miracle", label: "Miracle" },
       { value: "Délivrance", label: "Délivrance" },
       { value: "Deuil / Perte", label: "Deuil / Perte" },

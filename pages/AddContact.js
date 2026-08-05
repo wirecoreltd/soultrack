@@ -103,6 +103,13 @@ const translations = {
     convReconciliation: "Reconciliation",
     besoins: "Difficulties / Needs",
     besoinAutre: "Other",
+    besoinsOptions: [
+      "Finances", "Physical health", "Mental health / Depression", "Work / Studies",
+      "Family / Children", "Couple / Marriage", "Relationships / Conflicts",
+      "Addictions / Dependencies", "Spiritual life", "Miracle", "Deliverance",
+      "Grief / Loss", "Housing / Security", "Immigration / Documents",
+      "Justice / Protection", "Community / Isolation", "Basic needs"
+    ],
     besoinPrecisez: "Please specify...",
     infosSupp: "Additional information",
     annuler: "Cancel",
@@ -609,7 +616,7 @@ export default function AddContact() {
           {/* Besoins */}
           <label className="text-sm sm:text-base font-bold mb-1">{t.besoins}</label>
           <div className="flex flex-wrap gap-2 mb-2">
-            {besoinsOptions.map((item) => (
+            {t.besoinsOptions.map((item) => (
               <label key={item} className="flex items-center gap-1 text-sm">
                 <input
                   type="checkbox"

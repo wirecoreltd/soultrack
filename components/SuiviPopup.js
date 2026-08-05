@@ -35,18 +35,23 @@ const translations = {
 
     // Besoins options
     finances: "Finances",
-    sante: "Santé",
+    sante: "Santé physique",
+    depression: "Dépression / Santé mentale",    
     travailEtudes: "Travail / Études",
     familleEnfants: "Famille / Enfants",
-    miracle: "Miracle",
-    delivrance: "Délivrance",
+    mariage: "Couple / Mariage",
     relationsConflits: "Relations / Conflits",
     addictions: "Addictions / Dépendances",
-    guidanceSpirituelle: "Guidance spirituelle",
+    viespirituel: "Vie spirituelle",    
+    miracle: "Miracle",
+    delivrance: "Délivrance",
+    perte: "Deuil / Perte",
     logement: "Logement / Sécurité",
+    documents: "Immigration / Documents",
+    justice: "Justice / Protection",
     communaute: "Communauté / Isolement",
-    depression: "Dépression / Santé mentale",
-
+    besoinessentiel: "Besoins essentiels",         
+    
     // Statuts
     enSuivi: "En suivi",
     resolu: "Résolu",
@@ -118,19 +123,25 @@ const translations = {
     commentaire: "Comment",
     commentairePlaceholder: "Comment...",
 
-    // Besoins options
+    // Besoins options          
+    
     finances: "Finances",
-    sante: "Health",
+    sante: "Physical health",
+    depression: "Mental health / Depression",    
     travailEtudes: "Work / Studies",
     familleEnfants: "Family / Children",
-    miracle: "Miracle",
-    delivrance: "Deliverance",
+    mariage: "Couple / Marriage",
     relationsConflits: "Relationships / Conflicts",
     addictions: "Addictions / Dependencies",
-    guidanceSpirituelle: "Spiritual Guidance",
-    logement: "Housing / Safety",
+    viespirituel: "Spiritual life",    
+    miracle: "Miracle",
+    delivrance: "Deliverance",
+    perte: "Grief / Loss",
+    logement: "Housing / Security",
+    documents: "Immigration / Documents",
+    justice: "Justice / Protection",
     communaute: "Community / Isolation",
-    depression: "Depression / Mental Health",
+    besoinessentiel: "Basic needs",     
 
     // Statuts
     enSuivi: "In follow-up",

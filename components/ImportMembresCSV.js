@@ -42,15 +42,23 @@ const CONV_EN_TO_FR     = {
   "New convert": "Nouveau converti", "Reconciliation": "Réconciliation",
 };
 const BESOIN_EN_TO_FR   = {
-  "Finances": "Finances", "Health": "Santé",
-  "Work / Studies": "Travail / Études", "Family / Children": "Famille / Enfants",
-  "Miracle": "Miracle", "Deliverance": "Délivrance",
+  "Finances": "Finances", 
+  "Health": "Santé physique",
+  "Depression / Mental health": "Dépression / Santé mentale",
+  "Work / Studies": "Travail / Études",
+  "Family / Children": "Famille / Enfants",
+  "Marriage / Relationships": "Couple / Mariage",
   "Relationships / Conflicts": "Relations / Conflits",
   "Addictions / Dependencies": "Addictions / Dépendances",
-  "Spiritual guidance": "Guidance spirituelle",
+  "Spiritual life": "Vie spirituelle",
+  "Miracle": "Miracle", 
+  "Deliverance": "Délivrance",
+  "Grief / Loss":"Deuil / Perte",
   "Housing / Safety": "Logement / Sécurité",
+  "Immigration / Documentation": "Immigration / Documents",
+  "Justice / Protection": "Legal / Protection"
   "Community / Isolation": "Communauté / Isolement",
-  "Depression / Mental health": "Dépression / Santé mentale",
+  "Basic Needs": "Besoins essentiels",  
 };
 const MINISTERES_EN_TO_FR = {
   "Intercession": "Intercession", "Praise": "Louange",
@@ -153,7 +161,7 @@ const translations = {
       "is_whatsapp: Oui | Non (ou vide)",
       "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
       "ministere: OBLIGATOIRE si serviteur = Oui — valeurs séparées par | : Intercession | Louange | Technique | Communication | Les Enfants | Les ados | Les jeunes | Finance | Nettoyage | Conseiller | Compassion | Visite | Berger | Modération",
-      "besoin: valeurs séparées par ; (ex: Finances;Santé;Travail / Études) — valeurs possibles : Finances | Santé | Travail / Études | Famille / Enfants | Miracle | Délivrance | Relations / Conflits | Addictions / Dépendances | Guidance spirituelle | Logement / Sécurité | Communauté / Isolement | Dépression / Santé mentale",
+      "besoin: valeurs séparées par ; (ex: Finances;Santé;Travail / Études) — valeurs possibles : Finances | Santé physique | Travail / Études | Famille / Enfants | Couple / Mariage | Miracle | Délivrance | Deuil / Perte | Relations / Conflits | Addictions / Dépendances | Besoins essentiels | Immigration / Documents | Guidance spirituelle | Logement / Sécurité | Justice / Protection | Communauté / Isolement | Dépression / Santé mentale",
     ],
   },
   en: {
@@ -228,7 +236,7 @@ const translations = {
       "is_whatsapp: Yes | No (or empty)",
       "water_baptism / spirit_baptism: Yes | No (or empty)",
       "ministry: REQUIRED if servant = Yes — values separated by | : Intercession | Praise | Technical | Communication | Children | Teens | Youth | Finance | Cleaning | Counselor | Compassion | Visitation | Shepherd | Moderation",
-      "needs: values separated by ; (e.g.: Finances;Health;Work / Studies) — possible values: Finances | Health | Work / Studies | Family / Children | Miracle | Deliverance | Relationships / Conflicts | Addictions / Dependencies | Spiritual guidance | Housing / Safety | Community / Isolation | Depression / Mental health",
+      "needs: values separated by ; (e.g.: Finances;Health;Work / Studies) — possible values: Finances | Physical Health | Work / Studies | Family / Children | Miracle | Deliverance | Relationships / Conflicts | Addictions / Dependencies | Grief / Loss | Spiritual guidance | Marriage / Relationships | Immigration / Documentation | Housing / Safety | Legal / Protection | Community / Isolation | Basic Needs | Depression / Mental health",
     ],
   },
 };

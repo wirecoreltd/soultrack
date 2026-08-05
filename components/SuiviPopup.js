@@ -226,11 +226,8 @@ export default function SuiviPopup({ member, onClose, user }) {
     besoins_avancement: "", talents: "", domaine_service: "",
   };
 
-  const besoinsOptions = [
-    t.finances, t.sante, t.travailEtudes, t.familleEnfants, t.miracle, t.delivrance,
-    t.relationsConflits, t.addictions, t.guidanceSpirituelle,
-    t.logement, t.communaute, t.depression,
-  ];
+  const besoinsOptions = [  t.finances,  t.sante,  t.depression,  t.travailEtudes,  t.familleEnfants,  t.mariage,  t.relationsConflits,  t.addictions,
+  t.viespirituel,  t.miracle,  t.delivrance,  t.perte,  t.logement,  t.documents,  t.justice,  t.communaute,  t.besoinessentiel,];
 
   const [loading, setLoading] = useState(false);
   const [suivis, setSuivis] = useState([]);

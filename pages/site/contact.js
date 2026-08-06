@@ -1,27 +1,13 @@
-"use client"; 
+"use client";
 import { useState, useEffect } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
+import SiteHeader from "../../components/SiteHeader";
+import SiteFooter from "../../components/SiteFooter";
 
-import { Great_Vibes } from "next/font/google";
-const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
-
-// ─── DICTIONNAIRE ────────────────────────────────────────────────────────────
 const translations = {
   fr: {
-    login: "Connexion",
-    signup: "Créer mon église",
-    webVersion: "Version web",
-    logout: "Déconnexion",
-    nav: [
-      { label: "Accueil", path: "/site/HomePage" },
-      { label: "Fonctionnement", path: "/site/Fonctionnement" },
-      { label: "À propos", path: "/site/about" },
-      { label: "Pricing", path: "/site/pricing" },
-      { label: "Contact", path: "/site/contact" },
-    ],
     heroLabel: "Contact",
     heroTitle: "Une question ?",
     heroHighlight: "Écrivez-nous",
@@ -61,54 +47,17 @@ const translations = {
     typeDeleteAccount: "🗑️ Supprimer mon compte",
     placeholderDeleteAccount: "En soumettant ce formulaire, vous confirmez la suppression définitive de votre compte et de toutes les données de votre église (membres, cellules, familles, historiques). Cette action est irréversible.",
     btnDelete: "Supprimer mon compte",
-    btnConfirm: "Confirmer la suppression",
     deleteWarning: "⚠️ Cette action est irréversible. Toutes les données de votre église seront supprimées définitivement.",
     successMessages: {
-      amelioration: {
-        icon: "💡",
-        title: "Suggestion reçue !",
-        text: "Merci pour votre retour. Chaque idée compte et nous aide à améliorer SoulTrack pour mieux servir vos besoins.",
-      },
-      question: {
-        icon: "❓",
-        title: "Question bien reçue !",
-        text: "Nous avons bien reçu votre question. Notre équipe vous répondra dans les plus brefs délais avec toute l'attention que vous méritez.",
-      },
-      temoignage: {
-        icon: "✝️",
-        title: "Témoignage reçu, merci !",
-        text: "Votre témoignage nous touche profondément. Que Dieu soit glorifié à travers chaque vie transformée. Merci de partager ce que Dieu accomplit.",
-      },
-      reseaux: {
-        icon: "🔗",
-        title: "Demande reçue !",
-        text: "Merci pour votre intérêt. Notre équipe vous contactera sous 48h pour échanger sur votre réseau d'églises.",
-      },
-      refund: {
-        icon: "💳",
-        title: "Demande de remboursement reçue !",
-        text: "Votre demande de remboursement a bien été enregistrée. Notre équipe l'examinera dans les plus brefs délais et vous contactera pour vous informer de la suite donnée.",
-      },      
-      request: {
-        icon: "📩",
-        title: "Demande reçue !",
-        text: "Merci pour votre demande. Notre équipe l'étudiera attentivement et reviendra vers vous dans les meilleurs délais.",
-      },
+      amelioration: { icon: "💡", title: "Suggestion reçue !", text: "Merci pour votre retour. Chaque idée compte et nous aide à améliorer SoulTrack pour mieux servir vos besoins." },
+      question: { icon: "❓", title: "Question bien reçue !", text: "Nous avons bien reçu votre question. Notre équipe vous répondra dans les plus brefs délais avec toute l'attention que vous méritez." },
+      temoignage: { icon: "✝️", title: "Témoignage reçu, merci !", text: "Votre témoignage nous touche profondément. Que Dieu soit glorifié à travers chaque vie transformée. Merci de partager ce que Dieu accomplit." },
+      reseaux: { icon: "🔗", title: "Demande reçue !", text: "Merci pour votre intérêt. Notre équipe vous contactera sous 48h pour échanger sur votre réseau d'églises." },
+      refund: { icon: "💳", title: "Demande de remboursement reçue !", text: "Votre demande de remboursement a bien été enregistrée. Notre équipe l'examinera dans les plus brefs délais et vous contactera pour vous informer de la suite donnée." },
+      request: { icon: "📩", title: "Demande reçue !", text: "Merci pour votre demande. Notre équipe l'étudiera attentivement et reviendra vers vous dans les meilleurs délais." },
     },
-    footer: "Tous droits réservés.",
   },
   en: {
-    login: "Log in",
-    signup: "Create my church",
-    webVersion: "Web version",
-    logout: "Log out",
-    nav: [
-      { label: "Home", path: "/site/HomePage" },
-      { label: "How it works", path: "/site/Fonctionnement" },
-      { label: "About", path: "/site/about" },
-      { label: "Pricing", path: "/site/pricing" },
-      { label: "Contact", path: "/site/contact" },
-    ],
     heroLabel: "Contact",
     heroTitle: "A question?",
     heroHighlight: "Write to us",
@@ -148,134 +97,45 @@ const translations = {
     typeDeleteAccount: "🗑️ Delete my account",
     placeholderDeleteAccount: "By submitting this form, you confirm the permanent deletion of your account and all your church data (members, cells, families, history). This action cannot be undone.",
     btnDelete: "Delete my account",
-    btnConfirm: "Confirm deletion",
     deleteWarning: "⚠️ This action is irreversible. All your church data will be permanently deleted.",
     successMessages: {
-      amelioration: {
-        icon: "💡",
-        title: "Suggestion received!",
-        text: "Thank you for your feedback. Every idea counts and helps us improve SoulTrack to better serve your needs.",
-      },
-      question: {
-        icon: "❓",
-        title: "Question received!",
-        text: "We have received your question. Our team will get back to you as soon as possible with all the attention you deserve.",
-      },
-      temoignage: {
-        icon: "✝️",
-        title: "Testimony received, thank you!",
-        text: "Your testimony touches us deeply. May God be glorified through every transformed life. Thank you for sharing what God is doing.",
-      },
-      reseaux: {
-        icon: "🔗",
-        title: "Request received!",
-        text: "Thank you for your interest. Our team will reach out within 48 hours to discuss your church network.",
-      },
-      refund: {
-        icon: "💳",
-        title: "Refund Request Received!",
-        text: "Your refund request has been successfully submitted. Our team will review it as soon as possible and contact you regarding the outcome.",
-      },
-      
-      request: {
-        icon: "📩",
-        title: "Request Received!",
-        text: "Thank you for your request. Our team will review it carefully and get back to you as soon as possible.",
-      },
+      amelioration: { icon: "💡", title: "Suggestion received!", text: "Thank you for your feedback. Every idea counts and helps us improve SoulTrack to better serve your needs." },
+      question: { icon: "❓", title: "Question received!", text: "We have received your question. Our team will get back to you as soon as possible with all the attention you deserve." },
+      temoignage: { icon: "✝️", title: "Testimony received, thank you!", text: "Your testimony touches us deeply. May God be glorified through every transformed life. Thank you for sharing what God is doing." },
+      reseaux: { icon: "🔗", title: "Request received!", text: "Thank you for your interest. Our team will reach out within 48 hours to discuss your church network." },
+      refund: { icon: "💳", title: "Refund Request Received!", text: "Your refund request has been successfully submitted. Our team will review it as soon as possible and contact you regarding the outcome." },
+      request: { icon: "📩", title: "Request Received!", text: "Thank you for your request. Our team will review it carefully and get back to you as soon as possible." },
     },
-    footer: "All rights reserved.",
   },
 };
 
 export default function ContactPage() {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { lang } = useLang();
 
-  const [openMenu, setOpenMenu] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [form, setForm] = useState({
-    nom: "",
-    email: "",
-    type: "",
-    message: "",
-    titre: "",
-    nom_eglise: "",
-    note: 0,
+    nom: "", email: "", type: "", message: "", titre: "", nom_eglise: "", note: 0,
   });
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [hoveredStar, setHoveredStar] = useState(0);
-  const { lang, changeLang } = useLang();
-
-  // ── Profil connecté ─────────────────────────────────────────────────────
-  const [profile, setProfile] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
 
   const t = translations[lang];
 
-  // ── Lire le paramètre ?type= après hydratation ──
   useEffect(() => {
-  const typeParam = searchParams.get("type");
-  const fetchUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const storedName = localStorage.getItem("userName") || "";
-      setForm((prev) => ({
-        ...prev,
-        type: typeParam || prev.type,
-        nom: storedName,
-        email: user.email || "",
-      }));
-    } else if (typeParam) {
-      setForm((prev) => ({ ...prev, type: typeParam }));
-    }
-  };
-  fetchUser();
-}, [searchParams]);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // ── Profil : chargement + écoute des changements de session ────────────
-  useEffect(() => {
-    const loadProfile = async () => {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        setProfile(null);
-        setLoadingProfile(false);
-        return;
+    const typeParam = searchParams.get("type");
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const storedName = localStorage.getItem("userName") || "";
+        setForm((prev) => ({ ...prev, type: typeParam || prev.type, nom: storedName, email: user.email || "" }));
+      } else if (typeParam) {
+        setForm((prev) => ({ ...prev, type: typeParam }));
       }
-
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, role, roles")
-        .eq("id", sessionData.session.user.id)
-        .single();
-
-      if (!error) setProfile(profileData);
-      setLoadingProfile(false);
     };
-
-    loadProfile();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      loadProfile();
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    setProfile(null);
-    router.push("/login");
-  };
+    fetchUser();
+  }, [searchParams]);
 
   const handleSubmit = async () => {
     if (!form.nom || !form.email || !form.type || !form.message) {
@@ -319,16 +179,6 @@ export default function ContactPage() {
     letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: "7px",
   };
 
-  const langBtnStyle = (active) => ({
-    background: active ? "rgba(255,255,255,0.15)" : "none",
-    border: active ? "0.5px solid rgba(255,255,255,0.3)" : "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    padding: "3px 5px",
-    opacity: active ? 1 : 0.45,
-    transition: "opacity 0.2s",
-  });
-
   const socialLinks = [
     {
       label: "Email", href: "mailto:support@soultrack.org",
@@ -357,226 +207,7 @@ export default function ContactPage() {
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
 
-      {/* ───── HEADER ───── */}
-      <header
-        style={{
-          background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
-          borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent",
-          position: "sticky", top: 0, zIndex: 100,
-          backdropFilter: scrolled ? "blur(16px)" : "none",
-          transition: "background 0.3s, border-color 0.3s",
-        }}
-      >
-        <div style={{ maxWidth: "1240px", margin: "0 auto", padding: "22px 24px", height: "88px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "24px", boxSizing: "border-box" }}>
-
-          {/* LOGO */}
-          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
-            <Image src="/logo.png" alt="SoulTrack" width={38} height={38} />
-            <span style={{ color: "#fff", fontSize: "19px", fontWeight: 500, fontFamily: "'Great Vibes', cursive", whiteSpace: "nowrap" }}>SoulTrack</span>
-          </div>
-
-          {/* ───── GROUPE DROITE desktop : nav + boutons + switcher langue ───── */}
-          <div className="nav-hide" style={{ display: "flex", alignItems: "center", gap: "26px", zIndex: 1, flexShrink: 0 }}>
-
-            {/* NAV desktop */}
-            <nav style={{ display: "flex", alignItems: "center", gap: "20px", zIndex: 1, flexShrink: 0 }}>
-              {t.nav.map((item) => (
-                <span
-                  key={item.path}
-                  onClick={() => router.push(item.path)}
-                  style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "color 0.2s", whiteSpace: "nowrap" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = pathname === item.path ? "#fbbf24" : "#fff")}
-                >
-                  {item.label}
-                </span>
-              ))}
-            </nav>
-
-            {/* BOUTONS desktop */}
-            <div style={{ display: "flex", gap: "8px", alignItems: "center", zIndex: 1, flexShrink: 0 }}>
-              {loadingProfile ? (
-                <div style={{ width: "180px", height: "34px" }} />
-              ) : profile ? (
-                <>
-                  <span
-                    onClick={() => router.push("/hub")}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      cursor: "pointer",
-                      color: "#fff",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: "28px",
-                        height: "28px",
-                        borderRadius: "50%",
-                        background: "#fbbf24",
-                        color: "#333699",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 700,
-                        fontSize: "13px",
-                      }}
-                    >
-                      {profile.prenom?.[0]?.toUpperCase() || "U"}
-                    </span>
-                    {profile.prenom}
-                  </span>
-
-                  <button
-                    onClick={() => router.push("/hub")}
-                    style={{
-                      background: "transparent",
-                      color: "#fff",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "6px 12px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {t.webVersion}
-                  </button>
-
-                  <button
-                    onClick={handleLogout}
-                    style={{
-                      background: "transparent",
-                      color: "#fbbf24",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "6px 12px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {t.logout}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer", whiteSpace: "nowrap" }}>
-                    {t.login}
-                  </button>
-                  <button onClick={() => router.push("/site/pricing")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
-                    {t.signup}
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Switcher langue desktop */}
-            <div style={{ display: "flex", gap: "10px", alignItems: "center", flexShrink: 0 }}>
-              <button onClick={() => changeLang("fr")} title="Français" style={{ ...langBtnStyle(lang === "fr"), flexShrink: 0 }}>
-                <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="30" height="21" alt="Français" style={{ display: "block", borderRadius: "3px", flexShrink: 0 }} />
-              </button>
-              <button onClick={() => changeLang("en")} title="English" style={{ ...langBtnStyle(lang === "en"), flexShrink: 0 }}>
-                <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="30" height="21" alt="English" style={{ display: "block", borderRadius: "3px", flexShrink: 0 }} />
-              </button>
-            </div>
-          </div>
-          {/* ───── FIN GROUPE DROITE ───── */}
-
-          {/* HAMBURGER */}
-          <button onClick={() => setOpenMenu(!openMenu)} className="nav-show" style={{ background: "none", border: "none", cursor: "pointer", display: "none", flexDirection: "column", gap: "5px", padding: "4px", zIndex: 1 }}>
-            {[0, 1, 2].map((i) => (
-              <span key={i} style={{ display: "block", width: "22px", height: "1.5px", background: "rgba(255,255,255,0.85)", borderRadius: "2px", transition: "transform 0.2s, opacity 0.2s", transform: openMenu ? i === 0 ? "rotate(45deg) translate(5px, 5px)" : i === 2 ? "rotate(-45deg) translate(5px, -5px)" : "scaleX(0)" : "none", opacity: openMenu && i === 1 ? 0 : 1 }} />
-            ))}
-          </button>
-        </div>
-
-        {/* MENU MOBILE */}
-        {openMenu && (
-          <div style={{ background: "#333699", borderTop: "0.5px solid rgba(255,255,255,0.15)", padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: "20px" }}>
-            {t.nav.map((item) => (
-              <span key={item.path} onClick={() => { router.push(item.path); setOpenMenu(false); }} style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
-                {item.label}
-              </span>
-            ))}
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button onClick={() => changeLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
-                <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
-              </button>
-              <button onClick={() => changeLang("en")} title="English" style={langBtnStyle(lang === "en")}>
-                <img src="https://flagcdn.com/w20/gb.png" srcSet="https://flagcdn.com/w40/gb.png 2x" width="20" height="14" alt="English" style={{ display: "block", borderRadius: "2px" }} />
-              </button>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
-              {loadingProfile ? null : profile ? (
-                <>
-                  <span
-                    onClick={() => {
-                      router.push("/hub");
-                      setOpenMenu(false);
-                    }}
-                    style={{
-                      color: "#fff",
-                      fontSize: "15px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    👤 {profile.prenom}
-                  </span>
-                  <button
-                    onClick={() => {
-                      router.push("/hub");
-                      setOpenMenu(false);
-                    }}
-                    style={{
-                      background: "transparent",
-                      color: "#fff",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "11px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {t.webVersion}
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setOpenMenu(false);
-                    }}
-                    style={{
-                      background: "transparent",
-                      color: "#fbbf24",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "11px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {t.logout}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => { router.push("/login"); setOpenMenu(false); }} style={{ background: "transparent", color: "#fff", border: "0.5px solid rgba(255,255,255,0.35)", padding: "11px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
-                    {t.login}
-                  </button>
-                  <button onClick={() => { router.push("/site/pricing"); setOpenMenu(false); }} style={{ background: "#fff", color: "#333699", border: "none", padding: "11px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
-                    {t.signup}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </header>
+      <SiteHeader />
 
       {/* ───── HERO ───── */}
       <section style={{ textAlign: "center", padding: "70px 24px 40px", position: "relative", zIndex: 1 }}>
@@ -612,7 +243,6 @@ export default function ContactPage() {
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "18px", position: "relative", zIndex: 1 }}>
 
-                {/* Nom + Email */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }} className="form-row">
                   {[
                     { key: "nom", label: t.fieldName, placeholder: t.fieldNamePlaceholder, type: "text" },
@@ -633,7 +263,6 @@ export default function ContactPage() {
                   ))}
                 </div>
 
-                {/* Type de message */}
                 <div>
                   <label style={labelStyle}>{t.fieldType}</label>
                   <select
@@ -657,10 +286,9 @@ export default function ContactPage() {
                     <option value="requette" style={{ background: "#333699", color: "#fff" }}>{t.typeRequete}</option>
                     <option value="refund" style={{ background: "#333699", color: "#fff" }}>{t.typeRefund}</option>
                     <option value="delete_account" style={{ background: "#6b0000", color: "#fff" }}>{t.typeDeleteAccount}</option>
-                      </select>
+                  </select>
                 </div>
 
-                {/* Champs supplémentaires Témoignage */}
                 {form.type === "temoignage" && (
                   <>
                     <div>
@@ -682,7 +310,6 @@ export default function ContactPage() {
                   </>
                 )}
 
-                {/* Message */}
                 <div>
                   <label style={labelStyle}>{t.fieldMessage}</label>
                   <textarea
@@ -712,31 +339,31 @@ export default function ContactPage() {
                 </div>
 
                 {error && (
-                    <p style={{ color: "#fca5a5", fontSize: "13px", textAlign: "center", margin: 0 }}>{error}</p>
-                  )}
-                  
-                  {form.type === "delete_account" && (
-                    <div style={{ background: "rgba(220,38,38,0.15)", border: "0.5px solid rgba(220,38,38,0.5)", borderRadius: "10px", padding: "14px 16px", color: "#fca5a5", fontSize: "13px", lineHeight: 1.7 }}>
-                      {t.deleteWarning}
-                    </div>
-                  )}
-                  
-                  <div style={{ display: "flex", justifyContent: "center" }}>
-                    <button
-                      onClick={handleSubmit}
-                      disabled={loading}
-                      style={{
-                        background: loading ? "rgba(255,255,255,0.5)" : form.type === "delete_account" ? "#dc2626" : "#fff",
-                        color: form.type === "delete_account" ? "#fff" : "#333699",
-                        border: "none", padding: "13px 36px", borderRadius: "10px", fontSize: "15px", fontWeight: 600,
-                        cursor: loading ? "not-allowed" : "pointer", transition: "opacity 0.2s"
-                      }}
-                      onMouseEnter={(e) => { if (!loading) e.currentTarget.style.opacity = "0.9"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                    >
-                      {loading ? t.btnSending : form.type === "delete_account" ? t.btnDelete : t.btnSend}
-                    </button>
+                  <p style={{ color: "#fca5a5", fontSize: "13px", textAlign: "center", margin: 0 }}>{error}</p>
+                )}
+
+                {form.type === "delete_account" && (
+                  <div style={{ background: "rgba(220,38,38,0.15)", border: "0.5px solid rgba(220,38,38,0.5)", borderRadius: "10px", padding: "14px 16px", color: "#fca5a5", fontSize: "13px", lineHeight: 1.7 }}>
+                    {t.deleteWarning}
                   </div>
+                )}
+
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    style={{
+                      background: loading ? "rgba(255,255,255,0.5)" : form.type === "delete_account" ? "#dc2626" : "#fff",
+                      color: form.type === "delete_account" ? "#fff" : "#333699",
+                      border: "none", padding: "13px 36px", borderRadius: "10px", fontSize: "15px", fontWeight: 600,
+                      cursor: loading ? "not-allowed" : "pointer", transition: "opacity 0.2s"
+                    }}
+                    onMouseEnter={(e) => { if (!loading) e.currentTarget.style.opacity = "0.9"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                  >
+                    {loading ? t.btnSending : form.type === "delete_account" ? t.btnDelete : t.btnSend}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -755,25 +382,11 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* ───── FOOTER ───── */}
-      <footer style={{ borderTop: "0.5px solid rgba(255,255,255,0.1)", padding: "20px 24px", boxSizing: "border-box", width: "100%" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "14px" }}>
-          <div>© {new Date().getFullYear()} SoulTrack. {t.footer}</div>
-          <div style={{ marginTop: "10px", display: "flex", justifyContent: "center", gap: "16px", flexWrap: "wrap" }}>
-            <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>Terms</span>
-            <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>Privacy</span>
-            <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>Refund</span>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
 
       <style>{`
         body { overflow-x: hidden; }
         input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.25); }
-        @media (max-width: 768px) {
-          .nav-hide { display: none !important; }
-          .nav-show { display: flex !important; }
-        }
         @media (max-width: 480px) {
           .form-row { grid-template-columns: 1fr !important; }
         }

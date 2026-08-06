@@ -50,8 +50,7 @@ const translations = {
         ],
       },
       {
-        title: "Espace Évangélisation",
-        emoji: "✝️",
+        title: "Espace Évangélisation",        
         desc: "Le premier contact devient une histoire suivie, du témoignage jusqu'à la décision de foi.",
         accentText: "#D8B45B",
         accent: "rgba(216,180,91,0.6)",
@@ -194,8 +193,7 @@ const translations = {
         ],
       },
       {
-        title: "Cell Groups Space",
-        emoji: "🏠",
+        title: "Cell Groups Space",        
         desc: "The fabric of community: living groups where everyone is seen, guided and rooted.",
         accentText: "#79B8B5",
         accent: "rgba(121,184,181,0.6)",
@@ -209,8 +207,7 @@ const translations = {
         ],
       },
       {
-        title: "Children's Space",
-        emoji: "🧒",
+        title: "Children's Space",       
         desc: "The youngest grow in safety, followed class by class, lesson by lesson.",
         accentText: "#D79A89",
         accent: "rgba(215,154,137,0.6)",
@@ -225,8 +222,7 @@ const translations = {
         ],
       },
       {
-        title: "Counselor Space",
-        emoji: "🤝",
+        title: "Counselor Space",      
         desc: "Close pastoral accompaniment, from the first conversation to spiritual maturity.",
         accentText: "#E0A867",
         accent: "rgba(224,168,103,0.6)",
@@ -240,8 +236,7 @@ const translations = {
         ],
       },
       {
-        title: "Administrator Space",
-        emoji: "🛡️",
+        title: "Administrator Space",       
         desc: "The structure holding it together: users, roles and links between churches.",
         accentText: "#A79BD9",
         accent: "rgba(167,155,217,0.6)",
@@ -256,8 +251,7 @@ const translations = {
         ],
       },
       {
-        title: "Reports Space",
-        emoji: "📉",
+        title: "Reports Space",      
         desc: "Every story gathers here, into one clear view of the church's growth.",
         accentText: "#8FB0D6",
         accent: "rgba(143,176,214,0.6)",
@@ -275,7 +269,7 @@ const translations = {
   },
 };
 
-const numerals = ["🧭", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+const numerals = ["🧭", "✝️", "🏠", "🦁", "🤝", "⚙️", "📉", "VIII", "IX", "X"];
 
 function langBtnStyle(active) {
   return {
@@ -806,7 +800,7 @@ export default function Fonctionnement() {
                   }}
                 >
                   {numerals[mIndex]}
-                  <span style={{ position: "absolute", bottom: "-4px", right: "-4px", fontSize: "13px" }}>🌿</span>
+                  <span style={{ position: "absolute", bottom: "-4px", right: "-4px", fontSize: "13px" }}></span>
                 </div>
               </div>
 

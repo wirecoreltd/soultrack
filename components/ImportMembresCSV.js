@@ -3,7 +3,7 @@
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
 import { checkLimiteAtteinte } from "../lib/checkLimite";
-import * as XLSX from "xlsx";
+import Papa from "papaparse";
 import { useLang } from "../hooks/useLang";
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -92,15 +92,19 @@ const norm = (value, enToFrMap, validFrValues) => {
   return enToFrMap[trimmed] ?? trimmed;
 };
 
+// Colonnes multi-valeurs : nombre d'emplacements disponibles
+const MINISTERE_SLOTS = ["ministere_1", "ministere_2", "ministere_3", "ministere_4", "ministere_5"];
+const BESOIN_SLOTS = ["besoin_1", "besoin_2", "besoin_3", "besoin_4", "besoin_5", "besoin_6"];
+
 // ─── Traductions UI ───────────────────────────────────────────────────────────
 const translations = {
   fr: {
     beforeImport: "Avant d'importer",
     step1: "1. Telecharge le template et remplis-le avec tes donnees.",
-    step2: "2. Utilise les menus deroulants pour sexe, age, statut, ministere, besoin, etc.",
+    step2: "2. Efface toutes les lignes commencant par # avant d'importer.",
     step3: "3. Pour ajouter plus de ministeres/besoins que de colonnes disponibles, ou un ministere/besoin personnalise, modifie la fiche du membre dans l'application apres l'import.",
-    downloadTemplate: "Telecharger le template Excel",
-    importFile: "Importer un fichier Excel (.xlsx)",
+    downloadTemplate: "Telecharger le template CSV",
+    importFile: "Importer un fichier CSV",
     checkingDuplicates: "Verification des doublons en cours...",
     resumeFile: "Resume du fichier",
     readyToImport: "pret(s) a importer",
@@ -114,7 +118,7 @@ const translations = {
     alreadyInBase: "Deja dans la base :",
     update: "Mettre a jour",
     addAnyway: "Ajouter quand meme",
-    updateInfo: "Les donnees existantes seront ecrasees par celles du fichier.",
+    updateInfo: "Les donnees existantes seront ecrasees par celles du CSV.",
     addInfo: "Une nouvelle entree sera creee meme si le numero existe deja.",
     uncheckAll: "Tout decocher (MAJ)",
     updateAll: "Tout mettre a jour",
@@ -134,15 +138,50 @@ const translations = {
     errorInsert: "Erreur insert: ",
     errorInsertDup: "Erreur insert doublon: ",
     errorUpdate: "Erreur update",
-    invalidFileType: "Merci d'importer un fichier .xlsx (genere depuis le template).",
+    templateHeaders: [
+      "nom *", "prenom *", "sexe *", "age *", "date_venu *", "serviteur *",
+      "statut *", "venu *", "priere_salut *", "type_conversion *",
+      "telephone", "ville", "is_whatsapp",
+      "bapteme_eau", "bapteme_esprit",
+      "ministere_1", "ministere_2", "ministere_3", "ministere_4", "ministere_5",
+      "besoin_1", "besoin_2", "besoin_3", "besoin_4", "besoin_5", "besoin_6",
+      "infos_supplementaires",
+    ],
+    templateExample: [
+      "Dupont", "Marie", "Femme", "18-25 ans", "2026-01-15", "Oui",
+      "nouveau", "invité", "Oui", "Nouveau converti",
+      "+336 12 34 56 78", "Paris", "Oui",
+      "Oui", "Non",
+      "Louange", "Intercession", "", "", "",
+      "Finances", "Santé", "", "", "", "",
+      "Info supplementaire ici",
+    ],
+    templateNotes: [
+      "IMPORTANT: Effacez toutes les lignes commencant par # avant d'importer le fichier.",
+      "Les colonnes avec * sont obligatoires.",
+      "sexe: Homme | Femme",
+      "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
+      "Le préfixe téléphonique du pays doit être placé avant le numéro de téléphone",
+      "date_venu: format YYYY-MM-DD ou JJ-MM-AA ou JJ-MM-AAAA",
+      "serviteur: Oui | Non",
+      "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur",
+      "venu: invité | réseaux | evangélisation | autre",
+      "priere_salut: Oui | Non",
+      "type_conversion: Nouveau converti | Réconciliation (optionnel- uniquement si priere_salut = Oui)",
+      "is_whatsapp: Oui | Non (ou vide)",
+      "bapteme_eau / bapteme_esprit: Oui | Non (ou vide)",
+      "ministere_1 a ministere_5: une valeur par colonne (laisser vide si non utilisee). OBLIGATOIRE (au moins une) si serviteur = Oui. Valeurs possibles : Intercession | Louange | Technique | Communication | Les Enfants | Les ados | Les jeunes | Finance | Nettoyage | Conseiller | Compassion | Visite | Berger | Modération",
+      "besoin_1 a besoin_6: une valeur par colonne (laisser vide si non utilisee). Valeurs possibles : Finances | Santé physique | Travail / Études | Famille / Enfants | Couple / Mariage | Miracle | Délivrance | Deuil / Perte | Relations / Conflits | Addictions / Dépendances | Besoins essentiels | Immigration / Documents | Guidance spirituelle | Logement / Sécurité | Justice / Protection | Communauté / Isolement | Dépression / Santé mentale",
+      "Pour ajouter plus de ministeres/besoins que de colonnes disponibles, ou un ministere/besoin personnalise, modifiez la fiche du membre dans l'application apres l'import.",
+    ],
   },
   en: {
     beforeImport: "Before importing",
     step1: "1. Download the template and fill it with your data.",
-    step2: "2. Use the dropdown menus for gender, age, status, ministry, needs, etc.",
+    step2: "2. Delete all lines starting with # before importing.",
     step3: "3. To add more ministries/needs than available columns, or a custom one, edit the member's profile in the app after import.",
-    downloadTemplate: "Download Excel template",
-    importFile: "Import an Excel file (.xlsx)",
+    downloadTemplate: "Download CSV template",
+    importFile: "Import a CSV file",
     checkingDuplicates: "Checking for duplicates...",
     resumeFile: "File summary",
     readyToImport: "ready to import",
@@ -156,7 +195,7 @@ const translations = {
     alreadyInBase: "Already in database:",
     update: "Update",
     addAnyway: "Add anyway",
-    updateInfo: "Existing data will be overwritten with file data.",
+    updateInfo: "Existing data will be overwritten with CSV data.",
     addInfo: "A new entry will be created even if the number already exists.",
     uncheckAll: "Uncheck all (Update)",
     updateAll: "Update all",
@@ -176,13 +215,44 @@ const translations = {
     errorInsert: "Insert error: ",
     errorInsertDup: "Duplicate insert error: ",
     errorUpdate: "Update error",
-    invalidFileType: "Please import a .xlsx file (generated from the template).",
+    templateHeaders: [
+      "last_name *", "first_name *", "gender *", "age *", "date_joined *", "servant *",
+      "status *", "how_came *", "salvation_prayer *", "conversion_type *",
+      "phone", "city", "is_whatsapp",
+      "water_baptism", "spirit_baptism",
+      "ministry_1", "ministry_2", "ministry_3", "ministry_4", "ministry_5",
+      "need_1", "need_2", "need_3", "need_4", "need_5", "need_6",
+      "additional_info",
+    ],
+    templateExample: [
+      "Dupont", "Mary", "Female", "18-25 yrs", "2026-01-15", "Yes",
+      "new", "invited", "Yes", "New convert",
+      "+1 212 555 0147", "New York", "Yes",
+      "Yes", "No",
+      "Praise", "Intercession", "", "", "",
+      "Finances", "Health", "", "", "", "",
+      "Additional info here",
+    ],
+    templateNotes: [
+      "IMPORTANT: Delete all lines starting with # before importing the file.",
+      "Columns with * are required.",
+      "gender: Male | Female",
+      "age: 12-17 yrs | 18-25 yrs | 26-30 yrs | 31-40 yrs | 41-55 yrs | 56-69 yrs | 70 yrs and over",
+      "The country phone prefix must be placed before the phone number",
+      "date_joined: format YYYY-MM-DD or DD-MM-YY or DD-MM-YYYY",
+      "servant: Yes | No",
+      "status: wants to join the church | already has a church | new | visitor",
+      "how_came: invited | social media | evangelization | other",
+      "salvation_prayer: Yes | No",
+      "conversion_type: New convert | Reconciliation (optional - only if salvation_prayer = Yes)",
+      "is_whatsapp: Yes | No (or empty)",
+      "water_baptism / spirit_baptism: Yes | No (or empty)",
+      "ministry_1 to ministry_5: one value per column (leave empty if unused). REQUIRED (at least one) if servant = Yes. Possible values: Intercession | Praise | Technical | Communication | Children | Teens | Youth | Finance | Cleaning | Counselor | Compassion | Visitation | Shepherd | Moderation",
+      "need_1 to need_6: one value per column (leave empty if unused). Possible values: Finances | Physical Health | Work / Studies | Family / Children | Marriage / Relationships | Miracle | Deliverance | Grief / Loss | Relationships / Conflicts | Addictions / Dependencies | Basic Needs | Immigration / Documentation | Spiritual guidance | Housing / Safety | Legal / Protection | Community / Isolation | Depression / Mental health",
+      "To add more ministries/needs than available columns, or a custom one, edit the member's profile in the app after import.",
+    ],
   },
 };
-
-// Colonnes multi-valeurs : nombre d'emplacements dropdown disponibles
-const MINISTERE_SLOTS = ["ministere_1", "ministere_2", "ministere_3", "ministere_4", "ministere_5"];
-const BESOIN_SLOTS = ["besoin_1", "besoin_2", "besoin_3", "besoin_4", "besoin_5", "besoin_6"];
 
 export default function ImportMembresCSV({ user }) {
   const { lang } = useLang();
@@ -227,23 +297,27 @@ export default function ImportMembresCSV({ user }) {
     return null;
   };
 
-  // ── Template : simple lien vers le fichier statique (créé manuellement dans Excel) ──
   const handleDownloadTemplate = () => {
-    const filename = lang === "en" ? "template_import_members.xlsx" : "template_import_membres.xlsx";
+    const csvContent = [
+      t.templateHeaders.join(","),
+      t.templateExample.join(","),
+      "",
+      ...t.templateNotes.map((n) => `# ${n}`),
+    ].join("\n");
+
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = `/templates/${filename}`;
-    link.download = filename;
+    link.href = url;
+    link.download = lang === "en" ? "template_import_members.csv" : "template_import_membres.csv";
     link.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    if (!file.name.toLowerCase().endsWith(".xlsx")) {
-      setErrors([t.invalidFileType]);
-      return;
-    }
 
     setSuccess(false);
     setDuplicates([]);
@@ -251,196 +325,202 @@ export default function ImportMembresCSV({ user }) {
     setDepsToAdd({});
     setData([]);
     setErrors([]);
-    setChecking(true);
 
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      const wb = XLSX.read(evt.target.result, { type: "array" });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        const rows = results.data;
+        const validData = [];
+        const errorList = [];
 
-      const validData = [];
-      const errorList = [];
+        rows.forEach((row, index) => {
+          if (Object.values(row)[0]?.toString().trim().startsWith("#")) return;
 
-      rows.forEach((row, index) => {
-        // ── Normaliser les clés : mapper EN → FR ──
-        const normalized = {};
-        Object.keys(row).forEach((key) => {
-          const cleanKey = key.replace(" *", "").trim();
-          const mappedKey = EN_HEADER_MAP[cleanKey] ?? cleanKey;
-          normalized[mappedKey] = row[key]?.toString().trim() || "";
-        });
-
-        // ── Normaliser les valeurs EN → FR ──
-        normalized.sexe           = norm(normalized.sexe, SEXE_EN_TO_FR, ["Homme", "Femme"]);
-        normalized.age            = norm(normalized.age, AGE_EN_TO_FR, ["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"]);
-        normalized.serviteur      = norm(normalized.serviteur, BOOL_EN_TO_FR, ["Oui", "Non"]);
-        normalized.is_whatsapp    = norm(normalized.is_whatsapp, BOOL_EN_TO_FR, ["Oui", "Non"]);
-        normalized.priere_salut   = norm(normalized.priere_salut, BOOL_EN_TO_FR, ["Oui", "Non"]);
-        normalized.bapteme_eau    = norm(normalized.bapteme_eau, BOOL_EN_TO_FR, ["Oui", "Non"]);
-        normalized.bapteme_esprit = norm(normalized.bapteme_esprit, BOOL_EN_TO_FR, ["Oui", "Non"]);
-        normalized.statut         = norm(normalized.statut, STATUT_EN_TO_FR, ["veut rejoindre l'église","a déjà son église","nouveau","visiteur"]);
-        normalized.venu           = norm(normalized.venu, VENU_EN_TO_FR, ["invité","réseaux","evangélisation","autre"]);
-        normalized.type_conversion = norm(normalized.type_conversion, CONV_EN_TO_FR, ["Nouveau converti","Réconciliation"]);
-
-        let rowErrors = [];
-
-        // ── Champs obligatoires ──
-        requiredFields.forEach((field) => {
-          if (!normalized[field])
-            rowErrors.push(`Ligne ${index + 1}: ${field} manquant`);
-        });
-
-        if (normalized.priere_salut === "Oui" && !normalized.type_conversion) {
-          rowErrors.push(`Ligne ${index + 1}: type_conversion manquant (requis si priere_salut = Oui)`);
-        }
-
-        // ── Validations des valeurs ──
-        if (normalized.sexe && !["Homme", "Femme"].includes(normalized.sexe))
-          rowErrors.push(`Ligne ${index + 1}: sexe invalide (Homme ou Femme)`);
-
-        const validAges = ["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"];
-        if (normalized.age && !validAges.includes(normalized.age))
-          rowErrors.push(`Ligne ${index + 1}: age invalide`);
-
-        const dateVenu = parseDate(normalized.date_venu);
-        if (normalized.date_venu && !dateVenu)
-          rowErrors.push(`Ligne ${index + 1}: date_venu invalide`);
-
-        if (normalized.serviteur && !["Oui", "Non"].includes(normalized.serviteur))
-          rowErrors.push(`Ligne ${index + 1}: serviteur invalide (Oui ou Non)`);
-
-        const validStatuts = ["veut rejoindre l'église","a déjà son église","nouveau","visiteur"];
-        if (normalized.statut && !validStatuts.includes(normalized.statut))
-          rowErrors.push(`Ligne ${index + 1}: statut invalide`);
-
-        const validVenu = ["invité","réseaux","evangélisation","autre"];
-        if (normalized.venu && !validVenu.includes(normalized.venu))
-          rowErrors.push(`Ligne ${index + 1}: venu invalide (invité | réseaux | evangélisation | autre)`);
-
-        if (normalized.priere_salut && !["Oui", "Non"].includes(normalized.priere_salut))
-          rowErrors.push(`Ligne ${index + 1}: priere_salut invalide (Oui ou Non)`);
-
-        if (normalized.is_whatsapp && !["Oui", "Non", ""].includes(normalized.is_whatsapp))
-          rowErrors.push(`Ligne ${index + 1}: is_whatsapp invalide (Oui ou Non)`);
-
-        if (normalized.bapteme_eau && !["Oui", "Non", ""].includes(normalized.bapteme_eau))
-          rowErrors.push(`Ligne ${index + 1}: bapteme_eau invalide (Oui ou Non)`);
-
-        if (normalized.bapteme_esprit && !["Oui", "Non", ""].includes(normalized.bapteme_esprit))
-          rowErrors.push(`Ligne ${index + 1}: bapteme_esprit invalide (Oui ou Non)`);
-
-        const validConversions = ["Nouveau converti", "Réconciliation"];
-        if (normalized.type_conversion && !validConversions.includes(normalized.type_conversion))
-          rowErrors.push(`Ligne ${index + 1}: type_conversion invalide (Nouveau converti | Réconciliation)`);
-
-        // ── Ministère : combine les colonnes ministere_1..5 ──
-        const ministeresRaw = MINISTERE_SLOTS
-          .map((slot) => normalized[slot])
-          .filter(Boolean);
-        const ministeres = ministeresRaw.map((m) => MINISTERES_EN_TO_FR[m] ?? m);
-
-        if (normalized.serviteur === "Oui" && ministeres.length === 0) {
-          rowErrors.push(`Ligne ${index + 1}: ministere obligatoire si serviteur = Oui`);
-        }
-        const invalidMin = ministeres.filter((m) => !MINISTERES_VALIDES.includes(m));
-        if (invalidMin.length > 0) {
-          rowErrors.push(`Ligne ${index + 1}: ministere invalide : ${invalidMin.join(", ")}`);
-        }
-
-        // ── Besoins : combine les colonnes besoin_1..6 ──
-        const besoin = BESOIN_SLOTS
-          .map((slot) => normalized[slot])
-          .filter(Boolean)
-          .map((b) => BESOIN_EN_TO_FR[b] ?? b);
-        const invalidBesoin = besoin.filter((b) => !BESOIN_FR.includes(b));
-        if (invalidBesoin.length > 0) {
-          rowErrors.push(`Ligne ${index + 1}: besoin invalide : ${invalidBesoin.join(", ")}`);
-        }
-
-        if (rowErrors.length === 0) {
-          validData.push({
-            nom:                   capitalize(normalized.nom),
-            prenom:                capitalize(normalized.prenom),
-            sexe:                  normalized.sexe,
-            age:                   normalized.age,
-            date_venu:             dateVenu,
-            star:                  normalized.serviteur === "Oui",
-            statut:                normalized.statut,
-            venu:                  normalized.venu,
-            priere_salut:          normalized.priere_salut,
-            telephone:             cleanPhone(normalized.telephone) || null,
-            ville:                 capitalize(normalized.ville) || null,
-            is_whatsapp:           normalized.is_whatsapp === "Oui",
-            bapteme_eau:           normalized.bapteme_eau || null,
-            bapteme_esprit:        normalized.bapteme_esprit || null,
-            Ministere:             ministeres.length > 0 ? JSON.stringify(ministeres) : null,
-            besoin:                besoin.length > 0 ? besoin : null,
-            type_conversion:       normalized.type_conversion || null,
-            infos_supplementaires: normalized.infos_supplementaires || null,
-            eglise_id:             user.eglise_id,
-            statut_suivis:         3,
-            etat_contact:          "existant",
+          // ── Normaliser les clés : enlever " *", mapper EN → FR ──
+          const normalized = {};
+          Object.keys(row).forEach((key) => {
+            const cleanKey = key.replace(" *", "").trim();
+            const mappedKey = EN_HEADER_MAP[cleanKey] ?? cleanKey;
+            normalized[mappedKey] = row[key]?.toString().trim() || "";
           });
-        } else {
-          errorList.push(...rowErrors);
+
+          // ── Normaliser les valeurs EN → FR ──
+          normalized.sexe           = norm(normalized.sexe, SEXE_EN_TO_FR, ["Homme", "Femme"]);
+          normalized.age            = norm(normalized.age, AGE_EN_TO_FR, ["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"]);
+          normalized.serviteur      = norm(normalized.serviteur, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          normalized.is_whatsapp    = norm(normalized.is_whatsapp, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          normalized.priere_salut   = norm(normalized.priere_salut, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          normalized.bapteme_eau    = norm(normalized.bapteme_eau, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          normalized.bapteme_esprit = norm(normalized.bapteme_esprit, BOOL_EN_TO_FR, ["Oui", "Non"]);
+          normalized.statut         = norm(normalized.statut, STATUT_EN_TO_FR, ["veut rejoindre l'église","a déjà son église","nouveau","visiteur"]);
+          normalized.venu           = norm(normalized.venu, VENU_EN_TO_FR, ["invité","réseaux","evangélisation","autre"]);
+          normalized.type_conversion = norm(normalized.type_conversion, CONV_EN_TO_FR, ["Nouveau converti","Réconciliation"]);
+
+          let rowErrors = [];
+
+          // ── Champs obligatoires ──
+          requiredFields.forEach((field) => {
+            if (!normalized[field])
+              rowErrors.push(`Ligne ${index + 1}: ${field} manquant`);
+          });
+
+          if (normalized.priere_salut === "Oui" && !normalized.type_conversion) {
+            rowErrors.push(`Ligne ${index + 1}: type_conversion manquant (requis si priere_salut = Oui)`);
+          }
+
+          // ── Validations des valeurs ──
+          if (normalized.sexe && !["Homme", "Femme"].includes(normalized.sexe))
+            rowErrors.push(`Ligne ${index + 1}: sexe invalide (Homme ou Femme)`);
+
+          const validAges = ["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"];
+          if (normalized.age && !validAges.includes(normalized.age))
+            rowErrors.push(`Ligne ${index + 1}: age invalide`);
+
+          const dateVenu = parseDate(normalized.date_venu);
+          if (normalized.date_venu && !dateVenu)
+            rowErrors.push(`Ligne ${index + 1}: date_venu invalide`);
+
+          if (normalized.serviteur && !["Oui", "Non"].includes(normalized.serviteur))
+            rowErrors.push(`Ligne ${index + 1}: serviteur invalide (Oui ou Non)`);
+
+          const validStatuts = ["veut rejoindre l'église","a déjà son église","nouveau","visiteur"];
+          if (normalized.statut && !validStatuts.includes(normalized.statut))
+            rowErrors.push(`Ligne ${index + 1}: statut invalide`);
+
+          const validVenu = ["invité","réseaux","evangélisation","autre"];
+          if (normalized.venu && !validVenu.includes(normalized.venu))
+            rowErrors.push(`Ligne ${index + 1}: venu invalide (invité | réseaux | evangélisation | autre)`);
+
+          if (normalized.priere_salut && !["Oui", "Non"].includes(normalized.priere_salut))
+            rowErrors.push(`Ligne ${index + 1}: priere_salut invalide (Oui ou Non)`);
+
+          if (normalized.is_whatsapp && !["Oui", "Non", ""].includes(normalized.is_whatsapp))
+            rowErrors.push(`Ligne ${index + 1}: is_whatsapp invalide (Oui ou Non)`);
+
+          if (normalized.bapteme_eau && !["Oui", "Non", ""].includes(normalized.bapteme_eau))
+            rowErrors.push(`Ligne ${index + 1}: bapteme_eau invalide (Oui ou Non)`);
+
+          if (normalized.bapteme_esprit && !["Oui", "Non", ""].includes(normalized.bapteme_esprit))
+            rowErrors.push(`Ligne ${index + 1}: bapteme_esprit invalide (Oui ou Non)`);
+
+          const validConversions = ["Nouveau converti", "Réconciliation"];
+          if (normalized.type_conversion && !validConversions.includes(normalized.type_conversion))
+            rowErrors.push(`Ligne ${index + 1}: type_conversion invalide (Nouveau converti | Réconciliation)`);
+
+          // ── Ministère : combine les colonnes ministere_1..5 ──
+          const ministeresRaw = MINISTERE_SLOTS
+            .map((slot) => normalized[slot])
+            .filter(Boolean);
+          const ministeres = ministeresRaw.map((m) => MINISTERES_EN_TO_FR[m] ?? m);
+
+          if (normalized.serviteur === "Oui" && ministeres.length === 0) {
+            rowErrors.push(`Ligne ${index + 1}: ministere obligatoire si serviteur = Oui`);
+          }
+          const invalidMin = ministeres.filter((m) => !MINISTERES_VALIDES.includes(m));
+          if (invalidMin.length > 0) {
+            rowErrors.push(`Ligne ${index + 1}: ministere invalide : ${invalidMin.join(", ")}`);
+          }
+
+          // ── Besoins : combine les colonnes besoin_1..6 ──
+          const besoin = BESOIN_SLOTS
+            .map((slot) => normalized[slot])
+            .filter(Boolean)
+            .map((b) => BESOIN_EN_TO_FR[b] ?? b);
+          const invalidBesoin = besoin.filter((b) => !BESOIN_FR.includes(b));
+          if (invalidBesoin.length > 0) {
+            rowErrors.push(`Ligne ${index + 1}: besoin invalide : ${invalidBesoin.join(", ")}`);
+          }
+
+          if (rowErrors.length === 0) {
+            validData.push({
+              nom:                   capitalize(normalized.nom),
+              prenom:                capitalize(normalized.prenom),
+              sexe:                  normalized.sexe,
+              age:                   normalized.age,
+              date_venu:             dateVenu,
+              star:                  normalized.serviteur === "Oui",
+              statut:                normalized.statut,
+              venu:                  normalized.venu,
+              priere_salut:          normalized.priere_salut,
+              telephone:             cleanPhone(normalized.telephone) || null,
+              ville:                 capitalize(normalized.ville) || null,
+              is_whatsapp:           normalized.is_whatsapp === "Oui",
+              bapteme_eau:           normalized.bapteme_eau || null,
+              bapteme_esprit:        normalized.bapteme_esprit || null,
+              Ministere:             ministeres.length > 0 ? JSON.stringify(ministeres) : null,
+              besoin:                besoin.length > 0 ? besoin : null,
+              type_conversion:       normalized.type_conversion || null,
+              infos_supplementaires: normalized.infos_supplementaires || null,
+              eglise_id:             user.eglise_id,
+              statut_suivis:         3,
+              etat_contact:          "existant",
+            });
+          } else {
+            errorList.push(...rowErrors);
+          }
+        });
+
+        setErrors(errorList);
+
+        if (validData.length === 0) {
+          setData([]);
+          return;
         }
-      });
 
-      setErrors(errorList);
+        setChecking(true);
 
-      if (validData.length === 0) {
+        const phones = validData.map((r) => r.telephone).filter(Boolean);
+        let existingByPhone = {};
+
+        if (phones.length > 0) {
+          const { data: existing } = await supabase
+            .from("membres_complets")
+            .select("id, nom, prenom, telephone")
+            .eq("eglise_id", user.eglise_id)
+            .in("telephone", phones);
+
+          (existing || []).forEach((e) => {
+            existingByPhone[e.telephone] = e;
+          });
+        }
+
         setChecking(false);
-        setData([]);
-        return;
-      }
 
-      const phones = validData.map((r) => r.telephone).filter(Boolean);
-      let existingByPhone = {};
+        const dupList = [];
+        const finalData = [];
 
-      if (phones.length > 0) {
-        const { data: existing } = await supabase
-          .from("membres_complets")
-          .select("id, nom, prenom, telephone")
-          .eq("eglise_id", user.eglise_id)
-          .in("telephone", phones);
-
-        (existing || []).forEach((e) => {
-          existingByPhone[e.telephone] = e;
+        validData.forEach((row) => {
+          if (!row.telephone) { finalData.push(row); return; }
+          const match = existingByPhone[row.telephone];
+          if (match) {
+            dupList.push({
+              csv: `${row.prenom} ${row.nom}`,
+              telephone: row.telephone,
+              existing: `${match.prenom} ${match.nom}`,
+              existingId: match.id,
+              rowData: row,
+            });
+          } else {
+            finalData.push(row);
+          }
         });
-      }
 
-      setChecking(false);
-
-      const dupList = [];
-      const finalData = [];
-
-      validData.forEach((row) => {
-        if (!row.telephone) { finalData.push(row); return; }
-        const match = existingByPhone[row.telephone];
-        if (match) {
-          dupList.push({
-            csv: `${row.prenom} ${row.nom}`,
-            telephone: row.telephone,
-            existing: `${match.prenom} ${match.nom}`,
-            existingId: match.id,
-            rowData: row,
-          });
-        } else {
-          finalData.push(row);
-        }
-      });
-
-      setDuplicates(dupList);
-      setDepsToUpdate({});
-      setDepsToAdd({});
-      setData(finalData);
-    };
-
-    reader.readAsArrayBuffer(file);
+        setDuplicates(dupList);
+        setDepsToUpdate({});
+        setDepsToAdd({});
+        setData(finalData);
+      },
+    });
   };
 
   // ─── Synchronise stats_ministere_besoin pour une liste {id, rowData} ───
+  // ⚠️ Pas de onConflict volontairement : chaque sauvegarde crée une nouvelle
+  // ligne "photo" datée du jour, pour conserver l'historique complet.
+  // RapportMinistere.js reconstruit l'état d'un membre à une date donnée en
+  // prenant la ligne la plus récente dont date_action <= date choisie.
+  // Ne JAMAIS ajouter onConflict ou faire un delete ici sans adapter
+  // RapportMinistere.js en conséquence.
   const syncStatsMinistere = async (idRowPairs) => {
     const rows = idRowPairs.map(({ id, rowData }) => {
       let ministeres = [];
@@ -454,6 +534,9 @@ export default function ImportMembresCSV({ user }) {
         membre_id: id,
         sexe: rowData.sexe,
         type: "ministere",
+        // star=true avec ministeres -> liste des ministères
+        // star=false (ou pas de ministère) -> ligne "fin de service" (valeur vide),
+        // sans jamais toucher aux lignes historiques précédentes
         valeur: rowData.star && ministeres.length > 0 ? ministeres.join(",") : "",
         eglise_id: user.eglise_id,
         date_action: new Date().toISOString().split("T")[0],
@@ -463,7 +546,7 @@ export default function ImportMembresCSV({ user }) {
     if (rows.length > 0) {
       const { error } = await supabase
         .from("stats_ministere_besoin")
-        .upsert(rows);
+        .upsert(rows); // pas de onConflict -> insert d'une nouvelle ligne à chaque fois
       if (error) console.error("Erreur sync stats_ministere_besoin:", error);
     }
   };
@@ -484,6 +567,7 @@ export default function ImportMembresCSV({ user }) {
       return;
     }
 
+    // ── Nouveaux membres ──
     if (data.length > 0) {
       const { data: inserted, error } = await supabase
         .from("membres_complets")
@@ -495,6 +579,7 @@ export default function ImportMembresCSV({ user }) {
       await syncStatsMinistere(pairs);
     }
 
+    // ── Doublons ajoutés quand même ──
     const dupsToInsert = duplicates.filter((d) => depsToAdd[d.telephone]);
     if (dupsToInsert.length > 0) {
       const { data: insertedDups, error } = await supabase
@@ -507,6 +592,7 @@ export default function ImportMembresCSV({ user }) {
       await syncStatsMinistere(pairs);
     }
 
+    // ── Doublons mis à jour ──
     const dupsToUpdate = duplicates.filter((d) => depsToUpdate[d.telephone]);
     if (dupsToUpdate.length > 0) {
       const updateResults = await Promise.all(
@@ -548,11 +634,12 @@ export default function ImportMembresCSV({ user }) {
   return (
     <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 space-y-5">
 
+      {/* Template */}
       <div className="bg-white/10 border border-blue-300/40 rounded-xl p-4">
         <p className="font-semibold text-white">{t.beforeImport}</p>
         <p className="text-sm text-white mb-1">{t.step1}</p>
-        <p className="text-sm text-white mb-1">{t.step2}</p>
-        <p className="text-sm text-orange-400 font-semibold mb-3">{t.step3}</p>
+        <p className="text-sm text-orange-400 font-semibold mb-1">{t.step2}</p>
+        <p className="text-sm text-white/70 mb-3">{t.step3}</p>
         <button
           onClick={handleDownloadTemplate}
           className="bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
@@ -561,11 +648,12 @@ export default function ImportMembresCSV({ user }) {
         </button>
       </div>
 
+      {/* Upload */}
       <div className="bg-white/10 border border-white/20 rounded-xl p-4">
         <p className="font-semibold text-white mb-2">{t.importFile}</p>
         <input
           type="file"
-          accept=".xlsx"
+          accept=".csv"
           onChange={handleFileChange}
           className="text-white/80 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white/20 file:text-white hover:file:bg-white/30"
         />
@@ -574,6 +662,7 @@ export default function ImportMembresCSV({ user }) {
         )}
       </div>
 
+      {/* Resume */}
       {(data.length > 0 || duplicates.length > 0 || errors.length > 0) && (
         <div className="bg-white/10 border border-white/20 rounded-xl p-4 space-y-2">
           <p className="font-semibold text-white mb-1">{t.resumeFile}</p>
@@ -594,6 +683,7 @@ export default function ImportMembresCSV({ user }) {
         </div>
       )}
 
+      {/* Erreurs */}
       {errors.length > 0 && (
         <div className="bg-red-500/20 border border-red-400/40 text-red-200 p-4 rounded-xl">
           <p className="font-semibold mb-1">{errors.length} {t.errorsDetected}</p>
@@ -606,6 +696,7 @@ export default function ImportMembresCSV({ user }) {
         </div>
       )}
 
+      {/* Doublons */}
       {duplicates.length > 0 && (
         <div className="bg-orange-500/20 border border-orange-400/40 p-4 rounded-xl space-y-3">
           <p className="font-semibold text-orange-200">{duplicates.length} {t.duplicatesByPhone}</p>
@@ -657,6 +748,7 @@ export default function ImportMembresCSV({ user }) {
         </div>
       )}
 
+      {/* Apercu */}
       {data.length > 0 && (
         <div className="bg-white/10 border border-white/20 rounded-xl p-4">
           <p className="font-semibold text-emerald-300 mb-2">{t.previewTitle}</p>
@@ -674,6 +766,7 @@ export default function ImportMembresCSV({ user }) {
         </div>
       )}
 
+      {/* Bouton import */}
       <button
         onClick={handleImport}
         disabled={totalToImport === 0 || loading}
@@ -682,6 +775,7 @@ export default function ImportMembresCSV({ user }) {
         {loading ? t.importing : `${t.importBtn}${totalToImport > 0 ? ` ${totalToImport} ${t.member}` : ""}`}
       </button>
 
+      {/* Succes */}
       {success && (
         <div className="bg-emerald-500/20 border border-emerald-400/40 rounded-xl p-4 text-center">
           <p className="text-emerald-300 font-bold text-lg">{t.successTitle}</p>

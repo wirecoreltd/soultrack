@@ -23,7 +23,7 @@ const translations = {
       rapport:  "Rapport Évangélisation",
       notifications: "Notifications",
     },
-    sendLink: "Envoyer l'appli – Évangélisé",
+    sendLink: "Envoyer formulaire – Évangélisation,
     verse: "Va, fais de toutes les nations des disciples. Chaque rencontre compte, chaque âme est précieuse.",
   },
   en: {
@@ -36,7 +36,7 @@ const translations = {
       rapport:  "Evangelism report",
       notifications: "Notifications",
     },
-    sendLink: "Send app – Evangelised",
+    sendLink: "Send form – Evangelism",
     verse: "Go and make disciples of all nations. Every encounter matters, every soul is precious.",
   },
 };

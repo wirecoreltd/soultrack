@@ -162,7 +162,7 @@ const EMPTY_INTERVIEW = {
   etudes_parole: "",
 };
 
-export default function SuiviEvanPopup({ member, onClose, user }) {
+export default function SuiviEvanPopup({ member, onClose, user, onMemberUpdated }) {
   const { lang } = useLang();
   const t = translations[lang];
 
@@ -422,9 +422,14 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
       .eq("evangelise_id", evangeliseId);
 
     setMemberBesoins(newMemberBesoins);
+
+    // 🔔 Remonte le changement au parent pour un affichage instantané (sans refresh)
+    onMemberUpdated?.(member.id, { besoin: JSON.stringify(newMemberBesoins) });
+
     setResolvedBesoins([]);
     setEditingSuivi(null);
     setLoading(false);
+    
     const newStatuts = {};
     newMemberBesoins.forEach((b) => { newStatuts[b] = "En suivi"; });
     setForm({ date_action: "", type: "", besoin: newMemberBesoins, besoinStatuts: newStatuts, commentaire: "", ...EMPTY_INTERVIEW });

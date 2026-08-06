@@ -66,8 +66,7 @@ const translations = {
         ],
       },
       {
-        title: "Espace Cellules",
-        emoji: "🏠",
+        title: "Espace Cellules",       
         desc: "Le tissu de proximité : des groupes vivants où chacun est vu, encadré et enraciné.",
         accentText: "#79B8B5",
         accent: "rgba(121,184,181,0.6)",
@@ -82,8 +81,7 @@ const translations = {
         ],
       },
       {
-        title: "Espace Enfant",
-        emoji: "🧒",
+        title: "Espace Enfant",       
         desc: "Les plus jeunes grandissent en sécurité, suivis classe après classe, leçon après leçon.",
         accentText: "#D79A89",
         accent: "rgba(215,154,137,0.6)",
@@ -98,8 +96,7 @@ const translations = {
         ],
       },
       {
-        title: "Espace Conseiller",
-        emoji: "🤝",
+        title: "Espace Conseiller",        
         desc: "Un accompagnement pastoral rapproché, du premier échange jusqu'à la maturité spirituelle.",
         accentText: "#E0A867",
         accent: "rgba(224,168,103,0.6)",
@@ -114,8 +111,7 @@ const translations = {
         ],
       },
       {
-        title: "Espace Administrateur",
-        emoji: "🛡️",
+        title: "Espace Administrateur",        
         desc: "La structure qui tient l'ensemble : utilisateurs, rôles et liens entre églises.",
         accentText: "#A79BD9",
         accent: "rgba(167,155,217,0.6)",
@@ -130,8 +126,7 @@ const translations = {
         ],
       },
       {
-        title: "Espace Rapports",
-        emoji: "📉",
+        title: "Espace Rapports",        
         desc: "Toutes les histoires se rassemblent ici, en une vue d'ensemble claire de la croissance.",
         accentText: "#8FB0D6",
         accent: "rgba(143,176,214,0.6)",
@@ -168,8 +163,7 @@ const translations = {
     footer: "All rights reserved.",
     modules: [
       {
-        title: "Members Space",
-        emoji: "🧭",
+        title: "Members Space",      
         desc: "The living register of the church: every member is welcomed, placed and accompanied over time.",
         accentText: "#9DC2A4",
         accent: "rgba(157,194,164,0.6)",
@@ -184,8 +178,7 @@ const translations = {
         ],
       },
       {
-        title: "Evangelism Space",
-        emoji: "✝️",
+        title: "Evangelism Space",        
         desc: "A first contact becomes a followed story, from the initial encounter to a decision of faith.",
         accentText: "#D8B45B",
         accent: "rgba(216,180,91,0.6)",

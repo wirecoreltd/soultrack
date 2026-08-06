@@ -1522,6 +1522,17 @@ useEffect(() => {
                     member={m}
                     onClose={() => setOpenSuiviMemberId(null)}
                     user={userProfile}
+                    onMemberUpdated={(memberId, updatedFields) => {
+                      localUpdateInProgressRef.current = true;
+                      setAllMembers((prev) =>
+                        prev.map((mem) =>
+                          mem.id === memberId ? { ...mem, ...updatedFields } : mem
+                        )
+                      );
+                      setTimeout(() => {
+                        localUpdateInProgressRef.current = false;
+                      }, 2000);
+                    }}
                   />
                 )}
                 {openEvalLeaderMemberId === m.id && (

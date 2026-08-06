@@ -23,7 +23,7 @@ const translations = {
       rapport:  "Rapport Évangélisation",
       notifications: "Notifications",
     },
-    sendLink: "Envoyer formulaire – Évangélisation,
+    sendLink: "Envoyer formulaire – Évangélisation",
     verse: "Va, fais de toutes les nations des disciples. Chaque rencontre compte, chaque âme est précieuse.",
   },
   en: {

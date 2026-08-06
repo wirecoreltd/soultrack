@@ -859,7 +859,7 @@ export default function Fonctionnement() {
             padding: "0px 24px 30px",
             position: "relative",
             zIndex: 1,
-            marginTop: "-20px",
+            marginTop: "-70px",
           }}
         >
           <p

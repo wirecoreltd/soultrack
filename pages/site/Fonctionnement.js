@@ -6,8 +6,14 @@ import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
 
-import { Great_Vibes } from "next/font/google";
+import { Great_Vibes, Cormorant_Garamond, Inter } from "next/font/google";
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  style: ["normal", "italic"],
+});
+const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
 
 // ─── DICTIONNAIRE ────────────────────────────────────────────────────────────
 const translations = {
@@ -23,6 +29,7 @@ const translations = {
       { label: "Pricing", path: "/site/pricing" },
       { label: "Contact", path: "/site/contact" },
     ],
+    eyebrow: "Comment ça marche",
     heroPara: `Chaque module sert un même chemin : suivre la présence, former les membres, accompagner les baptisés, engager chacun dans le service, répondre aux besoins et veiller d'abord sur la croissance personnelle de chaque vie, puis sur celle de l'église dans son ensemble. Rien ici n'est de simples données, mais des vies confiées à notre soin.`,
     heroPara2: `Que chaque âme soit gagnée, restaurée, bien entourée, enracinée dans la Parole et transformée en un disciple fidèle et accompli dans la maison de Dieu.`,
     heroTitle: "Comment fonctionne",
@@ -31,12 +38,14 @@ const translations = {
       {
         title: "Espace Membres",
         emoji: "🧭",
-        accent: "rgba(55,138,221,0.6)",
-        accentSolid: "rgba(55,138,221,0.25)",
+        desc: "Le registre vivant de l'église : chaque membre y est accueilli, situé et accompagné dans la durée.",
+        accentText: "#9DC2A4",
+        accent: "rgba(157,194,164,0.6)",
+        accentSoft: "rgba(157,194,164,0.15)",
         steps: [
           { icon: "➕", title: "Nouveau Membre", desc: "Créer ou importer un nouveau membre avec ses informations essentielles pour l'intégrer dans la base." },
-          { icon: "🏛️", title: "Liste des Membres", desc: "Accéder instantanément à tous les membres enregistrés, chacun disposant d'une carte dédiée avec ses informations, pour une vue claire, structurée et facile à exploiter." },
-          { icon: "👤", title: "Affectation", desc: "Associer un membre à un conseiller ou une cellule pour faciliter un suivi plus structuré et personnalisé, selon l'organisation de votre église." },
+          { icon: "🏛️", title: "Liste des Membres", desc: "Accéder instantanément à tous les membres enregistrés, chacun disposant d'une carte dédiée, pour une vue claire et facile à exploiter." },
+          { icon: "👤", title: "Affectation", desc: "Associer un membre à un conseiller ou une cellule pour un suivi plus structuré et personnalisé." },
           { icon: "💌", title: "Suivis", desc: "Enregistrer les interactions, commentaires et l'évolution du membre dans le temps." },
           { icon: "📊", title: "Rapport", desc: "Analyser les données pour suivre la croissance, l'activité et l'efficacité du suivi." },
         ],
@@ -44,53 +53,93 @@ const translations = {
       {
         title: "Espace Évangélisation",
         emoji: "✝️",
-        accent: "rgba(29,158,117,0.6)",
-        accentSolid: "rgba(29,158,117,0.25)",
+        desc: "Le premier contact devient une histoire suivie, du témoignage jusqu'à la décision de foi.",
+        accentText: "#D8B45B",
+        accent: "rgba(216,180,91,0.6)",
+        accentSoft: "rgba(216,180,91,0.15)",
         steps: [
           { icon: "➕", title: "Nouveau contact", desc: "Créer et centraliser toutes les nouvelles données afin de constituer une base structurée et exploitable." },
           { icon: "🌿", title: "Liste des Évangélisées", desc: "Accéder à une vue claire et structurée de toutes les informations avec une classification automatique." },
-          { icon: "💗", title: "Suivis", desc: "Enregistrer les échanges, commentaires et évolutions pour garantir un accompagnement continu et un historique complet." },
+          { icon: "💗", title: "Suivis", desc: "Enregistrer les échanges, commentaires et évolutions pour garantir un accompagnement continu." },
           { icon: "💧", title: "Baptême", desc: "Enregistrer les étapes spirituelles." },
-          { icon: "📊", title: "Rapport", desc: "Suivre les performances globales à travers des indicateurs et rapports pour mesurer l'impact et optimiser les actions." },
+          { icon: "📊", title: "Rapport", desc: "Suivre les performances globales à travers des indicateurs pour mesurer l'impact et optimiser les actions." },
         ],
       },
       {
         title: "Espace Cellules",
         emoji: "🏠",
-        accent: "rgba(93,202,165,0.6)",
-        accentSolid: "rgba(93,202,165,0.25)",
+        desc: "Le tissu de proximité : des groupes vivants où chacun est vu, encadré et enraciné.",
+        accentText: "#79B8B5",
+        accent: "rgba(121,184,181,0.6)",
+        accentSoft: "rgba(121,184,181,0.15)",
         steps: [
-          { icon: "🏠", title: "Liste des Cellules", desc: "Créer, organiser et suivre les cellules afin d'assurer une structure claire, une croissance équilibrée et un encadrement efficace des membres." },
+          { icon: "🏠", title: "Liste des Cellules", desc: "Créer, organiser et suivre les cellules afin d'assurer une structure claire et un encadrement efficace." },
           { icon: "💌", title: "Suivi des Âmes", desc: "Suivre l'évolution des personnes depuis leur premier contact jusqu'à leur intégration dans l'église." },
-          { icon: "👤", title: "Responsable", desc: "Gérer les responsables de cellules et d'équipes afin d'assurer une répartition claire des rôles et un leadership efficace." },
-          { icon: "🌱", title: "Intégration", desc: "Accompagner les nouveaux venus dans leur parcours d'intégration à l'église jusqu'à leur enracinement dans une cellule active." },
-          { icon: "📊", title: "Croissance", desc: "Analyser l'évolution globale des membres, des cellules et des conversions pour orienter les décisions stratégiques." },
+          { icon: "👤", title: "Responsable", desc: "Gérer les responsables de cellules et d'équipes pour un leadership efficace." },
+          { icon: "🌱", title: "Intégration", desc: "Accompagner les nouveaux venus jusqu'à leur enracinement dans une cellule active." },
+          { icon: "📊", title: "Croissance", desc: "Analyser l'évolution globale des membres, des cellules et des conversions." },
+        ],
+      },
+      {
+        title: "Espace Enfant",
+        emoji: "🧒",
+        desc: "Les plus jeunes grandissent en sécurité, suivis classe après classe, leçon après leçon.",
+        accentText: "#D79A89",
+        accent: "rgba(215,154,137,0.6)",
+        accentSoft: "rgba(215,154,137,0.15)",
+        steps: [
+          { icon: "➕", title: "Nouvel Enfant", desc: "Inscrire un enfant avec les coordonnées de son parent ou tuteur." },
+          { icon: "🧒", title: "Liste des Enfants", desc: "Retrouver tous les enfants inscrits, classés par tranche d'âge." },
+          { icon: "🎒", title: "Classes & Groupes", desc: "Organiser les classes d'âge et assigner des encadrants responsables." },
+          { icon: "✅", title: "Présence & Retrait", desc: "Pointer les arrivées et départs avec un code de retrait sécurisé pour les parents." },
+          { icon: "📖", title: "Suivi Pédagogique", desc: "Suivre les leçons apprises et la progression spirituelle de chaque enfant." },
+          { icon: "📊", title: "Rapport", desc: "Mesurer la fréquentation et la croissance de l'école du dimanche." },
         ],
       },
       {
         title: "Espace Conseiller",
         emoji: "🤝",
-        accent: "rgba(239,159,39,0.55)",
-        accentSolid: "rgba(239,159,39,0.22)",
+        desc: "Un accompagnement pastoral rapproché, du premier échange jusqu'à la maturité spirituelle.",
+        accentText: "#E0A867",
+        accent: "rgba(224,168,103,0.6)",
+        accentSoft: "rgba(224,168,103,0.15)",
         steps: [
-          { icon: "🏛️", title: "Mes membres", desc: "Centraliser tous les membres de l'église avec leurs informations complètes afin d'avoir une vue globale et structurée de la communauté." },
-          { icon: "💗", title: "Suivis", desc: "Assurer un accompagnement régulier des membres pour renforcer la proximité, identifier les besoins et favoriser leur croissance spirituelle." },
-          { icon: "🌱", title: "Évolution des Âmes", desc: "Analyser la progression des personnes accompagnées afin de suivre leur croissance spirituelle." },
-          { icon: "🎯", title: "Parcours Spirituel", desc: "Définir et structurer les étapes de croissance des personnes, depuis leur premier contact jusqu'à leur maturité spirituelle." },
-          { icon: "📊", title: "Rapports", desc: "Suivre et analyser les données globales des personnes accompagnées afin d'évaluer l'impact du suivi pastoral." },
+          { icon: "🏛️", title: "Mes membres", desc: "Centraliser tous les membres de l'église avec leurs informations complètes." },
+          { icon: "💗", title: "Suivis", desc: "Assurer un accompagnement régulier pour renforcer la proximité et identifier les besoins." },
+          { icon: "🌱", title: "Évolution des Âmes", desc: "Analyser la progression des personnes accompagnées." },
+          { icon: "🎯", title: "Parcours Spirituel", desc: "Définir les étapes de croissance, du premier contact jusqu'à la maturité spirituelle." },
+          { icon: "📊", title: "Rapports", desc: "Suivre et analyser les données globales pour évaluer l'impact du suivi pastoral." },
+        ],
+      },
+      {
+        title: "Espace Administrateur",
+        emoji: "🛡️",
+        desc: "La structure qui tient l'ensemble : utilisateurs, rôles et liens entre églises.",
+        accentText: "#A79BD9",
+        accent: "rgba(167,155,217,0.6)",
+        accentSoft: "rgba(167,155,217,0.15)",
+        steps: [
+          { icon: "👤", title: "Liste des Utilisateurs", desc: "Consulter tous les utilisateurs rattachés à l'église, leurs rôles et leur statut." },
+          { icon: "🔗", title: "Invitations & Liens", desc: "Inviter, superviser ou relier votre église à d'autres structures." },
+          { icon: "🧑‍💻", title: "Créer un Utilisateur", desc: "Ajouter un membre d'équipe avec un rôle défini." },
+          { icon: "💳", title: "Abonnement", desc: "Gérer l'abonnement et la facturation de l'église." },
+          { icon: "🔧", title: "Modifier l'église", desc: "Mettre à jour les informations générales de l'église." },
+          { icon: "🗑️", title: "Supprimer le compte", desc: "Faire une demande de suppression du compte et des données." },
         ],
       },
       {
         title: "Espace Rapports",
         emoji: "📉",
-        accent: "rgba(127,119,221,0.6)",
-        accentSolid: "rgba(127,119,221,0.25)",
+        desc: "Toutes les histoires se rassemblent ici, en une vue d'ensemble claire de la croissance.",
+        accentText: "#8FB0D6",
+        accent: "rgba(143,176,214,0.6)",
+        accentSoft: "rgba(143,176,214,0.15)",
         steps: [
           { icon: "⛪", title: "Affluence", desc: "Suivi des présences aux cultes : hommes, femmes, jeunes, enfants, connectés et nouveaux venus." },
           { icon: "✒️", title: "Formations", desc: "Analyse des formations organisées : participation et évolution de la croissance spirituelle." },
-          { icon: "💧", title: "Baptême", desc: "Suivi des baptêmes réalisés. Mesure les décisions publiques de foi et la croissance des nouveaux disciples." },
-          { icon: "💢", title: "Ministère", desc: "État des serviteurs engagés par ministère. Permet de voir la répartition, l'implication et la dynamique du service." },
-          { icon: "❓", title: "Besoins", desc: "Identification des besoins spirituels et personnels des membres de l'église pour apporter un accompagnement adapté." },
+          { icon: "💧", title: "Baptême", desc: "Suivi des baptêmes réalisés. Mesure les décisions publiques de foi." },
+          { icon: "💢", title: "Ministère", desc: "État des serviteurs engagés par ministère : répartition, implication et dynamique." },
+          { icon: "❓", title: "Besoins", desc: "Identification des besoins spirituels et personnels des membres." },
           { icon: "📊", title: "Vue d'ensemble", desc: "Vue d'ensemble complète de l'église : croissance, engagement, structures et impact spirituel." },
         ],
       },
@@ -108,6 +157,7 @@ const translations = {
       { label: "Pricing", path: "/site/pricing" },
       { label: "Contact", path: "/site/contact" },
     ],
+    eyebrow: "How it works",
     heroPara: `Every module serves the same journey: tracking attendance, training members, accompanying the baptised, engaging each person in service, responding to needs and watching first over the personal growth of each life, then over the church as a whole. Nothing here is mere data — these are lives entrusted to our care.`,
     heroPara2: `May every soul be won, restored, well surrounded, rooted in the Word and transformed into a faithful and fulfilled disciple in the house of God.`,
     heroTitle: "How",
@@ -117,12 +167,14 @@ const translations = {
       {
         title: "Members Space",
         emoji: "🧭",
-        accent: "rgba(55,138,221,0.6)",
-        accentSolid: "rgba(55,138,221,0.25)",
+        desc: "The living register of the church: every member is welcomed, placed and accompanied over time.",
+        accentText: "#9DC2A4",
+        accent: "rgba(157,194,164,0.6)",
+        accentSoft: "rgba(157,194,164,0.15)",
         steps: [
           { icon: "➕", title: "New Member", desc: "Create or import a new member with their essential information to integrate them into the database." },
-          { icon: "🏛️", title: "Members List", desc: "Instantly access all registered members, each with a dedicated card containing their information, for a clear and structured view." },
-          { icon: "👤", title: "Assignment", desc: "Associate a member with a counselor or cell group to facilitate more structured and personalised follow-up." },
+          { icon: "🏛️", title: "Members List", desc: "Instantly access all registered members, each with a dedicated card, for a clear and structured view." },
+          { icon: "👤", title: "Assignment", desc: "Associate a member with a counselor or cell group for more structured, personalised follow-up." },
           { icon: "💌", title: "Follow-ups", desc: "Record interactions, comments and the member's progress over time." },
           { icon: "📊", title: "Report", desc: "Analyse data to track growth, activity and the effectiveness of follow-up." },
         ],
@@ -130,59 +182,101 @@ const translations = {
       {
         title: "Evangelism Space",
         emoji: "✝️",
-        accent: "rgba(29,158,117,0.6)",
-        accentSolid: "rgba(29,158,117,0.25)",
+        desc: "A first contact becomes a followed story, from the initial encounter to a decision of faith.",
+        accentText: "#D8B45B",
+        accent: "rgba(216,180,91,0.6)",
+        accentSoft: "rgba(216,180,91,0.15)",
         steps: [
           { icon: "➕", title: "New Contact", desc: "Create and centralise all new data to build a structured and usable database." },
           { icon: "🌿", title: "Evangelised List", desc: "Access a clear and structured view of all information with automatic classification." },
-          { icon: "💗", title: "Follow-ups", desc: "Record exchanges, comments and progress to ensure continuous support and a complete history." },
+          { icon: "💗", title: "Follow-ups", desc: "Record exchanges, comments and progress to ensure continuous support." },
           { icon: "💧", title: "Baptism", desc: "Record spiritual milestones." },
-          { icon: "📊", title: "Report", desc: "Track overall performance through indicators and reports to measure impact and optimise actions." },
+          { icon: "📊", title: "Report", desc: "Track overall performance through indicators to measure impact and optimise actions." },
         ],
       },
       {
         title: "Cell Groups Space",
         emoji: "🏠",
-        accent: "rgba(93,202,165,0.6)",
-        accentSolid: "rgba(93,202,165,0.25)",
+        desc: "The fabric of community: living groups where everyone is seen, guided and rooted.",
+        accentText: "#79B8B5",
+        accent: "rgba(121,184,181,0.6)",
+        accentSoft: "rgba(121,184,181,0.15)",
         steps: [
-          { icon: "🏠", title: "Cell Groups List", desc: "Create, organise and track cell groups to ensure a clear structure, balanced growth and effective member oversight." },
+          { icon: "🏠", title: "Cell Groups List", desc: "Create, organise and track cell groups to ensure a clear structure and effective oversight." },
           { icon: "💌", title: "Soul Follow-up", desc: "Track people's journey from their first contact through to full integration into the church." },
-          { icon: "👤", title: "Leader", desc: "Manage cell and team leaders to ensure clear role distribution and effective on-the-ground leadership." },
-          { icon: "🌱", title: "Integration", desc: "Guide newcomers through their integration journey until they are rooted in an active cell group." },
-          { icon: "📊", title: "Growth", desc: "Analyse the overall evolution of members, cells and conversions to guide strategic decisions." },
+          { icon: "👤", title: "Leader", desc: "Manage cell and team leaders for effective on-the-ground leadership." },
+          { icon: "🌱", title: "Integration", desc: "Guide newcomers until they are rooted in an active cell group." },
+          { icon: "📊", title: "Growth", desc: "Analyse the overall evolution of members, cells and conversions." },
+        ],
+      },
+      {
+        title: "Children's Space",
+        emoji: "🧒",
+        desc: "The youngest grow in safety, followed class by class, lesson by lesson.",
+        accentText: "#D79A89",
+        accent: "rgba(215,154,137,0.6)",
+        accentSoft: "rgba(215,154,137,0.15)",
+        steps: [
+          { icon: "➕", title: "New Child", desc: "Register a child with their parent or guardian's contact details." },
+          { icon: "🧒", title: "Children List", desc: "Find every registered child, grouped by age range." },
+          { icon: "🎒", title: "Classes & Groups", desc: "Organise classes by age and assign responsible carers." },
+          { icon: "✅", title: "Check-in & Pickup", desc: "Log arrivals and departures with a secure pickup code for parents." },
+          { icon: "📖", title: "Learning Journey", desc: "Track lessons learned and each child's spiritual progress." },
+          { icon: "📊", title: "Report", desc: "Measure Sunday school attendance and growth." },
         ],
       },
       {
         title: "Counselor Space",
         emoji: "🤝",
-        accent: "rgba(239,159,39,0.55)",
-        accentSolid: "rgba(239,159,39,0.22)",
+        desc: "Close pastoral accompaniment, from the first conversation to spiritual maturity.",
+        accentText: "#E0A867",
+        accent: "rgba(224,168,103,0.6)",
+        accentSoft: "rgba(224,168,103,0.15)",
         steps: [
-          { icon: "🏛️", title: "My Members", desc: "Centralise all church members with their complete information for a global and structured view of the community." },
-          { icon: "💗", title: "Follow-ups", desc: "Provide regular support to members to strengthen connection, identify needs and foster their spiritual growth." },
-          { icon: "🌱", title: "Soul Progress", desc: "Analyse the progression of those being accompanied to track their spiritual growth." },
-          { icon: "🎯", title: "Spiritual Journey", desc: "Define and structure growth stages for individuals, from first contact to spiritual maturity." },
-          { icon: "📊", title: "Reports", desc: "Track and analyse overall data on those being accompanied to evaluate the impact of pastoral care." },
+          { icon: "🏛️", title: "My Members", desc: "Centralise all church members with their complete information." },
+          { icon: "💗", title: "Follow-ups", desc: "Provide regular support to strengthen connection and identify needs." },
+          { icon: "🌱", title: "Soul Progress", desc: "Analyse the progression of those being accompanied." },
+          { icon: "🎯", title: "Spiritual Journey", desc: "Define growth stages, from first contact to spiritual maturity." },
+          { icon: "📊", title: "Reports", desc: "Track and analyse overall data to evaluate the impact of pastoral care." },
+        ],
+      },
+      {
+        title: "Administrator Space",
+        emoji: "🛡️",
+        desc: "The structure holding it together: users, roles and links between churches.",
+        accentText: "#A79BD9",
+        accent: "rgba(167,155,217,0.6)",
+        accentSoft: "rgba(167,155,217,0.15)",
+        steps: [
+          { icon: "👤", title: "Users List", desc: "View every user linked to the church, their roles and status." },
+          { icon: "🔗", title: "Invitations & Links", desc: "Invite, supervise or link your church with other structures." },
+          { icon: "🧑‍💻", title: "Create a User", desc: "Add a team member with a defined role." },
+          { icon: "💳", title: "Subscription", desc: "Manage the church's subscription and billing." },
+          { icon: "🔧", title: "Edit church", desc: "Update the church's general information." },
+          { icon: "🗑️", title: "Delete account", desc: "Request deletion of the account and its data." },
         ],
       },
       {
         title: "Reports Space",
         emoji: "📉",
-        accent: "rgba(127,119,221,0.6)",
-        accentSolid: "rgba(127,119,221,0.25)",
+        desc: "Every story gathers here, into one clear view of the church's growth.",
+        accentText: "#8FB0D6",
+        accent: "rgba(143,176,214,0.6)",
+        accentSoft: "rgba(143,176,214,0.15)",
         steps: [
           { icon: "⛪", title: "Attendance", desc: "Track service attendance: men, women, youth, children, online and newcomers." },
-          { icon: "✒️", title: "Training", desc: "Analysis of organised training: participation and spiritual growth through teaching and equipping members." },
-          { icon: "💧", title: "Baptism", desc: "Track baptisms performed. Measures public decisions of faith and the growth of new disciples." },
-          { icon: "💢", title: "Ministry", desc: "Status of servants engaged by ministry. Shows distribution, involvement and service dynamics." },
-          { icon: "❓", title: "Needs", desc: "Identify spiritual and personal needs of church members to provide tailored support." },
-          { icon: "📊", title: "Overview", desc: "Complete church overview: growth, engagement, structures and spiritual impact. A central dashboard for the whole vision." },
+          { icon: "✒️", title: "Training", desc: "Analysis of organised training: participation and spiritual growth." },
+          { icon: "💧", title: "Baptism", desc: "Track baptisms performed. Measures public decisions of faith." },
+          { icon: "💢", title: "Ministry", desc: "Status of servants engaged by ministry: distribution and involvement." },
+          { icon: "❓", title: "Needs", desc: "Identify spiritual and personal needs of church members." },
+          { icon: "📊", title: "Overview", desc: "Complete church overview: growth, engagement, structures and spiritual impact." },
         ],
       },
     ],
   },
 };
+
+const numerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 
 function langBtnStyle(active) {
   return {
@@ -201,7 +295,6 @@ export default function Fonctionnement() {
 
   const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [active, setActive] = useState(null);
   const { lang, changeLang } = useLang();
 
   // ── Profil connecté ─────────────────────────────────────────────────────
@@ -217,33 +310,33 @@ export default function Fonctionnement() {
   }, []);
 
   // ── Profil : chargement + écoute des changements de session ────────────
-      useEffect(() => {
-      const loadProfile = async () => {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session) {
-          setProfile(null);
-          setLoadingProfile(false);
-          return;
-        }
-    
-        const { data: profileData, error } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, role, roles")
-          .eq("id", sessionData.session.user.id)
-          .single();
-    
-        if (!error) setProfile(profileData);
+  useEffect(() => {
+    const loadProfile = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        setProfile(null);
         setLoadingProfile(false);
-      };
-    
+        return;
+      }
+
+      const { data: profileData, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, role, roles")
+        .eq("id", sessionData.session.user.id)
+        .single();
+
+      if (!error) setProfile(profileData);
+      setLoadingProfile(false);
+    };
+
+    loadProfile();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
       loadProfile();
-    
-      const { data: listener } = supabase.auth.onAuthStateChange(() => {
-        loadProfile();
-      });
-    
-      return () => listener.subscription.unsubscribe();
-    }, []);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -253,25 +346,11 @@ export default function Fonctionnement() {
   };
 
   return (
-    <div style={{ background: "#333699", minHeight: "100vh", position: "relative",overflowX: "hidden" }}>
-
-      {/* GLOW 1 */}
-      <div style={{
-        position: "absolute", width: "800px", height: "800px", borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 40%, transparent 65%)",
-        top: "80px", left: "50%", transform: "translateX(-50%)",
-        pointerEvents: "none", zIndex: 0,
-      }} />
-
-      {/* GLOW 2 */}
-      <div style={{
-        position: "absolute", width: "600px", height: "600px", borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(251,191,36,0.07) 0%, transparent 65%)",
-        top: "900px", left: "50%", transform: "translateX(-50%)",
-        pointerEvents: "none", zIndex: 0,
-      }} />
-
-      {/* ───── HEADER ───── */}
+    <div
+      className={inter.className}
+      style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}
+    >
+      {/* ───── HEADER (inchangé) ───── */}
       <header
         style={{
           background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
@@ -357,9 +436,7 @@ export default function Fonctionnement() {
                     transition: "color 0.2s",
                     whiteSpace: "nowrap",
                   }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "#fff")
-                  }
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
                   onMouseLeave={(e) =>
                     (e.currentTarget.style.color =
                       pathname === item.path ? "#fbbf24" : "#fff")
@@ -486,57 +563,12 @@ export default function Fonctionnement() {
             </div>
 
             {/* Switcher langue */}
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                alignItems: "center",
-                flexShrink: 0,
-              }}
-            >
-              <button
-                onClick={() => changeLang("fr")}
-                title="Français"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
-                  opacity: lang === "fr" ? 1 : 0.45,
-                  transition: "opacity 0.2s",
-                  flexShrink: 0,
-                }}
-              >
-                <img
-                  src="https://flagcdn.com/w40/fr.png"
-                  srcSet="https://flagcdn.com/w80/fr.png 2x"
-                  width="30"
-                  height="21"
-                  alt="Français"
-                  style={{ display: "block", borderRadius: "3px", flexShrink: 0 }}
-                />
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", flexShrink: 0 }}>
+              <button onClick={() => changeLang("fr")} title="Français" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.45, transition: "opacity 0.2s", flexShrink: 0 }}>
+                <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="30" height="21" alt="Français" style={{ display: "block", borderRadius: "3px", flexShrink: 0 }} />
               </button>
-              <button
-                onClick={() => changeLang("en")}
-                title="English"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
-                  opacity: lang === "en" ? 1 : 0.45,
-                  transition: "opacity 0.2s",
-                  flexShrink: 0,
-                }}
-              >
-                <img
-                  src="https://flagcdn.com/w40/gb.png"
-                  srcSet="https://flagcdn.com/w80/gb.png 2x"
-                  width="30"
-                  height="21"
-                  alt="English"
-                  style={{ display: "block", borderRadius: "3px", flexShrink: 0 }}
-                />
+              <button onClick={() => changeLang("en")} title="English" style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "en" ? 1 : 0.45, transition: "opacity 0.2s", flexShrink: 0 }}>
+                <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="30" height="21" alt="English" style={{ display: "block", borderRadius: "3px", flexShrink: 0 }} />
               </button>
             </div>
           </div>
@@ -611,7 +643,6 @@ export default function Fonctionnement() {
               </span>
             ))}
 
-            {/* Switcher langue dans le menu mobile */}
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
               <button onClick={() => changeLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
                 <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
@@ -621,61 +652,24 @@ export default function Fonctionnement() {
               </button>
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                marginTop: "4px",
-              }}
-            >
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
               {loadingProfile ? null : profile ? (
                 <>
                   <span
-                    onClick={() => {
-                      router.push("/hub");
-                      setOpenMenu(false);
-                    }}
-                    style={{
-                      color: "#fff",
-                      fontSize: "15px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
+                    onClick={() => { router.push("/hub"); setOpenMenu(false); }}
+                    style={{ color: "#fff", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}
                   >
                     👤 {profile.prenom} {profile.nom}
                   </span>
                   <button
-                    onClick={() => {
-                      router.push("/hub");
-                      setOpenMenu(false);
-                    }}
-                    style={{
-                      background: "transparent",
-                      color: "#fff",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "11px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                    }}
+                    onClick={() => { router.push("/hub"); setOpenMenu(false); }}
+                    style={{ background: "transparent", color: "#fff", border: "0.5px solid rgba(255,255,255,0.35)", padding: "11px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
                   >
                     {t.webVersion}
                   </button>
                   <button
-                    onClick={() => {
-                      handleLogout();
-                      setOpenMenu(false);
-                    }}
-                    style={{
-                      background: "transparent",
-                      color: "#fbbf24",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "11px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                    }}
+                    onClick={() => { handleLogout(); setOpenMenu(false); }}
+                    style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "11px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
                   >
                     {t.logout}
                   </button>
@@ -684,30 +678,13 @@ export default function Fonctionnement() {
                 <>
                   <button
                     onClick={() => { router.push("/login"); setOpenMenu(false); }}
-                    style={{
-                      background: "transparent",
-                      color: "#fff",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "11px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                    }}
+                    style={{ background: "transparent", color: "#fff", border: "0.5px solid rgba(255,255,255,0.35)", padding: "11px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}
                   >
                     {t.login}
                   </button>
                   <button
                     onClick={() => { router.push("/site/pricing"); setOpenMenu(false); }}
-                    style={{
-                      background: "#fff",
-                      color: "#333699",
-                      border: "none",
-                      padding: "11px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
+                    style={{ background: "#fff", color: "#333699", border: "none", padding: "11px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}
                   >
                     {t.signup}
                   </button>
@@ -718,153 +695,235 @@ export default function Fonctionnement() {
         )}
       </header>
 
-      {/* ───── HERO ───── */}
-      <section style={{ textAlign: "center", padding: "60px 24px 40px",  zIndex: 1 }}>
-        <p style={{
-          color: "rgba(255,255,255,0.85)", fontSize: "clamp(0.9rem, 1.8vw, 1.05rem)",
-          lineHeight: 1.8, maxWidth: "680px", margin: "0 auto 28px", fontWeight: 400,
-        }}>
-          {t.heroPara}
-          <br /><br />
-          {t.heroPara2}
-        </p>
-
-        <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3.5vw, 2.2rem)", fontWeight: 500, lineHeight: 1.2, margin: "0 auto" }}>
-          {lang === "fr" ? (
-            <>Comment fonctionne <span style={{ color: "#fbbf24" }}>SoulTrack</span></>
-          ) : (
-            <>How <span style={{ color: "#fbbf24" }}>SoulTrack</span> works</>
-          )}
-        </h2>
-      </section>
-
-      {/* ───── MODULES ───── */}
-      {t.modules.map((module, mIndex) => (
-        <section key={mIndex} style={{ padding: "24px 24px 36px", position: "relative", zIndex: 1 }}>
-
-          {/* MODULE TITLE */}
-          <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: "16px", marginBottom: "40px" }}>
-            <div style={{
-              width: "55px", height: "55px", fontSize: "29px", borderRadius: "50%",
-              background: module.accentSolid,
-              boxShadow: `0 0 32px 8px ${module.accent}`,
-              border: `0.5px solid ${module.accent}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {module.emoji}
-            </div>
-            <h2 style={{ color: "#fff", fontSize: "clamp(1.2rem, 3vw, 1.6rem)", fontWeight: 500, lineHeight: 1.2, margin: 0 }}>
-              {module.title}
-            </h2>
+      {/* ───── CORPS : thème "manuscrit illuminé" ───── */}
+      <div
+        style={{
+          background:
+            "radial-gradient(ellipse 900px 500px at 50% 0%, rgba(216,180,91,0.10), transparent 60%), linear-gradient(180deg, #1B1D3A 0%, #181A38 100%)",
+          position: "relative",
+        }}
+      >
+        {/* ───── HERO ───── */}
+        <section style={{ textAlign: "center", padding: "72px 24px 56px", position: "relative", zIndex: 1 }}>
+          <div
+            style={{
+              display: "inline-block",
+              color: "#D8B45B",
+              fontSize: "12px",
+              fontWeight: 600,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              marginBottom: "20px",
+              fontFamily: inter.style.fontFamily,
+            }}
+          >
+            {t.eyebrow}
           </div>
 
-          {/* STEPS */}
-          <div style={{ position: "relative", maxWidth: "1050px", margin: "0 auto" }}>
-            <div className="connector-line" style={{
-              position: "absolute", top: "36px", left: "10%", right: "10%", height: "1.5px",
-              background: `linear-gradient(90deg, transparent, ${module.accent}, transparent)`,
-              zIndex: 0,
-            }} />
+          <h2
+            style={{
+              color: "#EDE7D8",
+              fontStyle: "italic",
+              fontWeight: 600,
+              fontSize: "clamp(1.8rem, 5vw, 3rem)",
+              lineHeight: 1.15,
+              margin: "0 auto 28px",
+              fontFamily: cormorant.style.fontFamily,
+            }}
+          >
+            {lang === "fr" ? (
+              <>{t.heroTitle} <span style={{ color: "#fbbf24", fontStyle: "normal" }}>SoulTrack</span></>
+            ) : (
+              <>{t.heroTitle} <span style={{ color: "#fbbf24", fontStyle: "normal" }}>SoulTrack</span> {t.heroTitleSuffix}</>
+            )}
+          </h2>
 
-            {/* Grid: sur desktop N colonnes égales, sur mobile 2 colonnes */}
-            <div
-              className="steps-grid"
+          {/* Ornement vigne */}
+          <svg width="140" height="20" viewBox="0 0 140 20" style={{ margin: "0 auto 32px", display: "block" }}>
+            <path d="M5 10 Q35 -2 70 10 T135 10" stroke="rgba(216,180,91,0.55)" strokeWidth="1.2" fill="none" />
+            <circle cx="70" cy="10" r="3" fill="#D8B45B" />
+            <circle cx="30" cy="6" r="1.6" fill="rgba(157,194,164,0.8)" />
+            <circle cx="110" cy="6" r="1.6" fill="rgba(157,194,164,0.8)" />
+          </svg>
+
+          <p
+            style={{
+              color: "rgba(237,231,216,0.75)",
+              fontSize: "clamp(0.92rem, 1.6vw, 1.05rem)",
+              lineHeight: 1.85,
+              maxWidth: "660px",
+              margin: "0 auto",
+              fontWeight: 400,
+            }}
+          >
+            {t.heroPara}
+            <br />
+            <br />
+            <span style={{ fontStyle: "italic", color: "rgba(237,231,216,0.9)" }}>{t.heroPara2}</span>
+          </p>
+        </section>
+
+        {/* ───── CHAPITRES / MODULES ───── */}
+        <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 0 40px", position: "relative", zIndex: 1 }}>
+          {t.modules.map((module, mIndex) => (
+            <section
+              key={mIndex}
+              className="chapter-grid"
               style={{
                 display: "grid",
-                gridTemplateColumns: `repeat(${module.steps.length}, 1fr)`,
-                gap: "8px",
+                gridTemplateColumns: "84px 1fr",
+                gap: "28px",
+                padding: "0 24px 56px",
+                position: "relative",
               }}
             >
-              {module.steps.map((step, i) => {
-                const isActive = active === `${mIndex}-${i}`;
-                return (
-                  <div
-                    key={i}
-                    onMouseEnter={() => setActive(`${mIndex}-${i}`)}
-                    onMouseLeave={() => setActive(null)}
+              {/* Colonne vigne + médaillon */}
+              <div style={{ position: "relative", display: "flex", justifyContent: "center" }}>
+                <div
+                  className="vine"
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    bottom: "-56px",
+                    left: "50%",
+                    width: "1.5px",
+                    background: `linear-gradient(180deg, transparent, ${module.accent}, transparent)`,
+                    transform: "translateX(-50%)",
+                  }}
+                />
+                <div
+                  className="medallion"
+                  style={{
+                    position: "relative",
+                    zIndex: 2,
+                    width: "62px",
+                    height: "62px",
+                    borderRadius: "50%",
+                    background: `radial-gradient(circle at 30% 30%, ${module.accentSoft}, rgba(21,23,58,0.95))`,
+                    border: `1px solid ${module.accent}`,
+                    boxShadow: `0 0 22px 1px ${module.accentSoft}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontFamily: cormorant.style.fontFamily,
+                    fontSize: "20px",
+                    fontWeight: 600,
+                    color: "#EDE7D8",
+                  }}
+                >
+                  {numerals[mIndex]}
+                  <span style={{ position: "absolute", bottom: "-4px", right: "-4px", fontSize: "13px" }}>🌿</span>
+                </div>
+              </div>
+
+              {/* Colonne contenu */}
+              <div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "8px", flexWrap: "wrap" }}>
+                  <span style={{ fontSize: "20px" }}>{module.emoji}</span>
+                  <h3
                     style={{
-                      display: "flex", flexDirection: "column", alignItems: "center",
-                      textAlign: "center",
-                      transition: "transform 0.25s",
-                      transform: isActive ? "translateY(-6px)" : "translateY(0)",
+                      fontFamily: cormorant.style.fontFamily,
+                      fontStyle: "italic",
+                      fontWeight: 600,
+                      fontSize: "clamp(1.25rem, 3vw, 1.6rem)",
+                      color: module.accentText,
+                      margin: 0,
                     }}
                   >
-                    <div style={{
-                      width: isActive ? "72px" : "62px", height: isActive ? "72px" : "62px",
-                      borderRadius: "50%",
-                      background: isActive ? module.accentSolid : "rgba(255,255,255,0.08)",
-                      border: `1.5px solid ${isActive ? module.accent : "rgba(255,255,255,0.2)"}`,
-                      boxShadow: isActive ? `0 0 20px 4px ${module.accent}` : "none",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "22px", marginBottom: "12px", transition: "all 0.25s",
-                      position: "relative", zIndex: 2, backdropFilter: "blur(8px)",
-                    }}>
-                      {step.icon}
-                    </div>
+                    {module.title}
+                  </h3>
+                </div>
 
-                    <div style={{
-                      color: module.accent.replace("0.6", "1").replace("0.55", "1"),
-                      fontSize: "13px", fontWeight: 600, marginBottom: "6px",
-                    }}>
-                      {step.title}
-                    </div>
+                <p
+                  style={{
+                    color: "rgba(237,231,216,0.6)",
+                    fontSize: "13.5px",
+                    lineHeight: 1.75,
+                    margin: "0 0 22px",
+                    maxWidth: "540px",
+                    fontStyle: "italic",
+                  }}
+                >
+                  {module.desc}
+                </p>
 
-                    <div style={{ color: "#fff", fontSize: "12px", lineHeight: 1.5 }}>
-                      {step.desc}
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {module.steps.map((step, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        gap: "14px",
+                        alignItems: "flex-start",
+                        padding: "13px 0",
+                        borderBottom:
+                          i < module.steps.length - 1 ? "1px solid rgba(255,255,255,0.07)" : "none",
+                      }}
+                    >
+                      <span
+                        style={{
+                          flexShrink: 0,
+                          width: "24px",
+                          height: "24px",
+                          borderRadius: "50%",
+                          border: `1px solid ${module.accent}`,
+                          color: module.accentText,
+                          fontSize: "10.5px",
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginTop: "1px",
+                        }}
+                      >
+                        {i + 1}
+                      </span>
+                      <span style={{ fontSize: "16px", flexShrink: 0 }}>{step.icon}</span>
+                      <div>
+                        <div style={{ color: "#EDE7D8", fontWeight: 600, fontSize: "13.5px", marginBottom: "2px" }}>
+                          {step.title}
+                        </div>
+                        <div style={{ color: "rgba(237,231,216,0.5)", fontSize: "12.5px", lineHeight: 1.6 }}>
+                          {step.desc}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
+
+      {/* ───── FOOTER (inchangé) ───── */}
+      <footer
+        style={{
+          borderTop: "0.5px solid rgba(255,255,255,0.1)",
+          padding: "20px 24px",
+          boxSizing: "border-box",
+          width: "100%",
+          background: "#181A38",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1100px",
+            margin: "0 auto",
+            textAlign: "center",
+            color: "rgba(255,255,255,0.35)",
+            fontSize: "14px",
+          }}
+        >
+          <div>© {new Date().getFullYear()} SoulTrack. {t.footer}</div>
+
+          <div style={{ marginTop: "10px", display: "flex", justifyContent: "center", gap: "16px", flexWrap: "wrap" }}>
+            <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>Terms</span>
+            <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>Privacy</span>
+            <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>Refund</span>
           </div>
-        </section>
-      ))}
-
-      {/* ───── FOOTER ───── */}
-<footer
-  style={{
-    borderTop: "0.5px solid rgba(255,255,255,0.1)",
-    padding: "20px 24px",
-    boxSizing: "border-box",
-    width: "100%",
-  }}
->
-  <div
-    style={{
-      maxWidth: "1100px",
-      margin: "0 auto",
-      textAlign: "center",
-      color: "rgba(255,255,255,0.35)",
-      fontSize: "14px",
-    }}
-  >
-    {/* COPYRIGHT */}
-    <div>
-      © {new Date().getFullYear()} SoulTrack. {t.footer}
-    </div>
-
-    {/* LINKS PADDLE */}
-    <div
-      style={{
-        marginTop: "10px",
-        display: "flex",
-        justifyContent: "center",
-        gap: "16px",
-        flexWrap: "wrap",
-      }}
-    >
-      <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-        Terms
-      </span>
-      <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-        Privacy
-      </span>
-      <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-        Refund
-      </span>
-    </div>
-  </div>
-</footer>
+        </div>
+      </footer>
 
       <style>{`
         body { overflow-x: hidden; }
@@ -872,26 +931,19 @@ export default function Fonctionnement() {
         @media (max-width: 768px) {
           .nav-hide { display: none !important; }
           .nav-show { display: flex !important; }
-          .connector-line { display: none !important; }
-
-          /* 2 colonnes sur mobile : les 5 steps → 2+2+1 centré */
-          .steps-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 24px 16px !important;
-          }
-
-          /* Dernier item seul → centré sur toute la largeur */
-          .steps-grid > div:last-child:nth-child(odd) {
-            grid-column: 1 / -1;
-            max-width: 160px;
-            margin: 0 auto;
-          }
         }
 
-        @media (max-width: 400px) {
-          .steps-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 20px 10px !important;
+        @media (max-width: 640px) {
+          .chapter-grid {
+            grid-template-columns: 52px 1fr !important;
+            gap: 16px !important;
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+          .medallion {
+            width: 42px !important;
+            height: 42px !important;
+            font-size: 15px !important;
           }
         }
       `}</style>

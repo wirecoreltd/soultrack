@@ -23,7 +23,7 @@ const translations = {
     typeMessage: "Message",
     sectionBesoins: "🙏 Besoins",
     besoinsOptions: [
-      "Finances", "Santé", "Dépression / Santé mentale", "Travail / Études",
+      "Finances", "Santé physique", "Santé mentale / Dépression", "Travail / Études",
       "Famille / Enfants", "Couple / Mariage", "Relations / Conflits",
       "Addictions / Dépendances", "Vie spirituelle", "Miracle", "Délivrance",
       "Deuil / Perte", "Logement / Sécurité", "Immigration / Documents",

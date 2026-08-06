@@ -117,8 +117,8 @@ const translations = {
     needs: "Difficulties / Needs:",
     needsOptions: [
       { value: "Finances", label: "Finances" },
-      { value: "Santé", label: "Physical Health" },
-      { value: "Dépression / Santé mentale", label: "Mental Health / Depression" },
+      { value: "Santé physique", label: "Physical Health" },
+      { value: "Santé mentale / Dépression", label: "Mental Health / Depression" },
       { value: "Travail / Études", label: "Work / Education" },
       { value: "Famille / Enfants", label: "Family / Children" },
       { value: "Couple / Mariage", label: "Marriage / Relationships" },

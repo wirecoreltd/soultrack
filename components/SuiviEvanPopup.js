@@ -462,6 +462,16 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
     <div className="fixed inset-0 flex items-center justify-center z-[60] p-4" style={{ background: "rgba(30,35,90,0.45)", backdropFilter: "blur(6px)" }}>
       <div className="relative w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid #e2e8f0" }}>
 
+        {/* TOAST DE SUCCÈS */}
+        {successMessage && (
+          <div
+            className="absolute top-3 left-1/2 -translate-x-1/2 z-[70] px-4 py-2 rounded-full text-sm font-semibold text-white shadow-lg whitespace-nowrap"
+            style={{ background: "#16a34a", animation: "fadeInOut 3s ease" }}
+          >
+            {successMessage}
+          </div>
+        )}
+
         {/* HEADER */}
         <div ref={formTopRef} className="px-6 pt-6 pb-4" style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}>
           <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white font-bold text-sm" style={{ background: "rgba(255,255,255,0.2)" }}>✕</button>
@@ -489,13 +499,7 @@ export default function SuiviEvanPopup({ member, onClose, user }) {
               <p className="text-orange-700 text-sm font-semibold">{t.editingSuiviLabel(formatDate(editingSuivi.date_action))}</p>
               <button onClick={handleCancelEdit} className="text-xs text-gray-500 underline hover:text-gray-700">{t.cancel}</button>
             </div>
-          )}
-
-          {successMessage && (
-            <div className="bg-green-50 border border-green-300 rounded-xl px-4 py-3 text-sm text-green-700 font-semibold text-center animate-pulse">
-              {successMessage}
-            </div>
-          )}
+          )}         
 
           {/* FORMULAIRE */}
           {!evangeliseNotFound && (

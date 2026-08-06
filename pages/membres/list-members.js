@@ -1507,7 +1507,7 @@ useEffect(() => {
                   >
                     {t.addSuivi}
                   </button>
-                  {m.leader_developpement && (
+                  {m.leader_developpement && userRole !== "Conseiller" && (
                     <button
                       onClick={() => setOpenEvalLeaderMemberId(m.id)}
                       className="mt-2 text-sm px-3 py-1 rounded text-white font-semibold"

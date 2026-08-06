@@ -437,9 +437,25 @@ function parseArr(val) {
 /* ============================================================
    COMPOSANT PRINCIPAL
    ============================================================ */
+function getRoles(profile) {
+  if (!profile) return [];
+  if (Array.isArray(profile.roles)) return profile.roles;
+  if (typeof profile.roles === "string") {
+    return profile.roles.replace("{", "").replace("}", "").split(",").map((r) => r.trim());
+  }
+  if (profile.role) return [profile.role];
+  return [];
+}
+
 export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }) {
   const { lang } = useLang();
   const t = translations[lang];
+
+  // Garde-fou : les Conseillers n'ont pas accès à ce suivi
+  const isConseiller = getRoles(user).includes("Conseiller");
+  useEffect(() => {
+    if (isConseiller) onClose();
+  }, [isConseiller]);
 
   const [loading, setLoading] = useState(false);
   const [evaluations, setEvaluations] = useState([]);
@@ -451,6 +467,8 @@ export default function EvaluationLeaderPopup({ member, onClose, user, onSaved }
   const currentStageKey = evaluations[0]?.parcours_etape || form.parcours_etape;
   const currentStageEmoji = t.parcours.find((s) => s.key === currentStageKey)?.emoji || "🌱";
   const [successMsg, setSuccessMsg] = useState("");
+
+  if (isConseiller) return null;
 
   const formTopRef = useRef(null);
   const modalRef = useRef(null);

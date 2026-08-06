@@ -835,12 +835,12 @@ export default function Fonctionnement() {
                       >
                         {i + 1}
                       </span>
-                      <span style={{ fontSize: "16px", flexShrink: 0 }}>{step.icon}</span>
-                      <div>
-                        <div style={{ color: "#fff", fontWeight: 600, fontSize: "13.5px", marginBottom: "2px" }}>
-                          {step.title}
-                        </div>
-                        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: "12.5px", lineHeight: 1.6 }}>
+                      <span style={{ fontSize: "18px", flexShrink: 0 }}>{step.icon}</span>
+                        <div>
+                          <div style={{ color: "#fff", fontWeight: 600, fontSize: "14.5px", marginBottom: "2px" }}>
+                            {step.title}
+                          </div>
+                        <div style={{ color: "rgba(255,255,255,0.78)", fontSize: "12.5px", lineHeight: 1.6 }}>
                           {step.desc}
                         </div>
                       </div>

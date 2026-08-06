@@ -16,7 +16,7 @@ const MINISTERES_VALIDES = [
 
 // Liste alignée sur ImportMembresCSV (17 valeurs documentées)
 const BESOIN_FR = [
-  "Finances", "Santé", "Travail / Études", "Famille / Enfants",
+  "Finances", "Santé physique", "Travail / Études", "Famille / Enfants",
   "Miracle", "Délivrance", "Relations / Conflits",
   "Addictions / Dépendances", "Guidance spirituelle",
   "Logement / Sécurité", "Communauté / Isolement", "Dépression / Santé mentale",
@@ -47,7 +47,7 @@ const CONV_EN_TO_FR     = {
 // Aligné sur ImportMembresCSV ("Health" -> "Santé")
 const BESOIN_EN_TO_FR   = {
   "Finances": "Finances",
-  "Health": "Santé",
+  "Physical health": "Santé",
   "Depression / Mental health": "Dépression / Santé mentale",
   "Work / Studies": "Travail / Études",
   "Family / Children": "Famille / Enfants",

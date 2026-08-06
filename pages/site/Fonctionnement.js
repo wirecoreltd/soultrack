@@ -856,9 +856,10 @@ export default function Fonctionnement() {
         <div
           style={{
             textAlign: "center",
-            padding: "20px 24px 70px",
+            padding: "0px 24px 30px",
             position: "relative",
             zIndex: 1,
+            marginTop: "-20px",
           }}
         >
           <p
@@ -866,6 +867,7 @@ export default function Fonctionnement() {
               color: "#fbbf24",
               fontSize: "15px",
               fontWeight: 500,
+              fontStyle: "italic",
               maxWidth: "540px",
               margin: "0 auto",
               lineHeight: 1.7,

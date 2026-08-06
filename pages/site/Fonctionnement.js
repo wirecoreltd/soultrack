@@ -696,12 +696,7 @@ export default function Fonctionnement() {
       </header>
 
       {/* ───── CORPS : thème "manuscrit illuminé" ───── */}
-      <div
-        style={{
-          background:
-            "radial-gradient(ellipse 900px 500px at 50% 0%, rgba(216,180,91,0.10), transparent 60%), linear-gradient(180deg, #1B1D3A 0%, #181A38 100%)",
-          position: "relative",
-        }}
+      <div style={{background: "#333699", position: "relative", }}
       >
         {/* ───── HERO ───── */}
         <section style={{ textAlign: "center", padding: "72px 24px 56px", position: "relative", zIndex: 1 }}>
@@ -903,7 +898,7 @@ export default function Fonctionnement() {
           padding: "20px 24px",
           boxSizing: "border-box",
           width: "100%",
-          background: "#181A38",
+          background: "#333699",
         }}
       >
         <div

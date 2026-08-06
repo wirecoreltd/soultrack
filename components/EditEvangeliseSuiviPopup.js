@@ -499,50 +499,8 @@ const isPrivileged = rolesArray.some((r) =>
                 <option value="Réconciliation">{t.reconciliation}</option>
               </select>
             )}
-          </Field>          
-
-          {/* Section: Besoins */}
-          <SectionTitle>{t.sectionBesoins}</SectionTitle>
-          <div className="flex flex-col gap-2">
-            {besoinsOptionsFr.map((bFr) => {
-              const checked = formData.besoin.includes(bFr);
-              return (
-                <label
-                  key={bFr}
-                  className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    value={bFr}
-                    checked={checked}
-                    onChange={(e) => handleBesoinChange(bFr, e.target.checked)}
-                    className="accent-[#2E3192]"
-                  />
-                  {translateBesoin(bFr, lang)}
-                </label>
-              );
-            })}
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                value="Autre"
-                checked={showAutre}
-                onChange={(e) => handleBesoinChange("Autre", e.target.checked)}
-                className="accent-[#2E3192]"
-              />
-              {t.autre}
-            </label>
-            {showAutre && (
-              <input
-                type="text"
-                placeholder={t.preciser}
-                value={formData.autreBesoin}
-                onChange={(e) => setFormData((prev) => ({ ...prev, autreBesoin: e.target.value }))}
-                className="inp"
-              />
-            )}
-          </div>
-
+          </Field>       
+          
           {/* Section: Suivi */}
           <SectionTitle>{t.sectionSuivi}</SectionTitle>
 

@@ -36,8 +36,7 @@ const translations = {
     footer: "Tous droits réservés.",
     modules: [
       {
-        title: "Espace Membres",
-        emoji: "🧭",
+        title: "Espace Membres",        
         desc: "Le registre vivant de l'église : chaque membre y est accueilli, situé et accompagné dans la durée.",
         accentText: "#9DC2A4",
         accent: "rgba(157,194,164,0.6)",
@@ -276,7 +275,7 @@ const translations = {
   },
 };
 
-const numerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+const numerals = ["🧭", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 
 function langBtnStyle(active) {
   return {

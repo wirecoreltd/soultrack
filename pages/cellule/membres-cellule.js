@@ -853,6 +853,14 @@ useEffect(() => {
                               <SuiviPopup
                                 member={m}
                                 onClose={() => setOpenSuiviMemberId(null)}
+                                user={userProfile}
+                                onMemberUpdated={(memberId, updatedFields) => {
+                                  setMembres((prev) =>
+                                    prev.map((mem) =>
+                                      mem.id === memberId ? { ...mem, ...updatedFields } : mem
+                                    )
+                                  );
+                                }}
                               />
                             )}
 

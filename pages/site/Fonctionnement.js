@@ -1,32 +1,13 @@
 "use client";
-
-import { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import Image from "next/image";
-import supabase from "../../lib/supabaseClient";
+import { useState } from "react";
 import { useLang } from "../../hooks/useLang";
+import SiteHeader from "../../components/SiteHeader";
+import SiteFooter from "../../components/SiteFooter";
 
-import { Great_Vibes } from "next/font/google";
-const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
-
-// ─── DICTIONNAIRE ────────────────────────────────────────────────────────────
 const translations = {
   fr: {
-    login: "Connexion",
-    signup: "Créer mon église",
-    webVersion: "Version web",
-    logout: "Déconnexion",
-    nav: [
-      { label: "Accueil", path: "/site/HomePage" },
-      { label: "Fonctionnement", path: "/site/Fonctionnement" },
-      { label: "À propos", path: "/site/about" },
-      { label: "Pricing", path: "/site/pricing" },
-      { label: "Contact", path: "/site/contact" },
-    ],
     heroPara: `Chaque module sert un même chemin : suivre la présence, former les membres, accompagner les baptisés, engager chacun dans le service, répondre aux besoins et veiller d'abord sur la croissance personnelle de chaque vie, puis sur celle de l'église dans son ensemble. Rien ici n'est de simples données, mais des vies confiées à notre soin.`,
     heroPara2: `Que chaque âme soit gagnée, restaurée, bien entourée, enracinée dans la Parole et transformée en un disciple fidèle et accompli dans la maison de Dieu.`,
-    heroTitle: "Comment fonctionne",
-    footer: "Tous droits réservés.",
     modules: [
       {
         title: "Espace Membres",
@@ -97,22 +78,8 @@ const translations = {
     ],
   },
   en: {
-    login: "Log in",
-    signup: "Create my church",
-    webVersion: "Web version",
-    logout: "Log out",
-    nav: [
-      { label: "Home", path: "/site/HomePage" },
-      { label: "How it works", path: "/site/Fonctionnement" },
-      { label: "About", path: "/site/about" },
-      { label: "Pricing", path: "/site/pricing" },
-      { label: "Contact", path: "/site/contact" },
-    ],
     heroPara: `Every module serves the same journey: tracking attendance, training members, accompanying the baptised, engaging each person in service, responding to needs and watching first over the personal growth of each life, then over the church as a whole. Nothing here is mere data — these are lives entrusted to our care.`,
     heroPara2: `May every soul be won, restored, well surrounded, rooted in the Word and transformed into a faithful and fulfilled disciple in the house of God.`,
-    heroTitle: "How",
-    heroTitleSuffix: "works",
-    footer: "All rights reserved.",
     modules: [
       {
         title: "Members Space",
@@ -184,76 +151,13 @@ const translations = {
   },
 };
 
-function langBtnStyle(active) {
-  return {
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    padding: 0,
-    opacity: active ? 1 : 0.45,
-    transition: "opacity 0.2s",
-  };
-}
-
 export default function Fonctionnement() {
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const [openMenu, setOpenMenu] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const { lang } = useLang();
   const [active, setActive] = useState(null);
-  const { lang, changeLang } = useLang();
-
-  // ── Profil connecté ─────────────────────────────────────────────────────
-  const [profile, setProfile] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-
   const t = translations[lang];
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // ── Profil : chargement + écoute des changements de session ────────────
-      useEffect(() => {
-      const loadProfile = async () => {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData?.session) {
-          setProfile(null);
-          setLoadingProfile(false);
-          return;
-        }
-    
-        const { data: profileData, error } = await supabase
-          .from("profiles")
-          .select("id, prenom, nom, role, roles")
-          .eq("id", sessionData.session.user.id)
-          .single();
-    
-        if (!error) setProfile(profileData);
-        setLoadingProfile(false);
-      };
-    
-      loadProfile();
-    
-      const { data: listener } = supabase.auth.onAuthStateChange(() => {
-        loadProfile();
-      });
-    
-      return () => listener.subscription.unsubscribe();
-    }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.clear();
-    setProfile(null);
-    router.push("/login");
-  };
-
   return (
-    <div style={{ background: "#333699", minHeight: "100vh", position: "relative",overflowX: "hidden" }}>
+    <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
 
       {/* GLOW 1 */}
       <div style={{
@@ -271,455 +175,10 @@ export default function Fonctionnement() {
         pointerEvents: "none", zIndex: 0,
       }} />
 
-      {/* ───── HEADER ───── */}
-      <header
-        style={{
-          background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
-          borderBottom: scrolled
-            ? "0.5px solid rgba(255,255,255,0.15)"
-            : "0.5px solid transparent",
-          position: "sticky",
-          top: 0,
-          zIndex: 100,
-          backdropFilter: scrolled ? "blur(16px)" : "none",
-          transition: "background 0.3s, border-color 0.3s",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1240px",
-            margin: "0 auto",
-            padding: "22px 24px",
-            height: "88px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "24px",
-            boxSizing: "border-box",
-          }}
-        >
-          {/* LOGO */}
-          <div
-            onClick={() => router.push("/site/HomePage")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              cursor: "pointer",
-              zIndex: 1,
-              flexShrink: 0,
-            }}
-          >
-            <Image src="/logo.png" alt="SoulTrack" width={38} height={38} />
-            <span
-              style={{
-                color: "#fff",
-                fontSize: "19px",
-                fontWeight: 500,
-                fontFamily: "'Great Vibes', cursive",
-                whiteSpace: "nowrap",
-              }}
-            >
-              SoulTrack
-            </span>
-          </div>
-
-          {/* ───── GROUPE DROITE desktop : nav + boutons + switcher langue ───── */}
-          <div
-            className="nav-hide"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "26px",
-              zIndex: 1,
-              flexShrink: 0,
-            }}
-          >
-            {/* NAV */}
-            <nav
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "20px",
-                zIndex: 1,
-                flexShrink: 0,
-              }}
-            >
-              {t.nav.map((item) => (
-                <span
-                  key={item.path}
-                  onClick={() => router.push(item.path)}
-                  style={{
-                    color: pathname === item.path ? "#fbbf24" : "#fff",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "color 0.2s",
-                    whiteSpace: "nowrap",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "#fff")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color =
-                      pathname === item.path ? "#fbbf24" : "#fff")
-                  }
-                >
-                  {item.label}
-                </span>
-              ))}
-            </nav>
-
-            {/* BOUTONS profil / login+signup */}
-            <div
-              style={{
-                display: "flex",
-                gap: "8px",
-                alignItems: "center",
-                zIndex: 1,
-                flexShrink: 0,
-              }}
-            >
-              {loadingProfile ? (
-                <div style={{ width: "180px", height: "34px" }} />
-              ) : profile ? (
-                <>
-                  <span
-                    onClick={() => router.push("/hub")}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      cursor: "pointer",
-                      color: "#fff",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: "28px",
-                        height: "28px",
-                        borderRadius: "50%",
-                        background: "#fbbf24",
-                        color: "#333699",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 700,
-                        fontSize: "13px",
-                      }}
-                    >
-                      {profile.prenom?.[0]?.toUpperCase() || "U"}
-                    </span>
-                    {profile.prenom} {profile.nom}
-                  </span>
-
-                  <button
-                    onClick={() => router.push("/hub")}
-                    style={{
-                      background: "transparent",
-                      color: "#fff",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "6px 12px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {t.webVersion}
-                  </button>
-
-                  <button
-                    onClick={handleLogout}
-                    style={{
-                      background: "transparent",
-                      color: "#fbbf24",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "6px 12px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {t.logout}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => router.push("/login")}
-                    style={{
-                      background: "transparent",
-                      color: "#fbbf24",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "7px 18px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {t.login}
-                  </button>
-                  <button
-                    onClick={() => router.push("/site/pricing")}
-                    style={{
-                      background: "#fff",
-                      color: "#333699",
-                      border: "none",
-                      padding: "7px 18px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {t.signup}
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Switcher langue */}
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                alignItems: "center",
-                flexShrink: 0,
-              }}
-            >
-              <button
-                onClick={() => changeLang("fr")}
-                title="Français"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
-                  opacity: lang === "fr" ? 1 : 0.45,
-                  transition: "opacity 0.2s",
-                  flexShrink: 0,
-                }}
-              >
-                <img
-                  src="https://flagcdn.com/w40/fr.png"
-                  srcSet="https://flagcdn.com/w80/fr.png 2x"
-                  width="30"
-                  height="21"
-                  alt="Français"
-                  style={{ display: "block", borderRadius: "3px", flexShrink: 0 }}
-                />
-              </button>
-              <button
-                onClick={() => changeLang("en")}
-                title="English"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
-                  opacity: lang === "en" ? 1 : 0.45,
-                  transition: "opacity 0.2s",
-                  flexShrink: 0,
-                }}
-              >
-                <img
-                  src="https://flagcdn.com/w40/gb.png"
-                  srcSet="https://flagcdn.com/w80/gb.png 2x"
-                  width="30"
-                  height="21"
-                  alt="English"
-                  style={{ display: "block", borderRadius: "3px", flexShrink: 0 }}
-                />
-              </button>
-            </div>
-          </div>
-          {/* ───── FIN GROUPE DROITE ───── */}
-
-          {/* HAMBURGER */}
-          <button
-            onClick={() => setOpenMenu(!openMenu)}
-            className="nav-show"
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              display: "none",
-              flexDirection: "column",
-              gap: "5px",
-              padding: "4px",
-              zIndex: 1,
-            }}
-          >
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                style={{
-                  display: "block",
-                  width: "22px",
-                  height: "1.5px",
-                  background: "rgba(255,255,255,0.85)",
-                  borderRadius: "2px",
-                  transition: "transform 0.2s, opacity 0.2s",
-                  transform: openMenu
-                    ? i === 0
-                      ? "rotate(45deg) translate(5px, 5px)"
-                      : i === 2
-                      ? "rotate(-45deg) translate(5px, -5px)"
-                      : "scaleX(0)"
-                    : "none",
-                  opacity: openMenu && i === 1 ? 0 : 1,
-                }}
-              />
-            ))}
-          </button>
-        </div>
-
-        {/* MENU MOBILE */}
-        {openMenu && (
-          <div
-            style={{
-              background: "#333699",
-              borderTop: "0.5px solid rgba(255,255,255,0.15)",
-              padding: "20px 24px 28px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "20px",
-            }}
-          >
-            {t.nav.map((item) => (
-              <span
-                key={item.path}
-                onClick={() => {
-                  router.push(item.path);
-                  setOpenMenu(false);
-                }}
-                style={{
-                  color: pathname === item.path ? "#fbbf24" : "#fff",
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                {item.label}
-              </span>
-            ))}
-
-            {/* Switcher langue dans le menu mobile */}
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <button onClick={() => changeLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
-                <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
-              </button>
-              <button onClick={() => changeLang("en")} title="English" style={langBtnStyle(lang === "en")}>
-                <img src="https://flagcdn.com/w20/gb.png" srcSet="https://flagcdn.com/w40/gb.png 2x" width="20" height="14" alt="English" style={{ display: "block", borderRadius: "2px" }} />
-              </button>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                marginTop: "4px",
-              }}
-            >
-              {loadingProfile ? null : profile ? (
-                <>
-                  <span
-                    onClick={() => {
-                      router.push("/hub");
-                      setOpenMenu(false);
-                    }}
-                    style={{
-                      color: "#fff",
-                      fontSize: "15px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    👤 {profile.prenom} {profile.nom}
-                  </span>
-                  <button
-                    onClick={() => {
-                      router.push("/hub");
-                      setOpenMenu(false);
-                    }}
-                    style={{
-                      background: "transparent",
-                      color: "#fff",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "11px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {t.webVersion}
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setOpenMenu(false);
-                    }}
-                    style={{
-                      background: "transparent",
-                      color: "#fbbf24",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "11px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {t.logout}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => { router.push("/login"); setOpenMenu(false); }}
-                    style={{
-                      background: "transparent",
-                      color: "#fff",
-                      border: "0.5px solid rgba(255,255,255,0.35)",
-                      padding: "11px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {t.login}
-                  </button>
-                  <button
-                    onClick={() => { router.push("/site/pricing"); setOpenMenu(false); }}
-                    style={{
-                      background: "#fff",
-                      color: "#333699",
-                      border: "none",
-                      padding: "11px",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {t.signup}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </header>
+      <SiteHeader />
 
       {/* ───── HERO ───── */}
-      <section style={{ textAlign: "center", padding: "60px 24px 40px",  zIndex: 1 }}>
+      <section style={{ textAlign: "center", padding: "60px 24px 40px", zIndex: 1 }}>
         <p style={{
           color: "rgba(255,255,255,0.85)", fontSize: "clamp(0.9rem, 1.8vw, 1.05rem)",
           lineHeight: 1.8, maxWidth: "680px", margin: "0 auto 28px", fontWeight: 400,
@@ -766,7 +225,6 @@ export default function Fonctionnement() {
               zIndex: 0,
             }} />
 
-            {/* Grid: sur desktop N colonnes égales, sur mobile 2 colonnes */}
             <div
               className="steps-grid"
               style={{
@@ -820,67 +278,19 @@ export default function Fonctionnement() {
         </section>
       ))}
 
-      {/* ───── FOOTER ───── */}
-<footer
-  style={{
-    borderTop: "0.5px solid rgba(255,255,255,0.1)",
-    padding: "20px 24px",
-    boxSizing: "border-box",
-    width: "100%",
-  }}
->
-  <div
-    style={{
-      maxWidth: "1100px",
-      margin: "0 auto",
-      textAlign: "center",
-      color: "rgba(255,255,255,0.35)",
-      fontSize: "14px",
-    }}
-  >
-    {/* COPYRIGHT */}
-    <div>
-      © {new Date().getFullYear()} SoulTrack. {t.footer}
-    </div>
-
-    {/* LINKS PADDLE */}
-    <div
-      style={{
-        marginTop: "10px",
-        display: "flex",
-        justifyContent: "center",
-        gap: "16px",
-        flexWrap: "wrap",
-      }}
-    >
-      <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-        Terms
-      </span>
-      <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-        Privacy
-      </span>
-      <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
-        Refund
-      </span>
-    </div>
-  </div>
-</footer>
+      <SiteFooter />
 
       <style>{`
         body { overflow-x: hidden; }
 
         @media (max-width: 768px) {
-          .nav-hide { display: none !important; }
-          .nav-show { display: flex !important; }
           .connector-line { display: none !important; }
 
-          /* 2 colonnes sur mobile : les 5 steps → 2+2+1 centré */
           .steps-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             gap: 24px 16px !important;
           }
 
-          /* Dernier item seul → centré sur toute la largeur */
           .steps-grid > div:last-child:nth-child(odd) {
             grid-column: 1 / -1;
             max-width: 160px;

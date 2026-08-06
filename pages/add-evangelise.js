@@ -50,8 +50,8 @@ const translations = {
     needs: "Difficultés / Besoins :",
     needsOptions: [
       { value: "Finances", label: "Finances" },
-      { value: "Santé", label: "Santé physique" },
-      { value: "Dépression / Santé mentale", label: "Dépression / Santé mentale" },
+      { value: "Santé physique", label: "Santé physique" },
+      { value: "Santé mentale / Dépression", label: "Santé mentale / Dépression" },
       { value: "Travail / Études", label: "Travail / Études" },
       { value: "Famille / Enfants", label: "Famille / Enfants" },
       { value: "Couple / Mariage", label: "Couple / Mariage" },

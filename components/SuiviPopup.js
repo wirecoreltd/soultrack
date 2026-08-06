@@ -209,7 +209,7 @@ function parseHistoriqueBesoin(besoinJson) {
   }
 }
 
-export default function SuiviPopup({ member, onClose, user }) {
+export default function SuiviPopup({ member, onClose, user, onMemberUpdated }) {
   const { lang } = useLang();
   const t = translations[lang];
 
@@ -443,6 +443,10 @@ export default function SuiviPopup({ member, onClose, user }) {
 
     await supabase.from("membres_complets").update({ besoin: JSON.stringify(newMemberBesoins) }).eq("id", member.id);
     setMemberBesoins(newMemberBesoins);
+
+    // 🔔 Remonte le changement au parent pour un affichage instantané (sans refresh)
+    onMemberUpdated?.(member.id, { besoin: JSON.stringify(newMemberBesoins) });
+
     setResolvedBesoins([]);
     setEditingSuivi(null);
     setLoading(false);

@@ -1103,6 +1103,9 @@ const getMapLabel = (map, value) => {
           member={suiviEvanMember}
           user={user}
           onClose={() => setSuiviEvanMember(null)}
+          onMemberUpdated={(memberId, updatedFields) => {
+            updateSuiviLocal(memberId, updatedFields);
+          }}
         />
       )}
 

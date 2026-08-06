@@ -50,7 +50,7 @@ const CONV_EN_TO_FR     = {
 };
 const BESOIN_EN_TO_FR   = {
   "Finances": "Finances",
-  "Health": "Santé",
+  "Physical health": "Santé physique",
   "Depression / Mental health": "Dépression / Santé mentale",
   "Work / Studies": "Travail / Études",
   "Family / Children": "Famille / Enfants",

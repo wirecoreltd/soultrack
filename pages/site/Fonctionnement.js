@@ -6,14 +6,8 @@ import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
 
-import { Great_Vibes, Cormorant_Garamond, Inter } from "next/font/google";
+import { Great_Vibes } from "next/font/google";
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  style: ["normal", "italic"],
-});
-const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"] });
 
 // ─── DICTIONNAIRE ────────────────────────────────────────────────────────────
 const translations = {
@@ -34,9 +28,12 @@ const translations = {
     heroPara2: `Que chaque âme soit gagnée, restaurée, bien entourée, enracinée dans la Parole et transformée en un disciple fidèle et accompli dans la maison de Dieu.`,
     heroTitle: "Comment fonctionne",
     footer: "Tous droits réservés.",
+    moreFeatures:
+      "✨ Et ce n'est qu'un aperçu ! De nombreuses autres fonctionnalités vous attendent dans l'application pour accompagner chaque aspect de la vie de votre église.",
     modules: [
       {
-        title: "Espace Membres",        
+        title: "Espace Membres",
+        emoji: "🧭",
         desc: "Le registre vivant de l'église : chaque membre y est accueilli, situé et accompagné dans la durée.",
         accentText: "#9DC2A4",
         accent: "rgba(157,194,164,0.6)",
@@ -51,7 +48,8 @@ const translations = {
         ],
       },
       {
-        title: "Espace Évangélisation",        
+        title: "Espace Évangélisation",
+        emoji: "✝️",
         desc: "Le premier contact devient une histoire suivie, du témoignage jusqu'à la décision de foi.",
         accentText: "#D8B45B",
         accent: "rgba(216,180,91,0.6)",
@@ -66,22 +64,24 @@ const translations = {
         ],
       },
       {
-        title: "Espace Cellules",       
+        title: "Espace Cellules",
+        emoji: "🏠",
         desc: "Le tissu de proximité : des groupes vivants où chacun est vu, encadré et enraciné.",
         accentText: "#79B8B5",
         accent: "rgba(121,184,181,0.6)",
         accentSoft: "rgba(121,184,181,0.15)",
         steps: [
-          {icon: "🏠", title: "Liste des Cellules", desc: "Créer, organiser et suivre les cellules afin d'assurer une structure claire et un encadrement efficace." },
-          {icon: "👥", title: "Membres", desc: "Consulter les membres de chaque cellule et assurer leur suivi au sein du groupe." },
-          {icon: "🤝", title: "Intégration", desc: "Accompagner les nouveaux venus jusqu'à leur pleine intégration dans une cellule active." },
-          {icon: "💌", title: "Suivi des Âmes", desc: "Enregistrer les échanges et accompagner chaque personne dans son cheminement spirituel." },
-          {icon: "🗒️", title: "Présences", desc: "Saisir les présences des réunions et suivre la participation des membres au fil du temps." },
-          {icon: "📊", title: "Croissance", desc: "Analyser les statistiques des cellules, des présences et de la progression des membres." },
+          { icon: "🏠", title: "Liste des Cellules", desc: "Créer, organiser et suivre les cellules afin d'assurer une structure claire et un encadrement efficace." },
+          { icon: "👥", title: "Membres", desc: "Consulter les membres de chaque cellule et assurer leur suivi au sein du groupe." },
+          { icon: "🤝", title: "Intégration", desc: "Accompagner les nouveaux venus jusqu'à leur pleine intégration dans une cellule active." },
+          { icon: "💌", title: "Suivi des Âmes", desc: "Enregistrer les échanges et accompagner chaque personne dans son cheminement spirituel." },
+          { icon: "🗒️", title: "Présences", desc: "Saisir les présences des réunions et suivre la participation des membres au fil du temps." },
+          { icon: "📊", title: "Croissance", desc: "Analyser les statistiques des cellules, des présences et de la progression des membres." },
         ],
       },
       {
-        title: "Espace Enfant",       
+        title: "Espace Enfant",
+        emoji: "🧒",
         desc: "Les plus jeunes grandissent en sécurité, suivis classe après classe, leçon après leçon.",
         accentText: "#D79A89",
         accent: "rgba(215,154,137,0.6)",
@@ -96,7 +96,8 @@ const translations = {
         ],
       },
       {
-        title: "Espace Conseiller",        
+        title: "Espace Conseiller",
+        emoji: "🤝",
         desc: "Un accompagnement pastoral rapproché, du premier échange jusqu'à la maturité spirituelle.",
         accentText: "#E0A867",
         accent: "rgba(224,168,103,0.6)",
@@ -111,14 +112,15 @@ const translations = {
         ],
       },
       {
-        title: "Espace Administrateur",        
+        title: "Espace Administrateur",
+        emoji: "🛡️",
         desc: "La structure qui tient l'ensemble : utilisateurs, rôles et liens entre églises.",
         accentText: "#A79BD9",
         accent: "rgba(167,155,217,0.6)",
         accentSoft: "rgba(167,155,217,0.15)",
         steps: [
           { icon: "👤", title: "Utilisateurs", desc: "Gérer les utilisateurs, leurs rôles et leurs niveaux d'accès au sein de l'église." },
-          { icon: "🛡️", title: "Permissions",  desc: "Attribuer les responsabilités et garantir un accès sécurisé à chaque espace." },
+          { icon: "🛡️", title: "Permissions", desc: "Attribuer les responsabilités et garantir un accès sécurisé à chaque espace." },
           { icon: "🔗", title: "Églises", desc: "Créer des liens entre églises et superviser les structures rattachées." },
           { icon: "⚙️", title: "Configuration", desc: "Personnaliser les informations, les paramètres et l'identité de l'église." },
           { icon: "💳", title: "Abonnement", desc: "Gérer le plan, la facturation et les services associés à votre église." },
@@ -126,7 +128,8 @@ const translations = {
         ],
       },
       {
-        title: "Espace Rapports",        
+        title: "Espace Rapports",
+        emoji: "📉",
         desc: "Toutes les histoires se rassemblent ici, en une vue d'ensemble claire de la croissance.",
         accentText: "#8FB0D6",
         accent: "rgba(143,176,214,0.6)",
@@ -161,9 +164,12 @@ const translations = {
     heroTitle: "How",
     heroTitleSuffix: "works",
     footer: "All rights reserved.",
+    moreFeatures:
+      "✨ And this is just a glimpse! Many more features await you inside the app to support every aspect of your church's life.",
     modules: [
       {
-        title: "Members Space",      
+        title: "Members Space",
+        emoji: "🧭",
         desc: "The living register of the church: every member is welcomed, placed and accompanied over time.",
         accentText: "#9DC2A4",
         accent: "rgba(157,194,164,0.6)",
@@ -178,14 +184,15 @@ const translations = {
         ],
       },
       {
-        title: "Evangelism Space",        
+        title: "Evangelism Space",
+        emoji: "✝️",
         desc: "A first contact becomes a followed story, from the initial encounter to a decision of faith.",
         accentText: "#D8B45B",
         accent: "rgba(216,180,91,0.6)",
         accentSoft: "rgba(216,180,91,0.15)",
         steps: [
           { icon: "➕", title: "New Contact", desc: "Create and centralise all new data to build a structured and usable database." },
-          { icon: "🙏", title: "ecision for Christ", desc: "Record those who have accepted Jesus Christ and follow their journey through baptism and integration into the church." },
+          { icon: "🙏", title: "Decision for Christ", desc: "Record those who have accepted Jesus Christ and follow their journey through baptism and integration into the church." },
           { icon: "🌿", title: "Evangelised List", desc: "Access a clear and structured view of all information with automatic classification." },
           { icon: "💗", title: "Follow-ups", desc: "Record exchanges, comments and progress to ensure continuous support." },
           { icon: "💧", title: "Baptism", desc: "Record spiritual milestones." },
@@ -193,7 +200,8 @@ const translations = {
         ],
       },
       {
-        title: "Cell Groups Space",        
+        title: "Cell Groups Space",
+        emoji: "🏠",
         desc: "The fabric of community: living groups where everyone is seen, guided and rooted.",
         accentText: "#79B8B5",
         accent: "rgba(121,184,181,0.6)",
@@ -207,7 +215,8 @@ const translations = {
         ],
       },
       {
-        title: "Children's Space",       
+        title: "Children's Space",
+        emoji: "🧒",
         desc: "The youngest grow in safety, followed class by class, lesson by lesson.",
         accentText: "#D79A89",
         accent: "rgba(215,154,137,0.6)",
@@ -222,7 +231,8 @@ const translations = {
         ],
       },
       {
-        title: "Counselor Space",      
+        title: "Counselor Space",
+        emoji: "🤝",
         desc: "Close pastoral accompaniment, from the first conversation to spiritual maturity.",
         accentText: "#E0A867",
         accent: "rgba(224,168,103,0.6)",
@@ -237,7 +247,8 @@ const translations = {
         ],
       },
       {
-        title: "Administrator Space",       
+        title: "Administrator Space",
+        emoji: "🛡️",
         desc: "The structure holding it together: users, roles and links between churches.",
         accentText: "#A79BD9",
         accent: "rgba(167,155,217,0.6)",
@@ -252,7 +263,8 @@ const translations = {
         ],
       },
       {
-        title: "Reports Space",      
+        title: "Reports Space",
+        emoji: "📉",
         desc: "Every story gathers here, into one clear view of the church's growth.",
         accentText: "#8FB0D6",
         accent: "rgba(143,176,214,0.6)",
@@ -342,7 +354,6 @@ export default function Fonctionnement() {
 
   return (
     <div
-      className={inter.className}
       style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}
     >
       {/* ───── HEADER (inchangé) ───── */}
@@ -690,41 +701,23 @@ export default function Fonctionnement() {
         )}
       </header>
 
-      {/* ───── CORPS : thème "manuscrit illuminé" ───── */}
-      <div style={{background: "#333699", position: "relative", }}
-      >
+      {/* ───── CORPS ───── */}
+      <div style={{ background: "#333699", position: "relative" }}>
         {/* ───── HERO ───── */}
         <section style={{ textAlign: "center", padding: "72px 24px 56px", position: "relative", zIndex: 1 }}>
-          <div
-            style={{
-              display: "inline-block",
-              color: "#D8B45B",
-              fontSize: "12px",
-              fontWeight: 600,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              marginBottom: "20px",
-              fontFamily: inter.style.fontFamily,
-            }}
-          >
-            {t.eyebrow}
-          </div>
-
           <h2
             style={{
-              color: "#EDE7D8",
-              fontStyle: "italic",
-              fontWeight: 600,
+              color: "#fff",
+              fontWeight: 500,
               fontSize: "clamp(1.8rem, 5vw, 3rem)",
               lineHeight: 1.15,
               margin: "0 auto 28px",
-              fontFamily: cormorant.style.fontFamily,
             }}
           >
             {lang === "fr" ? (
-              <>{t.heroTitle} <span style={{ color: "#fbbf24", fontStyle: "normal" }}>SoulTrack</span></>
+              <>{t.heroTitle} <span style={{ color: "#fbbf24" }}>SoulTrack</span></>
             ) : (
-              <>{t.heroTitle} <span style={{ color: "#fbbf24", fontStyle: "normal" }}>SoulTrack</span> {t.heroTitleSuffix}</>
+              <>{t.heroTitle} <span style={{ color: "#fbbf24" }}>SoulTrack</span> {t.heroTitleSuffix}</>
             )}
           </h2>
 
@@ -738,7 +731,7 @@ export default function Fonctionnement() {
 
           <p
             style={{
-              color: "rgba(237,231,216,0.75)",
+              color: "rgba(255,255,255,0.85)",
               fontSize: "clamp(0.92rem, 1.6vw, 1.05rem)",
               lineHeight: 1.85,
               maxWidth: "660px",
@@ -749,7 +742,7 @@ export default function Fonctionnement() {
             {t.heroPara}
             <br />
             <br />
-            <span style={{ fontStyle: "italic", color: "rgba(237,231,216,0.9)" }}>{t.heroPara2}</span>
+            <span style={{ color: "rgba(255,255,255,0.95)" }}>{t.heroPara2}</span>
           </p>
         </section>
 
@@ -795,10 +788,9 @@ export default function Fonctionnement() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontFamily: cormorant.style.fontFamily,
                     fontSize: "20px",
                     fontWeight: 600,
-                    color: "#EDE7D8",
+                    color: "#fff",
                   }}
                 >
                   {numerals[mIndex]}
@@ -812,11 +804,9 @@ export default function Fonctionnement() {
                   <span style={{ fontSize: "20px" }}>{module.emoji}</span>
                   <h3
                     style={{
-                      fontFamily: cormorant.style.fontFamily,
-                      fontStyle: "italic",
                       fontWeight: 600,
                       fontSize: "clamp(1.25rem, 3vw, 1.6rem)",
-                      color: module.accentText,
+                      color: "#fff",
                       margin: 0,
                     }}
                   >
@@ -826,12 +816,11 @@ export default function Fonctionnement() {
 
                 <p
                   style={{
-                    color: "rgba(237,231,216,0.6)",
+                    color: "rgba(255,255,255,0.6)",
                     fontSize: "13.5px",
                     lineHeight: 1.75,
                     margin: "0 0 22px",
                     maxWidth: "540px",
-                    fontStyle: "italic",
                   }}
                 >
                   {module.desc}
@@ -870,10 +859,10 @@ export default function Fonctionnement() {
                       </span>
                       <span style={{ fontSize: "16px", flexShrink: 0 }}>{step.icon}</span>
                       <div>
-                        <div style={{ color: "#EDE7D8", fontWeight: 600, fontSize: "13.5px", marginBottom: "2px" }}>
+                        <div style={{ color: "#fff", fontWeight: 600, fontSize: "13.5px", marginBottom: "2px" }}>
                           {step.title}
                         </div>
-                        <div style={{ color: "rgba(237,231,216,0.5)", fontSize: "12.5px", lineHeight: 1.6 }}>
+                        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: "12.5px", lineHeight: 1.6 }}>
                           {step.desc}
                         </div>
                       </div>
@@ -883,6 +872,29 @@ export default function Fonctionnement() {
               </div>
             </section>
           ))}
+        </div>
+
+        {/* ───── PLUS DE FONCTIONNALITÉS ───── */}
+        <div
+          style={{
+            textAlign: "center",
+            padding: "20px 24px 70px",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <p
+            style={{
+              color: "#fbbf24",
+              fontSize: "15px",
+              fontWeight: 500,
+              maxWidth: "540px",
+              margin: "0 auto",
+              lineHeight: 1.7,
+            }}
+          >
+            {t.moreFeatures}
+          </p>
         </div>
       </div>
 

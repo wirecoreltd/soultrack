@@ -112,7 +112,7 @@ const translations = {
     soinPastoral: "❤️‍🩹 Soin pastoral",
     besoins: "❓ Difficultés / Besoins :",
     besoinOptions: {
-      "Finances": "Financial Needs",
+      "Finances": "Financial",
       "Santé physique": "Physical Health",
       "Santé mentale / Dépression": "Mental Health / Depression",
       "Travail / Études": "Work / Education",

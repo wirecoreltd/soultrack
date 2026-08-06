@@ -57,6 +57,9 @@ const translations = {
     resolu: "Résolu",
     resoluTick: "✓ Résolu",
 
+    succesAjout: "✅ Suivi ajouté avec succès",
+    succesMiseAJour: "✅ Suivi mis à jour avec succès",
+
     // Historique
     aucunSuivi: "Aucun suivi pour le moment",
     besoinLabel: "Besoin :",
@@ -148,6 +151,9 @@ const translations = {
     resolu: "Resolved",
     resoluTick: "✓ Resolved",
 
+    succesAjout: "✅ Follow-up added successfully",
+    succesMiseAJour: "✅ Follow-up updated successfully",
+
     // Historique
     aucunSuivi: "No follow-ups yet",
     besoinLabel: "Need:",
@@ -230,6 +236,7 @@ export default function SuiviPopup({ member, onClose, user }) {
   t.viespirituel,  t.miracle,  t.delivrance,  t.perte,  t.logement,  t.documents,  t.justice,  t.communaute,  t.besoinessentiel,];
 
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
   const [suivis, setSuivis] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentUserName, setCurrentUserName] = useState("");
@@ -384,10 +391,12 @@ export default function SuiviPopup({ member, onClose, user }) {
     }));
   };
 
-  const handleSubmit = async () => {
+ const handleSubmit = async () => {
     if (!form.date_action || !form.type) { alert(t.alerteChamps); return; }
     if (!currentUserId) { alert(t.alerteSession); return; }
     setLoading(true);
+
+    const wasEditing = !!editingSuivi;
 
     const resolvedFromChecked = form.besoin.filter((b) => form.besoinStatuts[b] === t.resolu);
     const allResolved = [...new Set([...resolvedBesoins, ...resolvedFromChecked])];
@@ -422,7 +431,7 @@ export default function SuiviPopup({ member, onClose, user }) {
       ...interviewFields,
     };
 
-    if (editingSuivi) {
+     if (editingSuivi) {
       const { error } = await supabase.from("suivis").update(payload).eq("id", editingSuivi.id);
       if (error) { setLoading(false); alert(t.erreur + error.message); return; }
       setSuivis((prev) => prev.map((s) => s.id === editingSuivi.id ? { ...s, ...payload } : s));
@@ -437,10 +446,15 @@ export default function SuiviPopup({ member, onClose, user }) {
     setResolvedBesoins([]);
     setEditingSuivi(null);
     setLoading(false);
+
+    // 🔔 Affiche le toast
+    setToast(wasEditing ? t.succesMiseAJour : t.succesAjout);
+    setTimeout(() => setToast(null), 3000);
+
     const newStatuts = {};
     newMemberBesoins.forEach((b) => { newStatuts[b] = t.enSuivi; });
     setForm({ date_action: "", type: "", besoin: newMemberBesoins, besoinStatuts: newStatuts, commentaire: "", ...EMPTY_INTERVIEW });
-  };
+};
 
   const formatDateForInput = (date) => date ? date.split("T")[0] : "";
 
@@ -468,6 +482,16 @@ export default function SuiviPopup({ member, onClose, user }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: "rgba(30,35,90,0.35)", backdropFilter: "blur(6px)" }}>
       <div ref={modalRef} className="relative w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid #e2e8f0" }}>
+
+      {/* TOAST DE SUCCÈS */}
+      {toast && (
+        <div
+          className="absolute top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full text-sm font-semibold text-white shadow-lg"
+          style={{ background: "#16a34a", animation: "fadeInOut 3s ease" }}
+        >
+          {toast}
+        </div>
+      )}
 
         {/* HEADER */}
         <div ref={formTopRef} className="px-6 pt-6 pb-4 relative" style={{ background: "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)" }}>

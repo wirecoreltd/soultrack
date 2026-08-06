@@ -1,165 +1,727 @@
 "use client";
-import { useRouter } from "next/navigation";
-import { useLang } from "../../hooks/useLang";
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
-import SiteHeader from "../../components/SiteHeader";
-import SiteFooter from "../../components/SiteFooter";
+import { useLang } from "../../hooks/useLang";
+
+import { Great_Vibes } from "next/font/google";
+const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
 
 const translations = {
   fr: {
-    heroTitle:     "Une structure adaptée à votre",
-    heroHighlight: "croissance",
-    heroSub:       "Choisissez votre plan et on commence.",
-    heroPara:      "Chaque étape du ministère nécessite un niveau de structure différent. SoulTrack évolue avec votre église.",
-    btnStart:      "Commencer →",
-    btnContact:    "Nous contacter →",
-    perMonth:      "/mois",
-    forever:       "Pour toujours",
-    contactUs:     "Contactez-nous",
-    plans: [
-      { id: "free", name: "Départ", emoji: "🌱", range: "0 – 50 membres", price: "Gratuit", accent: "rgba(29,158,117,0.45)", color: "#10b981", durees: null },
-      { id: "starter", name: "Croissance", emoji: "📈", range: "51 – 200 membres", price: "$19", color: "#3b82f6", accent: "rgba(55,138,221,0.5)", popular: true,
-        durees: [ { id: "6m", label: "6 mois", total: 99,  save: 15  }, { id: "1a", label: "1 an",   total: 179, save: 49  } ] },
-      { id: "vision", name: "Vision", emoji: "🔥", range: "201 – 500 membres", price: "$39", color: "#f59e0b", accent: "rgba(251,191,36,0.4)",
-        durees: [ { id: "6m", label: "6 mois", total: 199, save: 35  }, { id: "1a", label: "1 an",   total: 359, save: 109 } ] },
-      { id: "expansion", name: "Expansion", emoji: "🌍", range: "501 – 1500 membres", price: "$79", color: "#8b5cf6", accent: "rgba(212,83,126,0.4)",
-        durees: [ { id: "6m", label: "6 mois", total: 399, save: 75  }, { id: "1a", label: "1 an",   total: 719, save: 229 } ] },
-      { id: "enterprise", name: "Réseaux", emoji: "🔗", range: "1500+ • Multi-églises", price: "Sur mesure", accent: "rgba(139,92,246,0.45)", color: "#ec4899", durees: null },
+    login: "Connexion",
+    signup: "Créer mon église",
+    webVersion: "Version web",
+    logout: "Déconnexion",
+    nav: [
+      { label: "Accueil", path: "/site/HomePage" },
+      { label: "Fonctionnement", path: "/site/Fonctionnement" },
+      { label: "À propos", path: "/site/about" },
+      { label: "Pricing", path: "/site/pricing" },
+      { label: "Contact", path: "/site/contact" },
     ],
+    footer: "Tous droits réservés.",
+
+    heroLabel: "À propos",
+    heroTitle: "À propos de",
+    heroHighlight: "SoulTrack",
+    heroSub: "Parce que chaque âme a de la valeur, nous aidons les églises à structurer leur suivi pour ne laisser personne de côté.",
+
+    introTitle: "Le constat",
+    introP1: "SoulTrack est né d'un constat clair : chaque âme a de la valeur et ne doit pas être perdue.",
+    introP2: "Mais à mesure que l'église grandit, le suivi devient plus complexe. Les informations se dispersent, les responsabilités se multiplient, et il devient difficile de garder une vision précise de chaque personne.",
+    introP3: "C'est dans ce contexte que SoulTrack a été conçu.",
+
+    missionTitle: "Notre mission",
+    missionText: "Notre mission est d'aider les églises à structurer leur organisation afin de suivre chaque membre avec clarté, constance et fidélité.",
+    missionQuote: "Nous croyons qu'un bon système ne remplace pas le cœur du berger, mais lui donne les moyens d'agir avec précision.",
+
+    problemTitle: "Le problème",
+    problemIntro: "Dans beaucoup d'églises aujourd'hui :",
+    problems: [
+      "Les membres ne sont pas suivis de manière régulière",
+      "Les nouvelles âmes ne sont pas toujours accompagnées",
+      "Les responsables manquent de visibilité",
+      "Les décisions sont prises sans données claires",
+    ],
+    problemResult: "Résultat : certaines personnes passent inaperçues.",
+
+    solutionTitle: "La solution",
+    solutionIntro: "SoulTrack apporte une structure simple et centralisée pour :",
+    solutions: [
+      "Gérer les membres et leur évolution",
+      "Organiser les cellules et les responsables",
+      "Suivre l'évangélisation et les nouvelles âmes",
+      "Donner une vision claire grâce aux rapports",
+    ],
+    solutionClose: "Tout est connecté pour transformer des informations dispersées en une vision claire et actionnable.",
+
+    approachTitle: "Notre approche",
+    approachSub: "SoulTrack a été pensé avec une double approche :",
+    approachSpiritual: "Spirituelle",
+    approachSpiritualText: "Aider le berger à connaître son troupeau et à prendre soin de chaque personne avec attention",
+    approachStrategic: "Stratégique",
+    approachStrategicText: "Apporter des données fiables pour guider les décisions et accompagner la croissance de manière structurée",
+
+    valuesTitle: "Nos valeurs",
+    values: [
+      { emoji: "❤️", title: "Chaque personne compte", text: "Aucune âme n'est insignifiante" },
+      { emoji: "🧭", title: "Clarté", text: "Voir clairement pour mieux accompagner" },
+      { emoji: "🤝", title: "Responsabilité", text: "Prendre soin avec intention et suivi" },
+      { emoji: "📈", title: "Croissance saine", text: "Grandir sans perdre la qualité du suivi" },
+    ],
+
+    visionTitle: "Notre vision",
+    visionP1: "Nous voulons voir des églises capables de grandir sans perdre la capacité de connaître et accompagner chaque membre.",
+    visionP2: "Une église où personne n'est oublié. Une église où chaque vie est suivie avec intention.",
+
+    ctaTitle: "Prêt à structurer votre église ?",
+    ctaText: "Commencez dès aujourd'hui à structurer votre église et à suivre chaque âme avec précision.",
+    ctaBtn: "Créer mon église →",
   },
   en: {
-    heroTitle:     "A structure adapted to your",
-    heroHighlight: "growth",
-    heroSub:       "Choose your plan and let's get started.",
-    heroPara:      "Every stage of ministry requires a different level of structure. SoulTrack grows with your church.",
-    btnStart:      "Get started →",
-    btnContact:    "Contact us →",
-    perMonth:      "/mo",
-    forever:       "Forever free",
-    contactUs:     "Contact us",
-    plans: [
-      { id: "free", name: "Starter", emoji: "🌱", range: "0 – 50 members", price: "Free", accent: "rgba(29,158,117,0.45)", color: "#10b981", durees: null },
-      { id: "starter", name: "Growth", emoji: "📈", range: "51 – 200 members", price: "$19", color: "#3b82f6", accent: "rgba(55,138,221,0.5)", popular: true,
-        durees: [ { id: "6m", label: "6 months", total: 99,  save: 15  }, { id: "1a", label: "1 year",   total: 179, save: 49  } ] },
-      { id: "vision", name: "Vision", emoji: "🔥", range: "201 – 500 members", price: "$39", color: "#f59e0b", accent: "rgba(251,191,36,0.4)",
-        durees: [ { id: "6m", label: "6 months", total: 199, save: 35  }, { id: "1a", label: "1 year",   total: 359, save: 109 } ] },
-      { id: "expansion", name: "Expansion", emoji: "🌍", range: "501 – 1500 members", price: "$79", color: "#8b5cf6", accent: "rgba(212,83,126,0.4)",
-        durees: [ { id: "6m", label: "6 months", total: 399, save: 75  }, { id: "1a", label: "1 year",   total: 719, save: 229 } ] },
-      { id: "enterprise", name: "Networks", emoji: "🔗", range: "1500+ • Multi-church", price: "Custom", accent: "rgba(139,92,246,0.45)", color: "#ec4899", durees: null },
+    login: "Log in",
+    signup: "Create my church",
+    webVersion: "Web version",
+    logout: "Log out",
+    nav: [
+      { label: "Home", path: "/site/HomePage" },
+      { label: "How it works", path: "/site/Fonctionnement" },
+      { label: "About", path: "/site/about" },
+      { label: "Pricing", path: "/site/pricing" },
+      { label: "Contact", path: "/site/contact" },
     ],
+    footer: "All rights reserved.",
+
+    heroLabel: "About",
+    heroTitle: "About",
+    heroHighlight: "SoulTrack",
+    heroSub: "Because every soul matters, we help churches structure their follow-up so no one is left behind.",
+
+    introTitle: "The observation",
+    introP1: "SoulTrack was born from a clear observation: every soul has value and must not be lost.",
+    introP2: "But as the church grows, follow-up becomes more complex. Information scatters, responsibilities multiply, and it becomes difficult to maintain a clear picture of each person.",
+    introP3: "It is in this context that SoulTrack was designed.",
+
+    missionTitle: "Our mission",
+    missionText: "Our mission is to help churches structure their organisation in order to follow each member with clarity, consistency and faithfulness.",
+    missionQuote: "We believe a good system does not replace the heart of the shepherd, but gives them the means to act with precision.",
+
+    problemTitle: "The problem",
+    problemIntro: "In many churches today:",
+    problems: [
+      "Members are not followed up on a regular basis",
+      "New souls are not always accompanied",
+      "Leaders lack visibility",
+      "Decisions are made without clear data",
+    ],
+    problemResult: "As a result: some people go unnoticed.",
+
+    solutionTitle: "The solution",
+    solutionIntro: "SoulTrack provides a simple, centralised structure to:",
+    solutions: [
+      "Manage members and their progress",
+      "Organise cells and leaders",
+      "Track evangelism and new souls",
+      "Provide a clear vision through reports",
+    ],
+    solutionClose: "Everything is connected to transform scattered information into a clear and actionable vision.",
+
+    approachTitle: "Our approach",
+    approachSub: "SoulTrack was designed with a dual approach:",
+    approachSpiritual: "Spiritual",
+    approachSpiritualText: "Helping the shepherd know their flock and care for each person with attention",
+    approachStrategic: "Strategic",
+    approachStrategicText: "Providing reliable data to guide decisions and support growth in a structured way",
+
+    valuesTitle: "Our values",
+    values: [
+      { emoji: "❤️", title: "Every person matters", text: "No soul is insignificant" },
+      { emoji: "🧭", title: "Clarity", text: "See clearly to better accompany" },
+      { emoji: "🤝", title: "Responsibility", text: "Care with intention and follow-through" },
+      { emoji: "📈", title: "Healthy growth", text: "Grow without losing the quality of follow-up" },
+    ],
+
+    visionTitle: "Our vision",
+    visionP1: "We want to see churches capable of growing without losing the ability to know and accompany each member.",
+    visionP2: "A church where no one is forgotten. A church where every life is followed with intention.",
+
+    ctaTitle: "Ready to structure your church?",
+    ctaText: "Start today to structure your church and follow every soul with precision.",
+    ctaBtn: "Create my church →",
   },
 };
 
-export default function PricingPage() {
+const langBtnStyle = (active) => ({
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  padding: 0,
+  opacity: active ? 1 : 0.45,
+  transition: "opacity 0.2s",
+});
+
+export default function AboutPage() {
   const router = useRouter();
-  const { lang } = useLang();
+  const [openMenu, setOpenMenu] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const { lang, changeLang } = useLang();
+  const pathname = usePathname();
+
+  // ── Profil connecté ─────────────────────────────────────────────────────
+  const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
   const t = translations[lang];
 
-  async function handleChoosePlan(planId, dureeId) {
-    if (planId === "enterprise") {
-      router.push("/site/contact?type=reseaux");
-      return;
-    }
-    const { data: { user } } = await supabase.auth.getUser();
-    const suffix = dureeId ? `&duree=${dureeId}` : "";
-    if (user) {
-      router.push(`/administrateur/subscription?plan=${planId}${suffix}`);
-    } else {
-      router.push(`/SignupEglise?plan=${planId}${suffix}`);
-    }
-  }
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // ── Profil : chargement + écoute des changements de session ────────────
+  useEffect(() => {
+    const loadProfile = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        setProfile(null);
+        setLoadingProfile(false);
+        return;
+      }
+
+      const { data: profileData, error } = await supabase
+        .from("profiles")
+        .select("id, prenom, nom, role, roles")
+        .eq("id", sessionData.session.user.id)
+        .single();
+
+      if (!error) setProfile(profileData);
+      setLoadingProfile(false);
+    };
+
+    loadProfile();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      loadProfile();
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.clear();
+    setProfile(null);
+    router.push("/login");
+  };
 
   return (
-    <div style={{ background: "#333699", minHeight: "100vh", overflowX: "hidden" }}>
+    <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
 
-      {/* GLOW */}
-      <div style={{ position: "fixed", width: "800px", height: "800px", borderRadius: "50%", background: "radial-gradient(circle, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 40%, transparent 65%)", top: "80px", left: "50%", transform: "translateX(-50%)", pointerEvents: "none", zIndex: 0 }} />
-      <div style={{ position: "fixed", width: "600px", height: "600px", borderRadius: "50%", background: "radial-gradient(circle, rgba(251,191,36,0.07) 0%, rgba(255,255,255,0.02) 40%, transparent 65%)", top: "600px", left: "50%", transform: "translateX(-50%)", pointerEvents: "none", zIndex: 0 }} />
+      {/* GLOWS */}
+      <div style={{
+        position: "absolute", width: "800px", height: "800px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(255,255,255,0.11) 0%, rgba(255,255,255,0.03) 40%, transparent 65%)",
+        top: "60px", left: "50%", transform: "translateX(-50%)",
+        pointerEvents: "none", zIndex: 0,
+      }} />
+      <div style={{
+        position: "absolute", width: "600px", height: "600px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(251,191,36,0.06) 0%, transparent 65%)",
+        top: "900px", left: "20%",
+        pointerEvents: "none", zIndex: 0,
+      }} />
+      <div style={{
+        position: "absolute", width: "500px", height: "500px", borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(55,138,221,0.07) 0%, transparent 65%)",
+        top: "1800px", right: "10%",
+        pointerEvents: "none", zIndex: 0,
+      }} />
 
-      <SiteHeader />
+      {/* ───── HEADER ───── */}
+      <header style={{
+        background: scrolled ? "rgba(51,54,153,0.92)" : "transparent",
+        borderBottom: scrolled ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid transparent",
+        position: "sticky", top: 0, zIndex: 100,
+        backdropFilter: scrolled ? "blur(16px)" : "none",
+        transition: "background 0.3s, border-color 0.3s",
+      }}>
+        <div style={{
+          maxWidth: "1240px", margin: "0 auto", padding: "22px 24px",
+          height: "88px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          gap: "24px", boxSizing: "border-box",
+        }}>
 
-      {/* ───── HERO ───── */}
-      <section style={{ textAlign: "center", padding: "60px max(16px, 4vw) 40px", width: "100%", boxSizing: "border-box", position: "relative", zIndex: 1 }}>
-        <h1 style={{ color: "#fff", fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 500, marginBottom: "10px" }}>
-          {t.heroTitle} <span style={{ color: "#fbbf24" }}>{t.heroHighlight}</span>
-        </h1>
-        <p style={{ color: "#fff", fontSize: "clamp(1rem, 2.5vw, 1.25rem)", fontWeight: 600, marginBottom: "12px", letterSpacing: "0.01em" }}>{t.heroSub}</p>
-        <p style={{ color: "rgba(255,255,255,0.6)", maxWidth: "500px", margin: "0 auto", lineHeight: 1.7 }}>{t.heroPara}</p>
-      </section>
+          {/* LOGO */}
+          <div onClick={() => router.push("/site/HomePage")} style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", zIndex: 1, flexShrink: 0 }}>
+            <Image src="/logo.png" alt="SoulTrack" width={38} height={38} />
+            <span style={{ color: "#fff", fontSize: "19px", fontWeight: 500, fontFamily: "'Great Vibes', cursive", whiteSpace: "nowrap" }}>
+              SoulTrack
+            </span>
+          </div>
 
-      {/* ───── PLANS ───── */}
-      <section style={{ padding: "40px 24px 100px", position: "relative", zIndex: 1 }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: "20px", width: "100%", alignItems: "start" }}>
-          {t.plans.map((plan, i) => (
-            <div key={i} style={{ background: "rgba(255,255,255,0.08)", border: plan.popular ? `2px solid ${plan.color}` : "0.5px solid rgba(255,255,255,0.12)", borderRadius: "20px", padding: plan.popular ? "42px 24px 28px" : "32px 24px 28px", position: "relative", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column" }}>
+          {/* ───── GROUPE DROITE desktop : nav + boutons + switcher langue ───── */}
+          <div className="nav-hide" style={{ display: "flex", alignItems: "center", gap: "26px", zIndex: 1, flexShrink: 0 }}>
 
-              <div style={{ position: "absolute", top: "-40px", left: "-40px", width: "160px", height: "160px", borderRadius: "50%", background: `radial-gradient(circle, ${plan.accent} 0%, transparent 70%)`, pointerEvents: "none" }} />
+            {/* NAV desktop */}
+            <nav style={{ display: "flex", alignItems: "center", gap: "20px", zIndex: 1, flexShrink: 0 }}>
+              {t.nav.map((item) => (
+                <span key={item.path} onClick={() => router.push(item.path)}
+                  style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "14px", fontWeight: 600, cursor: "pointer", transition: "color 0.2s", whiteSpace: "nowrap" }}>
+                  {item.label}
+                </span>
+              ))}
+            </nav>
 
-              {plan.popular && (
-                <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: plan.color, color: "#fff", fontSize: "11px", fontWeight: 600, padding: "3px 12px", borderRadius: "99px", whiteSpace: "nowrap" }}>
-                  {lang === "fr" ? "Populaire" : "Popular"}
-                </div>
-              )}
+            {/* BOUTONS desktop */}
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", zIndex: 1, flexShrink: 0 }}>
+              {loadingProfile ? (
+                <div style={{ width: "180px", height: "34px" }} />
+              ) : profile ? (
+                <>
+                  <span
+                    onClick={() => router.push("/hub")}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      cursor: "pointer",
+                      color: "#fff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: "28px",
+                        height: "28px",
+                        borderRadius: "50%",
+                        background: "#fbbf24",
+                        color: "#333699",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                        fontSize: "13px",
+                      }}
+                    >
+                      {profile.prenom?.[0]?.toUpperCase() || "U"}
+                    </span>
+                    {profile.prenom} {profile.nom}
+                  </span>
 
-              <div style={{ fontSize: "24px", marginBottom: "8px" }}>{plan.emoji}</div>
-              <h3 style={{ color: "#fff", fontSize: "18px", fontWeight: 600, margin: "0 0 4px" }}>{plan.name}</h3>
-              <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "13px", margin: "0 0 16px" }}>{plan.range}</p>
+                  <button
+                    onClick={() => router.push("/hub")}
+                    style={{
+                      background: "transparent",
+                      color: "#fff",
+                      border: "0.5px solid rgba(255,255,255,0.35)",
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {t.webVersion}
+                  </button>
 
-              {plan.id === "free" || plan.id === "enterprise" ? (
-                <div style={{ marginBottom: "20px" }}>
-                  <p style={{ color: "#fbbf24", fontWeight: 600, fontSize: "24px", margin: "0 0 4px" }}>{plan.price}</p>
-                  <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "12px", margin: 0 }}>
-                    {plan.id === "free" ? t.forever : t.contactUs}
-                  </p>
-                </div>
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      background: "transparent",
+                      color: "#fbbf24",
+                      border: "0.5px solid rgba(255,255,255,0.35)",
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {t.logout}
+                  </button>
+                </>
               ) : (
-                <div style={{ marginBottom: "14px" }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "4px", marginBottom: "12px" }}>
-                    <span style={{ color: "#fbbf24", fontWeight: 600, fontSize: "24px" }}>{plan.price}</span>
-                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px" }}>{t.perMonth}</span>
-                  </div>
-
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    {plan.durees.map((d) => (
-                      <div
-                        key={d.id}
-                        onClick={() => handleChoosePlan(plan.id, d.id)}
-                        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderRadius: "10px", border: `0.5px solid ${plan.color}55`, background: `${plan.color}15`, cursor: "pointer", transition: "background 0.15s" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = `${plan.color}28`)}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = `${plan.color}15`)}
-                      >
-                        <span style={{ color: "rgba(255,255,255,0.85)", fontSize: "13px", fontWeight: 500 }}>{d.label}</span>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span style={{ color: "#fff", fontSize: "13px", fontWeight: 600 }}>${d.total}</span>
-                          <span style={{ background: "rgba(16,185,129,0.2)", color: "#6ee7b7", fontSize: "11px", fontWeight: 600, padding: "2px 7px", borderRadius: "99px" }}>-${d.save}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <>
+                  <button onClick={() => router.push("/login")} style={{ background: "transparent", color: "#fbbf24", border: "0.5px solid rgba(255,255,255,0.35)", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", cursor: "pointer", whiteSpace: "nowrap" }}>
+                    {t.login}
+                  </button>
+                  <button onClick={() => router.push("/site/pricing")} style={{ background: "#fff", color: "#333699", border: "none", padding: "7px 18px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>
+                    {t.signup}
+                  </button>
+                </>
               )}
+            </div>
 
-              <button
-                onClick={() => handleChoosePlan(plan.id, null)}
-                style={{ background: plan.id === "free" ? "rgba(255,255,255,0.15)" : "#fff", color: plan.id === "free" ? "#fff" : "#333699", border: plan.id === "free" ? "0.5px solid rgba(255,255,255,0.3)" : "none", padding: "10px 20px", borderRadius: "10px", fontWeight: 600, cursor: "pointer", marginTop: "auto", width: "100%", fontSize: "14px", transition: "opacity 0.2s" }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-              >
-                {plan.id === "enterprise" ? t.btnContact : t.btnStart}
+            {/* Switcher langue desktop */}
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", flexShrink: 0 }}>
+              <button onClick={() => changeLang("fr")} title="Français" style={{ ...langBtnStyle(lang === "fr"), flexShrink: 0 }}>
+                <img src="https://flagcdn.com/w40/fr.png" srcSet="https://flagcdn.com/w80/fr.png 2x" width="30" height="21" alt="Français" style={{ display: "block", borderRadius: "3px", flexShrink: 0 }} />
+              </button>
+              <button onClick={() => changeLang("en")} title="English" style={{ ...langBtnStyle(lang === "en"), flexShrink: 0 }}>
+                <img src="https://flagcdn.com/w40/gb.png" srcSet="https://flagcdn.com/w80/gb.png 2x" width="30" height="21" alt="English" style={{ display: "block", borderRadius: "3px", flexShrink: 0 }} />
               </button>
             </div>
-          ))}
+          </div>
+          {/* ───── FIN GROUPE DROITE ───── */}
+
+          {/* HAMBURGER */}
+          <button onClick={() => setOpenMenu(!openMenu)} className="nav-show"
+            style={{ background: "none", border: "none", cursor: "pointer", display: "none", flexDirection: "column", gap: "5px", padding: "4px", zIndex: 1 }}>
+            {[0, 1, 2].map((i) => (
+              <span key={i} style={{
+                display: "block", width: "22px", height: "1.5px",
+                background: "rgba(255,255,255,0.85)", borderRadius: "2px",
+                transition: "transform 0.2s, opacity 0.2s",
+                transform: openMenu
+                  ? i === 0 ? "rotate(45deg) translate(5px, 5px)"
+                  : i === 2 ? "rotate(-45deg) translate(5px, -5px)"
+                  : "scaleX(0)" : "none",
+                opacity: openMenu && i === 1 ? 0 : 1,
+              }} />
+            ))}
+          </button>
+        </div>
+
+        {/* MENU MOBILE */}
+        {openMenu && (
+          <div style={{ background: "#333699", borderTop: "0.5px solid rgba(255,255,255,0.15)", padding: "20px 24px 28px", display: "flex", flexDirection: "column", gap: "20px" }}>
+            {t.nav.map((item) => (
+              <span key={item.path} onClick={() => { router.push(item.path); setOpenMenu(false); }}
+                style={{ color: pathname === item.path ? "#fbbf24" : "#fff", fontSize: "15px", fontWeight: 600, cursor: "pointer" }}>
+                {item.label}
+              </span>
+            ))}
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <button onClick={() => changeLang("fr")} title="Français" style={langBtnStyle(lang === "fr")}>
+                <img src="https://flagcdn.com/w20/fr.png" srcSet="https://flagcdn.com/w40/fr.png 2x" width="20" height="14" alt="Français" style={{ display: "block", borderRadius: "2px" }} />
+              </button>
+              <button onClick={() => changeLang("en")} title="English" style={langBtnStyle(lang === "en")}>
+                <img src="https://flagcdn.com/w20/gb.png" srcSet="https://flagcdn.com/w40/gb.png 2x" width="20" height="14" alt="English" style={{ display: "block", borderRadius: "2px" }} />
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "4px" }}>
+              {loadingProfile ? null : profile ? (
+                <>
+                  <span
+                    onClick={() => {
+                      router.push("/hub");
+                      setOpenMenu(false);
+                    }}
+                    style={{
+                      color: "#fff",
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    👤 {profile.prenom} {profile.nom}
+                  </span>
+                  <button
+                    onClick={() => {
+                      router.push("/hub");
+                      setOpenMenu(false);
+                    }}
+                    style={{
+                      background: "transparent",
+                      color: "#fff",
+                      border: "0.5px solid rgba(255,255,255,0.35)",
+                      padding: "11px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t.webVersion}
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setOpenMenu(false);
+                    }}
+                    style={{
+                      background: "transparent",
+                      color: "#fbbf24",
+                      border: "0.5px solid rgba(255,255,255,0.35)",
+                      padding: "11px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t.logout}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => { router.push("/login"); setOpenMenu(false); }} style={{ background: "transparent", color: "#fff", border: "0.5px solid rgba(255,255,255,0.35)", padding: "11px", borderRadius: "8px", fontSize: "14px", cursor: "pointer" }}>
+                    {t.login}
+                  </button>
+                  <button onClick={() => { router.push("/site/pricing"); setOpenMenu(false); }} style={{ background: "#fff", color: "#333699", border: "none", padding: "11px", borderRadius: "8px", fontSize: "14px", fontWeight: 600, cursor: "pointer" }}>
+                    {t.signup}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* ───── HERO ───── */}
+      <section style={{ textAlign: "center", padding: "70px max(16px, 4vw) 60px", position: "relative", zIndex: 1 }}>       
+        <h1 style={{ color: "#fff", fontSize: "clamp(2.2rem, 5vw, 3.2rem)", fontWeight: 500, lineHeight: 1.15, marginBottom: "20px" }}>
+          {t.heroTitle} <span style={{ color: "#fbbf24" }}>{t.heroHighlight}</span>
+        </h1>
+        <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "clamp(0.95rem, 2vw, 1.05rem)", maxWidth: "560px", margin: "0 auto", lineHeight: 1.8 }}>
+          {t.heroSub}
+        </p>
+        <div style={{ width: "40px", height: "2px", background: "#fbbf24", margin: "32px auto 0", borderRadius: "2px" }} />
+      </section>
+
+      {/* ───── INTRO ───── */}
+      <section style={{ padding: "20px max(16px, 4vw) 60px", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+          <SectionLabel>{t.introTitle}</SectionLabel>
+          <p style={bodyText}>{t.introP1}</p>
+          <p style={{ ...bodyText, marginTop: "14px" }}>{t.introP2}</p>
+          <p style={{ ...bodyText, marginTop: "14px", color: "#FFFFFF", fontStyle: "italic" }}>{t.introP3}</p>
         </div>
       </section>
 
-      <SiteFooter />
+      {/* ───── MISSION ───── */}
+      <section style={{ padding: "0 max(16px, 4vw) 60px", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+          <SectionLabel>{t.missionTitle}</SectionLabel>
+          <p style={bodyText}>{t.missionText}</p>
+          <blockquote style={{
+            margin: "28px 0 0",
+            padding: "20px 24px",
+            borderLeft: "3px solid #fbbf24",
+            background: "rgba(251,191,36,0.07)",
+            borderRadius: "12px",
+          }}>
+            <p style={{ color: "rgba(255,255,255,0.85)", fontSize: "16px", lineHeight: 1.8, margin: 0, fontStyle: "italic" }}>
+              {t.missionQuote}
+            </p>
+          </blockquote>
+        </div>
+      </section>
+
+      {/* ───── PROBLÈME + SOLUTION (2 colonnes) ───── */}
+      <section style={{ padding: "0 max(16px, 4vw) 60px", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: "1000px", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(300px,100%), 1fr))", gap: "24px" }}>
+
+          {/* Problème */}
+          <div style={card}>
+            <div style={{ position: "absolute", top: "-30px", left: "-30px", width: "120px", height: "120px", borderRadius: "50%", background: "radial-gradient(circle, rgba(239,68,68,0.18) 0%, transparent 70%)" }} />
+            <SectionLabel color="rgba(239,68,68,0.8)">{t.problemTitle}</SectionLabel>
+            <p style={{ ...bodyText, marginBottom: "16px" }}>{t.problemIntro}</p>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
+              {t.problems.map((p, i) => (
+                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px", color: "rgba(255,255,255,0.75)", fontSize: "16px", lineHeight: 1.6 }}>
+                  <span style={{ color: "rgba(239,68,68,0.7)", marginTop: "2px", flexShrink: 0 }}>✕</span>
+                  {p}
+                </li>
+              ))}
+            </ul>
+            <p style={{ ...bodyText, marginTop: "20px", color: "#fbbf24", fontStyle: "italic" }}>{t.problemResult}</p>
+          </div>
+
+          {/* Solution */}
+          <div style={card}>
+            <div style={{ position: "absolute", top: "-30px", left: "-30px", width: "120px", height: "120px", borderRadius: "50%", background: "radial-gradient(circle, rgba(29,158,117,0.2) 0%, transparent 70%)" }} />
+            <SectionLabel color="rgba(29,158,117,0.9)">{t.solutionTitle}</SectionLabel>
+            <p style={{ ...bodyText, marginBottom: "16px" }}>{t.solutionIntro}</p>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px" }}>
+              {t.solutions.map((s, i) => (
+                <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: "10px", color: "rgba(255,255,255,0.75)", fontSize: "16px", lineHeight: 1.6 }}>
+                  <span style={{ color: "rgba(29,158,117,0.9)", marginTop: "2px", flexShrink: 0 }}>✓</span>
+                  {s}
+                </li>
+              ))}
+            </ul>
+            <p style={{ ...bodyText, marginTop: "20px", color: "#fbbf24", fontStyle: "italic" }}>{t.solutionClose}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ───── APPROCHE ───── */}
+      <section style={{ padding: "0 max(16px, 4vw) 60px", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+          <SectionLabel>{t.approachTitle}</SectionLabel>
+          <p style={{ ...bodyText, marginBottom: "28px" }}>{t.approachSub}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(240px,100%), 1fr))", gap: "16px" }}>
+            {/* Spirituelle */}
+            <div style={{ ...card, background: "rgba(251,191,36,0.07)", border: "0.5px solid rgba(251,191,36,0.2)" }}>
+              <div style={{ fontSize: "28px", marginBottom: "10px" }}>🧭</div>
+              <h3 style={{ color: "#fbbf24", fontSize: "16px", fontWeight: 600, marginBottom: "10px" }}>{t.approachSpiritual}</h3>
+              <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "14px", lineHeight: 1.7, margin: 0 }}>{t.approachSpiritualText}</p>
+            </div>
+            {/* Stratégique */}
+            <div style={{ ...card, background: "rgba(55,138,221,0.07)", border: "0.5px solid rgba(55,138,221,0.2)" }}>
+              <div style={{ fontSize: "28px", marginBottom: "10px" }}>📊</div>
+              <h3 style={{ color: "rgba(55,138,221,0.95)", fontSize: "16px", fontWeight: 600, marginBottom: "10px" }}>{t.approachStrategic}</h3>
+              <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "14px", lineHeight: 1.7, margin: 0 }}>{t.approachStrategicText}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ───── VALEURS ───── */}
+      <section style={{ padding: "0 max(16px, 4vw) 60px", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+          <SectionLabel centered>{t.valuesTitle}</SectionLabel>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px,100%), 1fr))", gap: "16px", marginTop: "8px" }}>
+            {t.values.map((v, i) => (
+              <div key={i} style={{ ...card, textAlign: "center", alignItems: "center" }}>
+                <div style={{ fontSize: "32px", marginBottom: "12px" }}>{v.emoji}</div>
+                <h4 style={{ color: "#fff", fontSize: "15px", fontWeight: 600, marginBottom: "8px" }}>{v.title}</h4>
+                <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "13.5px", lineHeight: 1.6, margin: 0 }}>{v.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ───── VISION ───── */}
+      <section style={{ padding: "0 max(16px, 4vw) 60px", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+          <SectionLabel>{t.visionTitle}</SectionLabel>
+          <p style={bodyText}>{t.visionP1}</p>
+          <p style={{ ...bodyText, marginTop: "14px", color: "#fbbf24", fontWeight: 500 }}>{t.visionP2}</p>
+        </div>
+      </section>
+
+      {/* ───── CTA ───── */}
+      <section style={{ padding: "0 max(16px, 4vw) 100px", position: "relative", zIndex: 1 }}>
+        <div style={{ maxWidth: "680px", margin: "0 auto" }}>
+          <div style={{
+            background: "rgba(255,255,255,0.07)",
+            border: "0.5px solid rgba(255,255,255,0.15)",
+            borderRadius: "20px",
+            padding: "48px 40px",
+            textAlign: "center",
+            position: "relative",
+            overflow: "hidden",
+            backdropFilter: "blur(8px)",
+          }}>
+            <div style={{ position: "absolute", top: 0, left: "40px", right: "40px", height: "1px", background: "linear-gradient(90deg, transparent, rgba(251,191,36,0.4), transparent)" }} />
+            <div style={{ fontSize: "36px", marginBottom: "16px" }}>✝️</div>
+            <h2 style={{ color: "#fff", fontSize: "clamp(1.4rem, 3vw, 1.9rem)", fontWeight: 500, marginBottom: "14px" }}>
+              {t.ctaTitle}
+            </h2>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "15px", lineHeight: 1.8, maxWidth: "420px", margin: "0 auto 28px" }}>
+              {t.ctaText}
+            </p>
+            <button onClick={() => router.push("/site/pricing")} style={{
+              background: "#fff", color: "#333699", border: "none",
+              padding: "14px 36px", borderRadius: "10px", fontSize: "15px",
+              fontWeight: 700, cursor: "pointer", transition: "opacity 0.2s",
+            }}
+              onMouseEnter={e => e.currentTarget.style.opacity = "0.9"}
+              onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+            >
+              {t.ctaBtn}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ───── FOOTER ───── */}
+<footer
+  style={{
+    borderTop: "0.5px solid rgba(255,255,255,0.1)",
+    padding: "20px 24px",
+    boxSizing: "border-box",
+    width: "100%",
+  }}
+>
+  <div
+    style={{
+      maxWidth: "1100px",
+      margin: "0 auto",
+      textAlign: "center",
+      color: "rgba(255,255,255,0.35)",
+      fontSize: "14px",
+    }}
+  >
+    {/* COPYRIGHT */}
+    <div>
+      © {new Date().getFullYear()} SoulTrack. {t.footer}
+    </div>
+
+    {/* LINKS PADDLE */}
+    <div
+      style={{
+        marginTop: "10px",
+        display: "flex",
+        justifyContent: "center",
+        gap: "16px",
+        flexWrap: "wrap",
+      }}
+    >
+      <span onClick={() => router.push("/site/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+        Terms
+      </span>
+      <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+        Privacy
+      </span>
+      <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+        Refund
+      </span>
+    </div>
+  </div>
+</footer>
 
       <style>{`
-        html { overflow-x: hidden; }
-        body { width: 100%; }
+        html, body { width: 100%; overflow-x: hidden; }
         * { box-sizing: border-box; }
         img { max-width: 100%; height: auto; }
+        @media (max-width: 768px) {
+          .nav-hide { display: none !important; }
+          .nav-show { display: flex !important; }
+        }
       `}</style>
     </div>
   );
 }
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function SectionLabel({ children, color, centered }) {
+  return (
+    <p style={{
+      color: color || "rgba(251,191,36,0.85)",
+      fontSize: "13px",
+      letterSpacing: "0.13em",
+      textTransform: "uppercase",
+      fontWeight: 600,
+      marginBottom: "14px",
+      textAlign: centered ? "center" : "left",
+    }}>
+      {children}
+    </p>
+  );
+}
+
+const bodyText = {
+  color: "#FFFFFF",
+  fontSize: "16px",
+  lineHeight: 1.85,
+  margin: 0,
+};
+
+const card = {
+  background: "rgba(255,255,255,0.07)",
+  border: "0.5px solid rgba(255,255,255,0.12)",
+  borderRadius: "18px",
+  padding: "28px 24px",
+  position: "relative",
+  overflow: "hidden",
+  backdropFilter: "blur(8px)",
+  display: "flex",
+  flexDirection: "column",
+};

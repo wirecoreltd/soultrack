@@ -425,7 +425,7 @@ export default function HomePage() {
         }}
       />
 
-      <Header />
+      <HeaderSite />
 
       {/* ───── HERO ───── */}
       <section

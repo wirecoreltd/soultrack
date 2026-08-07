@@ -310,7 +310,7 @@ export default function ImportMembresCSV({ user }) {
   if (Capacitor.isNativePlatform()) {
     // Dans l'app native : pas de gestionnaire de telechargement dans la webview,
     // on ouvre l'URL pour que l'OS la prenne en charge (navigateur systeme).
-    window.open(url, "_blank");
+    window.location.href = url;
   } else {
     const link = document.createElement("a");
     link.href = url;

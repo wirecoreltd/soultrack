@@ -827,7 +827,7 @@ export default function ImportMembresCSV({ user }) {
             <p className="text-sm text-white/70 mb-4 leading-relaxed">{t.mobileNoticeMsg2}</p>
 
             <a
-              href="https://www.soultrack.org/login"
+              href="https://www.soultrack.org"
               target="_blank"
               rel="noopener noreferrer"
               className="block bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold px-4 py-2.5 rounded-lg shadow transition mb-3"

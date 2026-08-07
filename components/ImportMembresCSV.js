@@ -867,7 +867,7 @@ export default function ImportMembresCSV({ user }) {
               <h3 className="text-lg font-bold text-white mb-2">{t.mobileNoticeTitle}</h3>
               <p className="text-sm text-white/70 mb-1 leading-relaxed">{t.mobileNoticeMsg}</p>
               <p className="text-sm text-white/70 mb-4 leading-relaxed">{t.mobileNoticeMsg2}</p>
-        
+
               
                 href="https://www.soultrack.org/login"
                 target="_blank"
@@ -886,8 +886,6 @@ export default function ImportMembresCSV({ user }) {
             </div>
           </div>
         )}
-        </div>
-      )}
-    </div>
-  );
-}
+      </div>
+    );
+  }

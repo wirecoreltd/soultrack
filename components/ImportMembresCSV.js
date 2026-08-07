@@ -123,6 +123,10 @@ const translations = {
     step2: "2. Utilise les menus deroulants pour les champs a choix (sexe, age, statut, ministeres, besoins...). Efface les lignes commencant par # avant d'importer.",
     step3: "3. Pour ajouter plus de ministeres/besoins que de colonnes disponibles, ou un ministere/besoin personnalise, modifie la fiche du membre dans l'application apres l'import.",
     downloadTemplate: "Telecharger le template Excel",
+    mobileNoticeTitle: "Bientot disponible",
+    mobileNoticeMsg: "Le telechargement du template n'est pas encore disponible dans l'application mobile — nous y travaillons.",
+    mobileNoticeMsg2: "En attendant, connecte-toi depuis un navigateur pour telecharger le template :",
+    mobileNoticeClose: "Fermer",
     importFile: "Importer un fichier CSV ou Excel",
     checkingDuplicates: "Verification des doublons en cours...",
     resumeFile: "Resume du fichier",
@@ -195,6 +199,10 @@ const translations = {
     step2: "2. Use the dropdown menus for choice fields (gender, age, status, ministries, needs...). Delete lines starting with # before importing.",
     step3: "3. To add more ministries/needs than available columns, or a custom one, edit the member's profile in the app after import.",
     downloadTemplate: "Download Excel template",
+    mobileNoticeTitle: "Coming soon",
+    mobileNoticeMsg: "Downloading the template isn't available yet in the mobile app — we're working on it.",
+    mobileNoticeMsg2: "In the meantime, log in from a browser to download the template:",
+    mobileNoticeClose: "Close",
     importFile: "Import a CSV or Excel file",
     checkingDuplicates: "Checking for duplicates...",
     resumeFile: "File summary",
@@ -276,6 +284,7 @@ export default function ImportMembresCSV({ user }) {
   const [checking, setChecking] = useState(false);
   const [success, setSuccess] = useState(false);
   const [importCount, setImportCount] = useState(0);
+  const [showMobileNotice, setShowMobileNotice] = useState(false);
 
   const requiredFields = [
     "nom", "prenom", "sexe", "age", "date_venu", "serviteur",
@@ -309,7 +318,7 @@ export default function ImportMembresCSV({ user }) {
   // ─── Genere et telecharge le template Excel avec menus deroulants ───
   const handleDownloadTemplate = () => {
   if (Capacitor.isNativePlatform()) {
-    alert(t.downloadUnavailableNative);
+    setShowMobileNotice(true);
     return;
   }
 
@@ -834,10 +843,49 @@ export default function ImportMembresCSV({ user }) {
       </button>
 
       {/* Succes */}
-      {success && (
-        <div className="bg-emerald-500/20 border border-emerald-400/40 rounded-xl p-4 text-center">
-          <p className="text-emerald-300 font-bold text-lg">{t.successTitle}</p>
-          <p className="text-white/70 text-sm mt-1">{importCount} {t.successMsg}</p>
+        {success && (
+          <div className="bg-emerald-500/20 border border-emerald-400/40 rounded-xl p-4 text-center">
+            <p className="text-emerald-300 font-bold text-lg">{t.successTitle}</p>
+            <p className="text-white/70 text-sm mt-1">{importCount} {t.successMsg}</p>
+          </div>
+        )}
+        
+        {/* Popup mobile */}
+        {showMobileNotice && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6"
+            onClick={() => setShowMobileNotice(false)}
+          >
+            <div
+              className="w-full max-w-sm rounded-2xl border border-white/20 p-6 text-center shadow-2xl"
+              style={{ backgroundColor: "#333699" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-400/20 border border-blue-300/40 text-3xl">
+                🚧
+              </div>
+              <h3 className="text-lg font-bold text-white mb-2">{t.mobileNoticeTitle}</h3>
+              <p className="text-sm text-white/70 mb-1 leading-relaxed">{t.mobileNoticeMsg}</p>
+              <p className="text-sm text-white/70 mb-4 leading-relaxed">{t.mobileNoticeMsg2}</p>
+        
+              
+                href="https://www.soultrack.org/login"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold px-4 py-2.5 rounded-lg shadow transition mb-3"
+              >
+                soultrack.org/login
+              </a>
+        
+              <button
+                onClick={() => setShowMobileNotice(false)}
+                className="text-white/50 hover:text-white/80 text-sm underline transition"
+              >
+                {t.mobileNoticeClose}
+              </button>
+            </div>
+          </div>
+        )}
         </div>
       )}
     </div>

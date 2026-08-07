@@ -15,11 +15,6 @@ const MINISTERES_VALIDES = [
   "Berger", "Modération",
 ];
 
-// ⚠️ Corrigé : la liste précédente ne contenait que 12 valeurs alors que les
-// notes du template en documentaient 17 (ex : "Couple / Mariage",
-// "Deuil / Perte", "Immigration / Documents"...). Ces besoins étaient donc
-// rejetés comme invalides même recopiés à l'identique. Liste complétée pour
-// correspondre à ce qui est réellement documenté / mappé depuis l'anglais.
 const BESOIN_FR = [
   "Finances", "Santé", "Travail / Études", "Famille / Enfants",
   "Miracle", "Délivrance", "Relations / Conflits",
@@ -100,11 +95,9 @@ const norm = (value, enToFrMap, validFrValues) => {
   return enToFrMap[trimmed] ?? trimmed;
 };
 
-// Colonnes multi-valeurs : nombre d'emplacements disponibles
 const MINISTERE_SLOTS = ["ministere_1", "ministere_2", "ministere_3", "ministere_4", "ministere_5"];
 const BESOIN_SLOTS = ["besoin_1", "besoin_2", "besoin_3", "besoin_4", "besoin_5", "besoin_6"];
 
-// Position (0-based) de chaque champ dans templateHeaders (identique FR/EN)
 const FIELD_INDEX = {
   nom: 0, prenom: 1, sexe: 2, age: 3, date_venu: 4, serviteur: 5,
   statut: 6, venu: 7, priere_salut: 8, type_conversion: 9,
@@ -148,7 +141,6 @@ const translations = {
     uncheckAllAdd: "Tout decocher (Ajout)",
     addAllAnyway: "Tout ajouter quand meme",
     previewTitle: "Apercu des lignes a importer",
-    downloadTemplate: "Telecharger le template Excel",
     downloadUnavailableNative: "Le telechargement du template n'est pas encore disponible dans l'application mobile — nous y travaillons. En attendant, connecte-toi sur soultrack.org depuis un navigateur pour telecharger le template.",
     andOthers: "autres",
     importing: "Import en cours...",
@@ -222,8 +214,7 @@ const translations = {
     uncheckAll: "Uncheck all (Update)",
     updateAll: "Update all",
     uncheckAllAdd: "Uncheck all (Add)",
-    addAllAnyway: "Add all anyway",  
-    downloadTemplate: "Download Excel template",
+    addAllAnyway: "Add all anyway",
     downloadUnavailableNative: "Downloading the template isn't available yet in the mobile app — we're working on it. In the meantime, log in at soultrack.org from a browser to download the template.",
     previewTitle: "Preview of rows to import",
     andOthers: "others",
@@ -313,25 +304,22 @@ export default function ImportMembresCSV({ user }) {
       return `${yyyy}-${mm}-${dd}`;
     }
     return null;
-  };  
+  };
 
-  // ─── Genere et telecharge le template Excel avec menus deroulants ───
   const handleDownloadTemplate = () => {
-  if (Capacitor.isNativePlatform()) {
-    setShowMobileNotice(true);
-    return;
-  }
+    if (Capacitor.isNativePlatform()) {
+      setShowMobileNotice(true);
+      return;
+    }
 
-  const url = `/api/template-import-membres?lang=${lang}`;
-  const filename = lang === "en" ? "template_import_members.xlsx" : "template_import_membres.xlsx";
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-};
+    const url = `/api/template-import-membres?lang=${lang}`;
+    const filename = lang === "en" ? "template_import_members.xlsx" : "template_import_membres.xlsx";
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+  };
 
-  // ─── Traite un tableau de lignes (objets {header: valeur}), quelle que soit
-  //     la source (CSV via PapaParse ou Excel via ExcelJS) ───
   const processRows = async (rows) => {
     const validData = [];
     const errorList = [];
@@ -342,7 +330,6 @@ export default function ImportMembresCSV({ user }) {
       const isEmptyRow = Object.values(row).every((v) => !v || !v.toString().trim());
       if (isEmptyRow) return;
 
-      // ── Normaliser les clés : enlever " *", mapper EN → FR ──
       const normalized = {};
       Object.keys(row).forEach((key) => {
         const cleanKey = key.replace(" *", "").trim();
@@ -350,7 +337,6 @@ export default function ImportMembresCSV({ user }) {
         normalized[mappedKey] = row[key]?.toString().trim() || "";
       });
 
-      // ── Normaliser les valeurs EN → FR ──
       normalized.sexe           = norm(normalized.sexe, SEXE_EN_TO_FR, ["Homme", "Femme"]);
       normalized.age            = norm(normalized.age, AGE_EN_TO_FR, ["12-17 ans","18-25 ans","26-30 ans","31-40 ans","41-55 ans","56-69 ans","70 ans et plus"]);
       normalized.serviteur      = norm(normalized.serviteur, BOOL_EN_TO_FR, ["Oui", "Non"]);
@@ -364,7 +350,6 @@ export default function ImportMembresCSV({ user }) {
 
       let rowErrors = [];
 
-      // ── Champs obligatoires ──
       requiredFields.forEach((field) => {
         if (!normalized[field])
           rowErrors.push(`Ligne ${index + 1}: ${field} manquant`);
@@ -374,7 +359,6 @@ export default function ImportMembresCSV({ user }) {
         rowErrors.push(`Ligne ${index + 1}: type_conversion manquant (requis si priere_salut = Oui)`);
       }
 
-      // ── Validations des valeurs ──
       if (normalized.sexe && !["Homme", "Femme"].includes(normalized.sexe))
         rowErrors.push(`Ligne ${index + 1}: sexe invalide (Homme ou Femme)`);
 
@@ -413,7 +397,6 @@ export default function ImportMembresCSV({ user }) {
       if (normalized.type_conversion && !validConversions.includes(normalized.type_conversion))
         rowErrors.push(`Ligne ${index + 1}: type_conversion invalide (Nouveau converti | Réconciliation)`);
 
-      // ── Ministère : combine les colonnes ministere_1..5 ──
       const ministeresRaw = MINISTERE_SLOTS
         .map((slot) => normalized[slot])
         .filter(Boolean);
@@ -427,7 +410,6 @@ export default function ImportMembresCSV({ user }) {
         rowErrors.push(`Ligne ${index + 1}: ministere invalide : ${invalidMin.join(", ")}`);
       }
 
-      // ── Besoins : combine les colonnes besoin_1..6 ──
       const besoin = BESOIN_SLOTS
         .map((slot) => normalized[slot])
         .filter(Boolean)
@@ -517,7 +499,6 @@ export default function ImportMembresCSV({ user }) {
     setData(finalData);
   };
 
-  // ─── Lit un fichier .xlsx / .xls et le convertit en tableau de lignes ───
   const parseExcelFile = async (file) => {
     try {
       const ExcelJS = (await import("exceljs")).default;
@@ -525,7 +506,6 @@ export default function ImportMembresCSV({ user }) {
       const buffer = await file.arrayBuffer();
       await workbook.xlsx.load(buffer);
 
-      // Prend la premiere feuille qui n'est pas la feuille cachee "Listes"
       const ws = workbook.worksheets.find((s) => s.name !== "Listes") || workbook.worksheets[0];
 
       const headerRow = (ws.getRow(1).values || []).slice(1).map((v) => (v ?? "").toString().trim());
@@ -581,13 +561,6 @@ export default function ImportMembresCSV({ user }) {
     }
   };
 
-  // ─── Synchronise stats_ministere_besoin pour une liste {id, rowData} ───
-  // ⚠️ Pas de onConflict volontairement : chaque sauvegarde crée une nouvelle
-  // ligne "photo" datée du jour, pour conserver l'historique complet.
-  // RapportMinistere.js reconstruit l'état d'un membre à une date donnée en
-  // prenant la ligne la plus récente dont date_action <= date choisie.
-  // Ne JAMAIS ajouter onConflict ou faire un delete ici sans adapter
-  // RapportMinistere.js en conséquence.
   const syncStatsMinistere = async (idRowPairs) => {
     const rows = idRowPairs.map(({ id, rowData }) => {
       let ministeres = [];
@@ -601,9 +574,6 @@ export default function ImportMembresCSV({ user }) {
         membre_id: id,
         sexe: rowData.sexe,
         type: "ministere",
-        // star=true avec ministeres -> liste des ministères
-        // star=false (ou pas de ministère) -> ligne "fin de service" (valeur vide),
-        // sans jamais toucher aux lignes historiques précédentes
         valeur: rowData.star && ministeres.length > 0 ? ministeres.join(",") : "",
         eglise_id: user.eglise_id,
         date_action: new Date().toISOString().split("T")[0],
@@ -613,7 +583,7 @@ export default function ImportMembresCSV({ user }) {
     if (rows.length > 0) {
       const { error } = await supabase
         .from("stats_ministere_besoin")
-        .upsert(rows); // pas de onConflict -> insert d'une nouvelle ligne à chaque fois
+        .upsert(rows);
       if (error) console.error("Erreur sync stats_ministere_besoin:", error);
     }
   };
@@ -634,7 +604,6 @@ export default function ImportMembresCSV({ user }) {
       return;
     }
 
-    // ── Nouveaux membres ──
     if (data.length > 0) {
       const { data: inserted, error } = await supabase
         .from("membres_complets")
@@ -646,7 +615,6 @@ export default function ImportMembresCSV({ user }) {
       await syncStatsMinistere(pairs);
     }
 
-    // ── Doublons ajoutés quand même ──
     const dupsToInsert = duplicates.filter((d) => depsToAdd[d.telephone]);
     if (dupsToInsert.length > 0) {
       const { data: insertedDups, error } = await supabase
@@ -659,7 +627,6 @@ export default function ImportMembresCSV({ user }) {
       await syncStatsMinistere(pairs);
     }
 
-    // ── Doublons mis à jour ──
     const dupsToUpdate = duplicates.filter((d) => depsToUpdate[d.telephone]);
     if (dupsToUpdate.length > 0) {
       const updateResults = await Promise.all(
@@ -701,7 +668,6 @@ export default function ImportMembresCSV({ user }) {
   return (
     <div className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 space-y-5">
 
-      {/* Template */}
       <div className="bg-white/10 border border-blue-300/40 rounded-xl p-4">
         <p className="font-semibold text-white">{t.beforeImport}</p>
         <p className="text-sm text-white mb-1">{t.step1}</p>
@@ -715,7 +681,6 @@ export default function ImportMembresCSV({ user }) {
         </button>
       </div>
 
-      {/* Upload */}
       <div className="bg-white/10 border border-white/20 rounded-xl p-4">
         <p className="font-semibold text-white mb-2">{t.importFile}</p>
         <input
@@ -729,7 +694,6 @@ export default function ImportMembresCSV({ user }) {
         )}
       </div>
 
-      {/* Resume */}
       {(data.length > 0 || duplicates.length > 0 || errors.length > 0) && (
         <div className="bg-white/10 border border-white/20 rounded-xl p-4 space-y-2">
           <p className="font-semibold text-white mb-1">{t.resumeFile}</p>
@@ -750,7 +714,6 @@ export default function ImportMembresCSV({ user }) {
         </div>
       )}
 
-      {/* Erreurs */}
       {errors.length > 0 && (
         <div className="bg-red-500/20 border border-red-400/40 text-red-200 p-4 rounded-xl">
           <p className="font-semibold mb-1">{errors.length} {t.errorsDetected}</p>
@@ -763,7 +726,6 @@ export default function ImportMembresCSV({ user }) {
         </div>
       )}
 
-      {/* Doublons */}
       {duplicates.length > 0 && (
         <div className="bg-orange-500/20 border border-orange-400/40 p-4 rounded-xl space-y-3">
           <p className="font-semibold text-orange-200">{duplicates.length} {t.duplicatesByPhone}</p>
@@ -815,7 +777,6 @@ export default function ImportMembresCSV({ user }) {
         </div>
       )}
 
-      {/* Apercu */}
       {data.length > 0 && (
         <div className="bg-white/10 border border-white/20 rounded-xl p-4">
           <p className="font-semibold text-emerald-300 mb-2">{t.previewTitle}</p>
@@ -833,7 +794,6 @@ export default function ImportMembresCSV({ user }) {
         </div>
       )}
 
-      {/* Bouton import */}
       <button
         onClick={handleImport}
         disabled={totalToImport === 0 || loading}
@@ -842,50 +802,77 @@ export default function ImportMembresCSV({ user }) {
         {loading ? t.importing : `${t.importBtn}${totalToImport > 0 ? ` ${totalToImport} ${t.member}` : ""}`}
       </button>
 
-      {/* Succes */}
-        {success && (
-          <div className="bg-emerald-500/20 border border-emerald-400/40 rounded-xl p-4 text-center">
-            <p className="text-emerald-300 font-bold text-lg">{t.successTitle}</p>
-            <p className="text-white/70 text-sm mt-1">{importCount} {t.successMsg}</p>
-          </div>
-        )}
-        
-        {/* Popup mobile */}
-        {showMobileNotice && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6"
-            onClick={() => setShowMobileNotice(false)}
-          >
-            <div
-              className="w-full max-w-sm rounded-2xl border border-white/20 p-6 text-center shadow-2xl"
-              style={{ backgroundColor: "#333699" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-400/20 border border-blue-300/40 text-3xl">
-                🚧
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">{t.mobileNoticeTitle}</h3>
-              <p className="text-sm text-white/70 mb-1 leading-relaxed">{t.mobileNoticeMsg}</p>
-              <p className="text-sm text-white/70 mb-4 leading-relaxed">{t.mobileNoticeMsg2}</p>
+      {success && (
+        <div className="bg-emerald-500/20 border border-emerald-400/40 rounded-xl p-4 text-center">
+          <p className="text-emerald-300 font-bold text-lg">{t.successTitle}</p>
+          <p className="text-white/70 text-sm mt-1">{importCount} {t.successMsg}</p>
+        </div>
+      )}
 
-              
-                href="https://www.soultrack.org/login"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold px-4 py-2.5 rounded-lg shadow transition mb-3"
-              >
-                soultrack.org/login
-              </a>
-        
-              <button
-                onClick={() => setShowMobileNotice(false)}
-                className="text-white/50 hover:text-white/80 text-sm underline transition"
-              >
-                {t.mobileNoticeClose}
-              </button>
+      {showMobileNotice && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6"
+          onClick={() => setShowMobileNotice(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-white/20 p-6 text-center shadow-2xl"
+            style={{ backgroundColor: "#333699" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-400/20 border border-blue-300/40 text-3xl">
+              🚧
             </div>
+            <h3 className="text-lg font-bold text-white mb-2">{t.mobileNoticeTitle}</h3>
+            <p className="text-sm text-white/70 mb-1 leading-relaxed">{t.mobileNoticeMsg}</p>
+            <p className="text-sm text-white/70 mb-4 leading-relaxed">{t.mobileNoticeMsg2}</p>
+
+            <a
+              href="https://www.soultrack.org/login"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold px-4 py-2.5 rounded-lg shadow transition mb-3"
+            >
+              soultrack.org/login
+            </a>
+
+            <button
+              onClick={() => setShowMobileNotice(false)}
+              className="text-white/50 hover:text-white/80 text-sm underline transition"
+            >
+              {t.mobileNoticeClose}
+            </button>
           </div>
-        )}
-      </div>
-    );
-  }
+        </div>
+      )}
+    </div>
+  );
+}
+ENDOFFILE
+node -e "require('@babel/core')" 2>/dev/null; echo "Fichier ecrit, verification structure..."
+grep -c "^export default function" /home/claude/ImportMembresCSV_final.js
+python3 -c "
+content = open('/home/claude/ImportMembresCSV_final.js').read()
+print('Nb <a href=login:', content.count('href=\"https://www.soultrack.org/login\"'))
+print('Nb <a>:', content.count('<a\n') + content.count('<a '))
+print('Nb </a>:', content.count('</a>'))
+print('Dernieres lignes:')
+print(content[-200:])
+"
+Output
+
+Fichier ecrit, verification structure...
+1
+Nb <a href=login: 1
+Nb <a>: 1
+Nb </a>: 1
+Dernieres lignes:
+ame="text-white/50 hover:text-white/80 text-sm underline transition"
+            >
+              {t.mobileNoticeClose}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

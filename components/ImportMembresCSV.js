@@ -832,7 +832,7 @@ export default function ImportMembresCSV({ user }) {
               rel="noopener noreferrer"
               className="block bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold px-4 py-2.5 rounded-lg shadow transition mb-3"
             >
-              soultrack.org/login
+              www.soultrack.org
             </a>
 
             <button

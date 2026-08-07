@@ -5,6 +5,7 @@ import supabase from "../lib/supabaseClient";
 import { checkLimiteAtteinte } from "../lib/checkLimite";
 import Papa from "papaparse";
 import { useLang } from "../hooks/useLang";
+import { Capacitor } from "@capacitor/core";
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const MINISTERES_VALIDES = [
@@ -299,106 +300,24 @@ export default function ImportMembresCSV({ user }) {
       return `${yyyy}-${mm}-${dd}`;
     }
     return null;
-  };
-
-  // ─── Helper : convertit un numero de colonne (1-based) en lettre Excel ───
-  const colLetter = (n) => {
-    let s = "";
-    while (n > 0) {
-      const m = (n - 1) % 26;
-      s = String.fromCharCode(65 + m) + s;
-      n = Math.floor((n - 1) / 26);
-    }
-    return s;
-  };
+  };  
 
   // ─── Genere et telecharge le template Excel avec menus deroulants ───
-  const handleDownloadTemplate = async () => {
-    // Import dynamique (cote client uniquement) pour ne pas alourdir le bundle serveur
-    const ExcelJS = (await import("exceljs")).default;
-    const workbook = new ExcelJS.Workbook();
-    const ws = workbook.addWorksheet(lang === "en" ? "Template" : "Modele");
+  const handleDownloadTemplate = () => {
+  const url = `/api/template-import-membres?lang=${lang}`;
+  const filename = lang === "en" ? "template_import_members.xlsx" : "template_import_membres.xlsx";
 
-    ws.addRow(t.templateHeaders);
-    ws.getRow(1).font = { bold: true };
-    ws.addRow(t.templateExample);
-    t.templateNotes.forEach((note) => ws.addRow([`# ${note}`]));
-
-    ws.columns.forEach((col) => { col.width = 24; });
-    ws.views = [{ state: "frozen", ySplit: 1 }];
-
-    // ── Feuille cachee contenant les listes pour les menus deroulants ──
-    const wsListes = workbook.addWorksheet("Listes");
-    wsListes.state = "hidden";
-
-    const isEn = lang === "en";
-    const lists = {
-      sexe: isEn ? Object.keys(SEXE_EN_TO_FR) : ["Homme", "Femme"],
-      age: isEn
-        ? Object.keys(AGE_EN_TO_FR)
-        : ["12-17 ans", "18-25 ans", "26-30 ans", "31-40 ans", "41-55 ans", "56-69 ans", "70 ans et plus"],
-      bool: isEn ? Object.keys(BOOL_EN_TO_FR) : ["Oui", "Non"],
-      statut: isEn
-        ? Object.keys(STATUT_EN_TO_FR)
-        : ["veut rejoindre l'église", "a déjà son église", "nouveau", "visiteur"],
-      venu: isEn ? Object.keys(VENU_EN_TO_FR) : ["invité", "réseaux", "evangélisation", "autre"],
-      conversion: isEn ? Object.keys(CONV_EN_TO_FR) : ["Nouveau converti", "Réconciliation"],
-      ministere: isEn ? Object.keys(MINISTERES_EN_TO_FR) : MINISTERES_VALIDES,
-      besoin: isEn ? Object.keys(BESOIN_EN_TO_FR) : BESOIN_FR,
-    };
-
-    const listKeys = Object.keys(lists);
-    listKeys.forEach((key, colIdx) => {
-      lists[key].forEach((val, rowIdx) => {
-        wsListes.getCell(rowIdx + 1, colIdx + 1).value = val;
-      });
-    });
-
-    const rangeFor = (key) => {
-      const colIdx = listKeys.indexOf(key) + 1;
-      const letter = colLetter(colIdx);
-      return `Listes!$${letter}$1:$${letter}$${lists[key].length}`;
-    };
-
-    const applyList = (colNumber, listKey) => {
-      const formula = rangeFor(listKey);
-      for (let row = 2; row <= 200; row++) {
-        ws.getCell(row, colNumber).dataValidation = {
-          type: "list",
-          allowBlank: true,
-          formulae: [formula],
-          showErrorMessage: true,
-          errorStyle: "warning",
-          error: isEn ? "Please pick a value from the list." : "Merci de choisir une valeur dans la liste.",
-        };
-      }
-    };
-
-    // Colonnes -> liste (numeros de colonne = FIELD_INDEX + 1)
-    applyList(FIELD_INDEX.sexe + 1, "sexe");
-    applyList(FIELD_INDEX.age + 1, "age");
-    applyList(FIELD_INDEX.serviteur + 1, "bool");
-    applyList(FIELD_INDEX.statut + 1, "statut");
-    applyList(FIELD_INDEX.venu + 1, "venu");
-    applyList(FIELD_INDEX.priere_salut + 1, "bool");
-    applyList(FIELD_INDEX.type_conversion + 1, "conversion");
-    applyList(FIELD_INDEX.is_whatsapp + 1, "bool");
-    applyList(FIELD_INDEX.bapteme_eau + 1, "bool");
-    applyList(FIELD_INDEX.bapteme_esprit + 1, "bool");
-    MINISTERE_SLOTS.forEach((slot) => applyList(FIELD_INDEX[slot] + 1, "ministere"));
-    BESOIN_SLOTS.forEach((slot) => applyList(FIELD_INDEX[slot] + 1, "besoin"));
-
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const url = URL.createObjectURL(blob);
+  if (Capacitor.isNativePlatform()) {
+    // Dans l'app native : pas de gestionnaire de telechargement dans la webview,
+    // on ouvre l'URL pour que l'OS la prenne en charge (navigateur systeme).
+    window.open(url, "_blank");
+  } else {
     const link = document.createElement("a");
     link.href = url;
-    link.download = lang === "en" ? "template_import_members.xlsx" : "template_import_membres.xlsx";
+    link.download = filename;
     link.click();
-    URL.revokeObjectURL(url);
-  };
+  }
+};
 
   // ─── Traite un tableau de lignes (objets {header: valeur}), quelle que soit
   //     la source (CSV via PapaParse ou Excel via ExcelJS) ───

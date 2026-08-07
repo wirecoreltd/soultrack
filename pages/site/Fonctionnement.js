@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
+import HeaderSite from "../../components/HeaderSite";
 
 import { Great_Vibes } from "next/font/google";
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });

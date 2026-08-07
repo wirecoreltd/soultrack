@@ -144,6 +144,8 @@ const translations = {
     uncheckAllAdd: "Tout decocher (Ajout)",
     addAllAnyway: "Tout ajouter quand meme",
     previewTitle: "Apercu des lignes a importer",
+    downloadTemplate: "Telecharger le template Excel",
+    downloadUnavailableNative: "Le telechargement du template n'est pas encore disponible dans l'application mobile — nous y travaillons. En attendant, connecte-toi sur soultrack.org depuis un navigateur pour telecharger le template.",
     andOthers: "autres",
     importing: "Import en cours...",
     importBtn: "Importer",
@@ -212,7 +214,9 @@ const translations = {
     uncheckAll: "Uncheck all (Update)",
     updateAll: "Update all",
     uncheckAllAdd: "Uncheck all (Add)",
-    addAllAnyway: "Add all anyway",
+    addAllAnyway: "Add all anyway",  
+    downloadTemplate: "Download Excel template",
+    downloadUnavailableNative: "Downloading the template isn't available yet in the mobile app — we're working on it. In the meantime, log in at soultrack.org from a browser to download the template.",
     previewTitle: "Preview of rows to import",
     andOthers: "others",
     importing: "Importing...",
@@ -304,19 +308,17 @@ export default function ImportMembresCSV({ user }) {
 
   // ─── Genere et telecharge le template Excel avec menus deroulants ───
   const handleDownloadTemplate = () => {
+  if (Capacitor.isNativePlatform()) {
+    alert(t.downloadUnavailableNative);
+    return;
+  }
+
   const url = `/api/template-import-membres?lang=${lang}`;
   const filename = lang === "en" ? "template_import_members.xlsx" : "template_import_membres.xlsx";
-
-  if (Capacitor.isNativePlatform()) {
-    // Dans l'app native : pas de gestionnaire de telechargement dans la webview,
-    // on ouvre l'URL pour que l'OS la prenne en charge (navigateur systeme).
-    window.location.href = url;
-  } else {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    link.click();
-  }
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
 };
 
   // ─── Traite un tableau de lignes (objets {header: valeur}), quelle que soit

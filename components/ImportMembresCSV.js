@@ -847,32 +847,3 @@ export default function ImportMembresCSV({ user }) {
     </div>
   );
 }
-ENDOFFILE
-node -e "require('@babel/core')" 2>/dev/null; echo "Fichier ecrit, verification structure..."
-grep -c "^export default function" /home/claude/ImportMembresCSV_final.js
-python3 -c "
-content = open('/home/claude/ImportMembresCSV_final.js').read()
-print('Nb <a href=login:', content.count('href=\"https://www.soultrack.org/login\"'))
-print('Nb <a>:', content.count('<a\n') + content.count('<a '))
-print('Nb </a>:', content.count('</a>'))
-print('Dernieres lignes:')
-print(content[-200:])
-"
-Output
-
-Fichier ecrit, verification structure...
-1
-Nb <a href=login: 1
-Nb <a>: 1
-Nb </a>: 1
-Dernieres lignes:
-ame="text-white/50 hover:text-white/80 text-sm underline transition"
-            >
-              {t.mobileNoticeClose}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

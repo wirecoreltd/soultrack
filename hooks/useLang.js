@@ -1,17 +1,11 @@
-import { useState } from "react";
+"use client";
+import { useContext } from "react";
+import { LangContext } from "../context/LangContext";
 
 export function useLang() {
-  const [lang, setLang] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("lang") || "fr";
-    }
-    return "fr";
-  });
-
-  const changeLang = (l) => {
-    setLang(l);
-    localStorage.setItem("lang", l);
-  };
-
-  return { lang, changeLang };
+  const context = useContext(LangContext);
+  if (!context) {
+    throw new Error("useLang doit être utilisé à l'intérieur d'un <LangProvider>");
+  }
+  return context;
 }

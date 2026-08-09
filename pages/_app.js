@@ -4,12 +4,15 @@ import { useRouter } from "next/router";
 import { MembersProvider } from "../context/MembersContext";
 import { FeaturesProvider } from "../components/FeaturesContext";
 import { NotificationsProvider } from "../context/NotificationsContext";
+import { LangProvider } from "../context/LangContext";
 import { Great_Vibes } from "next/font/google";
+
 const greatVibes = Great_Vibes({
   subsets: ["latin"],
   weight: "400",
   variable: "--font-great-vibes",
 });
+
 function MyApp({ Component, pageProps }) {
   const router = useRouter();
 
@@ -18,10 +21,8 @@ function MyApp({ Component, pageProps }) {
     if (typeof window === "undefined" || !window.Capacitor) return;
 
     let listenerHandle;
-
     const setupListener = async () => {
       const { App } = await import("@capacitor/app");
-
       listenerHandle = await App.addListener("appUrlOpen", (data) => {
         // data.url est du type "https://www.soultrack.org/accept-invitation?token=..."
         try {
@@ -33,7 +34,6 @@ function MyApp({ Component, pageProps }) {
         }
       });
     };
-
     setupListener();
 
     return () => {
@@ -43,14 +43,17 @@ function MyApp({ Component, pageProps }) {
 
   return (
     <div className={greatVibes.variable}>
-      <FeaturesProvider>
-        <MembersProvider>
-          <NotificationsProvider>
-            <Component {...pageProps} />
-          </NotificationsProvider>
-        </MembersProvider>
-      </FeaturesProvider>
+      <LangProvider>
+        <FeaturesProvider>
+          <MembersProvider>
+            <NotificationsProvider>
+              <Component {...pageProps} />
+            </NotificationsProvider>
+          </MembersProvider>
+        </FeaturesProvider>
+      </LangProvider>
     </div>
   );
 }
+
 export default MyApp;

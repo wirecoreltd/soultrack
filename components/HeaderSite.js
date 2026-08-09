@@ -36,7 +36,7 @@ const headerTranslations = {
   },
 };
 
-export default function HeaderSite() {
+export default function HeaderSite({ showSignup = true }) {
   const router = useRouter();
   const pathname = usePathname();
   const { lang, changeLang } = useLang();
@@ -283,22 +283,24 @@ export default function HeaderSite() {
                 >
                   {t.login}
                 </button>
-                <button
-                  onClick={() => router.push("/site/pricing")}
-                  style={{
-                    background: "#fff",
-                    color: "#333699",
-                    border: "none",
-                    padding: "7px 18px",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {t.signup}
-                </button>
+                {showSignup && (
+                  <button
+                    onClick={() => router.push("/site/pricing")}
+                    style={{
+                      background: "#fff",
+                      color: "#333699",
+                      border: "none",
+                      padding: "7px 18px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {t.signup}
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -551,24 +553,26 @@ export default function HeaderSite() {
                 >
                   {t.login}
                 </button>
-                <button
-                  onClick={() => {
-                    router.push("/site/pricing");
-                    setOpenMenu(false);
-                  }}
-                  style={{
-                    background: "#fff",
-                    color: "#333699",
-                    border: "none",
-                    padding: "11px",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  {t.signup}
-                </button>
+                {showSignup && (
+                  <button
+                    onClick={() => {
+                      router.push("/site/pricing");
+                      setOpenMenu(false);
+                    }}
+                    style={{
+                      background: "#fff",
+                      color: "#333699",
+                      border: "none",
+                      padding: "11px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t.signup}
+                  </button>
+                )}
               </>
             )}
           </div>

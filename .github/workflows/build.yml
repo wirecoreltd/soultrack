@@ -39,18 +39,15 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Add App Links intent-filter
-        run: |
-          MANIFEST="android/app/src/main/AndroidManifest.xml"
-          sed -i '/<\/activity>/i \
-            <intent-filter android:autoVerify="true">\n\
-                <action android:name="android.intent.action.VIEW" />\n\
-                <category android:name="android.intent.category.DEFAULT" />\n\
-                <category android:name="android.intent.category.BROWSABLE" />\n\
-                <data android:scheme="https" android:host="www.soultrack.org" />\n\
-            </intent-filter>' "$MANIFEST"
-          echo "=== AndroidManifest.xml ==="
-          cat "$MANIFEST"
+      # ─── ÉTAPE SUPPRIMÉE : "Add App Links intent-filter" ───────────────
+      # Cette étape ajoutait un <intent-filter android:autoVerify="true">
+      # qui faisait qu'Android ouvrait automatiquement l'app à chaque clic
+      # sur un lien https://www.soultrack.org/... (dans Gmail, SMS, Chrome,
+      # etc.), même app fermée. On la retire pour que le web reste TOUJOURS
+      # web, même avec l'app installée. L'app garde son propre accès direct
+      # (icône sur l'écran d'accueil) qui charge server.url en interne, donc
+      # ce n'est pas affecté par ce retrait.
+      # ─────────────────────────────────────────────────────────────────
 
       - name: Generate app icons & splash
         run: |
@@ -126,7 +123,7 @@ jobs:
       - name: Decode Keystore
         run: |
           echo '${{ secrets.KEYSTORE_BASE64 }}' | base64 -d > $GITHUB_WORKSPACE/soultrack.keystore
-      
+
       - name: Build APK Release
         run: |
           cd android

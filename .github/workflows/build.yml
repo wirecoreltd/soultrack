@@ -96,13 +96,15 @@ jobs:
 
       - name: Fix Android navigation bar
         run: |
-          # Nav bar blanche fixe. On opt-out de l'edge-to-edge forcé
-          # d'Android 15 (encore possible sur API 35, cet attribut sera
-          # supprimé par Google sur API 36) pour retrouver le comportement
-          # classique où la couleur définie ici s'applique réellement.
+          # Upgrade targetSdk à 36 requis par Google Play depuis août 2026
+          sed -i 's/targetSdkVersion = 35/targetSdkVersion = 36/' android/variables.gradle
+          sed -i 's/compileSdkVersion = 35/compileSdkVersion = 36/' android/variables.gradle
+
           STYLES_FILE="android/app/src/main/res/values/styles.xml"
           sed -i 's|</style>|    <item name="android:navigationBarColor">#FFFFFF</item>\n    <item name="android:windowLightNavigationBar">true</item>\n    <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>\n</style>|' "$STYLES_FILE"
 
+          echo "=== variables.gradle ==="
+          cat android/variables.gradle
           echo "=== styles.xml ==="
           cat "$STYLES_FILE"
 

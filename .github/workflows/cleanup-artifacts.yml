@@ -1,0 +1,20 @@
+name: Cleanup Artifacts
+
+on:
+  workflow_dispatch:  # bouton manuel "Run workflow"
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete all artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+          gh api repos/$REPO/actions/artifacts --paginate | \
+            jq -r '.artifacts[].id' | \
+            while read id; do
+              echo "Suppression artifact $id"
+              gh api repos/$REPO/actions/artifacts/$id -X DELETE
+            done

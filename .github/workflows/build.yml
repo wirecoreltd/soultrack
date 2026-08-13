@@ -100,13 +100,45 @@ jobs:
           sed -i 's/targetSdkVersion = 35/targetSdkVersion = 36/' android/variables.gradle
           sed -i 's/compileSdkVersion = 35/compileSdkVersion = 36/' android/variables.gradle
 
+          # Fix edge-to-edge Android 16 — injecter le bon thème
           STYLES_FILE="android/app/src/main/res/values/styles.xml"
-          sed -i 's|</style>|    <item name="android:navigationBarColor">#FFFFFF</item>\n    <item name="android:windowLightNavigationBar">true</item>\n    <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>\n</style>|' "$STYLES_FILE"
+          sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:statusBarColor">#333699</item>\n    <item name="android:windowLightNavigationBar">false</item>\n    <item name="android:windowLightStatusBar">false</item>\n</style>|' "$STYLES_FILE"
+
+          # Fix edge-to-edge via MainActivity
+          MAIN="android/app/src/main/java/org/soultrack/app/MainActivity.java"
+          cat > "$MAIN" << 'JAVAEOF'
+          package org.soultrack.app;
+
+          import android.graphics.Color;
+          import android.os.Bundle;
+          import android.view.View;
+          import android.view.Window;
+          import androidx.core.view.WindowCompat;
+          import androidx.core.view.WindowInsetsControllerCompat;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  Window window = getWindow();
+                  WindowCompat.setDecorFitsSystemWindows(window, true);
+                  window.setNavigationBarColor(Color.parseColor("#333699"));
+                  window.setStatusBarColor(Color.parseColor("#333699"));
+                  WindowInsetsControllerCompat controller =
+                      new WindowInsetsControllerCompat(window, window.getDecorView());
+                  controller.setAppearanceLightNavigationBars(false);
+                  controller.setAppearanceLightStatusBars(false);
+              }
+          }
+          JAVAEOF
 
           echo "=== variables.gradle ==="
           cat android/variables.gradle
           echo "=== styles.xml ==="
           cat "$STYLES_FILE"
+          echo "=== MainActivity.java ==="
+          cat "$MAIN"
 
       - name: Set version code
         run: |

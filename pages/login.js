@@ -66,72 +66,92 @@ export default function LoginPage() {
   }, [router]);
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+  e.preventDefault();
+  setError(null);
+  setLoading(true);
 
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+  try {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (authError || !authData.user) {
-        setError(t.errorCredentials);
-        setLoading(false);
-        return;
-      }
+    if (authError || !authData.user) {
+      setError(t.errorCredentials);
+      setLoading(false);
+      return;
+    }
 
-      const user = authData.user;
+    const user = authData.user;
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, role, roles, prenom, nom, telephone")
-        .eq("id", user.id)
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, role, roles, prenom, nom, telephone, eglise_id")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      setError(t.errorProfile);
+      setLoading(false);
+      return;
+    }
+
+    // ── Vérification suspension de l'église ──────────────────────────
+    if (profile.eglise_id) {
+      const { data: eglise } = await supabase
+        .from("eglises")
+        .select("suspended")
+        .eq("id", profile.eglise_id)
         .single();
 
-      if (profileError) {
-        setError(t.errorProfile);
+      if (eglise?.suspended) {
+        await supabase.auth.signOut();
+        setError(
+          lang === "fr"
+            ? "🚫 Ce compte est suspendu. Accès temporairement bloqué."
+            : "🚫 This account is suspended. Access temporarily blocked."
+        );
         setLoading(false);
         return;
       }
-
-     const roles = profile.roles || [];
-      localStorage.setItem("userRole", JSON.stringify(roles));
-      localStorage.setItem("profile", JSON.stringify(profile));
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userId", user.id);
-
-      await initPushNotifications(user.id);      
-      
-      const params = new URLSearchParams(window.location.search);
-      const redirect = params.get("redirect");
-      if (redirect) {
-        router.replace(redirect);
-        return;
-      }
-      // ← FIN AJOUT
-      
-      if (roles.length > 1) { router.replace("/hub"); return; }            
-
-      if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")) {
-        router.replace("/cellule/cellules-hub");
-      } else if (roles.includes("ResponsableFamilles")) {
-        router.replace("/famille/familles-hub");
-      } else if (roles.includes("Conseiller")) {
-        router.replace("/conseiller/conseiller-hub");
-      } else if (roles.includes("ResponsableEvangelisation")) {
-        router.replace("/evangelisation/evangelisation-hub");
-      } else if (roles.includes("ResponsableIntegration")) {
-        router.replace("/membres/membres-hub");
-      } else {
-        router.replace("/hub");
-      }
-
-    } catch (err) {
-      console.error(err);
-      setError(t.errorGeneral);
-    } finally {
-      setLoading(false);
     }
-  };
+    // ──────────────────────────────────────────────────────────────────
+
+    const roles = profile.roles || [];
+    localStorage.setItem("userRole", JSON.stringify(roles));
+    localStorage.setItem("profile", JSON.stringify(profile));
+    localStorage.setItem("userEmail", email);
+    localStorage.setItem("userId", user.id);
+
+    await initPushNotifications(user.id);
+
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get("redirect");
+    if (redirect) {
+      router.replace(redirect);
+      return;
+    }
+
+    if (roles.length > 1) { router.replace("/hub"); return; }
+
+    if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")) {
+      router.replace("/cellule/cellules-hub");
+    } else if (roles.includes("ResponsableFamilles")) {
+      router.replace("/famille/familles-hub");
+    } else if (roles.includes("Conseiller")) {
+      router.replace("/conseiller/conseiller-hub");
+    } else if (roles.includes("ResponsableEvangelisation")) {
+      router.replace("/evangelisation/evangelisation-hub");
+    } else if (roles.includes("ResponsableIntegration")) {
+      router.replace("/membres/membres-hub");
+    } else {
+      router.replace("/hub");
+    }
+
+  } catch (err) {
+    console.error(err);
+    setError(t.errorGeneral);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // ✅ CORRECTIF : écran neutre (ou vide) tant qu'on vérifie la session.
   // Remplace ce bloc par un spinner/logo si tu préfères un visuel,

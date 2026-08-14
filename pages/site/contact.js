@@ -95,6 +95,11 @@ const translations = {
         title: "Demande reçue !",
         text: "Merci pour votre demande. Notre équipe l'étudiera attentivement et reviendra vers vous dans les meilleurs délais.",
       },
+      delete_account: {
+        icon: "🗑️",
+        title: "Demande de suppression reçue",
+        text: "Votre demande a bien été reçue. Sauf reconfirmation de votre part, votre église sera définitivement supprimée de nos bases de données d'ici 48h. Tous les accès à votre compte, y compris administrateur, sont suspendus dès maintenant.",
+      },
     },
     footer: "Tous droits réservés.",
   },
@@ -177,11 +182,15 @@ const translations = {
         title: "Refund Request Received!",
         text: "Your refund request has been successfully submitted. Our team will review it as soon as possible and contact you regarding the outcome.",
       },
-      
       request: {
         icon: "📩",
         title: "Request Received!",
         text: "Thank you for your request. Our team will review it carefully and get back to you as soon as possible.",
+      },
+      delete_account: {
+        icon: "🗑️",
+        title: "Deletion request received",
+        text: "Your request has been received. Unless you confirm otherwise, your church will be permanently deleted from our databases within 48 hours. All access to your account, including administrator access, is suspended effective immediately.",
       },
     },
     footer: "All rights reserved.",
@@ -207,6 +216,7 @@ export default function ContactPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [hoveredStar, setHoveredStar] = useState(0);
   const { lang, changeLang } = useLang();
 
@@ -252,9 +262,10 @@ export default function ContactPage() {
         return;
       }
 
+      // NB: eglise_id est nécessaire pour la suspension de compte (type delete_account)
       const { data: profileData, error } = await supabase
         .from("profiles")
-        .select("id, prenom, nom, role, roles")
+        .select("id, prenom, nom, role, roles, eglise_id")
         .eq("id", sessionData.session.user.id)
         .single();
 
@@ -278,15 +289,28 @@ export default function ContactPage() {
     router.push("/login");
   };
 
+  const validate = () => {
+    const errors = {};
+    if (!form.nom) errors.nom = true;
+    if (!form.email) errors.email = true;
+    if (!form.type) errors.type = true;
+    if (!form.message) errors.message = true;
+    if (form.type === "temoignage") {
+      if (!form.titre) errors.titre = true;
+      if (!form.nom_eglise) errors.nom_eglise = true;
+      if (!form.note) errors.note = true;
+    }
+    return errors;
+  };
+
   const handleSubmit = async () => {
-    if (!form.nom || !form.email || !form.type || !form.message) {
-      setError(t.errorRequired);
+    const errors = validate();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError(form.type === "temoignage" ? t.errorTemoignage : t.errorRequired);
       return;
     }
-    if (form.type === "temoignage" && (!form.titre || !form.nom_eglise || !form.note)) {
-      setError(t.errorTemoignage);
-      return;
-    }
+    setFieldErrors({});
     setError("");
     setLoading(true);
     try {
@@ -301,6 +325,21 @@ export default function ContactPage() {
       };
       const { error: insertError } = await supabase.from("contact").insert([payload]);
       if (insertError) throw insertError;
+
+      // ── Suspension immédiate de l'église en cas de demande de suppression ──
+      // Bloque l'accès (via policies RLS côté DB) en attendant la suppression
+      // définitive sous 48h. Nécessite que profile.eglise_id soit disponible.
+      if (form.type === "delete_account" && profile?.eglise_id) {
+        const { error: suspendError } = await supabase
+          .from("eglises")
+          .update({
+            suspended: true,
+            deletion_scheduled_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+          })
+          .eq("id", profile.eglise_id);
+        if (suspendError) throw suspendError;
+      }
+
       setSent(true);
     } catch (err) {
       setError(t.errorServer);
@@ -310,10 +349,11 @@ export default function ContactPage() {
     }
   };
 
-  const inputStyle = {
-    width: "100%", background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.18)",
+  const inputStyle = (hasError) => ({
+    width: "100%", background: "rgba(255,255,255,0.07)",
+    border: hasError ? "1px solid #dc2626" : "0.5px solid rgba(255,255,255,0.18)",
     borderRadius: "10px", padding: "10px 14px", color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box",
-  };
+  });
 
   const labelStyle = {
     display: "block", color: "rgba(255,255,255,0.5)", fontSize: "12px",
@@ -385,7 +425,7 @@ export default function ContactPage() {
                 <h3 style={{ color: "#fff", fontSize: "20px", fontWeight: 600, marginBottom: "12px" }}>{successInfo.title}</h3>
                 <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "14px", lineHeight: 1.8, maxWidth: "380px", margin: "0 auto" }}>{successInfo.text}</p>
                 <button
-                  onClick={() => { setSent(false); setForm({ nom: "", email: "", type: "", message: "", titre: "", nom_eglise: "", note: 0 }); setHoveredStar(0); }}
+                  onClick={() => { setSent(false); setForm({ nom: "", email: "", type: "", message: "", titre: "", nom_eglise: "", note: 0 }); setHoveredStar(0); setFieldErrors({}); }}
                   style={{ marginTop: "28px", background: "transparent", color: "rgba(255,255,255,0.7)", border: "0.5px solid rgba(255,255,255,0.25)", padding: "8px 20px", borderRadius: "8px", fontSize: "13px", cursor: "pointer" }}
                 >
                   {t.btnSendAnother}
@@ -406,10 +446,13 @@ export default function ContactPage() {
                         type={f.type}
                         placeholder={f.placeholder}
                         value={form[f.key]}
-                        onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                        style={inputStyle}
+                        onChange={(e) => {
+                          setForm({ ...form, [f.key]: e.target.value });
+                          if (fieldErrors[f.key]) setFieldErrors({ ...fieldErrors, [f.key]: false });
+                        }}
+                        style={inputStyle(fieldErrors[f.key])}
                         onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
-                        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
+                        onBlur={(e) => (e.target.style.borderColor = fieldErrors[f.key] ? "#dc2626" : "rgba(255,255,255,0.18)")}
                       />
                     </div>
                   ))}
@@ -420,16 +463,20 @@ export default function ContactPage() {
                   <label style={labelStyle}>{t.fieldType}</label>
                   <select
                     value={form.type}
-                    onChange={(e) => setForm({ ...form, type: e.target.value, titre: "", nom_eglise: "", note: 0 })}
+                    onChange={(e) => {
+                      setForm({ ...form, type: e.target.value, titre: "", nom_eglise: "", note: 0 });
+                      if (fieldErrors.type) setFieldErrors({ ...fieldErrors, type: false });
+                    }}
                     style={{
-                      width: "100%", background: "rgba(30,35,100,0.85)", border: "0.5px solid rgba(255,255,255,0.18)",
+                      width: "100%", background: "rgba(30,35,100,0.85)",
+                      border: fieldErrors.type ? "1px solid #dc2626" : "0.5px solid rgba(255,255,255,0.18)",
                       borderRadius: "10px", padding: "10px 14px", color: form.type ? "#fff" : "rgba(255,255,255,0.3)",
                       fontSize: "14px", outline: "none", cursor: "pointer", appearance: "none",
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
                       backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center",
                     }}
                     onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
-                    onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
+                    onBlur={(e) => (e.target.style.borderColor = fieldErrors.type ? "#dc2626" : "rgba(255,255,255,0.18)")}
                   >
                     <option value="" disabled style={{ background: "#333699" }}>{t.fieldTypePlaceholder}</option>
                     <option value="amelioration" style={{ background: "#333699", color: "#fff" }}>{t.typeAmelioration}</option>
@@ -447,17 +494,48 @@ export default function ContactPage() {
                   <>
                     <div>
                       <label style={labelStyle}>{t.fieldTitre}</label>
-                      <input type="text" placeholder={t.fieldTitrePlaceholder} value={form.titre} onChange={(e) => setForm({ ...form, titre: e.target.value })} style={inputStyle} onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")} onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")} />
+                      <input
+                        type="text"
+                        placeholder={t.fieldTitrePlaceholder}
+                        value={form.titre}
+                        onChange={(e) => {
+                          setForm({ ...form, titre: e.target.value });
+                          if (fieldErrors.titre) setFieldErrors({ ...fieldErrors, titre: false });
+                        }}
+                        style={inputStyle(fieldErrors.titre)}
+                        onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
+                        onBlur={(e) => (e.target.style.borderColor = fieldErrors.titre ? "#dc2626" : "rgba(255,255,255,0.18)")}
+                      />
                     </div>
                     <div>
                       <label style={labelStyle}>{t.fieldEglise}</label>
-                      <input type="text" placeholder={t.fieldEglisePlaceholder} value={form.nom_eglise} onChange={(e) => setForm({ ...form, nom_eglise: e.target.value })} style={inputStyle} onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")} onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")} />
+                      <input
+                        type="text"
+                        placeholder={t.fieldEglisePlaceholder}
+                        value={form.nom_eglise}
+                        onChange={(e) => {
+                          setForm({ ...form, nom_eglise: e.target.value });
+                          if (fieldErrors.nom_eglise) setFieldErrors({ ...fieldErrors, nom_eglise: false });
+                        }}
+                        style={inputStyle(fieldErrors.nom_eglise)}
+                        onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
+                        onBlur={(e) => (e.target.style.borderColor = fieldErrors.nom_eglise ? "#dc2626" : "rgba(255,255,255,0.18)")}
+                      />
                     </div>
                     <div>
                       <label style={labelStyle}>{t.fieldNote}</label>
-                      <div style={{ display: "flex", gap: "8px" }}>
+                      <div style={{
+                        display: "flex", gap: "8px", padding: fieldErrors.note ? "6px" : "0",
+                        border: fieldErrors.note ? "1px solid #dc2626" : "none", borderRadius: "8px", width: "fit-content"
+                      }}>
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <span key={star} onClick={() => setForm({ ...form, note: star })} onMouseEnter={() => setHoveredStar(star)} onMouseLeave={() => setHoveredStar(0)} style={{ fontSize: "32px", cursor: "pointer", transition: "transform 0.15s", transform: (hoveredStar || form.note) >= star ? "scale(1.2)" : "scale(1)", color: (hoveredStar || form.note) >= star ? "#fbbf24" : "rgba(255,255,255,0.2)", userSelect: "none" }}>★</span>
+                          <span
+                            key={star}
+                            onClick={() => { setForm({ ...form, note: star }); if (fieldErrors.note) setFieldErrors({ ...fieldErrors, note: false }); }}
+                            onMouseEnter={() => setHoveredStar(star)}
+                            onMouseLeave={() => setHoveredStar(0)}
+                            style={{ fontSize: "32px", cursor: "pointer", transition: "transform 0.15s", transform: (hoveredStar || form.note) >= star ? "scale(1.2)" : "scale(1)", color: (hoveredStar || form.note) >= star ? "#fbbf24" : "rgba(255,255,255,0.2)", userSelect: "none" }}
+                          >★</span>
                         ))}
                       </div>
                     </div>
@@ -481,10 +559,13 @@ export default function ContactPage() {
                     }
                     rows={5}
                     value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })}
-                    style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }}
+                    onChange={(e) => {
+                      setForm({ ...form, message: e.target.value });
+                      if (fieldErrors.message) setFieldErrors({ ...fieldErrors, message: false });
+                    }}
+                    style={{ ...inputStyle(fieldErrors.message), resize: "vertical", fontFamily: "inherit" }}
                     onFocus={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.45)")}
-                    onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.18)")}
+                    onBlur={(e) => (e.target.style.borderColor = fieldErrors.message ? "#dc2626" : "rgba(255,255,255,0.18)")}
                   />
                   {form.type === "temoignage" && (
                     <div style={{ textAlign: "right", fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>

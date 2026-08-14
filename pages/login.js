@@ -135,9 +135,9 @@ export default function LoginPage() {
         router.replace("/hub");
       }
 
-    } catch (err) {
+   } catch (err) {
       console.error(err);
-      setError(t.errorGeneral);
+      setErrorKey("errorGeneral");
     } finally {
       setLoading(false);
     }

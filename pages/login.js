@@ -1,5 +1,4 @@
-"use client";
-
+"use client"; 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
@@ -19,6 +18,7 @@ const translations = {
     errorCredentials: "❌ Email ou mot de passe incorrect",
     errorProfile: "❌ Impossible de récupérer le profil",
     errorGeneral: "❌ Erreur lors de la connexion",
+    errorSuspended: "🚫 Ce compte est suspendu en attente de suppression définitive. Accès bloqué.",
   },
   en: {
     welcome: "Welcome to SoulTrack! A platform to stay connected and follow every member.",
@@ -31,6 +31,7 @@ const translations = {
     errorCredentials: "❌ Incorrect email or password",
     errorProfile: "❌ Unable to retrieve profile",
     errorGeneral: "❌ Error during login",
+    errorSuspended: "🚫 This account is suspended pending permanent deletion. Access blocked.",
   },
 };
 
@@ -44,20 +45,13 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ CORRECTIF : tant qu'on ne sait pas si une session existe déjà,
-  // on n'affiche RIEN (ni le formulaire, ni un flash) → évite le
-  // clignotement du login avant la redirection vers /hub.
   const [checkingSession, setCheckingSession] = useState(true);
 
-  // Vérifie si déjà connecté
   useEffect(() => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (data?.session) {
         router.replace("/hub");
-        // Pas besoin de setCheckingSession(false) ici :
-        // la redirection est en cours, on reste sur l'écran neutre
-        // jusqu'à ce que Next.js démonte cette page.
         return;
       }
       setCheckingSession(false);
@@ -66,96 +60,89 @@ export default function LoginPage() {
   }, [router]);
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setError(null);
-  setLoading(true);
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-  try {
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (authError || !authData.user) {
-      setError(t.errorCredentials);
-      setLoading(false);
-      return;
-    }
-
-    const user = authData.user;
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id, role, roles, prenom, nom, telephone, eglise_id")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError) {
-      setError(t.errorProfile);
-      setLoading(false);
-      return;
-    }
-
-    // ── Vérification suspension de l'église ──────────────────────────
-    if (profile.eglise_id) {
-      const { data: eglise } = await supabase
-        .from("eglises")
-        .select("suspended")
-        .eq("id", profile.eglise_id)
-        .single();
-
-      if (eglise?.suspended) {
-        await supabase.auth.signOut();
-        setError(
-          lang === "fr"
-            ? "🚫 Ce compte est suspendu. Accès temporairement bloqué."
-            : "🚫 This account is suspended. Access temporarily blocked."
-        );
+      if (authError || !authData.user) {
+        setError(t.errorCredentials);
         setLoading(false);
         return;
       }
+
+      const user = authData.user;
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, role, roles, prenom, nom, telephone, eglise_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) {
+        setError(t.errorProfile);
+        setLoading(false);
+        return;
+      }
+
+      // ── Vérification suspension de l'église (demande de suppression) ──
+      if (profile.eglise_id) {
+        const { data: eglise } = await supabase
+          .from("eglises")
+          .select("suspended")
+          .eq("id", profile.eglise_id)
+          .single();
+
+        if (eglise?.suspended) {
+          await supabase.auth.signOut();
+          setError(t.errorSuspended);
+          setLoading(false);
+          return;
+        }
+      }
+      // ─────────────────────────────────────────────────────────────────
+
+      const roles = profile.roles || [];
+      localStorage.setItem("userRole", JSON.stringify(roles));
+      localStorage.setItem("profile", JSON.stringify(profile));
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userId", user.id);
+
+      await initPushNotifications(user.id);
+
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+      if (redirect) {
+        router.replace(redirect);
+        return;
+      }
+
+      if (roles.length > 1) { router.replace("/hub"); return; }
+
+      if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")) {
+        router.replace("/cellule/cellules-hub");
+      } else if (roles.includes("ResponsableFamilles")) {
+        router.replace("/famille/familles-hub");
+      } else if (roles.includes("Conseiller")) {
+        router.replace("/conseiller/conseiller-hub");
+      } else if (roles.includes("ResponsableEvangelisation")) {
+        router.replace("/evangelisation/evangelisation-hub");
+      } else if (roles.includes("ResponsableIntegration")) {
+        router.replace("/membres/membres-hub");
+      } else {
+        router.replace("/hub");
+      }
+
+    } catch (err) {
+      console.error(err);
+      setError(t.errorGeneral);
+    } finally {
+      setLoading(false);
     }
-    // ──────────────────────────────────────────────────────────────────
+  };
 
-    const roles = profile.roles || [];
-    localStorage.setItem("userRole", JSON.stringify(roles));
-    localStorage.setItem("profile", JSON.stringify(profile));
-    localStorage.setItem("userEmail", email);
-    localStorage.setItem("userId", user.id);
-
-    await initPushNotifications(user.id);
-
-    const params = new URLSearchParams(window.location.search);
-    const redirect = params.get("redirect");
-    if (redirect) {
-      router.replace(redirect);
-      return;
-    }
-
-    if (roles.length > 1) { router.replace("/hub"); return; }
-
-    if (roles.includes("ResponsableCellule") || roles.includes("SuperviseurCellule")) {
-      router.replace("/cellule/cellules-hub");
-    } else if (roles.includes("ResponsableFamilles")) {
-      router.replace("/famille/familles-hub");
-    } else if (roles.includes("Conseiller")) {
-      router.replace("/conseiller/conseiller-hub");
-    } else if (roles.includes("ResponsableEvangelisation")) {
-      router.replace("/evangelisation/evangelisation-hub");
-    } else if (roles.includes("ResponsableIntegration")) {
-      router.replace("/membres/membres-hub");
-    } else {
-      router.replace("/hub");
-    }
-
-  } catch (err) {
-    console.error(err);
-    setError(t.errorGeneral);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // ✅ CORRECTIF : écran neutre (ou vide) tant qu'on vérifie la session.
-  // Remplace ce bloc par un spinner/logo si tu préfères un visuel,
-  // mais JAMAIS le formulaire tant que checkingSession est true.
   if (checkingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100">
@@ -168,13 +155,11 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100 p-6">
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
 
-        {/* LOGO */}
         <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
           <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12 object-contain" />
           SoulTrack
         </h1>
 
-        {/* SWITCHER LANGUE */}
         <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "12px" }}>
           <button onClick={() => changeLang("fr")} title="Français"
             style={{ background: "none", border: "none", cursor: "pointer", padding: 0, opacity: lang === "fr" ? 1 : 0.4, transition: "opacity 0.2s" }}>

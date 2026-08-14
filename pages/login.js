@@ -42,7 +42,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
+  const [errorKey, setErrorKey] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const [checkingSession, setCheckingSession] = useState(true);
@@ -60,48 +60,48 @@ export default function LoginPage() {
   }, [router]);
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+  e.preventDefault();
+  setErrorKey(null);
+  setLoading(true);
 
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+  try {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (authError || !authData.user) {
-        setError(t.errorCredentials);
-        setLoading(false);
-        return;
-      }
+    if (authError || !authData.user) {
+      setErrorKey("errorCredentials");
+      setLoading(false);
+      return;
+    }
 
-      const user = authData.user;
+    const user = authData.user;
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, role, roles, prenom, nom, telephone, eglise_id")
-        .eq("id", user.id)
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, role, roles, prenom, nom, telephone, eglise_id")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      setErrorKey("errorProfile");
+      setLoading(false);
+      return;
+    }
+
+    // ── Vérification suspension de l'église (demande de suppression) ──
+    if (profile.eglise_id) {
+      const { data: eglise } = await supabase
+        .from("eglises")
+        .select("suspended")
+        .eq("id", profile.eglise_id)
         .single();
 
-      if (profileError) {
-        setError(t.errorProfile);
+      if (eglise?.suspended) {
+        await supabase.auth.signOut();
+        setErrorKey("errorSuspended");
         setLoading(false);
         return;
       }
-
-      // ── Vérification suspension de l'église (demande de suppression) ──
-      if (profile.eglise_id) {
-        const { data: eglise } = await supabase
-          .from("eglises")
-          .select("suspended")
-          .eq("id", profile.eglise_id)
-          .single();
-
-        if (eglise?.suspended) {
-          await supabase.auth.signOut();
-          setError(t.errorSuspended);
-          setLoading(false);
-          return;
-        }
-      }
+    }
       // ─────────────────────────────────────────────────────────────────
 
       const roles = profile.roles || [];
@@ -185,7 +185,7 @@ export default function LoginPage() {
             className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
           />
 
-          {error && <p className="text-red-500 text-center">{error}</p>}
+          {errorKey && <p className="text-red-500 text-center">{t[errorKey]}</p>}
 
           <button type="submit" disabled={loading}
             className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md">

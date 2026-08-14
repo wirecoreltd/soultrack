@@ -1,6 +1,9 @@
 name: Cleanup Artifacts
 on:
   workflow_dispatch:
+permissions:
+  actions: write
+  contents: read
 jobs:
   cleanup:
     runs-on: ubuntu-latest
@@ -12,7 +15,6 @@ jobs:
           REPO="${{ github.repository }}"
           gh api repos/$REPO/actions/artifacts --paginate | \
             jq '[.artifacts[].size_in_bytes] | add / 1024 / 1024 | tostring + " MB"'
-
       - name: Delete all artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

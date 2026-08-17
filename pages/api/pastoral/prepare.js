@@ -102,6 +102,10 @@ En tant que berger sage, génère un support de préparation pastoral en JSON un
     ? "You are a loving and wise shepherd. Respond ONLY in valid JSON, with no text before or after."
     : "Tu es un berger aimant et sage. Tu réponds UNIQUEMENT en JSON valide, sans aucun texte avant ou après.";
 
+  const genericErrorMessage = isEn
+    ? "Service temporarily unavailable, please try again in a moment"
+    : "Service temporairement indisponible, réessaie dans quelques instants";
+
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -110,7 +114,7 @@ En tant que berger sage, génère un support de préparation pastoral en JSON un
         "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
         max_tokens: 1200,
         messages: [
           { role: "system", content: systemPrompt },
@@ -120,12 +124,22 @@ En tant que berger sage, génère un support de préparation pastoral en JSON un
       }),
     });
 
+    if (!response.ok) {
+      console.error("[pastoral/prepare] Groq API error", response.status, await response.text());
+      return res.status(502).json({ error: genericErrorMessage });
+    }
+
     const data = await response.json();
-    const text = data.choices[0].message.content;
+    const text = data?.choices?.[0]?.message?.content;
+    if (!text) {
+      console.error("[pastoral/prepare] Unexpected Groq response shape", JSON.stringify(data));
+      return res.status(502).json({ error: genericErrorMessage });
+    }
+
     const parsed = JSON.parse(text);
     return res.status(200).json(parsed);
   } catch (err) {
     console.error("[pastoral/prepare]", err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: genericErrorMessage });
   }
 }

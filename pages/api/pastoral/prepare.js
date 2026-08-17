@@ -47,11 +47,11 @@ Here is what you know about this person:
 - Recurring patterns detected: ${aDesRecidives ? "Yes" : "No"}
 History:
 ${historiqueTexte}
-As a wise shepherd, generate a pastoral preparation support in JSON only. Be gentle, deep, human — never cold or academic.
+As a wise shepherd, generate a pastoral preparation support in JSON only. Be gentle, deep, human — never cold or academic. Write everything in English, even though some of the data above may be in French.
 {
   "avant_dentrer": "1-2 essential sentences about this person's likely inner state today. What the leader should hold in their heart before even saying hello.",
   "cles_comprehension": "2-3 sentences about the deep wounds, blocks, and inner cycles detected in the history. Go to the root, not the symptoms.",
-  "mots_cles": ["word 1", "word 2", "word 3", "word 4", "word 5"],
+  "mots_cles": ["single word 1", "single word 2", "single word 3", "single word 4", "single word 5"],
   "questions_a_poser": [
     "gentle and open question 1",
     "question 2",
@@ -99,8 +99,8 @@ En tant que berger sage, génère un support de préparation pastoral en JSON un
 }`;
 
   const systemPrompt = isEn
-    ? "You are a loving and wise shepherd. Respond ONLY in valid JSON, with no text before or after."
-    : "Tu es un berger aimant et sage. Tu réponds UNIQUEMENT en JSON valide, sans aucun texte avant ou après.";
+    ? "You are a loving and wise shepherd. Respond ONLY in valid JSON, with no text before or after. IMPORTANT: Write your entire response in English, in every field, regardless of the language used in the source data provided (needs, history, comments may be in French — translate/interpret them, but always write your output in English). Each item in \"mots_cles\" must be a separate single word or short phrase, given as distinct array entries."
+    : "Tu es un berger aimant et sage. Tu réponds UNIQUEMENT en JSON valide, sans aucun texte avant ou après. IMPORTANT : Rédige l'intégralité de ta réponse en français, dans tous les champs, quelle que soit la langue des données sources fournies. Chaque élément de \"mots_cles\" doit être un mot ou une courte expression distincte, sous forme d'entrées séparées dans le tableau.";
 
   const genericErrorMessage = isEn
     ? "Service temporarily unavailable, please try again in a moment"

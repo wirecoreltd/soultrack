@@ -1451,9 +1451,9 @@ useEffect(() => {
             <div className="text-black text-sm mt-3 w-full space-y-4">
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">{t.identity}</p>
-                <p><span className="font-medium">{t.civility}</span> {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
-                <p><span className="font-medium">{t.age}</span> {m.age || "—"}</p>
-                <p><span className="font-medium">{t.whatsapp}</span> {m.is_whatsapp ? t.yes : t.no}</p>
+                <p><span className="font-semibold">{t.civility}</span> {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
+                <p><span className="font-semibold">{t.age}</span> {m.age || "—"}</p>
+                <p><span className="font-semibold">{t.whatsapp}</span> {m.is_whatsapp ? t.yes : t.no}</p>
               </div>
               <hr />
 
@@ -1465,25 +1465,24 @@ useEffect(() => {
                     m.suivi_statut ||
                     "—"}
                 </p>
-                <p>{t.sentDate} {formatDateFr(m.date_envoi_suivi)}</p>
-                <p>{t.comment} {m.commentaire_suivis || "—"}</p>
-                <p>{t.evangComment} {m.Commentaire_Suivi_Evangelisation || "—"}</p>
+                <p><span className="font-semibold">{t.sentDate}</span> {formatDateFr(m.date_envoi_suivi)}</p>
+                <p><span className="font-semibold">{t.comment}</span> {m.commentaire_suivis || "—"}</p>
+                <p><span className="font-semibold">{t.evangComment}</span> {m.Commentaire_Suivi_Evangelisation || "—"}</p>
               </div>
               <hr />
 
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">{t.spiritual}</p>
-                <p>{t.baptemeEau} {getYesNo(m.bapteme_eau)}</p>
+                <p><span className="font-semibold">{t.baptemeEau}</span> {getYesNo(m.bapteme_eau)}</p>
                   {m.bapteme_eau === "Non" &&
                     m.veut_se_faire_baptiser === "Oui" && (
                       <p className="ml-4">{t.wantsBaptism}</p>
                     )}
-                <p>{t.baptemeFeu} {getYesNo(m.bapteme_esprit)}</p>
-                <p>{t.prayer} {getYesNo(m.priere_salut)}</p>
-                <p>{t.conversion} {getLabel(t.conversionOptions, m.type_conversion)}</p>
-                <p>{t.formation} {m.Formation || "—"}</p>
-                <p>
-                  {t.ministere}{" "}
+                <p><span className="font-semibold">{t.baptemeFeu}</span> {getYesNo(m.bapteme_esprit)}</p>
+                <p><span className="font-semibold">{t.prayer}</span> {getYesNo(m.priere_salut)}</p>
+                <p><span className="font-semibold">{t.conversion}</span> {getLabel(t.conversionOptions, m.type_conversion)}</p>
+                <p>{<span className="font-semibold">t.formation}</span> {m.Formation || "—"}</p>
+                <p><span className="font-semibold">{t.ministere}</span>{" "}
                   {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}
                 </p>
               </div>
@@ -1491,15 +1490,15 @@ useEffect(() => {
 
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">{t.parcours}</p>
-                <p>{t.howCame} {getMapLabel(t.venuOptions, m.venu)}</p>
-                <p>{t.reason} {getMapLabel(t.statutInitialOptions, m.statut_initial)}</p>
-                <p>{t.infos} {m.infos_supplementaires || "—"}</p>
+                <p><span className="font-semibold">{t.howCame}</span> {getMapLabel(t.venuOptions, m.venu)}</p>
+                <p><span className="font-semibold">{t.reason}</span> {getMapLabel(t.statutInitialOptions, m.statut_initial)}</p>
+                <p><span className="font-semibold">{t.infos}</span> {m.infos_supplementaires || "—"}</p>
               </div>
               <hr />
 
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">{t.pastoral}</p>
-                <p>{t.needs} {besoins}</p>
+                <p><span className="font-semibold{t.needs}</span>  {besoins}</p>
                 <div className="flex justify-center gap-2 flex-wrap">
                   <button
                     onClick={() => setOpenSuiviMemberId(m.id)}

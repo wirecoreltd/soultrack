@@ -1012,13 +1012,13 @@ const getMapLabel = (map, value) => {
                     <hr />
 
                     <div>
-                      <p className="font-bold text-[#2E3192] mb-1">t.parcoursTitle}</p>
+                      <p className="font-bold text-[#2E3192] mb-1">{t.parcoursTitle}</p>
                       <p><span className="font-semibold">{m.sexe === "Femme"
                           ? t.evangeliseLeFemme
                           : t.evangeliseLeM}</span>{" "}
                         {formatDateFr(m.date_evangelise)}
                       </p>
-                      <p><span className="font-semibold">{t.typeEvang} : {getMapLabel(t.typeEvangOptions, m.type_evangelisation)}</p>
+                     <p><span className="font-semibold">{t.typeEvang}</span> :{" "} {getMapLabel(t.typeEvangOptions, m.type_evangelisation)}</p>
                     </div>
                     <hr />
 

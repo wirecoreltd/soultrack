@@ -1481,7 +1481,7 @@ useEffect(() => {
                 <p><span className="font-semibold">{t.baptemeFeu}</span> {getYesNo(m.bapteme_esprit)}</p>
                 <p><span className="font-semibold">{t.prayer}</span> {getYesNo(m.priere_salut)}</p>
                 <p><span className="font-semibold">{t.conversion}</span> {getLabel(t.conversionOptions, m.type_conversion)}</p>
-                <p>{<span className="font-semibold">t.formation}</span> {m.Formation || "—"}</p>
+                <p><span className="font-semibold">{t.formation}</span> {m.Formation || "—"}</p>
                 <p><span className="font-semibold">{t.ministere}</span>{" "}
                   {formatMinistere(m.Ministere, m.Autre_Ministere) || "—"}
                 </p>

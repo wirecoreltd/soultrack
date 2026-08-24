@@ -18,6 +18,8 @@ const translations = {
     chargement: "Chargement...",
     telephone: "Téléphone du responsable",
     telephonePlaceholder: "+33 6 00 00 00 00",
+    email: "Email",
+    emailPlaceholder: "exemple@email.com",
     annuler: "Annuler",
     sauvegarder: "💾 Sauvegarder",
     enregistrement: "Enregistrement...",
@@ -37,6 +39,8 @@ const translations = {
     chargement: "Loading...",
     telephone: "Leader's phone number",
     telephonePlaceholder: "+44 7700 000000",
+    email: "Email",
+    emailPlaceholder: "example@email.com",
     annuler: "Cancel",
     sauvegarder: "💾 Save",
     enregistrement: "Saving...",
@@ -49,32 +53,65 @@ export default function EditFamilleModal({ famille, onClose, onUpdated }) {
   const { lang } = useLang();
   const t = translations[lang];
 
+  const egliseId = famille?.eglise_id || "";
+
   const [ville, setVille] = useState(famille?.ville || "");
   const [telephone, setTelephone] = useState(famille?.telephone_responsable || "");
+  const [email, setEmail] = useState(famille?.email || "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
+  const [selectedResponsableId, setSelectedResponsableId] = useState(
+    famille?.responsable_id || ""
+  );
   const [responsables, setResponsables] = useState([]);
-  const [selectedResponsableId, setSelectedResponsableId] = useState(famille?.responsable_id || "");
   const [loadingResponsables, setLoadingResponsables] = useState(true);
 
   const modalRef = useRef(null);
 
+  // ─── Fetch des responsables ───
   useEffect(() => {
-    const fetchResponsables = async () => {
-      setLoadingResponsables(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom, telephone")
-        .contains("roles", ["ResponsableFamilles"])
-        .order("nom");
-      if (!error && data) setResponsables(data);
-      else console.error("Erreur chargement responsables:", error);
+    if (!egliseId) {
       setLoadingResponsables(false);
-    };
-    fetchResponsables();
+      return;
+    }
+
+    let cancelled = false;
+
+    supabase
+      .from("profiles")
+      .select("id, prenom, nom, telephone, email, role, roles")
+      .eq("eglise_id", egliseId)
+      .order("nom")
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (!error && data) {
+          const filtered = data.filter((p) => {
+            const roleStr = (p.role || "").trim();
+            const rolesArr = Array.isArray(p.roles) ? p.roles : [];
+            return (
+              roleStr === "ResponsableFamilles" ||
+              rolesArr.some((r) => r.trim() === "ResponsableFamilles")
+            );
+          });
+
+          setResponsables(filtered);
+        }
+        setLoadingResponsables(false);
+      });
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!loadingResponsables && selectedResponsableId) {
+      const obj = responsables.find((r) => r.id === selectedResponsableId);
+      if (obj) setEmail(obj.email || "");
+    }
+  }, [loadingResponsables, responsables, selectedResponsableId]);
+
+  // ─── Fermer en cliquant dehors ───
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) onClose();
@@ -83,6 +120,7 @@ export default function EditFamilleModal({ famille, onClose, onUpdated }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
+  // ─── Sauvegarde ───
   const handleSave = async () => {
     setMessage("");
     if (!ville.trim()) return setMessage(t.erreurVille);
@@ -98,6 +136,7 @@ export default function EditFamilleModal({ famille, onClose, onUpdated }) {
       .update({
         ville,
         telephone_responsable: telephone,
+        email,
         responsable_id: selectedResponsableId || null,
         responsable: responsableNom,
       })
@@ -117,6 +156,8 @@ export default function EditFamilleModal({ famille, onClose, onUpdated }) {
   };
 
   if (!famille) return null;
+
+  const isLoading = loading || loadingResponsables;
 
   return (
     <div
@@ -148,6 +189,7 @@ export default function EditFamilleModal({ famille, onClose, onUpdated }) {
 
         {/* Body */}
         <div className="overflow-y-auto px-6 py-5 flex flex-col gap-5" style={{ maxHeight: "68vh" }}>
+
           <SectionTitle>{t.sectionInfos}</SectionTitle>
 
           <Field label={t.nomFamille}>
@@ -168,12 +210,8 @@ export default function EditFamilleModal({ famille, onClose, onUpdated }) {
 
           <Field label={t.responsable}>
             {loadingResponsables ? (
-              <div className="inp flex items-center gap-2 text-gray-400 text-sm">
-                <span
-                  className="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin inline-block"
-                  style={{ borderColor: "#2E3192", borderTopColor: "transparent" }}
-                />
-                {t.chargement}
+              <div className="inp-readonly">
+                {famille.responsable || <span className="text-gray-400">{t.chargement}</span>}
               </div>
             ) : (
               <select
@@ -182,8 +220,9 @@ export default function EditFamilleModal({ famille, onClose, onUpdated }) {
                 onChange={(e) => {
                   const id = e.target.value;
                   setSelectedResponsableId(id);
-                  const responsableObj = responsables.find((r) => r.id === id);
-                  setTelephone(responsableObj?.telephone || "");
+                  const obj = responsables.find((r) => r.id === id);
+                  setTelephone(obj?.telephone || "");
+                  setEmail(obj?.email || "");
                 }}
               >
                 <option value="">{t.responsableDefault}</option>
@@ -204,6 +243,16 @@ export default function EditFamilleModal({ famille, onClose, onUpdated }) {
               placeholder={t.telephonePlaceholder}
             />
           </Field>
+
+          <Field label={t.email}>
+            <input
+              className="inp"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t.emailPlaceholder}
+            />
+          </Field>
+
         </div>
 
         {/* Footer */}
@@ -218,16 +267,15 @@ export default function EditFamilleModal({ famille, onClose, onUpdated }) {
           <button
             type="button"
             onClick={handleSave}
-            disabled={loading || loadingResponsables}
+            disabled={isLoading}
             className="flex-1 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-60"
             style={{
-              background:
-                loading || loadingResponsables
-                  ? "#a0a0c0"
-                  : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
+              background: isLoading
+                ? "#a0a0c0"
+                : "linear-gradient(135deg, #2E3192 0%, #4f54c9 100%)",
             }}
           >
-            {loading ? t.enregistrement : loadingResponsables ? t.chargement : t.sauvegarder}
+            {loading ? t.enregistrement : isLoading ? t.chargement : t.sauvegarder}
           </button>
         </div>
 

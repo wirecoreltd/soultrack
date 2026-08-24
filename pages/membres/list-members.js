@@ -1451,9 +1451,9 @@ useEffect(() => {
             <div className="text-black text-sm mt-3 w-full space-y-4">
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">{t.identity}</p>
-                <p>{t.civility} {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
-                <p>{t.age} {m.age || "—"}</p>
-                <p>{t.whatsapp} {m.is_whatsapp ? t.yes : t.no}</p>
+                <p><span className="font-semibold">{t.civility}</span> {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
+                <p><span className="font-semibold">{t.age}</span> {m.age || "—"}</p>
+                <p><span className="font-semibold">{t.whatsapp}</span> {m.is_whatsapp ? t.yes : t.no}</p>
               </div>
               <hr />
 

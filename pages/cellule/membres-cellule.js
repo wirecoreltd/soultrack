@@ -761,7 +761,7 @@ useEffect(() => {
                               {t.identiteLabel}
                             </p>
                             <p><span className="font-semibold">{t.civilite}</span>  : {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
-                            <p>{<span className="font-semibold">{t.age}</span>  : {m.age || ""}</p>
+                            <p><span className="font-semibold">{t.age}</span>  : {m.age || ""}</p>
                             <p><span className="font-semibold">{t.whatsapp}</span>  :{" "}
                               {m.is_whatsapp ? t.oui : t.non}
                             </p>

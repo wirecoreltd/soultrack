@@ -565,7 +565,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             onChange={e => setFormData({ ...formData, nom: e.target.value })} required />
 
           <select value={formData.age}
-            onChange={e => setFormData({ ...formData, age: e.target.value })} className="input">
+            onChange={e => setFormData({ ...formData, age: e.target.value })} className="input" required>
             <option value="">{t.age}</option>
             {t.ageOptions.map(v => <option key={v} value={v}>{v}</option>)}
           </select>

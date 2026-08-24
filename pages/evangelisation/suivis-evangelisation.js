@@ -890,15 +890,12 @@ const getMapLabel = (map, value) => {
                 {/* Infos conditionnées par feature */}
                 <div className="flex flex-col items-center space-y-1 mb-1">
                   {cellulesActive && (
-                    <p><span className="font-semibold text-sm text-black">{t.cellule}</span> : {cellule?.cellule_full || "—"}</p>
-                  )}
+                    <p className="text-sm text-black"><span className="font-semibold">t.cellule}</span> : {cellule?.cellule_full || "—"}</p>)}
                   {famillesActive && (
-                    <p className="text-sm text-black"><span className="font-semibold">{t.famille}</span> : {famille?.famille_full || "—"}</p>
-                  )}
+                    <p className="text-sm text-black"><span className="font-semibold">{t.famille}</span> : {famille?.famille_full || "—"}</p>)}
                   {conseillerActive && (
-                    <p className="text-sm text-black"><span className="font-semibold">{t.conseiller}</span> : {getConseillersForSuivi(m.id)}</p>
-                  )}
-                  <p className="text-sm text-black"><span className="font-semibold">{t.ville}</span> : {m.ville || "—"}</p>
+                    <p className="text-sm text-black"><span className="font-semibold">{t.conseiller}</span> : {getConseillersForSuivi(m.id)}</p>)}
+                    <p className="text-sm text-black"><span className="font-semibold">{t.ville}</span> : {m.ville || "—"}</p>
                 </div>
 
                 <p className="self-end text-[11px] text-gray-400 mt-2">

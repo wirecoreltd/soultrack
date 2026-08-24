@@ -1498,7 +1498,7 @@ useEffect(() => {
 
               <div>
                 <p className="font-bold text-[#2E3192] mb-1">{t.pastoral}</p>
-                <p><span className="font-semibold{t.needs}</span>  {besoins}</p>
+                <p><span className="font-semibold">{t.needs}</span> {besoins}</p>
                 <div className="flex justify-center gap-2 flex-wrap">
                   <button
                     onClick={() => setOpenSuiviMemberId(m.id)}

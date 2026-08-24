@@ -998,57 +998,34 @@ const getMapLabel = (map, value) => {
                       <p className="font-bold text-[#2E3192] mb-1">
                         {t.identiteTitle}
                       </p>
-                      <p>
-  {t.civilite} : {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}
-</p>
-                      <p>
-                        {t.age} : {m.age || ""}
-                      </p>
-                      <p>
-                        {t.whatsapp} : {m.is_whatsapp ? t.oui : t.non}
-                      </p>
+                      <p><span className="font-semibold">{t.civilite}</span> : {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
+                      <p><span className="font-semibold">{t.age}</span> : {m.age || ""}</p>
+                      <p><span className="font-semibold">{t.whatsapp}</span> : {m.is_whatsapp ? t.oui : t.non} </p>
                     </div>
                     <hr />
 
                     <div>
-                      <p className="font-bold text-[#2E3192] mb-1">
-                        {t.spiritualTitle}
-                      </p>
-                      <p>
-                        {t.priereSalut} : {getYesNo(m.priere_salut)}
-                      </p>
-                      <p>
-                        {t.typeConversion} : {getMapLabel(t.conversionOptions, m.type_conversion)}
-                      </p>
+                      <p className="font-bold text-[#2E3192] mb-1">{t.spiritualTitle}</p>
+                      <p><span className="font-semibold">{t.priereSalut}</span> : {getYesNo(m.priere_salut)}</p>
+                      <p><span className="font-semibold">{t.typeConversion}</span> : {getMapLabel(t.conversionOptions, m.type_conversion)}</p>
                     </div>
                     <hr />
 
                     <div>
-                      <p className="font-bold text-[#2E3192] mb-1">
-                        {t.parcoursTitle}
-                      </p>
-                      <p>
-                        {m.sexe === "Femme"
+                      <p className="font-bold text-[#2E3192] mb-1">t.parcoursTitle}</p>
+                      <p><span className="font-semibold">{m.sexe === "Femme"
                           ? t.evangeliseLeFemme
-                          : t.evangeliseLeM}{" "}
+                          : t.evangeliseLeM}</span>{" "}
                         {formatDateFr(m.date_evangelise)}
                       </p>
-                      <p>
-                        {t.typeEvang} : {getMapLabel(t.typeEvangOptions, m.type_evangelisation)}
-                      </p>
+                      <p><span className="font-semibold">{t.typeEvang} : {getMapLabel(t.typeEvangOptions, m.type_evangelisation)}</p>
                     </div>
                     <hr />
 
                     <div>
-                      <p className="font-bold text-[#2E3192] mb-1">
-                        {t.pastoralTitle}
-                      </p>
-                      <p>
-                        {t.besoins} : {formatBesoin(m.besoin)}
-                      </p>
-                      <p>
-                        {t.infos} : {m.infos_supplementaires || ""}
-                      </p>
+                      <p className="font-bold text-[#2E3192] mb-1">{t.pastoralTitle}</p>
+                      <p><span className="font-semibold">{t.besoins}</span> : {formatBesoin(m.besoin)}</p>
+                      <p><span className="font-semibold">{t.infos}</span> : {m.infos_supplementaires || ""}</p>
                     </div>
 
                     {!showRefus && (

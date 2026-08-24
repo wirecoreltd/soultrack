@@ -306,7 +306,7 @@ const DetailsPopup = React.memo(function DetailsPopup({
       <hr />
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.suivi}</p>
-        <p>📅 {m.sexe === "Femme" ? t.arrivedLe : t.arriveLe} {formatDate(m.date_venu)}</p>        
+        <p>📅 <span className="font-semibold"> {m.sexe === "Femme" ? t.arrivedLe : t.arriveLe} </span>{" "}{formatDate(m.date_venu)}</p>       
       </div>
       <hr />
       <div>
@@ -750,17 +750,22 @@ function SuivisMembresContent() {
 
                 {cellulesActive && m.cellule_id && (
                   <p className="text-sm text-black-700 mb-1">
-                    {t.cellule} {cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}
+                    <span className="font-semibold">{t.cellule}</span>{" "}
+                    {cellules.find(c => c.id === m.cellule_id)?.cellule_full || "—"}
                   </p>
                 )}
+                
                 {famillesActive && m.famille_id && (
                   <p className="text-sm text-black-700 mb-1">
-                    {t.famille} {familles.find(f => f.id === m.famille_id)?.famille_full || "—"}
+                    <span className="font-semibold">{t.famille}</span>{" "}
+                    {familles.find(f => f.id === m.famille_id)?.famille_full || "—"}
                   </p>
                 )}
+                
                 {conseillerActive && assignmentsMap[m.id]?.length > 0 && (
                   <p className="text-sm text-black-700 mb-1">
-                    {t.conseiller} {getConseillersForMember(m.id)}
+                    <span className="font-semibold">{t.conseiller}</span>{" "}
+                    {getConseillersForMember(m.id)}
                   </p>
                 )}
 

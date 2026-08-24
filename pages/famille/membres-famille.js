@@ -592,12 +592,9 @@ function MembresFamilleContent() {
                       )}
                     </div>
 
-                    <p className="text-center text-sm mt-1"><span className="font-semibold">{t.ville}</span>  {m.ville || ""}</p>
-                    <p className="text-center text-sm mt-1">
-                      <span className="font-semibold">{t.famille}</span>  {m.famille_full || famille?.famille_full || "—"}
-                    </p>
-                    <p className="text-center text-sm mt-1">
-                      <span className="font-semibold">{t.responsable}</span>  {m.responsable || famille?.responsable || "—"}
+                    <p className="text-center text-sm mt-1 font-semibold">{t.ville} {m.ville || ""}</p>
+                    <p className="text-center text-sm mt-1 font-semibold">{t.famille} {m.famille_full || famille?.famille_full || "—"} </p>
+                    <p className="text-center text-sm mt-1 font-semibold">{t.responsable}{m.responsable || famille?.responsable || "—"}
                     </p>
 
                     <div className="w-full flex flex-col items-end mt-3 gap-2">

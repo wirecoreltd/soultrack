@@ -890,7 +890,7 @@ const getMapLabel = (map, value) => {
                 {/* Infos conditionnées par feature */}
                 <div className="flex flex-col items-center space-y-1 mb-1">
                   {cellulesActive && (
-                    <p className="text-sm text-black"><span className="font-semibold">t.cellule}</span> : {cellule?.cellule_full || "—"}</p>)}
+                    <p className="text-sm text-black"><span className="font-semibold">{t.cellule}</span> : {cellule?.cellule_full || "—"}</p>)}
                   {famillesActive && (
                     <p className="text-sm text-black"><span className="font-semibold">{t.famille}</span> : {famille?.famille_full || "—"}</p>)}
                   {conseillerActive && (

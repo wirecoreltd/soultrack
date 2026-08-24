@@ -299,9 +299,9 @@ const DetailsPopup = React.memo(function DetailsPopup({
     <div className="text-black text-sm space-y-2 w-full">
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.identite}</p>
-        <p>{t.civilite} {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
-        <p>{t.age} {m.age || "—"}</p>
-        <p>{t.whatsapp} {m.is_whatsapp ? t.oui : t.non}</p>
+        <p><span className="font-semibold">{t.civilite}</span> {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
+        <p><span className="font-semibold">{t.age}</span> {m.age || "—"}</p>
+        <p><span className="font-semibold">{t.whatsapp}</span> {m.is_whatsapp ? t.oui : t.non}</p>
       </div>
       <hr />
       <div>
@@ -311,24 +311,24 @@ const DetailsPopup = React.memo(function DetailsPopup({
       <hr />
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.vieSpirituelle}</p>
-        <p>{t.baptemeEau} {getYesNo(m.bapteme_eau)}</p>
-        <p>{t.baptemeFeu} {getYesNo(m.bapteme_esprit)}</p>
-        <p>{t.priereSalut} {getYesNo(m.priere_salut)}</p>
-        <p>{t.typeConversion} {getMapLabel(t.conversionOptions, m.type_conversion)}</p>
-        <p>{t.formation} {m.Formation || "—"}</p>
-        <p>{t.ministere} {formatMinistere(m.Ministere) || "—"}</p>
+        <p><span className="font-semibold">{t.baptemeEau}</span> {getYesNo(m.bapteme_eau)}</p>
+        <p><span className="font-semibold">{t.baptemeFeu}</span> {getYesNo(m.bapteme_esprit)}</p>
+        <p><span className="font-semibold">{t.priereSalut}</span> {getYesNo(m.priere_salut)}</p>
+        <p><span className="font-semibold">{t.typeConversion}</span> {getMapLabel(t.conversionOptions, m.type_conversion)}</p>
+        <p><span className="font-semibold">{t.formation}</span> {m.Formation || "—"}</p>
+        <p>{<span className="font-semibold">{t.ministere}</span> {formatMinistere(m.Ministere) || "—"}</p>
       </div>
       <hr />
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.parcours}</p>
-        <p>{t.commentEstVenu} {getMapLabel(t.venuOptions, m.venu)}</p>
-        <p>{t.raisonVenue} {getMapLabel(t.statutInitialOptions, m.statut_initial ?? m.statut)}</p>
-        <p>{t.infos} {m.infos_supplementaires || "—"}</p>
+        <p><span className="font-semibold">{t.commentEstVenu}</span> {getMapLabel(t.venuOptions, m.venu)}</p>
+        <p><span className="font-semibold">{t.raisonVenue}</span> {getMapLabel(t.statutInitialOptions, m.statut_initial ?? m.statut)}</p>
+        <p><span className="font-semibold">{t.infos}</span> {m.infos_supplementaires || "—"}</p>
       </div>
       <hr />
       <div>
         <p className="font-bold text-[#2E3192] mb-1">{t.soinPastoral}</p>
-        <p>{t.besoins} {formatBesoinField(m.besoin)}</p>
+        <p><span className="font-semibold">{t.besoins}</span> {formatBesoinField(m.besoin)}</p>
         <div className="flex justify-center">
           <button
             onClick={() => setOpenSuiviMemberId(m.id)}

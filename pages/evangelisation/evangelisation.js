@@ -734,9 +734,7 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
                   <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} />
                   {" "}{t.selectionner}
                 </label>
-                <p className="text-[11px] text-gray-400 text-right mt-3">
-                  {t.evangeliseLe} {formatDate(member.date_evangelise)}
-                </p>
+                <p className="text-[11px] text-gray-400 text-right mt-3">{t.evangeliseLe} {formatDate(member.date_evangelise)}</p>
 
                 {/* ===== BOUTON INTÉGRER ===== */}
                 <button
@@ -759,7 +757,7 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
                 {detailsOpen[member.id] && (
                   <div className="text-black text-sm mt-3 w-full space-y-4">
                     <div>
-                      <p>{t.typeEvang} {getLabel(t.typeEvangOptions, member.type_evangelisation)}</p>
+                      <p><span className="font-semibold">{t.typeEvang}</span> {getLabel(t.typeEvangOptions, member.type_evangelisation)}</p>
                     </div>
                     <hr />
                     <div>

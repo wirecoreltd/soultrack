@@ -316,7 +316,7 @@ const DetailsPopup = React.memo(function DetailsPopup({
         <p><span className="font-semibold">{t.priereSalut}</span> {getYesNo(m.priere_salut)}</p>
         <p><span className="font-semibold">{t.typeConversion}</span> {getMapLabel(t.conversionOptions, m.type_conversion)}</p>
         <p><span className="font-semibold">{t.formation}</span> {m.Formation || "—"}</p>
-        <p>{<span className="font-semibold">{t.ministere}</span> {formatMinistere(m.Ministere) || "—"}</p>
+        <p><span className="font-semibold">{t.ministere}</span> {formatMinistere(m.Ministere) || "—"}</p>
       </div>
       <hr />
       <div>

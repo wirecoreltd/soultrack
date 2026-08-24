@@ -721,12 +721,10 @@ useEffect(() => {
                         )}
                       </div>
 
-                      <p className="text-center text-sm mt-1">🏙️ {m.ville || ""}</p>
-                      <p className="text-center text-sm mt-1">
-                        🏠 {cellule?.cellule_full || cellule?.cellule || "—"}
-                      </p>
-                      <p className="text-center text-sm mt-1">👤 {nomResponsable}</p>
-
+                      <p className="text-center text-sm mt-1"><span className="font-semibold">🏙️ {m.ville || ""}</span></p>
+                      <p className="text-center text-sm mt-1"><span className="font-semibold">🏠 {cellule?.cellule_full || cellule?.cellule || "—"}</span></p>
+                      <p className="text-center text-sm mt-1"><span className="font-semibold">👤 {nomResponsable}</span></p>
+                          
                       <div className="w-full flex flex-col items-end mt-3 gap-2">
                         <p className="text-[11px] text-gray-400">
                           {t.creLe} {formatDateFr(m.date_venu)}
@@ -762,10 +760,9 @@ useEffect(() => {
                             <p className="font-bold text-[#2E3192] mb-1">
                               {t.identiteLabel}
                             </p>
-                            <p>{t.civilite} : {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
-                            <p>{t.age} : {m.age || ""}</p>
-                            <p>
-                              {t.whatsapp} :{" "}
+                            <p><span className="font-semibold">{t.civilite}</span>  : {m.sexe === "Homme" ? t.homme : m.sexe === "Femme" ? t.femme : "—"}</p>
+                            <p>{<span className="font-semibold">t.age}</span>  : {m.age || ""}</p>
+                            <p><span className="font-semibold">{t.whatsapp}</span>  :{" "}
                               {m.is_whatsapp ? t.oui : t.non}
                             </p>
                           </div>
@@ -797,10 +794,10 @@ useEffect(() => {
                                 m.veut_se_faire_baptiser === "Oui" && (
                                   <p className="ml-6">{t.veutBaptise}</p>
                                 )}
-                              <p>{t.baptemeFeu} : {getYesNo(m.bapteme_esprit)}</p>
-                              <p>{t.priereSalut} : {getYesNo(m.priere_salut)}</p>
-                              <p>{t.typeConversion} : {getMapLabel(t.conversionOptions, m.type_conversion)}</p>
-                            <p>{t.formation} : {m.Formation || ""}</p>
+                              <p><span className="font-semibold">{t.baptemeFeu}</span> : {getYesNo(m.bapteme_esprit)}</p>
+                              <p><span className="font-semibold">{t.priereSalut}</span> : {getYesNo(m.priere_salut)}</p>
+                              <p><span className="font-semibold">{t.typeConversion}</span> : {getMapLabel(t.conversionOptions, m.type_conversion)}</p>
+                              <p><span className="font-semibold">{t.formation}</span> : {m.Formation || ""}</p>
                             <p>
                               {t.ministere} :{" "}
                               {formatMinistere(m.Ministere, m.Autre_Ministere)}
@@ -812,15 +809,10 @@ useEffect(() => {
                             <p className="font-bold text-[#2E3192] mb-1">
                               {t.parcoursLabel}
                             </p>
-                            <p>{t.commentVenu} : {getMapLabel(t.venuOptions, m.venu)}</p>
-                            <p>{t.raisonVenue} : {getMapLabel(t.statutInitialOptions, m.statut_initial ?? m.statut)}</p>
-                            <p>
-                              {t.infos} :{" "}
-                              {m.infos_supplementaires || "—"}
-                            </p>
-                            <p>
-                              {t.commentaireSuivis} :{" "}
-                              {m.commentaire_suivis || ""}
+                            <p><span className="font-semibold">{t.commentVenu}</span> : {getMapLabel(t.venuOptions, m.venu)}</p>
+                            <p><span className="font-semibold">{t.raisonVenue}</span> : {getMapLabel(t.statutInitialOptions, m.statut_initial ?? m.statut)}</p>
+                            <p><span className="font-semibold">{t.infos}</span> :{" "} {m.infos_supplementaires || "—"} </p>
+                            <p><span className="font-semibold">{t.commentaireSuivis}</span> :{" "}{m.commentaire_suivis || ""}
                             </p>
                           </div>
                           <hr />
@@ -829,7 +821,7 @@ useEffect(() => {
                             <p className="font-bold text-[#2E3192] mb-1">
                               {t.pastoralLabel}
                             </p>
-                            <p>{t.besoinsDiff} : {besoins}</p>
+                            <p><span className="font-semibold">{t.besoinsDiff}</span> : {besoins}</p>
 
                             <div className="flex justify-center gap-2 flex-wrap">
                               <button

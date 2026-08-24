@@ -729,7 +729,7 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
                     <a href={member.telephone ? `https://wa.me/${member.telephone.replace(/\D/g, "")}` : "#"} target="_blank" rel="noopener noreferrer" className="block px-4 py-2 text-sm text-black hover:bg-gray-100">{t.messageWhatsApp}</a>
                   </div>
                 )}
-                <p className="text-center mt-3 text-sm">{t.ville} {member.ville || "—"}</p>
+                <p className="text-center mt-3 text-sm"> <span className="font-semibold">{t.ville}</span> {member.ville || "—"}</p>
                 <label className="flex justify-center gap-2 mt-4">
                   <input type="checkbox" checked={checkedContacts[member.id] || false} onChange={() => handleCheck(member.id)} />
                   {" "}{t.selectionner}
@@ -764,21 +764,21 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
                     <hr />
                     <div>
                       <p className="font-bold text-[#2E3192] mb-1">{t.identite}</p>
-                      <p>{t.civilite} {member.sexe || "—"}</p>
-                      <p>{t.age} {member.age || "—"}</p>
-                      <p>{t.whatsapp} {member.is_whatsapp ? t.oui : t.non}</p>
+                      <p><span className="font-semibold">{t.civilite}</span> {member.sexe || "—"}</p>
+                      <p><span className="font-semibold">{t.age}</span> {member.age || "—"}</p>
+                      <p><span className="font-semibold">{t.whatsapp}</span> {member.is_whatsapp ? t.oui : t.non}</p>
                     </div>
                     <hr />
                     <div>
                       <p className="font-bold text-[#2E3192] mb-1">{t.vieSpirituelle}</p>
-                      <p>{t.priereSalut} {member.priere_salut ? t.oui : "—"}</p>
-                      <p>{t.typeConversion} {getLabel(t.conversionOptions, member.type_conversion)}</p>
+                      <p><span className="font-semibold">{t.priereSalut}</span> {member.priere_salut ? t.oui : "—"}</p>
+                      <p><span className="font-semibold">{t.typeConversion}</span> {getLabel(t.conversionOptions, member.type_conversion)}</p>
                     </div>
                     <hr />
                     <div>
                       <p className="font-bold text-[#2E3192] mb-1">{t.soinPastoral}</p>
-                      <p>{t.besoins} {formatBesoin(member.besoin)}</p>
-                      <p>{t.infosSup} {formatBesoin(member.infos_supplementaires)}</p>
+                      <p><span className="font-semibold">{t.besoins}</span> {formatBesoin(member.besoin)}</p>
+                      <p><span className="font-semibold">{t.infosSup}</span> {formatBesoin(member.infos_supplementaires)}</p>
                     </div>
                     <div className="mt-3 bg-gray-50 rounded-xl shadow-md p-4">
                       <div className="flex flex-col gap-2">

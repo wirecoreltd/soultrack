@@ -1233,8 +1233,7 @@ useEffect(() => {
             </div>
 
             {cellulesActive && (
-              <p>
-                {t.cellule}{" "}
+              <p><span className="font-semibold">{t.cellule}</span>{" "}
                 {m.cellule_id
                   ? cellules.find(
                       (c) => String(c.id) === String(m.cellule_id)
@@ -1244,8 +1243,7 @@ useEffect(() => {
             )}
 
             {famillesActive && (
-              <p>
-                {t.famille}{" "}
+              <p><span className="font-semibold">{t.famille}</span>{" "}
                 {m.famille_id
                   ? familles.find(
                       (f) => String(f.id) === String(m.famille_id)
@@ -1255,7 +1253,7 @@ useEffect(() => {
             )}
 
             {conseillerActive && (
-              <p>{t.conseiller} {getConseillersForMember(m.id)}</p>
+              <p><span className="font-semibold">{t.conseiller}</span> {getConseillersForMember(m.id)}</p>
             )}
           </div>
 

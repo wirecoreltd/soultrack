@@ -1222,9 +1222,8 @@ useEffect(() => {
 
           {/* Infos principales */}
           <div className="w-full mt-2 text-sm text-black space-y-1">
-            <p className="text-center font-semibold">{t.city} {m.ville || "—"}</p>
-            <p className="text-center font-semibold">
-              {t.etatContact} {m.etat_contact || "—"}
+            <p className="text-center">{t.city} {m.ville || "—"}</p>
+            <p className="text-center">{t.etatContact} {m.etat_contact || "—"}
             </p>
             <div className="w-full flex justify-end mt-3">
               <p className="text-[11px] text-gray-400">

@@ -592,12 +592,12 @@ function MembresFamilleContent() {
                       )}
                     </div>
 
-                    <p className="text-center text-sm mt-1">{t.ville} {m.ville || ""}</p>
+                    <p className="text-center text-sm mt-1"><span className="font-semibold">{t.ville}</span>  {m.ville || ""}</p>
                     <p className="text-center text-sm mt-1">
-                      {t.famille} {m.famille_full || famille?.famille_full || "—"}
+                      <span className="font-semibold">{t.famille}</span>  {m.famille_full || famille?.famille_full || "—"}
                     </p>
                     <p className="text-center text-sm mt-1">
-                      {t.responsable} {m.responsable || famille?.responsable || "—"}
+                      <span className="font-semibold">{t.responsable}</span>  {m.responsable || famille?.responsable || "—"}
                     </p>
 
                     <div className="w-full flex flex-col items-end mt-3 gap-2">
@@ -629,17 +629,16 @@ function MembresFamilleContent() {
                       <div className="text-black text-sm space-y-2 w-full">
                         <div>
                           <p className="font-bold text-[#2E3192] mb-1">{t.identiteTitle}</p>
-                          <p>{t.civilite} : {m.sexe || ""}</p>
-                          <p>{t.age} : {m.age || ""}</p>
-                          <p>{t.whatsapp} : {m.is_whatsapp ? t.oui : t.non}</p>
+                          <p><span className="font-semibold">{t.civilite}</span> : {m.sexe || ""}</p>
+                          <p><span className="font-semibold">{t.age}</span> : {m.age || ""}</p>
+                          <p><span className="font-semibold">{t.whatsapp}</span> : {m.is_whatsapp ? t.oui : t.non}</p>
                         </div>
                         <hr />
 
                         <div>
                           <p className="font-bold text-[#2E3192] mb-1">{t.suiviTitle}</p>
-                          <p>{t.envoiSuivi} : {formatDateFr(m.date_envoi_suivi)}</p>
-                          <p>
-                            {t.statutSuivi} :{" "}
+                          <p><span className="font-semibold">{t.envoiSuivi}</span> : {formatDateFr(m.date_envoi_suivi)}</p>
+                          <p><span className="font-semibold">{t.statutSuivi}</span> :{" "}
                             {t.statutLabels[m.statut_suivis] || m.suivi_statut || ""}
                           </p>
                         </div>
@@ -647,30 +646,30 @@ function MembresFamilleContent() {
 
                         <div>
                           <p className="font-bold text-[#2E3192] mb-1">{t.spiritualTitle}</p>
-                          <p>{t.baptemeEau} : {m.bapteme_eau || "—"}</p>
+                          <p><span className="font-semibold">{t.baptemeEau}</span> : {m.bapteme_eau || "—"}</p>
                           {m.bapteme_eau === "Non" && m.veut_se_faire_baptiser === "Oui" && (
                             <p className="ml-6">{t.veutBaptise}</p>
                           )}
-                          <p>{t.baptemeFeu} : {m.bapteme_esprit || "—"}</p>
-                          <p>{t.priereSalut} : {m.priere_salut || "—"}</p>
-                          <p>{t.typeConversion} : {m.type_conversion || "—"}</p>
-                          <p>{t.formation} : {m.Formation || ""}</p>
-                          <p>{t.ministere} : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
+                          <p><span className="font-semibold">{t.baptemeFeu}</span> : {m.bapteme_esprit || "—"}</p>
+                          <p><span className="font-semibold">{t.priereSalut}</span> : {m.priere_salut || "—"}</p>
+                          <p><span className="font-semibold">{t.typeConversion}</span> : {m.type_conversion || "—"}</p>
+                          <p><span className="font-semibold">{t.formation}</span> : {m.Formation || ""}</p>
+                          <p><span className="font-semibold">{t.ministere}</span> : {formatMinistere(m.Ministere, m.Autre_Ministere)}</p>
                         </div>
                         <hr />
 
                         <div>
                           <p className="font-bold text-[#2E3192] mb-1">{t.parcoursTitle}</p>
-                          <p>{t.commentVenu} : {m.venu || ""}</p>
-                          <p>{t.raisonVenue} : {m.statut_initial ?? m.statut ?? "—"}</p>
-                          <p>{t.infos} : {m.infos_supplementaires || "—"}</p>
-                          <p>{t.commentaireSuivi} : {m.commentaire_suivis || ""}</p>
+                          <p><span className="font-semibold">{t.commentVenu}</span> : {m.venu || ""}</p>
+                          <p><span className="font-semibold">{t.raisonVenue}</span> : {m.statut_initial ?? m.statut ?? "—"}</p>
+                          <p><span className="font-semibold">{t.infos}</span> : {m.infos_supplementaires || "—"}</p>
+                          <p><span className="font-semibold">{t.commentaireSuivi}</span> : {m.commentaire_suivis || ""}</p>
                         </div>
                         <hr />
 
                         <div>
                           <p className="font-bold text-[#2E3192] mb-1">{t.pastoralTitle}</p>
-                          <p>{t.besoins} : {besoins}</p>
+                          <p><span className="font-semibold">{t.besoins}</span> : {besoins}</p>
                         
                           <div className="flex justify-center gap-2 flex-wrap">
                             <button

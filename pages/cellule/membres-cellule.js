@@ -120,6 +120,9 @@ const translations = {
       4: "Refus",
     },
     mois: ["Janv","Févr","Mars","Avr","Mai","Juin","Juil","Août","Sept","Oct","Nov","Déc"],
+    search: "🔍 Recherche (nom, prénom, téléphone)...",
+    allCellules: "-- Toutes les cellules --",
+    membresCount: (n) => `${n} membres`,
   },
   en: {
     titrePrefix: "Members of m",
@@ -227,6 +230,9 @@ const translations = {
       4: "Refused",
     },
     mois: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+    search: "🔍 Search (name, phone)...",
+    allCellules: "-- All cell groups --",
+    membresCount: (n) => `${n} members`,
   },
 };
 
@@ -601,6 +607,36 @@ useEffect(() => {
           {t.intro3}{" "}
           <span className="text-blue-300 font-semibold">{t.introAccent3}</span>.
         </p>
+      </div>
+
+      {/* Barre de recherche */}
+      <div className="mt-3 w-full flex justify-center mb-2">
+        <input
+          type="text"
+          placeholder={t.search}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full sm:w-2/3 max-w-md px-3 py-1 rounded-md border text-black"
+        />
+      </div>
+
+      {/* Filtre par cellule */}
+      <div className="w-full flex justify-center items-center mb-4 gap-2 flex-wrap">
+        <select
+          value={filterCellule}
+          onChange={(e) => setFilterCellule(e.target.value)}
+          className="px-3 py-1 rounded-md border text-black text-sm"
+        >
+          <option value="">{t.allCellules}</option>
+          {cellules.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.cellule_full || c.cellule}
+            </option>
+          ))}
+        </select>
+        <span className="text-white text-sm ml-2">
+          {t.membresCount(filteredMembres.length)}
+        </span>
       </div>
 
       {loading && (

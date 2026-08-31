@@ -2,6 +2,84 @@
 
 import { useState } from "react";
 import supabase from "../lib/supabaseClient";
+import { useLang } from "../hooks/useLang";
+
+const translations = {
+  fr: {
+    envoyer: "📤 Envoyer par WhatsApp",
+    envoi: "Envoi...",
+    errNotConnected: "❌ Vous devez être connecté.",
+    errDoublonCheck: "❌ Erreur lors de la vérification des doublons",
+    errUpdateMembre: "❌ Erreur mise à jour membre",
+    toastEnvoye: (nom) => `✅ ${nom} envoyé`,
+    doublonTitle: "⚠️ Doublon détecté",
+    doublonText: (tel) => `Ce numéro (${tel}) existe déjà.`,
+    envoyerQuandMeme: "Envoyer quand même",
+    annuler: "Annuler",
+    whatsappCheckText:
+      "Vérifiez les informations du responsable avant d'envoyer. Si le numéro est effacé, WhatsApp s'ouvrira sur vos contacts.",
+    labelNomResponsable: "👤 Nom du responsable",
+    labelNumeroWhatsapp: "📞 Numéro WhatsApp",
+    placeholderNumero: "+3363xxx... — laisser vide pour choisir dans vos contacts",
+    envoyerBtn: "Envoyer",
+    // Message WhatsApp
+    msgBonjour: (prenom) => `👋 Bonjour ${prenom} !`,
+    msgIntro1: "J'espère que tu vas bien 😊",
+    msgIntro2: "Je te partage les informations d'un nouveau membre que tu vas pouvoir accompagner :",
+    msgNom: "👤 Nom :",
+    msgSexe: "🎗️ Sexe :",
+    msgAge: "⏳ Âge :",
+    msgTelephone: "📱 Téléphone :",
+    msgWhatsapp: "💬 WhatsApp :",
+    msgVille: "🏙️ Ville :",
+    msgRaisonVenue: "✨ Raison de sa venue :",
+    msgPriereSalut: "🙏 Prière du salut :",
+    msgBesoins: "❓ Besoins :",
+    msgInfosSupp: "📝 Infos supplémentaires :",
+    msgMerci: "Merci beaucoup pour ton engagement et le temps que tu vas lui consacrer ❤️",
+    msgBenediction: "Que ton accompagnement soit une vraie bénédiction.",
+    oui: "Oui",
+    non: "Non",
+    responsableDefaut: "Responsable",
+  },
+  en: {
+    envoyer: "📤 Send via WhatsApp",
+    envoi: "Sending...",
+    errNotConnected: "❌ You must be logged in.",
+    errDoublonCheck: "❌ Error checking for duplicates",
+    errUpdateMembre: "❌ Error updating member",
+    toastEnvoye: (nom) => `✅ ${nom} sent`,
+    doublonTitle: "⚠️ Duplicate detected",
+    doublonText: (tel) => `This number (${tel}) already exists.`,
+    envoyerQuandMeme: "Send anyway",
+    annuler: "Cancel",
+    whatsappCheckText:
+      "Check the recipient's details before sending. If the number is cleared, WhatsApp will open your contacts.",
+    labelNomResponsable: "👤 Recipient's name",
+    labelNumeroWhatsapp: "📞 WhatsApp number",
+    placeholderNumero: "+3363xxx... — leave empty to choose from your contacts",
+    envoyerBtn: "Send",
+    // WhatsApp message
+    msgBonjour: (prenom) => `👋 Hello ${prenom}!`,
+    msgIntro1: "I hope you're doing well 😊",
+    msgIntro2: "Here are the details of a new member you'll be supporting:",
+    msgNom: "👤 Name:",
+    msgSexe: "🎗️ Gender:",
+    msgAge: "⏳ Age:",
+    msgTelephone: "📱 Phone:",
+    msgWhatsapp: "💬 WhatsApp:",
+    msgVille: "🏙️ City:",
+    msgRaisonVenue: "✨ Reason for coming:",
+    msgPriereSalut: "🙏 Prayer of salvation:",
+    msgBesoins: "❓ Needs:",
+    msgInfosSupp: "📝 Additional info:",
+    msgMerci: "Thank you so much for your commitment and the time you'll give ❤️",
+    msgBenediction: "May your support be a true blessing.",
+    oui: "Yes",
+    non: "No",
+    responsableDefaut: "Recipient",
+  },
+};
 
 export default function BoutonEnvoyer({
   membre,
@@ -11,6 +89,9 @@ export default function BoutonEnvoyer({
   onEnvoyer,
   showToast
 }) {
+  const { lang } = useLang();
+  const t = translations[lang];
+
   const [loading, setLoading] = useState(false);
   const [showDoublonPopup, setShowDoublonPopup] = useState(false);
   const [doublonDetected, setDoublonDetected] = useState(false);
@@ -29,7 +110,7 @@ export default function BoutonEnvoyer({
       .select("id")
       .eq("telephone", membre.telephone)
       .neq("id", membre.id);
-    if (error) { alert("❌ Erreur lors de la vérification des doublons"); return false; }
+    if (error) { alert(t.errDoublonCheck); return false; }
     return data.length > 0;
   };
 
@@ -76,35 +157,35 @@ export default function BoutonEnvoyer({
           .select("prenom, telephone")
           .eq("id", famille.responsable_id)
           .single();
-        responsablePrenom = resp?.prenom || "Responsable";
+        responsablePrenom = resp?.prenom || t.responsableDefaut;
         responsableTelephone = resp?.telephone || famille.telephone_responsable || "";
       } else {
-        responsablePrenom = "Responsable";
+        responsablePrenom = t.responsableDefaut;
         responsableTelephone = famille?.telephone_responsable || "";
       }
       cible.famille_full = famille?.famille_full || cible.famille_full;
     }
 
     if (type === "numero") {
-      responsablePrenom = "Responsable";
+      responsablePrenom = t.responsableDefaut;
       responsableTelephone = cible;
     }
 
-    let message = `👋 Bonjour ${responsablePrenom} !\n\n`;
-    message += `J'espère que tu vas bien 😊\n\n`;
-    message += `Je te partage les informations d'un nouveau membre que tu vas pouvoir accompagner :\n\n`;
+    let message = `${t.msgBonjour(responsablePrenom)}\n\n`;
+    message += `${t.msgIntro1}\n\n`;
+    message += `${t.msgIntro2}\n\n`;
 
-    message += `👤 Nom : ${membre.prenom} ${membre.nom}\n`;
-    message += `🎗️ Sexe : ${membre.sexe || "—"}\n`;
-    message += `⏳ Âge : ${membre.age || "—"}\n`;
-    message += `📱 Téléphone : ${membre.telephone || "—"}\n`;
-    message += `💬 WhatsApp : ${membre.is_whatsapp ? "Oui" : "Non"}\n`;
-    message += `🏙️ Ville : ${membre.ville || "—"}\n\n`;
+    message += `${t.msgNom} ${membre.prenom} ${membre.nom}\n`;
+    message += `${t.msgSexe} ${membre.sexe || "—"}\n`;
+    message += `${t.msgAge} ${membre.age || "—"}\n`;
+    message += `${t.msgTelephone} ${membre.telephone || "—"}\n`;
+    message += `${t.msgWhatsapp} ${membre.is_whatsapp ? t.oui : t.non}\n`;
+    message += `${t.msgVille} ${membre.ville || "—"}\n\n`;
 
-    message += `✨ Raison de sa venue : ${membre.statut_initial || "—"}\n`;
-    message += `🙏 Prière du salut : ${membre.priere_salut || "—"}\n`;
+    message += `${t.msgRaisonVenue} ${membre.statut_initial || "—"}\n`;
+    message += `${t.msgPriereSalut} ${membre.priere_salut || "—"}\n`;
 
-    message += `❓ Besoins : ${
+    message += `${t.msgBesoins} ${
       membre.besoin
         ? (() => {
             try {
@@ -115,10 +196,10 @@ export default function BoutonEnvoyer({
         : "—"
     }\n`;
 
-    message += `📝 Infos supplémentaires : ${membre.infos_supplementaires || "—"}\n\n`;
+    message += `${t.msgInfosSupp} ${membre.infos_supplementaires || "—"}\n\n`;
 
-    message += `Merci beaucoup pour ton engagement et le temps que tu vas lui consacrer ❤️\n`;
-    message += `Que ton accompagnement soit une vraie bénédiction.`;
+    message += `${t.msgMerci}\n`;
+    message += t.msgBenediction;
 
     setResponsableNom(responsablePrenom);
     return { message, responsableTelephone };
@@ -128,7 +209,7 @@ export default function BoutonEnvoyer({
   // 🔹 Click principal
   // =========================
   const handleClick = async () => {
-    if (!session) { alert("❌ Vous devez être connecté."); return; }
+    if (!session) { alert(t.errNotConnected); return; }
     try {
       setLoading(true);
       const { message, responsableTelephone } = await buildMessage();
@@ -206,7 +287,7 @@ export default function BoutonEnvoyer({
         .select()
         .single();
 
-      if (error) { console.error(error); alert("❌ Erreur mise à jour membre"); return; }
+      if (error) { console.error(error); alert(t.errUpdateMembre); return; }
 
       // Si type conseiller → écrire dans suivi_assignments
       if (type === "conseiller" && cible?.id) {
@@ -231,7 +312,7 @@ export default function BoutonEnvoyer({
         });
       }
 
-      if (showToast) showToast(`✅ ${membre.prenom} ${membre.nom} envoyé`);
+      if (showToast) showToast(t.toastEnvoye(`${membre.prenom} ${membre.nom}`));
 
     } catch (err) {
       console.error(err);
@@ -250,21 +331,21 @@ export default function BoutonEnvoyer({
           loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"
         }`}
       >
-        {loading ? "Envoi..." : "📤 Envoyer par WhatsApp"}
+        {loading ? t.envoi : t.envoyer}
       </button>
 
       {/* ================= POPUP DOUBLON ================= */}
       {showDoublonPopup && doublonDetected && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-96 text-center">
-            <h3 className="font-bold text-lg mb-3">⚠️ Doublon détecté</h3>
-            <p className="mb-4">Ce numéro ({membre.telephone}) existe déjà.</p>
+            <h3 className="font-bold text-lg mb-3">{t.doublonTitle}</h3>
+            <p className="mb-4">{t.doublonText(membre.telephone)}</p>
             <div className="flex gap-2">
               <button onClick={sendToWhatsapp} className="flex-1 bg-green-500 text-white py-2 rounded">
-                Envoyer quand même
+                {t.envoyerQuandMeme}
               </button>
               <button onClick={() => setShowDoublonPopup(false)} className="flex-1 bg-gray-300 py-2 rounded">
-                Annuler
+                {t.annuler}
               </button>
             </div>
           </div>
@@ -276,14 +357,13 @@ export default function BoutonEnvoyer({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
             <p className="text-gray-700 mb-4">
-              Vérifiez les informations du responsable avant d'envoyer.
-              Si le numéro est effacé, WhatsApp s'ouvrira sur vos contacts.
+              {t.whatsappCheckText}
             </p>
 
             <div className="flex flex-col gap-3 mb-4">
               <div>
                 <label className="text-sm font-semibold text-gray-600 mb-1 block">
-                  👤 Nom du responsable
+                  {t.labelNomResponsable}
                 </label>
                 <input
                   type="text"
@@ -294,13 +374,13 @@ export default function BoutonEnvoyer({
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-600 mb-1 block">
-                  📞 Numéro WhatsApp
+                  {t.labelNumeroWhatsapp}
                 </label>
                 <input
                   type="text"
                   value={manualPhone}
                   onChange={(e) => setManualPhone(e.target.value)}
-                  placeholder="+3363xxx... — laisser vide pour choisir dans vos contacts"
+                  placeholder={t.placeholderNumero}
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 mb-4"
                 />
               </div>
@@ -308,10 +388,10 @@ export default function BoutonEnvoyer({
 
             <div className="flex gap-2">
               <button onClick={sendToWhatsapp} className="flex-1 bg-green-500 text-white py-2 rounded-lg font-semibold">
-                Envoyer
+                {t.envoyerBtn}
               </button>
               <button onClick={() => setShowWhatsappPopup(false)} className="flex-1 bg-gray-200 py-2 rounded-lg">
-                Annuler
+                {t.annuler}
               </button>
             </div>
           </div>

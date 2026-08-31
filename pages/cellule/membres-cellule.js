@@ -584,6 +584,12 @@ useEffect(() => {
         (m.telephone && m.telephone.includes(search)))
   );
 
+  // ── Cellules à afficher dans le filtre : uniquement celles qui ont des membres ──
+  const celluleIdsAvecMembres = new Set(
+    membres.map((m) => m.cellule_id).filter(Boolean)
+  );
+  const celluleOptions = cellules.filter((c) => celluleIdsAvecMembres.has(c.id));
+
   // ── Render ──
   return (
     <div className="min-h-screen p-6" style={{ backgroundColor: "#333699" }}>

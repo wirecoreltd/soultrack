@@ -634,7 +634,7 @@ useEffect(() => {
           className="px-3 py-1 rounded-md border text-black text-sm"
         >
           <option value="">{t.allCellules}</option>
-          {cellules.map((c) => (
+          {celluleOptions.map((c) => (
             <option key={c.id} value={c.id}>
               {c.cellule_full || c.cellule}
             </option>

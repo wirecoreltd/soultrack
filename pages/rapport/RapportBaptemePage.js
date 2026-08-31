@@ -711,34 +711,34 @@ function RapportBaptemes() {
       if (selectedCandidats.length === 0) { alert(t.alertCandidat); return; }
 
       for (const id of selectedCandidats) {
-        const membre = candidats.find(c => c.id === id);
-        if (!membre) continue;
-
-        const evangelise_id = membre.evangelise_member_id
-          ? String(membre.evangelise_member_id)
-          : String(membre.id);
-
-        const payload = {
-          date: formData.date,
-          hommes: Number(formData.hommes) || 0,
-          femmes: Number(formData.femmes) || 0,
-          baptise_par: formData.baptise_par.trim(),
-          eglise_id: formData.eglise_id,
-          evangelise_member_id: evangelise_id,
-        };
-
-        const { error: insertError } = await supabase.from("baptemes").insert([payload]);
-        if (insertError) {
-          console.error("Erreur insert bapteme:", JSON.stringify(insertError));
-          alert(t.erreurEnregistrement + (insertError.message || insertError.details || JSON.stringify(insertError)));
-          return;
-        }
-
-        await supabase
-          .from("membres_complets")
-          .update({ bapteme_eau: "Oui", veut_se_faire_baptiser: "Non" })
-          .eq("id", id);
+      const membre = candidats.find(c => c.id === id);
+      if (!membre) continue;
+    
+      const evangelise_id = membre.evangelise_member_id
+        ? String(membre.evangelise_member_id)
+        : String(membre.id);
+    
+      const payload = {
+        date: formData.date,
+        hommes: membre.sexe === "Homme" ? 1 : 0,
+        femmes: membre.sexe === "Femme" ? 1 : 0,
+        baptise_par: formData.baptise_par.trim(),
+        eglise_id: formData.eglise_id,
+        evangelise_member_id: evangelise_id,
+      };
+    
+      const { error: insertError } = await supabase.from("baptemes").insert([payload]);
+      if (insertError) {
+        console.error("Erreur insert bapteme:", JSON.stringify(insertError));
+        alert(t.erreurEnregistrement + (insertError.message || insertError.details || JSON.stringify(insertError)));
+        return;
       }
+    
+      await supabase
+        .from("membres_complets")
+        .update({ bapteme_eau: "Oui", veut_se_faire_baptiser: "Non" })
+        .eq("id", id);
+    }
 
       setSelectedCandidats([]);
       if (userProfile) fetchCandidats(userProfile);

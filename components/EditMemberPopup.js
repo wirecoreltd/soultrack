@@ -789,6 +789,11 @@ export default function EditMemberPopup({
                       {v}
                     </option>
                   ))}
+                  {/* Si la valeur stockée ne correspond à aucune option connue,
+                      on l'affiche quand même au lieu de la perdre silencieusement */}
+                  {formData.age && !t.ages.includes(formData.age) && (
+                    <option value={formData.age}>{formData.age}</option>
+                  )}
                 </select>
               </Field>
 

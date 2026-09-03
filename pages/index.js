@@ -388,6 +388,33 @@ export default function HomePage() {
         <meta name="twitter:title" content="SoulTrack" />
         <meta name="twitter:description" content="Manage your church with clarity and precision." />
         <meta name="twitter:image" content="https://soultrack.org/logo.png" />
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "SoulTrack",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web, Android, iOS",
+            "description": "SoulTrack is a church management and pastoral care platform that helps churches track evangelism, cell groups, member follow-up, and leader development — so every person's journey is known, connected, and cared for.",
+            "url": "https://soultrack.org",
+            "image": "https://soultrack.org/logo.png",
+            "offers": {
+              "@type": "Offer",
+              "priceCurrency": "USD",
+              "availability": "https://schema.org/InStock",
+              "url": "https://soultrack.org/pricing"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "SoulTrack",
+              "url": "https://soultrack.org"
+            }
+          })
+        }}
+      />
       </Head>
 
       {/* GLOW 1 */}

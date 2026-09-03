@@ -490,10 +490,10 @@ export default function TermsPage() {
             <span onClick={() => router.push("/terms")} style={{ cursor: "pointer", textDecoration: "underline" }}>
               Terms
             </span>
-            <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+            <span onClick={() => router.push("/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>
               Privacy
             </span>
-            <span onClick={() => router.push("/site/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
+            <span onClick={() => router.push("/refund")} style={{ cursor: "pointer", textDecoration: "underline" }}>
               Refund
             </span>
           </div>

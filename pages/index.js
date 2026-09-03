@@ -16,11 +16,11 @@ const translations = {
   fr: {
     tagline:
       "Prendre soin d'une église, c'est veiller sur chaque âme avec attention, discernement et fidélité, afin qu'aucune ne se perde en chemin.",
-    heroTitle: "Pilotez votre église avec",
-    heroHighlight: "clarté",
-    heroTitleEnd: "et précision",
-    heroSub:
-      "Connecte toutes les dimensions de votre ministère pour transformer des données dispersées en une vision claire et actionnable.",
+    heroTitle: "Le logiciel de gestion d'église qui suit chaque",
+heroHighlight: "âme",
+heroTitleEnd: "",
+heroSub:
+  "Suivi de l'évangélisation, gestion des cellules, accompagnement pastoral et présence des membres — tout au même endroit, pour qu'aucune âme ne soit jamais oubliée.",
     howItWorks: "Voir comment ça marche",
     modulesLabel:
       "Chaque espace a été conçu pour aider le berger à voir, comprendre et accompagner son troupeau avec sagesse, amour et vision.",
@@ -102,11 +102,11 @@ const translations = {
   en: {
     tagline:
       "Caring for a church means watching over every soul with attention, discernment and faithfulness, so that none is ever lost along the way.",
-    heroTitle: "Lead your church with",
-    heroHighlight: "clarity",
-    heroTitleEnd: "and precision",
-    heroSub:
-      "Connects every dimension of your ministry to turn scattered data into a clear, actionable vision.",
+    heroTitle: "The church management software that tracks every",
+heroHighlight: "soul",
+heroTitleEnd: "",
+heroSub:
+  "Evangelism tracking, cell group management, pastoral care, and attendance — all in one place, so no soul is ever forgotten.",
     howItWorks: "See how it works",
     modulesLabel:
       "Every space was designed to help the shepherd see, understand and guide their flock with wisdom, love and vision.",

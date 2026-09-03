@@ -16,12 +16,15 @@ const translations = {
     signup: "Créer mon église",
     webVersion: "Version web",
     logout: "Déconnexion",
+    title: "Fonctionnement de SoulTrack — Suivi évangélisation, cellules et soin des âmes",
+    metaDescription:
+      "Découvrez comment fonctionne SoulTrack : suivi des membres, de l'évangélisation, des cellules, du soin des âmes, des enfants, des conseillers et des rapports — dans une seule application de gestion d'église.",
     nav: [
       { label: "Accueil", path: "/" },
       { label: "Fonctionnement", path: "/fonctionnement" },
-      { label: "À propos", path: "/site/about" },
+      { label: "À propos", path: "/about" },
       { label: "Pricing", path: "/pricing" },
-      { label: "Contact", path: "/site/contact" },
+      { label: "Contact", path: "/contact" },
     ],
     eyebrow: "Comment ça marche",
     heroPara: `Chaque module sert un même chemin : suivre la présence, former les membres, accompagner les baptisés, engager chacun dans le service, répondre aux besoins et veiller d'abord sur la croissance personnelle de chaque vie, puis sur celle de l'église dans son ensemble. Rien ici n'est de simples données, mais des vies confiées à notre soin.`,
@@ -140,12 +143,15 @@ const translations = {
     signup: "Create my church",
     webVersion: "Web version",
     logout: "Log out",
+    title: "How SoulTrack Works — Evangelism Tracking, Cell Groups & Soul Care Software",
+    metaDescription:
+      "See how SoulTrack works: member tracking, evangelism, cell groups, soul care, children's ministry, counselors and reports — all in one church management app.",
     nav: [
       { label: "Home", path: "/" },
       { label: "How it works", path: "/fonctionnement" },
-      { label: "About", path: "/site/about" },
+      { label: "About", path: "/about" },
       { label: "Pricing", path: "/pricing" },
-      { label: "Contact", path: "/site/contact" },
+      { label: "Contact", path: "/contact" },
     ],
     eyebrow: "How it works",
     heroPara: `Every module serves the same journey: tracking attendance, training members, accompanying the baptised, engaging each person in service, responding to needs and watching first over the personal growth of each life, then over the church as a whole. Nothing here is mere data — these are lives entrusted to our care.`,
@@ -334,12 +340,14 @@ export default function Fonctionnement() {
       style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}
     >
       <Head>
-        <title>How SoulTrack Works – Church Management Software Features</title>
-        <meta
-          name="description"
-          content="See how SoulTrack works: manage members, evangelism, cell groups, children's ministry, counseling, admin and reports — all in one church management platform."
-        />
+        <title>{t.title}</title>
+        <meta name="description" content={t.metaDescription} />
         <link rel="canonical" href="https://soultrack.org/fonctionnement" />
+      
+        <meta property="og:title" content={t.title} />
+        <meta property="og:description" content={t.metaDescription} />
+        <meta property="og:url" content="https://soultrack.org/fonctionnement" />
+        <meta property="og:type" content="website" />
       </Head>
 
       <HeaderSite />

@@ -272,8 +272,7 @@ export default function PricingPage() {
                 <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: plan.color, color: "#fff", fontSize: "11px", fontWeight: 600, padding: "3px 12px", borderRadius: "99px", whiteSpace: "nowrap" }}>
                   {t.popularBadge}
                 </div>
-              )}
-              )}
+              )}             
 
               {/* Emoji + Nom + Range */}
               <div style={{ fontSize: "24px", marginBottom: "8px" }}>{plan.emoji}</div>

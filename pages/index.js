@@ -375,14 +375,15 @@ export default function HomePage() {
       <Head>
         <title>SoulTrack</title>
         <meta name="description" content="Manage your church with clarity and precision." />
-
+        <link rel="canonical" href="https://soultrack.org/" />
+      
         <meta property="og:title" content="SoulTrack" />
         <meta property="og:description" content="Manage your church with clarity and precision." />
         <meta property="og:image" content="https://soultrack.org/logo.png" />
-        <meta property="og:url" content="https://soultrack.org" />
+        <meta property="og:url" content="https://soultrack.org/" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="SoulTrack" />
-
+      
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="SoulTrack" />
         <meta name="twitter:description" content="Manage your church with clarity and precision." />

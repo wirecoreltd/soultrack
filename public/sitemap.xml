@@ -6,37 +6,37 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://soultrack.org/site/Fonctionnement</loc>
+    <loc>https://soultrack.org/fonctionnement</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://soultrack.org/site/about</loc>
+    <loc>https://soultrack.org/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://soultrack.org/site/pricing</loc>
+    <loc>https://soultrack.org/pricing</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://soultrack.org/site/contact</loc>
+    <loc>https://soultrack.org/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://soultrack.org/site/terms</loc>
+    <loc>https://soultrack.org/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
   <url>
-    <loc>https://soultrack.org/site/privacy</loc>
+    <loc>https://soultrack.org/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
   <url>
-    <loc>https://soultrack.org/site/refund</loc>
+    <loc>https://soultrack.org/refund</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>

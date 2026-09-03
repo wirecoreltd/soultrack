@@ -14,6 +14,9 @@ const greatVibes = Great_Vibes({
 
 const translations = {
   fr: {
+    title: "SoulTrack — L'outil qui aide les bergers à ne perdre de vue aucune âme",
+    metaDescription:
+      "SoulTrack aide les bergers, responsables et disciples à suivre, accompagner et faire grandir chaque personne — de la cellule de maison à la mégaéglise multi-site. Un outil pour l'évangélisation, les cellules et le parcours de chaque âme.",
     tagline:
       "Prendre soin d'une personne, c'est veiller sur elle avec attention, discernement et fidélité, afin qu'elle ne se perde jamais en chemin.",
     heroTitle: "Le logiciel de suivi pastoral qui n'oublie",
@@ -100,8 +103,11 @@ const translations = {
     footer: "Tous droits réservés.",
   },
   en: {
+    title: "SoulTrack — L'outil qui aide les bergers à ne perdre de vue aucune âme",
+    metaDescription:
+      "SoulTrack aide les bergers, responsables et disciples à suivre, accompagner et faire grandir chaque personne — de la cellule de maison à la mégaéglise multi-site. Un outil pour l'évangélisation, les cellules et le parcours de chaque âme.",
     tagline:
-      "Caring for a person means watching over them with attention, discernment and faithfulness, so they are never lost along the way.",
+      "Prendre soin d'une personne, c'est veiller sur elle avec attention, discernement et fidélité, afin qu'elle ne se perde jamais en chemin.",
     heroTitle: "The pastoral care software that leaves",
     heroHighlight: "no one",
     heroTitleEnd: "behind",
@@ -373,52 +379,49 @@ export default function HomePage() {
       }}
     >
       <Head>
-      <title>SoulTrack</title>
-      <meta
-        name="description"
-        content="Pastoral care and church management software for cell groups, discipleship groups, churches, and megachurches — local or multi-site. Evangelism tracking and follow-up so no one is ever forgotten."
-      />
-      <link rel="canonical" href="https://soultrack.org/" />
-    
-      <meta property="og:title" content="SoulTrack" />
-      <meta property="og:description" content="Pastoral care and church management software for cell groups, discipleship groups, churches, and megachurches — local or multi-site." />
-      <meta property="og:image" content="https://soultrack.org/logo.png" />
-      <meta property="og:url" content="https://soultrack.org/" />
-      <meta property="og:type" content="website" />
-      <meta property="og:site_name" content="SoulTrack" />
-    
-      <meta name="twitter:card" content="summary" />
-      <meta name="twitter:title" content="SoulTrack" />
-      <meta name="twitter:description" content="Pastoral care and church management software for cell groups, discipleship groups, churches, and megachurches — local or multi-site." />
-      <meta name="twitter:image" content="https://soultrack.org/logo.png" />
-    
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            "name": "SoulTrack",
-            "applicationCategory": "BusinessApplication",
-            "operatingSystem": "Web, Android, iOS",
-            "description": "SoulTrack is pastoral care and church management software for any faith community — home cells, discipleship groups, local churches, megachurches, and multi-site networks worldwide. It tracks evangelism, cell groups, member follow-up, and leader development so every person's journey is known, connected, and cared for.",
-            "url": "https://soultrack.org",
-            "image": "https://soultrack.org/logo.png",
-            "offers": {
-              "@type": "Offer",
-              "priceCurrency": "USD",
-              "availability": "https://schema.org/InStock",
-              "url": "https://soultrack.org/pricing"
-            },
-            "publisher": {
-              "@type": "Organization",
+        <title>{t.title}</title>
+        <meta name="description" content={t.metaDescription} />
+        <link rel="canonical" href="https://soultrack.org/" />
+      
+        <meta property="og:title" content={t.title} />
+        <meta property="og:description" content={t.metaDescription} />
+        <meta property="og:image" content="https://soultrack.org/logo.png" />
+        <meta property="og:url" content="https://soultrack.org/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="SoulTrack" />
+      
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={t.title} />
+        <meta name="twitter:description" content={t.metaDescription} />
+        <meta name="twitter:image" content="https://soultrack.org/logo.png" />
+      
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
               "name": "SoulTrack",
-              "url": "https://soultrack.org"
-            }
-          })
-        }}
-      />
-    </Head>
+              "applicationCategory": "BusinessApplication",
+              "operatingSystem": "Web, Android, iOS",
+              "description": t.metaDescription,
+              "url": "https://soultrack.org",
+              "image": "https://soultrack.org/logo.png",
+              "offers": {
+                "@type": "Offer",
+                "priceCurrency": "USD",
+                "availability": "https://schema.org/InStock",
+                "url": "https://soultrack.org/pricing"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "SoulTrack",
+                "url": "https://soultrack.org"
+              }
+            })
+          }}
+        />
+      </Head>
 
       {/* GLOW 1 */}
       <div

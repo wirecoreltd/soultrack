@@ -12,16 +12,19 @@ const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
 const translations = {
   fr: {
     login: "Connexion",
-    signup: "Créer mon église",
-    webVersion: "Version web",
-    logout: "Déconnexion",
-    nav: [
-      { label: "Accueil", path: "/" },
-      { label: "Fonctionnement", path: "/fonctionnement" },
-      { label: "À propos", path: "/about" },
-      { label: "Pricing", path: "/pricing" },
-      { label: "Contact", path: "/site/contact" },
-    ],
+      signup: "Créer mon église",
+      webVersion: "Version web",
+      logout: "Déconnexion",
+      title: "À propos de SoulTrack — Le logiciel pensé pour prendre soin de chaque âme",
+      metaDescription:
+        "SoulTrack est une application de gestion d'église conçue pour aider les bergers à structurer le suivi de chaque membre, cellule et nouvelle âme, sans jamais perdre le cœur pastoral.",
+      nav: [
+        { label: "Accueil", path: "/" },
+        { label: "Fonctionnement", path: "/fonctionnement" },
+        { label: "À propos", path: "/about" },
+        { label: "Pricing", path: "/pricing" },
+        { label: "Contact", path: "/contact" },
+      ],
     footer: "Tous droits réservés.",
 
     heroLabel: "À propos",
@@ -86,12 +89,15 @@ const translations = {
     signup: "Create my church",
     webVersion: "Web version",
     logout: "Log out",
+    title: "About SoulTrack — Software Built to Care for Every Soul",
+    metaDescription:
+      "SoulTrack is a church management app built to help shepherds structure the follow-up of every member, cell group, and new soul — without losing the pastoral heart.",
     nav: [
       { label: "Home", path: "/" },
       { label: "How it works", path: "/fonctionnement" },
       { label: "About", path: "/about" },
       { label: "Pricing", path: "/pricing" },
-      { label: "Contact", path: "/site/contact" },
+      { label: "Contact", path: "/contact" },
     ],
     footer: "All rights reserved.",
 
@@ -220,12 +226,14 @@ export default function AboutPage() {
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}>
       <Head>
-        <title>About SoulTrack – Church Management Software Built for Shepherding</title>
-        <meta
-          name="description"
-          content="Learn why SoulTrack was built: helping church leaders structure their follow-up so every member and every new soul is known and cared for."
-        />
+        <title>{t.title}</title>
+        <meta name="description" content={t.metaDescription} />
         <link rel="canonical" href="https://soultrack.org/about" />
+      
+        <meta property="og:title" content={t.title} />
+        <meta property="og:description" content={t.metaDescription} />
+        <meta property="og:url" content="https://soultrack.org/about" />
+        <meta property="og:type" content="website" />
       </Head>
 
       {/* GLOWS */}

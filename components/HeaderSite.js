@@ -15,7 +15,7 @@ const headerTranslations = {
     logout: "Déconnexion",
     nav: [
       { label: "Accueil", path: "/HomePage" },
-      { label: "Fonctionnement", path: "/Fonctionnement" },
+      { label: "Fonctionnement", path: "/fonctionnement" },
       { label: "À propos", path: "/about" },
       { label: "Pricing", path: "/pricing" },
       { label: "Contact", path: "/contact" },
@@ -28,7 +28,7 @@ const headerTranslations = {
     logout: "Log out",
     nav: [
       { label: "Home", path: "/HomePage" },
-      { label: "How it works", path: "/Fonctionnement" },
+      { label: "How it works", path: "/fonctionnement" },
       { label: "About", path: "/about" },
       { label: "Pricing", path: "/pricing" },
       { label: "Contact", path: "/contact" },

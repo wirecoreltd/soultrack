@@ -22,6 +22,11 @@ export const metadata = {
   metadataBase: new URL("https://soultrack.org"),
   title: "SoulTrack",
   description: "Pilotez votre église avec clarté et précision.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
   openGraph: {
     title: "SoulTrack",
     description: "Pilotez votre église avec clarté et précision.",

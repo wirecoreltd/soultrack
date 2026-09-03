@@ -219,14 +219,15 @@ export default function PricingPage() {
       <Head>
         <title>SoulTrack Pricing</title>
         <meta name="description" content="Simple, transparent pricing that grows with your church — from small congregations to multi-church networks." />
-
+        <link rel="canonical" href="https://soultrack.org/pricing" />
+      
         <meta property="og:title" content="SoulTrack Pricing" />
         <meta property="og:description" content="Simple, transparent pricing that grows with your church — from small congregations to multi-church networks." />
         <meta property="og:image" content="https://soultrack.org/logo.png" />
         <meta property="og:url" content="https://soultrack.org/pricing" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="SoulTrack" />
-
+      
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="SoulTrack Pricing" />
         <meta name="twitter:description" content="Simple, transparent pricing that grows with your church — from small congregations to multi-church networks." />

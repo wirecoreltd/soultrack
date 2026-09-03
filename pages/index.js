@@ -15,20 +15,20 @@ const greatVibes = Great_Vibes({
 const translations = {
   fr: {
     tagline:
-      "Prendre soin d'une église, c'est veiller sur chaque âme avec attention, discernement et fidélité, afin qu'aucune ne se perde en chemin.",
-    heroTitle: "Le logiciel de gestion d'église qui suit chaque",
-heroHighlight: "âme",
-heroTitleEnd: "",
-heroSub:
-  "Suivi de l'évangélisation, gestion des cellules, accompagnement pastoral et présence des membres — tout au même endroit, pour qu'aucune âme ne soit jamais oubliée.",
+      "Prendre soin d'une personne, c'est veiller sur elle avec attention, discernement et fidélité, afin qu'elle ne se perde jamais en chemin.",
+    heroTitle: "Le logiciel de suivi pastoral qui n'oublie",
+    heroHighlight: "personne",
+    heroTitleEnd: "",
+    heroSub:
+      "Cellule de maison, groupe de disciples, église locale, mégaéglise, réseau multi-site en local ou à l'international : SoulTrack suit l'évangélisation, les cellules, l'accompagnement pastoral et la présence de chaque personne, quelle que soit la structure.",
     howItWorks: "Voir comment ça marche",
     modulesLabel:
-      "Chaque espace a été conçu pour aider le berger à voir, comprendre et accompagner son troupeau avec sagesse, amour et vision.",
-    modulesTitle: "Une structure complète pour accompagner chaque âme",
+      "Que vous cherchiez un logiciel de gestion d'église complet ou simplement un outil de suivi pastoral, chaque espace a été conçu pour aider le berger à voir, comprendre et accompagner chaque personne — dans un groupe de dix ou une communauté de dix mille.",
+    modulesTitle: "Une structure complète pour accompagner chaque personne, à toute échelle",
     testimonialsTitle: "Ce que disent les responsables",
     ctaTitle: "Commencez dès aujourd'hui",
     ctaSub:
-      "SoulTrack vous donne une vision vivante et stratégique pour guider votre église avec précision.",
+      "SoulTrack vous donne une vision vivante et stratégique pour accompagner chaque personne, de la cellule à la mégaéglise multi-site.",
     ctaBtn: "Démarrer SoulTrack →",
     login: "Connexion",
     signup: "Créer mon église",
@@ -101,20 +101,20 @@ heroSub:
   },
   en: {
     tagline:
-      "Caring for a church means watching over every soul with attention, discernment and faithfulness, so that none is ever lost along the way.",
-    heroTitle: "The church management software that tracks every",
-heroHighlight: "soul",
-heroTitleEnd: "",
-heroSub:
-  "Evangelism tracking, cell group management, pastoral care, and attendance — all in one place, so no soul is ever forgotten.",
+      "Caring for a person means watching over them with attention, discernment and faithfulness, so they are never lost along the way.",
+    heroTitle: "The pastoral care software that leaves",
+    heroHighlight: "no one",
+    heroTitleEnd: "behind",
+    heroSub:
+      "Home cell, discipleship group, local church, megachurch, or multi-site network — local or global: SoulTrack tracks evangelism, cell groups, pastoral care, and attendance for every person, whatever the structure around them.",
     howItWorks: "See how it works",
     modulesLabel:
-      "Every space was designed to help the shepherd see, understand and guide their flock with wisdom, love and vision.",
-    modulesTitle: "A complete structure to accompany every soul",
+      "Whether you're looking for complete church management software or simply a pastoral care tracking tool, every space was designed to help the shepherd see, understand and guide every person — in a group of ten or a community of ten thousand.",
+    modulesTitle: "A complete structure to accompany every person, at any scale",
     testimonialsTitle: "What leaders are saying",
     ctaTitle: "Get started today",
     ctaSub:
-      "SoulTrack gives you a living, strategic vision to lead your church with precision.",
+      "SoulTrack gives you a living, strategic vision to accompany every person — from a single cell to a multi-site megachurch.",
     ctaBtn: "Start SoulTrack →",
     login: "Log in",
     signup: "Create my church",
@@ -373,22 +373,25 @@ export default function HomePage() {
       }}
     >
       <Head>
-        <title>SoulTrack</title>
-        <meta name="description" content="Manage your church with clarity and precision." />
-        <link rel="canonical" href="https://soultrack.org/" />
-      
-        <meta property="og:title" content="SoulTrack" />
-        <meta property="og:description" content="Manage your church with clarity and precision." />
-        <meta property="og:image" content="https://soultrack.org/logo.png" />
-        <meta property="og:url" content="https://soultrack.org/" />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="SoulTrack" />
-      
-        <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="SoulTrack" />
-        <meta name="twitter:description" content="Manage your church with clarity and precision." />
-        <meta name="twitter:image" content="https://soultrack.org/logo.png" />
-
+      <title>SoulTrack</title>
+      <meta
+        name="description"
+        content="Pastoral care and church management software for cell groups, discipleship groups, churches, and megachurches — local or multi-site. Evangelism tracking and follow-up so no one is ever forgotten."
+      />
+      <link rel="canonical" href="https://soultrack.org/" />
+    
+      <meta property="og:title" content="SoulTrack" />
+      <meta property="og:description" content="Pastoral care and church management software for cell groups, discipleship groups, churches, and megachurches — local or multi-site." />
+      <meta property="og:image" content="https://soultrack.org/logo.png" />
+      <meta property="og:url" content="https://soultrack.org/" />
+      <meta property="og:type" content="website" />
+      <meta property="og:site_name" content="SoulTrack" />
+    
+      <meta name="twitter:card" content="summary" />
+      <meta name="twitter:title" content="SoulTrack" />
+      <meta name="twitter:description" content="Pastoral care and church management software for cell groups, discipleship groups, churches, and megachurches — local or multi-site." />
+      <meta name="twitter:image" content="https://soultrack.org/logo.png" />
+    
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -398,7 +401,7 @@ export default function HomePage() {
             "name": "SoulTrack",
             "applicationCategory": "BusinessApplication",
             "operatingSystem": "Web, Android, iOS",
-            "description": "SoulTrack is a church management and pastoral care platform that helps churches track evangelism, cell groups, member follow-up, and leader development — so every person's journey is known, connected, and cared for.",
+            "description": "SoulTrack is pastoral care and church management software for any faith community — home cells, discipleship groups, local churches, megachurches, and multi-site networks worldwide. It tracks evangelism, cell groups, member follow-up, and leader development so every person's journey is known, connected, and cared for.",
             "url": "https://soultrack.org",
             "image": "https://soultrack.org/logo.png",
             "offers": {
@@ -415,7 +418,7 @@ export default function HomePage() {
           })
         }}
       />
-      </Head>
+    </Head>
 
       {/* GLOW 1 */}
       <div
@@ -516,7 +519,7 @@ export default function HomePage() {
 
         <div style={{ position: "relative", zIndex: 1, marginBottom: "5px" }}>
           <button
-            onClick={() => router.push("/site/Fonctionnement")}
+            onClick={() => router.push("/fonctionnement")}
             style={{
               background: "transparent",
               color: "#fbbf24",
@@ -937,7 +940,7 @@ export default function HomePage() {
           {t.ctaSub}
         </p>
         <button
-          onClick={() => router.push("/site/pricing")}
+          onClick={() => router.push("/pricing")}
           style={{
             background: "#fff",
             color: "#fbbf24",

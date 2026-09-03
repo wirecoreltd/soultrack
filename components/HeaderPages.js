@@ -359,7 +359,7 @@ export default function HeaderPages() {
           <>
             <div
               className="relative w-12 h-12 mb-2 cursor-pointer group"
-              onClick={() => router.push("/index")}
+              onClick={() => router.push("/hub")}
             >
               {logoUrl ? (
                 <>

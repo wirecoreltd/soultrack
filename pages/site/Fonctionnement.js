@@ -1,10 +1,11 @@
+"use client";
+
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import Head from "next/head";
+import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
-import supabase from "../lib/supabaseClient";
-import { useLang } from "../hooks/useLang";
-import HeaderSite from "../components/HeaderSite";
+import supabase from "../../lib/supabaseClient";
+import { useLang } from "../../hooks/useLang";
+import HeaderSite from "../../components/HeaderSite";
 
 import { Great_Vibes } from "next/font/google";
 const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
@@ -17,10 +18,10 @@ const translations = {
     webVersion: "Version web",
     logout: "Déconnexion",
     nav: [
-      { label: "Accueil", path: "/" },
-      { label: "Fonctionnement", path: "/fonctionnement" },
+      { label: "Accueil", path: "/site/HomePage" },
+      { label: "Fonctionnement", path: "/site/Fonctionnement" },
       { label: "À propos", path: "/site/about" },
-      { label: "Pricing", path: "/pricing" },
+      { label: "Pricing", path: "/site/pricing" },
       { label: "Contact", path: "/site/contact" },
     ],
     eyebrow: "Comment ça marche",
@@ -141,10 +142,10 @@ const translations = {
     webVersion: "Web version",
     logout: "Log out",
     nav: [
-      { label: "Home", path: "/" },
-      { label: "How it works", path: "/fonctionnement" },
+      { label: "Home", path: "/site/HomePage" },
+      { label: "How it works", path: "/site/Fonctionnement" },
       { label: "About", path: "/site/about" },
-      { label: "Pricing", path: "/pricing" },
+      { label: "Pricing", path: "/site/pricing" },
       { label: "Contact", path: "/site/contact" },
     ],
     eyebrow: "How it works",
@@ -237,7 +238,7 @@ const translations = {
           { icon: "🛡️", title: "Permissions", desc: "Assign responsibilities and ensure secure access to every area of the platform." },
           { icon: "🔗", title: "Church Links", desc: "Connect churches and oversee linked organisations and structures." },
           { icon: "⚙️", title: "Configuration", desc: "Update your church's information, settings and organisational profile." },
-          { icon: "💳", title: "Subscription", desc: "Manage your church's subscription, billing and related services." },
+          { icon: "💳", title: "Subscription", desc: "Manage your church's subscription, billing and related services." },,
         ],
       },
       {
@@ -276,6 +277,7 @@ function langBtnStyle(active) {
 
 export default function Fonctionnement() {
   const router = useRouter();
+  const pathname = usePathname();
 
   const [openMenu, setOpenMenu] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -333,15 +335,7 @@ export default function Fonctionnement() {
     <div
       style={{ background: "#333699", minHeight: "100vh", position: "relative", overflowX: "hidden" }}
     >
-      <Head>
-        <title>How SoulTrack Works – Church Management Software Features</title>
-        <meta
-          name="description"
-          content="See how SoulTrack works: manage members, evangelism, cell groups, children's ministry, counseling, admin and reports — all in one church management platform."
-        />
-        <link rel="canonical" href="https://soultrack.org/fonctionnement" />
-      </Head>
-
+      
       <HeaderSite />
 
       {/* ───── CORPS ───── */}

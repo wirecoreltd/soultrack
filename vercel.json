@@ -9,6 +9,21 @@
       "source": "/site/pricing",
       "destination": "/pricing",
       "permanent": true
+    },
+    {
+      "source": "/site/Fonctionnement",
+      "destination": "/fonctionnement",
+      "permanent": true
+    },
+    {
+      "source": "/site/about",
+      "destination": "/about",
+      "permanent": true
+    },
+    {
+      "source": "/site/contact",
+      "destination": "/contact",
+      "permanent": true
     }
   ]
 }

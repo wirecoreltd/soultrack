@@ -325,9 +325,9 @@ export default function PricingPage() {
         <div style={{ maxWidth: "1100px", margin: "0 auto", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "14px" }}>
           <div>© {new Date().getFullYear()} SoulTrack. {t.footer}</div>
           <div style={{ marginTop: "10px", display: "flex", justifyContent: "center", gap: "16px", flexWrap: "wrap" }}>
-            <span onClick={() => router.push("/site/terms")}   style={{ cursor: "pointer", textDecoration: "underline" }}>Terms</span>
-            <span onClick={() => router.push("/site/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>Privacy</span>
-            <span onClick={() => router.push("/site/refund")}  style={{ cursor: "pointer", textDecoration: "underline" }}>Refund</span>
+            <span onClick={() => router.push("/terms")}   style={{ cursor: "pointer", textDecoration: "underline" }}>Terms</span>
+            <span onClick={() => router.push("/privacy")} style={{ cursor: "pointer", textDecoration: "underline" }}>Privacy</span>
+            <span onClick={() => router.push("/refund")}  style={{ cursor: "pointer", textDecoration: "underline" }}>Refund</span>
           </div>
         </div>
       </footer>

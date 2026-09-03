@@ -14,7 +14,7 @@ const headerTranslations = {
     webVersion: "Version web",
     logout: "Déconnexion",
     nav: [
-      { label: "Accueil", path: "/HomePage" },
+      { label: "Accueil", path: "/" },
       { label: "Fonctionnement", path: "/fonctionnement" },
       { label: "À propos", path: "/about" },
       { label: "Pricing", path: "/pricing" },
@@ -27,7 +27,7 @@ const headerTranslations = {
     webVersion: "Web version",
     logout: "Log out",
     nav: [
-      { label: "Home", path: "/HomePage" },
+      { label: "Home", path: "/" },
       { label: "How it works", path: "/fonctionnement" },
       { label: "About", path: "/about" },
       { label: "Pricing", path: "/pricing" },

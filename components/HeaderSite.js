@@ -14,11 +14,11 @@ const headerTranslations = {
     webVersion: "Version web",
     logout: "Déconnexion",
     nav: [
-      { label: "Accueil", path: "/site/HomePage" },
+      { label: "Accueil", path: "/HomePage" },
       { label: "Fonctionnement", path: "/Fonctionnement" },
-      { label: "À propos", path: "/site/about" },
+      { label: "À propos", path: "/about" },
       { label: "Pricing", path: "/pricing" },
-      { label: "Contact", path: "/site/contact" },
+      { label: "Contact", path: "/contact" },
     ],
   },
   en: {
@@ -27,11 +27,11 @@ const headerTranslations = {
     webVersion: "Web version",
     logout: "Log out",
     nav: [
-      { label: "Home", path: "/site/HomePage" },
+      { label: "Home", path: "/HomePage" },
       { label: "How it works", path: "/Fonctionnement" },
-      { label: "About", path: "/site/about" },
+      { label: "About", path: "/about" },
       { label: "Pricing", path: "/pricing" },
-      { label: "Contact", path: "/site/contact" },
+      { label: "Contact", path: "/contact" },
     ],
   },
 };

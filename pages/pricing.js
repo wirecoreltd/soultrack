@@ -17,10 +17,10 @@ const translations = {
     logout: "Déconnexion",
     nav: [
       { label: "Accueil",        path: "/" },
-      { label: "Fonctionnement", path: "/site/Fonctionnement" },
-      { label: "À propos",       path: "/site/about" },
+      { label: "Fonctionnement", path: "/Fonctionnement" },
+      { label: "À propos",       path: "/about" },
       { label: "Pricing",        path: "/pricing" },
-      { label: "Contact",        path: "/site/contact" },
+      { label: "Contact",        path: "/contact" },
     ],
     heroTitle:     "Une structure adaptée à votre",
     heroHighlight: "croissance",

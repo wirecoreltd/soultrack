@@ -24,6 +24,11 @@
       "source": "/site/contact",
       "destination": "/contact",
       "permanent": true
+    },
+    {
+      "source": "/site/terms",
+      "destination": "/terms",
+      "permanent": true
     }
   ]
 }

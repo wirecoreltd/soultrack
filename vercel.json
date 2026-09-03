@@ -4,6 +4,11 @@
       "source": "/site/HomePage",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/site/pricing",
+      "destination": "/pricing",
+      "permanent": true
     }
   ]
 }

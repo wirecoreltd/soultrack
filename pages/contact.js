@@ -16,6 +16,9 @@ const translations = {
     signup: "Créer mon église",
     webVersion: "Version web",
     logout: "Déconnexion",
+    title: "Contact SoulTrack — Support, suggestions et témoignages",
+    metaDescription:
+      "Contactez l'équipe SoulTrack : posez une question, partagez un retour, faites une demande pour un réseau d'églises, ou envoyez-nous votre témoignage.",
     nav: [
       { label: "Accueil", path: "/" },
       { label: "Fonctionnement", path: "/fonctionnement" },
@@ -108,6 +111,9 @@ const translations = {
     signup: "Create my church",
     webVersion: "Web version",
     logout: "Log out",
+    title: "Contact SoulTrack — Support, Suggestions & Testimonies",
+    metaDescription:
+      "Get in touch with the SoulTrack team: ask a question, share feedback, request a church network plan, or send us your testimony.",
     nav: [
       { label: "Home", path: "/" },
       { label: "How it works", path: "/fonctionnement" },
@@ -394,12 +400,14 @@ export default function ContactPage() {
   return (
     <div style={{ background: "#333699", minHeight: "100vh", position: "relative" }}>
       <Head>
-        <title>Contact SoulTrack – Support, Suggestions & Testimonies</title>
-        <meta
-          name="description"
-          content="Get in touch with the SoulTrack team: ask a question, share feedback, request a church network plan, or send us your testimony."
-        />
+        <title>{t.title}</title>
+        <meta name="description" content={t.metaDescription} />
         <link rel="canonical" href="https://soultrack.org/contact" />
+      
+        <meta property="og:title" content={t.title} />
+        <meta property="og:description" content={t.metaDescription} />
+        <meta property="og:url" content="https://soultrack.org/contact" />
+        <meta property="og:type" content="website" />
       </Head>
 
       <HeaderSite />

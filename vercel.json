@@ -26,6 +26,16 @@
       "permanent": true
     },
     {
+      "source": "/site/privacy",
+      "destination": "/privacy",
+      "permanent": true
+    },
+    {
+      "source": "/site/refund",
+      "destination": "/refund",
+      "permanent": true
+    },
+    {
       "source": "/site/terms",
       "destination": "/terms",
       "permanent": true

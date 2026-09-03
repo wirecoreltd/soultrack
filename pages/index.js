@@ -14,9 +14,9 @@ const greatVibes = Great_Vibes({
 
 const translations = {
   fr: {
-    title: "SoulTrack — L'outil qui aide les bergers à ne perdre de vue aucune âme",
+    title: "SoulTrack — L'application de gestion d'église qui aide les bergers à ne perdre de vue aucune âme",
     metaDescription:
-      "SoulTrack aide les bergers, responsables et disciples à suivre, accompagner et faire grandir chaque personne — de la cellule de maison à la mégaéglise multi-site. Un outil pour l'évangélisation, les cellules et le parcours de chaque âme.",
+      "SoulTrack est une application de gestion d'église qui aide les bergers, responsables et disciples à suivre, accompagner et faire grandir chaque personne — de la cellule de maison à la mégaéglise multi-site. Un outil pour l'évangélisation, les cellules et le parcours de chaque âme.",
     tagline:
       "Prendre soin d'une personne, c'est veiller sur elle avec attention, discernement et fidélité, afin qu'elle ne se perde jamais en chemin.",
     heroTitle: "Le logiciel de suivi pastoral qui n'oublie",
@@ -39,10 +39,10 @@ const translations = {
     logout: "Déconnexion",
     nav: [
       { label: "Accueil", path: "/" },
-      { label: "Fonctionnement", path: "/site/Fonctionnement" },
-      { label: "À propos", path: "/site/about" },
-      { label: "Pricing", path: "/site/pricing" },
-      { label: "Contact", path: "/site/contact" },
+      { label: "Fonctionnement", path: "/fonctionnement" },
+      { label: "À propos", path: "/about" },
+      { label: "Pricing", path: "/pricing" },
+      { label: "Contact", path: "/contact" },
     ],
     features: [
       {
@@ -103,11 +103,11 @@ const translations = {
     footer: "Tous droits réservés.",
   },
   en: {
-    title: "SoulTrack — L'outil qui aide les bergers à ne perdre de vue aucune âme",
+    title: "SoulTrack — Church Management App That Helps You Never Lose Sight of a Soul",
     metaDescription:
-      "SoulTrack aide les bergers, responsables et disciples à suivre, accompagner et faire grandir chaque personne — de la cellule de maison à la mégaéglise multi-site. Un outil pour l'évangélisation, les cellules et le parcours de chaque âme.",
+      "SoulTrack is a church management app that helps shepherds, leaders, and disciples track, follow up with, and grow every person — from a home cell to a multi-site megachurch. A tool for evangelism, cell life, and the journey of every soul.",
     tagline:
-      "Prendre soin d'une personne, c'est veiller sur elle avec attention, discernement et fidélité, afin qu'elle ne se perde jamais en chemin.",
+      "Caring for a person means watching over them with attention, discernment and faithfulness, so they are never lost along the way.",
     heroTitle: "The pastoral care software that leaves",
     heroHighlight: "no one",
     heroTitleEnd: "behind",
@@ -128,10 +128,10 @@ const translations = {
     logout: "Log out",
     nav: [
       { label: "Home", path: "/" },
-      { label: "How it works", path: "/site/Fonctionnement" },
-      { label: "About", path: "/site/about" },
-      { label: "Pricing", path: "/site/pricing" },
-      { label: "Contact", path: "/site/contact" },
+      { label: "How it works", path: "/fonctionnement" },
+      { label: "About", path: "/about" },
+      { label: "Pricing", path: "/pricing" },
+      { label: "Contact", path: "/contact" },
     ],
     features: [
       {

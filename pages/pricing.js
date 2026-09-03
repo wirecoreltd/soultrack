@@ -11,17 +11,21 @@ const greatVibes = Great_Vibes({ subsets: ["latin"], weight: "400" });
 
 const translations = {
   fr: {
-    login: "Connexion",
-    signup: "Créer mon église",
-    webVersion: "Version web",
-    logout: "Déconnexion",
-    nav: [
-      { label: "Accueil",        path: "/" },
-      { label: "Fonctionnement", path: "/Fonctionnement" },
-      { label: "À propos",       path: "/about" },
-      { label: "Pricing",        path: "/pricing" },
-      { label: "Contact",        path: "/contact" },
-    ],
+     login: "Connexion",
+      signup: "Créer mon église",
+      webVersion: "Version web",
+      logout: "Déconnexion",
+      title: "Tarifs SoulTrack — Logiciel de gestion d'église, de la cellule à la mégaéglise",
+      metaDescription:
+        "Des tarifs simples et transparents qui grandissent avec votre église : de la petite cellule à un réseau multi-sites. Découvrez le plan SoulTrack adapté à votre communauté.",
+      popularBadge: "Populaire",
+      nav: [
+        { label: "Accueil",        path: "/" },
+        { label: "Fonctionnement", path: "/fonctionnement" },
+        { label: "À propos",       path: "/about" },
+        { label: "Pricing",        path: "/pricing" },
+        { label: "Contact",        path: "/contact" },
+      ],
     heroTitle:     "Une structure adaptée à votre",
     heroHighlight: "croissance",
     heroSub:       "Choisissez votre plan et on commence.",
@@ -78,16 +82,20 @@ const translations = {
     ],
   },
   en: {
-    login:    "Log in",
-    signup:   "Create my church",
+    login: "Log in",
+    signup: "Create my church",
     webVersion: "Web version",
     logout: "Log out",
+    title: "SoulTrack Pricing — Church Management Software, From Cell Group to Megachurch",
+    metaDescription:
+      "Simple, transparent pricing that grows with your church — from a single home cell to a multi-site megachurch network. Find the SoulTrack plan for your community.",
+    popularBadge: "Popular",
     nav: [
       { label: "Home",         path: "/" },
-      { label: "How it works", path: "/site/Fonctionnement" },
-      { label: "About",        path: "/site/about" },
+      { label: "How it works", path: "/fonctionnement" },
+      { label: "About",        path: "/about" },
       { label: "Pricing",      path: "/pricing" },
-      { label: "Contact",      path: "/site/contact" },
+      { label: "Contact",      path: "/contact" },
     ],
     heroTitle:     "A structure adapted to your",
     heroHighlight: "growth",
@@ -202,7 +210,7 @@ export default function PricingPage() {
 
   async function handleChoosePlan(planId, dureeId) {
     if (planId === "enterprise") {
-      router.push("/site/contact?type=reseaux");
+      router.push("/contact?type=reseaux");
       return;
     }
     const { data: { user } } = await supabase.auth.getUser();
@@ -217,20 +225,20 @@ export default function PricingPage() {
   return (
     <div style={{ background: "#333699", minHeight: "100vh", overflowX: "hidden" }}>
       <Head>
-        <title>SoulTrack Pricing</title>
-        <meta name="description" content="Simple, transparent pricing that grows with your church — from small congregations to multi-church networks." />
+        <title>{t.title}</title>
+        <meta name="description" content={t.metaDescription} />
         <link rel="canonical" href="https://soultrack.org/pricing" />
       
-        <meta property="og:title" content="SoulTrack Pricing" />
-        <meta property="og:description" content="Simple, transparent pricing that grows with your church — from small congregations to multi-church networks." />
+        <meta property="og:title" content={t.title} />
+        <meta property="og:description" content={t.metaDescription} />
         <meta property="og:image" content="https://soultrack.org/logo.png" />
         <meta property="og:url" content="https://soultrack.org/pricing" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="SoulTrack" />
       
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content="SoulTrack Pricing" />
-        <meta name="twitter:description" content="Simple, transparent pricing that grows with your church — from small congregations to multi-church networks." />
+        <meta name="twitter:title" content={t.title} />
+        <meta name="twitter:description" content={t.metaDescription} />
         <meta name="twitter:image" content="https://soultrack.org/logo.png" />
       </Head>
 
@@ -262,8 +270,9 @@ export default function PricingPage() {
               {/* Badge populaire */}
               {plan.popular && (
                 <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: plan.color, color: "#fff", fontSize: "11px", fontWeight: 600, padding: "3px 12px", borderRadius: "99px", whiteSpace: "nowrap" }}>
-                  Populaire
+                  {t.popularBadge}
                 </div>
+              )}
               )}
 
               {/* Emoji + Nom + Range */}

@@ -2,5 +2,16 @@ User-agent: *
 Allow: /
 Disallow: /login
 Disallow: /api/
+Disallow: /hub
+Disallow: /membres/
+Disallow: /evangelisation/evangelisation-hub/
+Disallow: /cellule/cellules-hub/
+Disallow: /conseiller/conseiller-hub/
+Disallow: /famille/familles-hub/
+Disallow: /Presence/
+Disallow: /rapport/rapport-hub/
+Disallow: /admin/notifications/
+Disallow: /enfants/enfants-hub/
+Disallow: /administrateur/administrateur/
 
 Sitemap: https://soultrack.org/sitemap.xml

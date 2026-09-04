@@ -140,14 +140,16 @@ export default function HeaderSite({ showSignup = true }) {
             flexShrink: 0,
           }}
         >
-          <Image src="/logo.png" alt="SoulTrack" width={38} height={38} />
+          <Image src="/logo.png" alt="SoulTrack" width={30} height={30} />
           <span
             className={greatVibes.className}
             style={{
               color: "#fff",
-              fontSize: "24px",
+              fontSize: "20px",
               lineHeight: 1,
               whiteSpace: "nowrap",
+              position: "relative",
+              top: "3px",
             }}
           >
             SoulTrack

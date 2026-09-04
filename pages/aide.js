@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import { useLang } from "../hooks/useLang";
 import HeaderSite from "../components/HeaderSite";
+import { categories } from "../lib/aideContent";
 
 const translations = {
   fr: {
@@ -15,85 +16,6 @@ const translations = {
     noResults: "Aucun tutoriel ne correspond à votre recherche.",
     tutoLabel: (n) => `${n} tutoriel${n > 1 ? "s" : ""}`,
     footer: "Tous droits réservés.",
-    categories: [
-      {
-        slug: "mise-en-route",
-        emoji: "🚀",
-        title: "Mise en route",
-        description: "Créer votre église, se connecter, télécharger l'app",
-        count: 5,
-      },
-      {
-        slug: "membres",
-        emoji: "🧭",
-        title: "Membres",
-        description: "Suivi des membres",
-        count: 6,
-      },
-      {
-        slug: "evangelisation",
-        emoji: "✝️",
-        title: "Évangélisation",
-        description: "Suivre les nouvelles âmes et leur parcours",
-        count: 4,
-      },
-      {
-        slug: "cellules",
-        emoji: "🏠",
-        title: "Cellules",
-        description: "Créer et gérer vos cellules et responsables",
-        count: 6,
-      },
-      {
-        slug: "conseiller",
-        emoji: "🤝",
-        title: "Conseiller",
-        description: "Accompagner les membres dans leur parcours",
-        count: 4,
-      },
-      {
-        slug: "familles",
-        emoji: "👑",
-        title: "Familles",
-        description: "Organiser et suivre les familles",
-        count: 4,
-      },
-      {
-        slug: "espace-enfants",
-        emoji: "🦁",
-        title: "Espace enfants",
-        description: "Gérer le ministère enfants",
-        count: 3,
-      },
-      {
-        slug: "presences",
-        emoji: "✍🏻",
-        title: "Registre de présences",
-        description: "Check-in et suivi des présences",
-        count: 3,
-      },
-      {
-        slug: "rapports",
-        emoji: "📊",
-        title: "Rapports",
-        description: "Statistiques, exports et vision globale",
-        count: 5,
-      },
-      {
-        slug: "baptemes",
-        emoji: "💧",
-        title: "Baptêmes",
-        description: "Suivre les baptêmes et leur préparation",
-        count: 2,
-      },
-      {
-        slug: "espace-administrateur",
-        emoji: "⚙️",
-        title: "Espace administrateur",
-        description: "Paramètres et gestion de l'église",
-        count: 4,
-      },
-    ],
   },
   en: {
     title: "Help Center — SoulTrack",
@@ -105,85 +27,6 @@ const translations = {
     noResults: "No tutorial matches your search.",
     tutoLabel: (n) => `${n} tutorial${n > 1 ? "s" : ""}`,
     footer: "All rights reserved.",
-    categories: [
-      {
-        slug: "mise-en-route",
-        emoji: "🚀",
-        title: "Getting started",
-        description: "Create your church, log in, download the app",
-        count: 5,
-      },
-      {
-        slug: "membres",
-        emoji: "🧭",
-        title: "Members",
-        description: "Member tracking",
-        count: 6,
-      },
-      {
-        slug: "evangelisation",
-        emoji: "✝️",
-        title: "Evangelism",
-        description: "Follow up new souls and their journey",
-        count: 4,
-      },
-      {
-        slug: "cellules",
-        emoji: "🏠",
-        title: "Cell groups",
-        description: "Create and manage cell groups and leaders",
-        count: 6,
-      },
-      {
-        slug: "conseiller",
-        emoji: "🤝",
-        title: "Counsellor",
-        description: "Accompany members through their journey",
-        count: 4,
-      },
-      {
-        slug: "familles",
-        emoji: "👑",
-        title: "Families",
-        description: "Organise and follow up families",
-        count: 4,
-      },
-      {
-        slug: "espace-enfants",
-        emoji: "🦁",
-        title: "Children's space",
-        description: "Manage the children's ministry",
-        count: 3,
-      },
-      {
-        slug: "presences",
-        emoji: "✍🏻",
-        title: "Attendance register",
-        description: "Check-in and attendance tracking",
-        count: 3,
-      },
-      {
-        slug: "rapports",
-        emoji: "📊",
-        title: "Reports",
-        description: "Statistics, exports and overview",
-        count: 5,
-      },
-      {
-        slug: "baptemes",
-        emoji: "💧",
-        title: "Baptisms",
-        description: "Track baptisms and their preparation",
-        count: 2,
-      },
-      {
-        slug: "espace-administrateur",
-        emoji: "⚙️",
-        title: "Admin space",
-        description: "Church settings and administration",
-        count: 4,
-      },
-    ],
   },
 };
 
@@ -193,8 +36,9 @@ export default function AidePage() {
   const [query, setQuery] = useState("");
 
   const t = translations[lang];
+  const cats = categories[lang];
 
-  const filteredCategories = t.categories.filter((c) =>
+  const filteredCategories = cats.filter((c) =>
     (c.title + " " + c.description)
       .toLowerCase()
       .includes(query.trim().toLowerCase())

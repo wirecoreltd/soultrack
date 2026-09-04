@@ -2,13 +2,12 @@ module.exports = {
   appId: 'org.soultrack.app',
   appName: 'SoulTrack',
   server: {
-    url: 'https://www.soultrack.org/login',
+    url: 'https://soultrack.org/login',   // ← retirer le "www."
     cleartext: false,
+    allowNavigation: ['soultrack.org', '*.soultrack.org'],  // ← filet de sécurité
   },
   android: {
     allowMixedContent: true,
-    // Edge-to-edge géré directement au niveau natif Android 
-    // (voir android:windowOptOutEdgeToEdgeEnforcement dans le workflow).
   },
   plugins: {
     PushNotifications: {

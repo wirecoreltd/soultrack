@@ -2,8 +2,18 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
+import { Great_Vibes } from "next/font/google";
 import supabase from "../lib/supabaseClient"; // ⚠️ adapte le chemin selon l'emplacement de ce fichier
 import { useLang } from "../hooks/useLang"; // ⚠️ adapte le chemin selon l'emplacement de ce fichier
+
+// ── Police du logo ────────────────────────────────────────────────────────
+// C'était importée dans HomePage.js mais jamais appliquée, et absente ici :
+// le fallback CSS "cursive" du navigateur s'affichait à la place de Great Vibes.
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+});
 
 // Traductions spécifiques au header uniquement.
 // (les traductions propres à chaque page restent dans chaque page)
@@ -132,11 +142,11 @@ export default function HeaderSite({ showSignup = true }) {
         >
           <Image src="/logo.png" alt="SoulTrack" width={38} height={38} />
           <span
+            className={greatVibes.className}
             style={{
               color: "#fff",
-              fontSize: "19px",
-              fontWeight: 500,
-              fontFamily: "'Great Vibes', cursive",
+              fontSize: "24px",
+              lineHeight: 1,
               whiteSpace: "nowrap",
             }}
           >

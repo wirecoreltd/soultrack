@@ -17,6 +17,8 @@ const translations = {
     title: "SoulTrack — L'application de gestion d'église qui aide les bergers à ne perdre de vue aucune âme",
     metaDescription:
       "SoulTrack est une application de gestion d'église qui aide les bergers, responsables et disciples à suivre, accompagner et faire grandir chaque personne — de la cellule de maison à la mégaéglise multi-site. Un outil pour l'évangélisation, les cellules et le parcours de chaque âme.",
+    heroKicker: "SoulTrack",
+    heroKickerSub: "Chaque personne compte",
     tagline:
       "Prendre soin d'une personne, c'est veiller sur elle avec attention, discernement et fidélité, afin qu'elle ne se perde jamais en chemin.",
     heroTitle: "Le logiciel de suivi pastoral qui n'oublie",
@@ -106,6 +108,8 @@ const translations = {
     title: "SoulTrack — Church Management App That Helps You Never Lose Sight of a Soul",
     metaDescription:
       "SoulTrack is a church management app that helps shepherds, leaders, and disciples track, follow up with, and grow every person — from a home cell to a multi-site megachurch. A tool for evangelism, cell life, and the journey of every soul.",
+    heroKicker: "SoulTrack",
+    heroKickerSub: "Every one counts",
     tagline:
       "Caring for a person means watching over them with attention, discernment and faithfulness, so they are never lost along the way.",
     heroTitle: "The pastoral care software that leaves",
@@ -475,6 +479,39 @@ export default function HomePage() {
           width: "100%",
         }}
       >
+        {/* ── Titre SoulTrack + baseline (police normale) ── */}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+            marginBottom: "18px",
+          }}
+        >
+          <div
+            style={{
+              color: "#fff",
+              fontSize: "clamp(1.4rem, 4vw, 2.2rem)",
+              fontWeight: 600,
+              letterSpacing: "0.01em",
+              lineHeight: 1.1,
+            }}
+          >
+            {t.heroKicker}
+          </div>
+          <div
+            style={{
+              color: "#fbbf24",
+              fontSize: "13px",
+              fontWeight: 500,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              marginTop: "6px",
+            }}
+          >
+            {t.heroKickerSub}
+          </div>
+        </div>
+
         <p
           style={{
             position: "relative",
@@ -946,7 +983,7 @@ export default function HomePage() {
           onClick={() => router.push("/pricing")}
           style={{
             background: "#fff",
-            color: "#fbbf24",
+            color: "#333699",
             border: "none",
             padding: "14px 36px",
             borderRadius: "10px",

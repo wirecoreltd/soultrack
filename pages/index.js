@@ -490,10 +490,9 @@ export default function HomePage() {
           <div
             style={{
               color: "#fff",
-              fontSize: "clamp(1.4rem, 4vw, 2.2rem)",
-              fontWeight: 600,
-              letterSpacing: "0.01em",
-              lineHeight: 1.1,
+              fontSize: "clamp(1.6rem, 5vw, 3.2rem)",
+              fontWeight: 500,
+              lineHeight: 1.15,
             }}
           >
             {t.heroKicker}
@@ -520,6 +519,7 @@ export default function HomePage() {
             fontSize: "16px",
             maxWidth: "500px",
             lineHeight: 1.7,
+            letterSpacing: "normal",
             marginBottom: "50px",
           }}
         >
@@ -530,7 +530,7 @@ export default function HomePage() {
           style={{
             position: "relative",
             zIndex: 1,
-            fontSize: "clamp(1.6rem, 5vw, 3.2rem)",
+            fontSize: "clamp(1.4rem, 3vw, 2.2rem)",
             fontWeight: 500,
             color: "#fff",
             lineHeight: 1.15,
@@ -551,6 +551,7 @@ export default function HomePage() {
             fontSize: "16px",
             maxWidth: "500px",
             lineHeight: 1.7,
+            letterSpacing: "normal",
             marginBottom: "50px",
           }}
         >
@@ -592,10 +593,10 @@ export default function HomePage() {
             color: "#fff",
             fontSize: "16px",
             padding: "10px 24px 20px",
-            letterSpacing: "0.08em",
-            maxWidth: "560px",
+            letterSpacing: "normal",
+            maxWidth: "500px",
             margin: "0 auto 14px",
-            lineHeight: 1.6,
+            lineHeight: 1.7,
           }}
         >
           {t.modulesLabel}

@@ -29,7 +29,7 @@ const headerTranslations = {
       { label: "À propos", path: "/about" },
       { label: "Pricing", path: "/pricing" },
       { label: "Contact", path: "/contact" },
-      { label: "Aide", path: "/aide" },
+      { label: "Tuto", path: "/aide" },
     ],
   },
   en: {
@@ -43,7 +43,7 @@ const headerTranslations = {
       { label: "About", path: "/about" },
       { label: "Pricing", path: "/pricing" },
       { label: "Contact", path: "/contact" },
-      { label: "Support", path: "/aide" },
+      { label: "Tuto", path: "/aide" },
     ],
   },
 };

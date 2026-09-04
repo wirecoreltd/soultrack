@@ -489,8 +489,8 @@ export default function HomePage() {
         >
           <div
             style={{
-              color: "#fff",
-              fontSize: "clamp(1.6rem, 5vw, 3.2rem)",
+              color: "#c2295a",
+              fontSize: "clamp(1.9rem, 6vw, 3.8rem)",
               fontWeight: 500,
               lineHeight: 1.15,
             }}

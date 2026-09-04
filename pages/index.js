@@ -489,9 +489,10 @@ export default function HomePage() {
         >
           <div
             style={{
-              color: "#c2295a",
+              color: "#fff",
               fontSize: "clamp(1.9rem, 6vw, 3.8rem)",
-              fontWeight: 500,
+              fontWeight: 600,
+              letterSpacing: "0.03em",
               lineHeight: 1.15,
             }}
           >
@@ -520,7 +521,7 @@ export default function HomePage() {
             maxWidth: "500px",
             lineHeight: 1.7,
             letterSpacing: "normal",
-            marginBottom: "50px",
+            marginBottom: "70px",
           }}
         >
           {t.tagline}

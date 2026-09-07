@@ -1,8 +1,8 @@
 import { useRouter } from "next/router";
 import Head from "next/head";
-import { useLang } from "../../../hooks/useLang";
-import HeaderSite from "../../../components/HeaderSite";
-import { categories, tutorials } from "../../../lib/aideContent";
+import { useLang } from "../../hooks/useLang";
+import HeaderSite from "../../components/HeaderSite";
+import { categories, tutorials } from "../../lib/aideContent";
 
 const translations = {
   fr: {

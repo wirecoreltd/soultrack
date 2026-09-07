@@ -190,7 +190,7 @@ const translations = {
 
 export default function RapportBaptemesPage() {
   return (
-    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "ResponsableCellule", "SuperviseurCellule", "ResponsableFamilles", "SuperviseurFamilles", "Conseiller"]}>
+    <ProtectedRoute allowedRoles={["Administrateur", "ResponsableIntegration", "ResponsableCellule", "SuperviseurCellule", "ResponsableFamilles", "SuperviseurFamilles"]}>
       <RapportBaptemes />
     </ProtectedRoute>
   );

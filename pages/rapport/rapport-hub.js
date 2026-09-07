@@ -178,7 +178,7 @@ function RapportHubContent() {
               className={cardClass}
               style={{ borderTopColor: "#38BDF8" }}
             >
-              <div className="text-4xl mb-2">🗣️</div>
+              <div className="text-4xl mb-2">✝️</div>
               <div className="text-lg font-bold text-gray-800 text-center">
                 {t.cards.evangelisation}
               </div>

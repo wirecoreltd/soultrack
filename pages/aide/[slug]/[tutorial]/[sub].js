@@ -1,19 +1,19 @@
 import { useRouter } from "next/router";
 import Head from "next/head";
-import { useLang } from "../../../../hooks/useLang";
-import HeaderSite from "../../../../components/HeaderSite";
-import { categories, subTutorials, tutorialDetails } from "../../../../lib/aideContent";
+import { useLang } from "../../../hooks/useLang";
+import HeaderSite from "../../../components/HeaderSite";
+import { categories, tutorials, tutorialDetails } from "../../../lib/aideContent";
 
 const translations = {
   fr: {
     footer: "Tous droits réservés.",
-    backTutorial: (title) => `← ${title}`,
+    backCategory: (title) => `← ${title}`,
     comingSoonTitle: "Tutoriel à venir",
     comingSoon: "Ce tutoriel arrive bientôt.",
   },
   en: {
     footer: "All rights reserved.",
-    backTutorial: (title) => `← ${title}`,
+    backCategory: (title) => `← ${title}`,
     comingSoonTitle: "Tutorial coming soon",
     comingSoon: "This tutorial is on its way.",
   },
@@ -34,57 +34,44 @@ function renderWithKeywords(text) {
   );
 }
 
-// ── Ne génère les pages QUE pour les combinaisons slug/tutorial/sub existantes ──
+// ── Ne génère les pages QUE pour les combinaisons slug/tutorial existantes ──
+// On se base sur "tutorials" (les items affichés dans chaque catégorie), pas
+// sur tutorialDetails, pour couvrir aussi les tutoriels "à venir" (sans
+// détail rempli) tout comme le faisait le code original.
 export async function getStaticPaths() {
   const paths = [];
-  for (const key of Object.keys(subTutorials)) {
-    const [slug, tutorial] = key.split("/");
-    const items = subTutorials[key]?.fr?.items || [];
+  for (const slug of Object.keys(tutorials)) {
+    const items = tutorials[slug]?.fr?.items || [];
     items.forEach((item) => {
-      paths.push({ params: { slug, tutorial, sub: item.slug } });
+      paths.push({ params: { slug, tutorial: item.slug } });
     });
   }
   return { paths, fallback: false };
 }
 
 // ── Ne renvoie que le sous-ensemble de données nécessaire à CETTE page ──────
-// tutorialDetails et subTutorials contiennent TOUS les tutoriels de TOUTES
-// les catégories dans les 2 langues ; on n'en extrait ici que ce qui concerne
-// ce sous-tutoriel précis, pour les 2 langues (le hook useLang étant côté
-// client, on ne sait pas encore laquelle sera affichée).
 export async function getStaticProps({ params }) {
-  const { slug, tutorial, sub } = params;
+  const { slug, tutorial } = params;
 
   const categoryTitleFr = categories.fr.find((c) => c.slug === slug)?.title || "";
   const categoryTitleEn = categories.en.find((c) => c.slug === slug)?.title || "";
 
-  const parentKey = `${slug}/${tutorial}`;
-  const subKey = `${slug}/${sub}`;
-
-  const parentTitleFr =
-    tutorialDetails[parentKey]?.fr?.title ||
-    subTutorials[parentKey]?.fr?.items.find((i) => i.slug === tutorial)?.title ||
-    categoryTitleFr;
-  const parentTitleEn =
-    tutorialDetails[parentKey]?.en?.title ||
-    subTutorials[parentKey]?.en?.items.find((i) => i.slug === tutorial)?.title ||
-    categoryTitleEn;
-
-  const detailFr = tutorialDetails[subKey]?.fr || null;
-  const detailEn = tutorialDetails[subKey]?.en || null;
+  const key = `${slug}/${tutorial}`;
+  const detailFr = tutorialDetails[key]?.fr || null;
+  const detailEn = tutorialDetails[key]?.en || null;
 
   return {
-    props: { parentTitleFr, parentTitleEn, detailFr, detailEn },
+    props: { categoryTitleFr, categoryTitleEn, detailFr, detailEn },
   };
 }
 
-export default function AideSubTutorialPage({ parentTitleFr, parentTitleEn, detailFr, detailEn }) {
+export default function AideTutorialPage({ categoryTitleFr, categoryTitleEn, detailFr, detailEn }) {
   const router = useRouter();
-  const { slug, tutorial, sub } = router.query;
+  const { slug, tutorial } = router.query;
   const { lang } = useLang();
 
   const t = translations[lang];
-  const parentTitle = lang === "fr" ? parentTitleFr : parentTitleEn;
+  const categoryTitle = lang === "fr" ? categoryTitleFr : categoryTitleEn;
   const detail = lang === "fr" ? detailFr : detailEn;
 
   const pageTitle = detail ? `${detail.title} — Centre d'aide SoulTrack` : t.comingSoonTitle;
@@ -94,7 +81,7 @@ export default function AideSubTutorialPage({ parentTitleFr, parentTitleEn, deta
       <Head>
         <title>{pageTitle}</title>
         {detail && <meta name="description" content={detail.subtitle || detail.title} />}
-        {detail && <link rel="canonical" href={`https://soultrack.org/aide/${slug}/${tutorial}/${sub}`} />}
+        {detail && <link rel="canonical" href={`https://soultrack.org/aide/${slug}/${tutorial}`} />}
       </Head>
 
       {/* GLOW */}
@@ -111,10 +98,10 @@ export default function AideSubTutorialPage({ parentTitleFr, parentTitleEn, deta
         <div style={{ maxWidth: "560px", margin: "0 auto" }}>
 
           <span
-            onClick={() => router.push(`/aide/${slug}/${tutorial}`)}
+            onClick={() => router.push(`/aide/${slug}`)}
             style={{ color: "#fcd34d", fontSize: "13px", cursor: "pointer", display: "inline-block", marginBottom: "24px", fontWeight: 600 }}
           >
-            {t.backTutorial(parentTitle)}
+            {t.backCategory(categoryTitle)}
           </span>
 
           {detail ? (

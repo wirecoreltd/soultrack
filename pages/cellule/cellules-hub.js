@@ -160,7 +160,7 @@ function CellulesHubContent() {
         </Link>
 
         <Link href="/cellule/attendance_cellule" className={CARD_CLASS} style={{ borderTop: "4px solid #6366f1" }}>
-          <div className="text-5xl mb-2">🗒️</div>
+          <div className="text-5xl mb-2">🛐</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.presencesStats}</div>
         </Link>
 

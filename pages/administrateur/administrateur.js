@@ -29,6 +29,7 @@ const translations = {
       createUser:   "Créer un Utilisateur",
       subscription: "Subscription",
       deleteAccount: "Supprimer le compte",
+      export: "Exporté les membres",
       editEglise:   "Modifier l'église",
     },
   },
@@ -51,6 +52,7 @@ const translations = {
       createUser:   "Create a User",
       subscription: "Subscription",
       deleteAccount: "Delete account",
+      export: "Export members",
       editEglise:   "Edit church",
     },
   },
@@ -171,7 +173,7 @@ export default function Administrateur() {
 
           <Link href="/administrateur/export-rgpd" className={cardClass} style={{ borderTopColor: "#16A34A" }}>
             <div className="text-4xl mb-1">📦</div>
-            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.exportRgpd}</div>
+            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.export}</div>
           </Link>
 
           <Link href="/site/contact?type=delete_account" className={cardClass} style={{ borderTopColor: "#EF4444" }}>

@@ -115,13 +115,7 @@ function ConseillerHubContent() {
           className="bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#10B981] p-6 hover:shadow-2xl hover:scale-[1.02] transition-all duration-200 cursor-pointer h-36">
           <div className="text-5xl mb-3">💗</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.suivisEvang}</div>
-        </Link>
-
-        <Link href="/rapport/RapportBaptemePage"
-          className="bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#10B981] p-6 hover:shadow-2xl hover:scale-[1.02] transition-all duration-200 cursor-pointer h-36">
-          <div className="text-5xl mb-3">💧</div>
-          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.baptemes}</div>
-        </Link>
+        </Link>       
 
         <Link href="/conseiller/EtatConseillerPage"
           className="bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-yellow-500 p-6 hover:shadow-2xl hover:scale-[1.02] transition-all duration-200 cursor-pointer h-36">

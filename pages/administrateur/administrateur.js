@@ -161,7 +161,7 @@ export default function Administrateur() {
             <div className="text-lg font-bold text-gray-800 text-center">{t.cards.createUser}</div>
           </Link>
 
-          <Link href="/administrateur/subscription" className={cardClass} style={{ borderTopColor: "#F97316" }}>
+          <Link href="/administrateur/subscription" className={cardClass} style={{ borderTopColor: "#3052cf" }}>
             <div className="text-4xl mb-1">💳</div>
             <div className="text-lg font-bold text-gray-800 text-center">{t.cards.subscription}</div>
           </Link>

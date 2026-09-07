@@ -7,11 +7,12 @@
 // répartition par officiant), et vue détaillée par session. Les
 // candidats affichés sont filtrés selon le rôle de l'utilisateur
 // connecté (Administrateur, Responsable/Superviseur de cellule ou
-// famille, Conseiller).
+// famille, Conseiller). La vue "Par session" affiche également,
+// au clic, la liste des personnes baptisées lors de chaque session.
 //
 // Tables Supabase utilisées :
 // - profiles           (lecture)             → profil utilisateur (rôle, eglise_id)
-// - membres_complets   (lecture + écriture)  → candidats au baptême + mise à jour statut
+// - membres_complets   (lecture + écriture)  → candidats au baptême + mise à jour statut + noms
 // - cellules           (lecture)             → cellules supervisées/gérées (filtrage candidats)
 // - familles           (lecture)             → familles gérées (filtrage candidats)
 // - baptemes           (lecture + écriture)  → rapports de baptêmes (création, modification)
@@ -105,6 +106,8 @@ const translations = {
     erreurEnregistrement: "Erreur enregistrement baptême : ",
     ajouterModifier: "➕ Ajouter / modifier un rapport",
     nouveauRapportBtn: "➕ Nouveau rapport",
+    listeBaptises: "Personnes baptisées",
+    nomInconnu: "Nom non disponible",
     er: "er",
     eme: "ème",
   },
@@ -183,6 +186,8 @@ const translations = {
     erreurEnregistrement: "Baptism save error: ",
     ajouterModifier: "➕ Add / edit a report",
     nouveauRapportBtn: "➕ New report",
+    listeBaptises: "Baptized people",
+    nomInconnu: "Name unavailable",
     er: "st",
     eme: "th",
   },
@@ -209,6 +214,9 @@ function getMonthNameFR(monthIndex) {
 function getMonthNameEN(monthIndex) {
   return ["January","February","March","April","May","June","July","August","September","October","November","December"][monthIndex] || "";
 }
+
+// Regex pour distinguer un evangelise_member_id de type uuid d'un id "texte libre"
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
@@ -246,13 +254,20 @@ function BarreProgression({ pct, color }) {
 }
 
 // ─── AGRÉGATION ───────────────────────────────────────────────
+// Regroupe les lignes "baptemes" (une ligne par personne) en sessions
+// (date + officiant), en conservant la liste des personnes baptisées
+// pour l'affichage détaillé dans "Par session".
 function aggregateRapports(rapports) {
   const map = {};
   rapports.forEach(r => {
     const key = `${r.date}__${r.baptise_par}`;
-    if (!map[key]) map[key] = { ...r, hommes: 0, femmes: 0 };
+    if (!map[key]) map[key] = { ...r, hommes: 0, femmes: 0, personnes: [] };
     map[key].hommes += Number(r.hommes || 0);
     map[key].femmes += Number(r.femmes || 0);
+    map[key].personnes.push({
+      nom: r.nomBaptise || null,
+      sexe: Number(r.hommes) > 0 ? "Homme" : "Femme",
+    });
   });
   return Object.values(map);
 }
@@ -382,6 +397,9 @@ function BlocParOfficiant({ rapports, t }) {
 }
 
 // ─── CARTE SESSION ─────────────────────────────────────────────
+// Affiche une session groupée (date + officiant). Au clic sur la carte,
+// on déplie le détail : totaux H/F, PUIS la liste nominative des
+// personnes baptisées lors de cette session.
 function CarteSession({ r, onEdit, t }) {
   const [open, setOpen] = useState(false);
   const total = Number(r.hommes || 0) + Number(r.femmes || 0);
@@ -414,6 +432,25 @@ function CarteSession({ r, onEdit, t }) {
               </div>
             ))}
           </div>
+
+          {r.personnes && r.personnes.length > 0 && (
+            <div className="flex flex-col gap-1">
+              <p className="text-[11px] text-white/60 font-semibold uppercase tracking-wide">
+                {t.listeBaptises}
+              </p>
+              <div className="flex flex-col gap-1">
+                {r.personnes.map((p, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-white/5 rounded-lg px-3 py-1.5">
+                    <span className="text-sm text-white">{p.nom || t.nomInconnu}</span>
+                    <Badge color={p.sexe === "Homme" ? "blue" : "pink"}>
+                      {p.sexe === "Homme" ? t.hommes : t.femmes}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button onClick={() => onEdit(r)}
             className="w-full py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-blue-300 text-sm font-semibold transition">
             {t.modifier}
@@ -667,6 +704,11 @@ function RapportBaptemes() {
     setCandidats(data || []);
   };
 
+  // Récupère les rapports de baptêmes, puis enrichit chaque ligne avec
+  // le nom (prénom + nom) de la personne baptisée, en cherchant la
+  // correspondance à la fois dans membres_complets.id (uuid) et dans
+  // membres_complets.evangelise_member_id (text), car les deux cas
+  // existent selon la façon dont le candidat a été enregistré.
   const fetchRapports = async (overrideModePerso = null) => {
     if (!formData.eglise_id) return;
     setLoading(true);
@@ -687,7 +729,38 @@ function RapportBaptemes() {
     }
 
     const { data } = await query;
-    setRapports(data || []);
+    const rapportsData = data || [];
+
+    // ── Récupération des noms des baptisés ──
+    const ids = [...new Set(rapportsData.map(r => r.evangelise_member_id).filter(Boolean))];
+    let nomsParId = {};
+
+    if (ids.length > 0) {
+      const idsUuid = ids.filter(id => UUID_REGEX.test(id));
+
+      const [{ data: parId }, { data: parEvangeliseId }] = await Promise.all([
+        idsUuid.length > 0
+          ? supabase.from("membres_complets").select("id, prenom, nom").in("id", idsUuid)
+          : Promise.resolve({ data: [] }),
+        supabase.from("membres_complets").select("evangelise_member_id, prenom, nom").in("evangelise_member_id", ids),
+      ]);
+
+      (parId || []).forEach(m => {
+        nomsParId[String(m.id)] = `${m.prenom || ""} ${m.nom || ""}`.trim();
+      });
+      (parEvangeliseId || []).forEach(m => {
+        if (m.evangelise_member_id) {
+          nomsParId[String(m.evangelise_member_id)] = `${m.prenom || ""} ${m.nom || ""}`.trim();
+        }
+      });
+    }
+
+    const rapportsAvecNoms = rapportsData.map(r => ({
+      ...r,
+      nomBaptise: nomsParId[String(r.evangelise_member_id)] || null,
+    }));
+
+    setRapports(rapportsAvecNoms);
     setLoading(false);
   };
 

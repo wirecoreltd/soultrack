@@ -101,7 +101,7 @@ function ConseillerHubContent() {
 
         <Link href="/membres/list-members"
           className="bg-white rounded-3xl shadow-md flex flex-col justify-center items-center border-t-4 border-[#0D9488] p-6 hover:shadow-2xl hover:scale-[1.02] transition-all duration-200 cursor-pointer h-36">
-          <div className="text-5xl mb-3">👥</div>
+          <div className="text-5xl mb-3">🏛️</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.membres}</div>
         </Link>
 

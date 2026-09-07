@@ -169,6 +169,11 @@ export default function Administrateur() {
             <div className="text-lg font-bold text-gray-800 text-center">{t.cards.editEglise}</div>
           </Link>
 
+          <Link href="/administrateur/export-rgpd" className={cardClass} style={{ borderTopColor: "#16A34A" }}>
+            <div className="text-4xl mb-1">📦</div>
+            <div className="text-lg font-bold text-gray-800 text-center">{t.cards.exportRgpd}</div>
+          </Link>
+
           <Link href="/site/contact?type=delete_account" className={cardClass} style={{ borderTopColor: "#EF4444" }}>
             <div className="text-4xl mb-1">🗑️</div>
             <div className="text-lg font-bold text-gray-800 text-center">{t.cards.deleteAccount}</div>

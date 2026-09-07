@@ -165,24 +165,26 @@ function ExportRGPDContent() {
     if (error || !eglise) throw error || new Error("Église introuvable");
     setEgliseNom(eglise.nom);
 
-    // ⚠️ Résolution de l'église superviseure via eglise_supervisions
-    // (logique reprise de Administrateur.js, statut "accepted" — à confirmer)
+    // Résolution de l'église superviseure via eglise_supervisions.
+    // Schéma confirmé : supervisee_eglise_id / superviseur_eglise_id / statut.
     let egliseSuperviseureNom = "—";
     try {
       const { data: supervision } = await supabase
         .from("eglise_supervisions")
-        .select("eglise_superviseure_id, statut") // ⚠️ noms de colonnes à confirmer
-        .eq("eglise_id", egliseId)
+        .select("superviseur_eglise_id, eglise_nom, statut")
+        .eq("supervisee_eglise_id", egliseId)
         .eq("statut", "accepted")
         .maybeSingle();
 
-      if (supervision?.eglise_superviseure_id) {
+      if (supervision?.superviseur_eglise_id) {
         const { data: sup } = await supabase
           .from("eglises")
           .select("nom")
-          .eq("id", supervision.eglise_superviseure_id)
+          .eq("id", supervision.superviseur_eglise_id)
           .single();
-        if (sup?.nom) egliseSuperviseureNom = sup.nom;
+        // Repli sur eglise_nom (snapshot stocké sur la ligne de supervision)
+        // si la jointure vers eglises échoue pour une raison quelconque.
+        egliseSuperviseureNom = sup?.nom || supervision.eglise_nom || "—";
       }
     } catch (e) {
       console.warn("Résolution église superviseure impossible:", e);
@@ -192,9 +194,9 @@ function ExportRGPDContent() {
       {
         Nom: eglise.nom || "—",
         Ville: eglise.ville || "—",
-        Pays: eglise.pays || "—", // ⚠️ à confirmer
-        Dénomination: eglise.denomination || "—", // ⚠️ à confirmer
-        Branche: eglise.branche || eglise.branche_nom || "—", // ⚠️ à confirmer
+        Pays: eglise.pays || "—",
+        Dénomination: eglise.denomination || "—",
+        Branche: eglise.branche || "—",
         "Église superviseure": egliseSuperviseureNom,
       },
     ];

@@ -21,16 +21,18 @@
 // authentifié, quelle que soit la requête envoyée. Vérifie que ces
 // policies existent avant de considérer cet export comme conforme.
 //
-// Tables Supabase utilisées (lecture seule) :
-// - profiles              → profil de l'utilisateur connecté + résolution auteurs/conseillers
-// - eglises                → infos église + église superviseure
-// - eglise_supervisions    → résolution de l'église superviseure (⚠️ à confirmer, cf. Administrateur.js)
-// - membres_complets       → feuille "Membres"
-// - cellules               → feuille "Cellules" + résolution cellule des membres
-// - familles               → résolution famille des membres
-// - suivi_assignments      → résolution conseiller(s) par membre
-// - suivis                 → feuille "Suivis pastoraux"
-// - suivis_evangelises     → feuille "Suivis évangélisation"
+// ── Corrections apportées suite à l'erreur "column cellules.responsable_nom
+// does not exist" et à la vérification du schéma réel (information_schema) ──
+// 1. cellules : la colonne s'appelle "responsable" (texte libre), pas
+//    "responsable_nom". Il n'existe pas de table "branches" (seulement
+//    "zz_branches", non confirmée) : la résolution de branche a donc été
+//    retirée pour éviter une nouvelle erreur ; branche_id est affiché tel
+//    quel en attendant confirmation du schéma de zz_branches.
+// 2. suivis / suivis_evangelises : la colonne auteur est "created_by",
+//    pas "auteur_id".
+// 3. suivis / suivis_evangelises : les colonnes qualitatives réelles sont
+//    maintenant confirmées et intégrées (vie_spirituelle, combats_luttes,
+//    blocages, etc. / relation_avec_dieu, ouverture_spirituelle, luttes, etc.)
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
@@ -158,7 +160,7 @@ function ExportRGPDContent() {
   const buildFeuilleEglise = async (egliseId) => {
     const { data: eglise, error } = await supabase
       .from("eglises")
-      .select("*") // ⚠️ colonnes exactes à confirmer (nom, ville, pays, denomination, branche...)
+      .select("id, nom, ville, pays, denomination, branche")
       .eq("id", egliseId)
       .single();
 
@@ -166,7 +168,7 @@ function ExportRGPDContent() {
     setEgliseNom(eglise.nom);
 
     // Résolution de l'église superviseure via eglise_supervisions.
-    // Schéma confirmé : supervisee_eglise_id / superviseur_eglise_id / statut.
+    // Schéma confirmé : supervisee_eglise_id / superviseur_eglise_id / statut / eglise_nom.
     let egliseSuperviseureNom = "—";
     try {
       const { data: supervision } = await supabase
@@ -291,11 +293,14 @@ function ExportRGPDContent() {
 
   // ─── Feuille 3 : Cellules ───────────────────────────────────────
   const buildFeuilleCellules = async (egliseId) => {
+    // Colonnes confirmées via information_schema : la colonne du responsable
+    // est "responsable" (texte libre), il n'y a pas de "responsable_nom".
+    // branche_id référence une table non confirmée ("zz_branches" existe
+    // mais son schéma n'est pas vérifié) : affiché brut en attendant.
     const { data: cellules, error } = await supabase
       .from("cellules")
       .select(
-        // ⚠️ noms de colonnes à confirmer avec le schéma réel
-        "id, ville, cellule_full, responsable_nom, telephone_responsable, superviseur_id, cellule_mere_id, branche_id, created_at"
+        "id, ville, cellule_full, responsable, telephone_responsable, superviseur_id, cellule_mere_id, branche_id, created_at"
       )
       .eq("eglise_id", egliseId);
 
@@ -304,20 +309,15 @@ function ExportRGPDContent() {
 
     const superviseurIds = [...new Set(cellules.map((c) => c.superviseur_id).filter(Boolean))];
     const celluleMereIds = [...new Set(cellules.map((c) => c.cellule_mere_id).filter(Boolean))];
-    const brancheIds = [...new Set(cellules.map((c) => c.branche_id).filter(Boolean))];
 
-    const [{ data: superviseurs }, { data: cellulesMeres }, { data: branches }] =
-      await Promise.all([
-        superviseurIds.length
-          ? supabase.from("profiles").select("id, prenom, nom").in("id", superviseurIds)
-          : Promise.resolve({ data: [] }),
-        celluleMereIds.length
-          ? supabase.from("cellules").select("id, cellule_full").in("id", celluleMereIds)
-          : Promise.resolve({ data: [] }),
-        brancheIds.length
-          ? supabase.from("branches").select("id, nom").in("id", brancheIds) // ⚠️ table/colonnes "branches" à confirmer
-          : Promise.resolve({ data: [] }),
-      ]);
+    const [{ data: superviseurs }, { data: cellulesMeres }] = await Promise.all([
+      superviseurIds.length
+        ? supabase.from("profiles").select("id, prenom, nom").in("id", superviseurIds)
+        : Promise.resolve({ data: [] }),
+      celluleMereIds.length
+        ? supabase.from("cellules").select("id, cellule_full").in("id", celluleMereIds)
+        : Promise.resolve({ data: [] }),
+    ]);
 
     const superviseurMap = Object.fromEntries(
       (superviseurs || []).map((p) => [p.id, `${p.prenom || ""} ${p.nom || ""}`.trim()])
@@ -325,25 +325,25 @@ function ExportRGPDContent() {
     const celluleMereMap = Object.fromEntries(
       (cellulesMeres || []).map((c) => [c.id, c.cellule_full])
     );
-    const brancheMap = Object.fromEntries((branches || []).map((b) => [b.id, b.nom]));
 
     return cellules.map((c) => ({
       Ville: c.ville || "—",
       Nom: c.cellule_full || "—",
-      Responsable: c.responsable_nom || "—",
+      Responsable: c.responsable || "—",
       "Téléphone responsable": c.telephone_responsable || "—",
       Superviseur: superviseurMap[c.superviseur_id] || "—",
       "Cellule mère": celluleMereMap[c.cellule_mere_id] || "—",
-      Branche: brancheMap[c.branche_id] || "—",
+      // ⚠️ Branche non résolue : pas de table "branches" confirmée dans le
+      // schéma (seulement "zz_branches", non vérifiée). ID brut affiché.
+      "Branche (ID)": c.branche_id || "—",
       "Créée le": toDateStr(c.created_at),
     }));
   };
 
   // ─── Feuille 4 : Suivis pastoraux ───────────────────────────────
   const buildFeuilleSuivis = async (egliseId) => {
-    // ⚠️ La table "suivis" n'a probablement pas de colonne eglise_id directe :
-    // on filtre donc via les membres de l'église. À adapter si "suivis" a
-    // bien sa propre colonne eglise_id.
+    // ⚠️ La table "suivis" n'a pas de colonne eglise_id directe :
+    // on filtre donc via les membres de l'église.
     const { data: membres } = await supabase
       .from("membres_complets")
       .select("id, prenom, nom")
@@ -355,21 +355,24 @@ function ExportRGPDContent() {
     );
     if (membreIds.length === 0) return [];
 
+    // Colonnes confirmées via information_schema pour "suivis" :
+    // l'auteur est "created_by" (pas "auteur_id"), et les champs qualitatifs
+    // réels sont etat_general, vie_spirituelle, intention_priere,
+    // combats_luttes, blocages, vie_personnelle, besoins_avancement,
+    // talents, domaine_service.
     const { data: suivis, error } = await supabase
       .from("suivis")
       .select(
-        // ⚠️ liste de champs qualitatifs à compléter selon le schéma réel
-        // (vie spirituelle, combats, blocages, talents, etc. mentionnés au point 4)
-        "membre_id, type, statut, besoin, commentaire, auteur_id, date_action, created_at"
+        "membre_id, type, statut, besoin, commentaire, created_by, action_type, date_action, created_at, etat_general, vie_spirituelle, intention_priere, combats_luttes, blocages, vie_personnelle, besoins_avancement, talents, domaine_service"
       )
       .in("membre_id", membreIds);
 
     if (error) throw error;
     if (!suivis || suivis.length === 0) return [];
 
-    const auteurIds = [...new Set(suivis.map((s) => s.auteur_id).filter(Boolean))];
-    const { data: auteurs } = auteurIds.length
-      ? await supabase.from("profiles").select("id, prenom, nom").in("id", auteurIds)
+    const createdByIds = [...new Set(suivis.map((s) => s.created_by).filter(Boolean))];
+    const { data: auteurs } = createdByIds.length
+      ? await supabase.from("profiles").select("id, prenom, nom").in("id", createdByIds)
       : { data: [] };
     const auteurMap = Object.fromEntries(
       (auteurs || []).map((a) => [a.id, `${a.prenom || ""} ${a.nom || ""}`.trim()])
@@ -378,13 +381,20 @@ function ExportRGPDContent() {
     return suivis.map((s) => ({
       Membre: membreMap[s.membre_id] || "—",
       Type: s.type || "—",
+      "Type d'action": s.action_type || "—",
       Statut: s.statut || "—",
       Besoin: formatBesoins(s.besoin) || "—",
       Commentaire: s.commentaire || "—",
-      // ⚠️ AJOUTER ICI les autres champs qualitatifs réels de la table
-      // "suivis" (vie spirituelle, combats, blocages, talents...) une fois
-      // le schéma confirmé, sur le même modèle que les lignes ci-dessus.
-      Auteur: auteurMap[s.auteur_id] || "—",
+      "État général": s.etat_general || "—",
+      "Vie spirituelle": s.vie_spirituelle || "—",
+      "Intention de prière": s.intention_priere || "—",
+      "Combats / luttes": s.combats_luttes || "—",
+      Blocages: s.blocages || "—",
+      "Vie personnelle": s.vie_personnelle || "—",
+      "Besoins d'avancement": s.besoins_avancement || "—",
+      Talents: s.talents || "—",
+      "Domaine de service": s.domaine_service || "—",
+      Auteur: auteurMap[s.created_by] || "—",
       "Date action": toDateStr(s.date_action),
       "Créé le": toDateStr(s.created_at),
     }));
@@ -393,9 +403,9 @@ function ExportRGPDContent() {
   // ─── Feuille 5 : Suivis évangélisation ──────────────────────────
   const buildFeuilleEvangelisation = async (egliseId) => {
     // ⚠️ même remarque que pour "suivis" : filtrage via les évangélisés
-    // de l'église, à adapter si la table a sa propre colonne eglise_id.
+    // de l'église (pas de colonne eglise_id directe sur suivis_evangelises).
     const { data: evangelises } = await supabase
-      .from("evangelises") // ⚠️ nom de table à confirmer
+      .from("evangelises")
       .select("id, prenom, nom")
       .eq("eglise_id", egliseId);
 
@@ -405,20 +415,29 @@ function ExportRGPDContent() {
     );
     if (evangeliseIds.length === 0) return [];
 
+    // Colonnes confirmées via information_schema pour "suivis_evangelises" :
+    // l'auteur est "created_by" (pas "auteur_id"). Champs qualitatifs réels
+    // intégrés ci-dessous (etat_actuel, situation_actuelle, contexte_vie,
+    // relation_avec_dieu, perception_spirituelle, besoins_principaux,
+    // preoccupations, luttes, ouverture_spirituelle, ouverture_priere,
+    // engagement_foi, suivi_souhaite, canal_suivi, talents_identifies,
+    // domaine_service, accompagnement_suivi, etudes_parole).
+    // Note : la table a deux colonnes quasi-identiques "etudes_parol" et
+    // "etudes_parole" (probable doublon/typo historique) — on retient la
+    // version correctement orthographiée "etudes_parole".
     const { data: suivis, error } = await supabase
       .from("suivis_evangelises")
       .select(
-        // ⚠️ champs qualitatifs à compléter selon le schéma réel
-        "evangelise_id, type, statut, commentaire, auteur_id, date_action, created_at"
+        "evangelise_id, type, statut, besoin, commentaire, created_by, action_type, date_action, created_at, etat_actuel, situation_actuelle, contexte_vie, relation_avec_dieu, perception_spirituelle, besoins_principaux, preoccupations, luttes, ouverture_spirituelle, ouverture_priere, engagement_foi, suivi_souhaite, canal_suivi, talents_identifies, domaine_service, accompagnement_suivi, etudes_parole"
       )
       .in("evangelise_id", evangeliseIds);
 
     if (error) throw error;
     if (!suivis || suivis.length === 0) return [];
 
-    const auteurIds = [...new Set(suivis.map((s) => s.auteur_id).filter(Boolean))];
-    const { data: auteurs } = auteurIds.length
-      ? await supabase.from("profiles").select("id, prenom, nom").in("id", auteurIds)
+    const createdByIds = [...new Set(suivis.map((s) => s.created_by).filter(Boolean))];
+    const { data: auteurs } = createdByIds.length
+      ? await supabase.from("profiles").select("id, prenom, nom").in("id", createdByIds)
       : { data: [] };
     const auteurMap = Object.fromEntries(
       (auteurs || []).map((a) => [a.id, `${a.prenom || ""} ${a.nom || ""}`.trim()])
@@ -427,11 +446,28 @@ function ExportRGPDContent() {
     return suivis.map((s) => ({
       Évangélisé: evangeliseMap[s.evangelise_id] || "—",
       Type: s.type || "—",
+      "Type d'action": s.action_type || "—",
       Statut: s.statut || "—",
+      Besoin: formatBesoins(s.besoin) || "—",
       Commentaire: s.commentaire || "—",
-      // ⚠️ AJOUTER ICI les autres champs qualitatifs réels de la table
-      // "suivis_evangelises" une fois le schéma confirmé.
-      Auteur: auteurMap[s.auteur_id] || "—",
+      "État actuel": s.etat_actuel || "—",
+      "Situation actuelle": s.situation_actuelle || "—",
+      "Contexte de vie": s.contexte_vie || "—",
+      "Relation avec Dieu": s.relation_avec_dieu || "—",
+      "Perception spirituelle": s.perception_spirituelle || "—",
+      "Besoins principaux": s.besoins_principaux || "—",
+      Préoccupations: s.preoccupations || "—",
+      Luttes: s.luttes || "—",
+      "Ouverture spirituelle": s.ouverture_spirituelle || "—",
+      "Ouverture à la prière": s.ouverture_priere || "—",
+      "Engagement de foi": s.engagement_foi || "—",
+      "Suivi souhaité": s.suivi_souhaite || "—",
+      "Canal de suivi": s.canal_suivi || "—",
+      "Talents identifiés": s.talents_identifies || "—",
+      "Domaine de service": s.domaine_service || "—",
+      "Accompagnement / suivi": s.accompagnement_suivi || "—",
+      "Étude de la Parole": s.etudes_parole || "—",
+      Auteur: auteurMap[s.created_by] || "—",
       "Date action": toDateStr(s.date_action),
       "Créé le": toDateStr(s.created_at),
     }));

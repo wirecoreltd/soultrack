@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import { useLang } from "../../../hooks/useLang";
 import HeaderSite from "../../../components/HeaderSite";
-import { categories, tutorialDetails, subTutorials } from "../../../lib/aideContent";
+import { categories, tutorialDetails, subTutorials, tutorials } from "../../../lib/aideContent";
 
 const translations = {
   fr: {
@@ -34,17 +34,53 @@ function renderWithKeywords(text) {
   );
 }
 
-export default function AideTutorialPage() {
+// ── Ne génère les pages QUE pour les combinaisons slug/tutorial existantes ──
+export async function getStaticPaths() {
+  const paths = [];
+  for (const slug of Object.keys(tutorials)) {
+    const items = tutorials[slug]?.fr?.items || [];
+    items.forEach((item) => {
+      paths.push({ params: { slug, tutorial: item.slug } });
+    });
+  }
+  return { paths, fallback: false };
+}
+
+// ── Ne renvoie que le sous-ensemble de données nécessaire à CETTE page ──────
+// (catégorie, liste de sous-tutoriels le cas échéant, et détail le cas échéant)
+export async function getStaticProps({ params }) {
+  const { slug, tutorial } = params;
+
+  const categoryTitleFr = categories.fr.find((c) => c.slug === slug)?.title || "";
+  const categoryTitleEn = categories.en.find((c) => c.slug === slug)?.title || "";
+
+  const key = `${slug}/${tutorial}`;
+  const subListFr = subTutorials[key]?.fr || null;
+  const subListEn = subTutorials[key]?.en || null;
+  const detailFr = tutorialDetails[key]?.fr || null;
+  const detailEn = tutorialDetails[key]?.en || null;
+
+  return {
+    props: { categoryTitleFr, categoryTitleEn, subListFr, subListEn, detailFr, detailEn },
+  };
+}
+
+export default function AideTutorialPage({
+  categoryTitleFr,
+  categoryTitleEn,
+  subListFr,
+  subListEn,
+  detailFr,
+  detailEn,
+}) {
   const router = useRouter();
   const { slug, tutorial } = router.query;
   const { lang } = useLang();
 
   const t = translations[lang];
-  const category = categories[lang].find((c) => c.slug === slug);
-
-  // 3ᵉ niveau : ce tuto a-t-il une liste de sous-tutoriels (ex: "membres/list-members") ?
-  const subList = subTutorials[`${slug}/${tutorial}`]?.[lang];
-  const detail = tutorialDetails[`${slug}/${tutorial}`]?.[lang];
+  const categoryTitle = lang === "fr" ? categoryTitleFr : categoryTitleEn;
+  const subList = lang === "fr" ? subListFr : subListEn;
+  const detail = lang === "fr" ? detailFr : detailEn;
 
   const pageTitle = detail ? `${detail.title} — Centre d'aide SoulTrack` : t.comingSoonTitle;
 
@@ -73,7 +109,7 @@ export default function AideTutorialPage() {
               onClick={() => router.push(`/aide/${slug}`)}
               style={{ color: "rgba(255,255,255,0.55)", fontSize: "13px", cursor: "pointer", display: "inline-block", marginBottom: "28px" }}
             >
-              {t.backCategory(category ? category.title : "")}
+              {t.backCategory(categoryTitle)}
             </span>
 
             <div style={{ textAlign: "center", marginBottom: "36px" }}>
@@ -157,7 +193,7 @@ export default function AideTutorialPage() {
             onClick={() => router.push(`/aide/${slug}`)}
             style={{ color: "#fcd34d", fontSize: "13px", cursor: "pointer", display: "inline-block", marginBottom: "24px", fontWeight: 600 }}
           >
-            {t.backCategory(category ? category.title : "")}
+            {t.backCategory(categoryTitle)}
           </span>
 
           {detail ? (

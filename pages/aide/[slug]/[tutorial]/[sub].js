@@ -34,24 +34,58 @@ function renderWithKeywords(text) {
   );
 }
 
-export default function AideSubTutorialPage() {
+// ── Ne génère les pages QUE pour les combinaisons slug/tutorial/sub existantes ──
+export async function getStaticPaths() {
+  const paths = [];
+  for (const key of Object.keys(subTutorials)) {
+    const [slug, tutorial] = key.split("/");
+    const items = subTutorials[key]?.fr?.items || [];
+    items.forEach((item) => {
+      paths.push({ params: { slug, tutorial, sub: item.slug } });
+    });
+  }
+  return { paths, fallback: false };
+}
+
+// ── Ne renvoie que le sous-ensemble de données nécessaire à CETTE page ──────
+// tutorialDetails et subTutorials contiennent TOUS les tutoriels de TOUTES
+// les catégories dans les 2 langues ; on n'en extrait ici que ce qui concerne
+// ce sous-tutoriel précis, pour les 2 langues (le hook useLang étant côté
+// client, on ne sait pas encore laquelle sera affichée).
+export async function getStaticProps({ params }) {
+  const { slug, tutorial, sub } = params;
+
+  const categoryTitleFr = categories.fr.find((c) => c.slug === slug)?.title || "";
+  const categoryTitleEn = categories.en.find((c) => c.slug === slug)?.title || "";
+
+  const parentKey = `${slug}/${tutorial}`;
+  const subKey = `${slug}/${sub}`;
+
+  const parentTitleFr =
+    tutorialDetails[parentKey]?.fr?.title ||
+    subTutorials[parentKey]?.fr?.items.find((i) => i.slug === tutorial)?.title ||
+    categoryTitleFr;
+  const parentTitleEn =
+    tutorialDetails[parentKey]?.en?.title ||
+    subTutorials[parentKey]?.en?.items.find((i) => i.slug === tutorial)?.title ||
+    categoryTitleEn;
+
+  const detailFr = tutorialDetails[subKey]?.fr || null;
+  const detailEn = tutorialDetails[subKey]?.en || null;
+
+  return {
+    props: { parentTitleFr, parentTitleEn, detailFr, detailEn },
+  };
+}
+
+export default function AideSubTutorialPage({ parentTitleFr, parentTitleEn, detailFr, detailEn }) {
   const router = useRouter();
   const { slug, tutorial, sub } = router.query;
   const { lang } = useLang();
 
   const t = translations[lang];
-  const category = categories[lang].find((c) => c.slug === slug);
-
-  // Le titre du tuto parent (ex: "Manage members") sert de libellé pour le lien retour
-  const parentSubList = subTutorials[`${slug}/${tutorial}`]?.[lang];
-  const parentItem = parentSubList?.items.find((i) => i.slug === tutorial) || null;
-  const parentTitle =
-    tutorialDetails[`${slug}/${tutorial}`]?.[lang]?.title ||
-    (parentSubList ? parentSubList.items.find((i) => i.slug === tutorial)?.title : null) ||
-    (category ? category.title : "");
-
-  // Le détail du sous-tutoriel est stocké sous "slug/sub" dans tutorialDetails
-  const detail = tutorialDetails[`${slug}/${sub}`]?.[lang];
+  const parentTitle = lang === "fr" ? parentTitleFr : parentTitleEn;
+  const detail = lang === "fr" ? detailFr : detailEn;
 
   const pageTitle = detail ? `${detail.title} — Centre d'aide SoulTrack` : t.comingSoonTitle;
 

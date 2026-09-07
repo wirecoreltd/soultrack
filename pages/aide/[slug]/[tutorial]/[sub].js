@@ -2,18 +2,18 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import { useLang } from "../../../../hooks/useLang";
 import HeaderSite from "../../../../components/HeaderSite";
-import { categories, tutorials, tutorialDetails } from "../../../../lib/aideContent";
+import { categories, subTutorials, tutorialDetails } from "../../../../lib/aideContent";
 
 const translations = {
   fr: {
     footer: "Tous droits réservés.",
-    backCategory: (title) => `← ${title}`,
+    backTutorial: (title) => `← ${title}`,
     comingSoonTitle: "Tutoriel à venir",
     comingSoon: "Ce tutoriel arrive bientôt.",
   },
   en: {
     footer: "All rights reserved.",
-    backCategory: (title) => `← ${title}`,
+    backTutorial: (title) => `← ${title}`,
     comingSoonTitle: "Tutorial coming soon",
     comingSoon: "This tutorial is on its way.",
   },
@@ -34,45 +34,24 @@ function renderWithKeywords(text) {
   );
 }
 
-// ── Ne génère les pages QUE pour les combinaisons slug/tutorial existantes ──
-// On se base sur "tutorials" (les items affichés dans chaque catégorie), pas
-// sur tutorialDetails, pour couvrir aussi les tutoriels "à venir" (sans
-// détail rempli) tout comme le faisait le code original.
-export async function getStaticPaths() {
-  const paths = [];
-  for (const slug of Object.keys(tutorials)) {
-    const items = tutorials[slug]?.fr?.items || [];
-    items.forEach((item) => {
-      paths.push({ params: { slug, tutorial: item.slug } });
-    });
-  }
-  return { paths, fallback: false };
-}
-
-// ── Ne renvoie que le sous-ensemble de données nécessaire à CETTE page ──────
-export async function getStaticProps({ params }) {
-  const { slug, tutorial } = params;
-
-  const categoryTitleFr = categories.fr.find((c) => c.slug === slug)?.title || "";
-  const categoryTitleEn = categories.en.find((c) => c.slug === slug)?.title || "";
-
-  const key = `${slug}/${tutorial}`;
-  const detailFr = tutorialDetails[key]?.fr || null;
-  const detailEn = tutorialDetails[key]?.en || null;
-
-  return {
-    props: { categoryTitleFr, categoryTitleEn, detailFr, detailEn },
-  };
-}
-
-export default function AideTutorialPage({ categoryTitleFr, categoryTitleEn, detailFr, detailEn }) {
+export default function AideSubTutorialPage() {
   const router = useRouter();
-  const { slug, tutorial } = router.query;
+  const { slug, tutorial, sub } = router.query;
   const { lang } = useLang();
 
   const t = translations[lang];
-  const categoryTitle = lang === "fr" ? categoryTitleFr : categoryTitleEn;
-  const detail = lang === "fr" ? detailFr : detailEn;
+  const category = categories[lang].find((c) => c.slug === slug);
+
+  // Le titre du tuto parent (ex: "Manage members") sert de libellé pour le lien retour
+  const parentSubList = subTutorials[`${slug}/${tutorial}`]?.[lang];
+  const parentItem = parentSubList?.items.find((i) => i.slug === tutorial) || null;
+  const parentTitle =
+    tutorialDetails[`${slug}/${tutorial}`]?.[lang]?.title ||
+    (parentSubList ? parentSubList.items.find((i) => i.slug === tutorial)?.title : null) ||
+    (category ? category.title : "");
+
+  // Le détail du sous-tutoriel est stocké sous "slug/sub" dans tutorialDetails
+  const detail = tutorialDetails[`${slug}/${sub}`]?.[lang];
 
   const pageTitle = detail ? `${detail.title} — Centre d'aide SoulTrack` : t.comingSoonTitle;
 
@@ -81,7 +60,7 @@ export default function AideTutorialPage({ categoryTitleFr, categoryTitleEn, det
       <Head>
         <title>{pageTitle}</title>
         {detail && <meta name="description" content={detail.subtitle || detail.title} />}
-        {detail && <link rel="canonical" href={`https://soultrack.org/aide/${slug}/${tutorial}`} />}
+        {detail && <link rel="canonical" href={`https://soultrack.org/aide/${slug}/${tutorial}/${sub}`} />}
       </Head>
 
       {/* GLOW */}
@@ -98,10 +77,10 @@ export default function AideTutorialPage({ categoryTitleFr, categoryTitleEn, det
         <div style={{ maxWidth: "560px", margin: "0 auto" }}>
 
           <span
-            onClick={() => router.push(`/aide/${slug}`)}
+            onClick={() => router.push(`/aide/${slug}/${tutorial}`)}
             style={{ color: "#fcd34d", fontSize: "13px", cursor: "pointer", display: "inline-block", marginBottom: "24px", fontWeight: 600 }}
           >
-            {t.backCategory(categoryTitle)}
+            {t.backTutorial(parentTitle)}
           </span>
 
           {detail ? (

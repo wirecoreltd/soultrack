@@ -6,6 +6,8 @@ import { checkLimiteAtteinte } from "../lib/checkLimite";
 import Papa from "papaparse";
 import { useLang } from "../hooks/useLang";
 import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const MINISTERES_VALIDES = [
@@ -116,10 +118,8 @@ const translations = {
     step2: "2. Utilise les menus deroulants pour les champs a choix (sexe, age, statut, ministeres, besoins...). Efface les lignes commencant par # avant d'importer.",
     step3: "3. Pour ajouter plus de ministeres/besoins que de colonnes disponibles, ou un ministere/besoin personnalise, modifie la fiche du membre dans l'application apres l'import.",
     downloadTemplate: "Telecharger le template Excel",
-    mobileNoticeTitle: "Bientot disponible",
-    mobileNoticeMsg: "Le telechargement du template n'est pas encore disponible dans l'application mobile — nous y travaillons.",
-    mobileNoticeMsg2: "En attendant, connecte-toi depuis un navigateur pour telecharger le template :",
-    mobileNoticeClose: "Fermer",
+    downloadingTemplate: "Telechargement en cours...",
+    downloadTemplateError: "Erreur lors du telechargement du template : ",
     importFile: "Importer un fichier CSV ou Excel",
     checkingDuplicates: "Verification des doublons en cours...",
     resumeFile: "Resume du fichier",
@@ -141,7 +141,6 @@ const translations = {
     uncheckAllAdd: "Tout decocher (Ajout)",
     addAllAnyway: "Tout ajouter quand meme",
     previewTitle: "Apercu des lignes a importer",
-    downloadUnavailableNative: "Le telechargement du template n'est pas encore disponible dans l'application mobile — nous y travaillons. En attendant, connecte-toi sur soultrack.org depuis un navigateur pour telecharger le template.",
     andOthers: "autres",
     importing: "Import en cours...",
     importBtn: "Importer",
@@ -191,10 +190,8 @@ const translations = {
     step2: "2. Use the dropdown menus for choice fields (gender, age, status, ministries, needs...). Delete lines starting with # before importing.",
     step3: "3. To add more ministries/needs than available columns, or a custom one, edit the member's profile in the app after import.",
     downloadTemplate: "Download Excel template",
-    mobileNoticeTitle: "Coming soon",
-    mobileNoticeMsg: "Downloading the template isn't available yet in the mobile app — we're working on it.",
-    mobileNoticeMsg2: "In the meantime, log in from a browser to download the template:",
-    mobileNoticeClose: "Close",
+    downloadingTemplate: "Downloading...",
+    downloadTemplateError: "Error downloading the template: ",
     importFile: "Import a CSV or Excel file",
     checkingDuplicates: "Checking for duplicates...",
     resumeFile: "File summary",
@@ -215,7 +212,6 @@ const translations = {
     updateAll: "Update all",
     uncheckAllAdd: "Uncheck all (Add)",
     addAllAnyway: "Add all anyway",
-    downloadUnavailableNative: "Downloading the template isn't available yet in the mobile app — we're working on it. In the meantime, log in at soultrack.org from a browser to download the template.",
     previewTitle: "Preview of rows to import",
     andOthers: "others",
     importing: "Importing...",
@@ -275,7 +271,7 @@ export default function ImportMembresCSV({ user }) {
   const [checking, setChecking] = useState(false);
   const [success, setSuccess] = useState(false);
   const [importCount, setImportCount] = useState(0);
-  const [showMobileNotice, setShowMobileNotice] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
 
   const requiredFields = [
     "nom", "prenom", "sexe", "age", "date_venu", "serviteur",
@@ -306,18 +302,55 @@ export default function ImportMembresCSV({ user }) {
     return null;
   };
 
-  const handleDownloadTemplate = () => {
-    if (Capacitor.isNativePlatform()) {
-      setShowMobileNotice(true);
+  // ─── Téléchargement du template ─────────────────────────────────────
+  // Sur le web : téléchargement classique via <a download>.
+  // Sur mobile (app Capacitor) : la WebView n'a pas de mécanisme de
+  // téléchargement natif, donc on récupère le fichier via fetch(), on
+  // l'écrit avec Filesystem, puis on ouvre la feuille de partage native
+  // (Share) pour que l'utilisateur puisse l'enregistrer où il veut.
+  // Même logique que pour l'export RGPD.
+  const handleDownloadTemplate = async () => {
+    const url = `/api/template-import-membres?lang=${lang}`;
+    const filename = lang === "en" ? "template_import_members.xlsx" : "template_import_membres.xlsx";
+
+    if (!Capacitor.isNativePlatform()) {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
       return;
     }
 
-    const url = `/api/template-import-membres?lang=${lang}`;
-    const filename = lang === "en" ? "template_import_members.xlsx" : "template_import_membres.xlsx";
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    link.click();
+    setDownloadingTemplate(true);
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+
+      const base64Data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = () => reject(new Error("Lecture du fichier impossible"));
+        reader.readAsDataURL(blob);
+      });
+
+      const written = await Filesystem.writeFile({
+        path: filename,
+        data: base64Data,
+        directory: Directory.Cache,
+      });
+
+      await Share.share({
+        title: filename,
+        url: written.uri,
+        dialogTitle: t.downloadTemplate,
+      });
+    } catch (err) {
+      console.error("Erreur téléchargement template:", err);
+      alert(t.downloadTemplateError + (err.message || ""));
+    } finally {
+      setDownloadingTemplate(false);
+    }
   };
 
   const processRows = async (rows) => {
@@ -675,9 +708,10 @@ export default function ImportMembresCSV({ user }) {
         <p className="text-sm text-white/70 mb-3">{t.step3}</p>
         <button
           onClick={handleDownloadTemplate}
-          className="bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
+          disabled={downloadingTemplate}
+          className="bg-blue-500 hover:bg-blue-400 disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
         >
-          {t.downloadTemplate}
+          {downloadingTemplate ? t.downloadingTemplate : t.downloadTemplate}
         </button>
       </div>
 
@@ -806,42 +840,6 @@ export default function ImportMembresCSV({ user }) {
         <div className="bg-emerald-500/20 border border-emerald-400/40 rounded-xl p-4 text-center">
           <p className="text-emerald-300 font-bold text-lg">{t.successTitle}</p>
           <p className="text-white/70 text-sm mt-1">{importCount} {t.successMsg}</p>
-        </div>
-      )}
-
-      {showMobileNotice && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6"
-          onClick={() => setShowMobileNotice(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl border border-white/20 p-6 text-center shadow-2xl"
-            style={{ backgroundColor: "#333699" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-400/20 border border-blue-300/40 text-3xl">
-              🚧
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">{t.mobileNoticeTitle}</h3>
-            <p className="text-sm text-white/70 mb-1 leading-relaxed">{t.mobileNoticeMsg}</p>
-            <p className="text-sm text-white/70 mb-4 leading-relaxed">{t.mobileNoticeMsg2}</p>
-
-            <a
-              href="https://www.soultrack.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold px-4 py-2.5 rounded-lg shadow transition mb-3"
-            >
-              www.soultrack.org
-            </a>
-
-            <button
-              onClick={() => setShowMobileNotice(false)}
-              className="text-white/50 hover:text-white/80 text-sm underline transition"
-            >
-              {t.mobileNoticeClose}
-            </button>
-          </div>
         </div>
       )}
     </div>

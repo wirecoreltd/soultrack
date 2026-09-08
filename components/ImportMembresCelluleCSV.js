@@ -6,6 +6,8 @@ import { checkLimiteAtteinte } from "../lib/checkLimite";
 import Papa from "papaparse";
 import { useLang } from "../hooks/useLang";
 import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 // Liste alignée sur ImportMembresCSV (17 valeurs documentées)
@@ -100,10 +102,8 @@ const translations = {
     step2: "2. Utilise les menus deroulants pour les champs a choix (sexe, age, statut, besoins...). Efface les lignes commencant par # avant d'importer.",
     step3: "3. Pour ajouter plus de besoins que de colonnes disponibles, ou un besoin personnalise, modifie la fiche du membre dans l'application apres l'import.",
     downloadTemplate: "Telecharger le template Excel",
-    mobileNoticeTitle: "Bientot disponible",
-    mobileNoticeMsg: "Le telechargement du template n'est pas encore disponible dans l'application mobile — nous y travaillons.",
-    mobileNoticeMsg2: "En attendant, connecte-toi depuis un navigateur pour telecharger le template :",
-    mobileNoticeClose: "Fermer",
+    downloadingTemplate: "Telechargement en cours...",
+    downloadTemplateError: "Erreur lors du telechargement du template : ",
     importFile: "Importer un fichier CSV ou Excel",
     checkingDuplicates: "Verification des doublons en cours...",
     resumeFile: "Resume du fichier",
@@ -173,10 +173,8 @@ const translations = {
     step2: "2. Use the dropdown menus for choice fields (gender, age, status, needs...). Delete lines starting with # before importing.",
     step3: "3. To add more needs than available columns, or a custom one, edit the member's profile in the app after import.",
     downloadTemplate: "Download Excel template",
-    mobileNoticeTitle: "Coming soon",
-    mobileNoticeMsg: "Downloading the template isn't available yet in the mobile app — we're working on it.",
-    mobileNoticeMsg2: "In the meantime, log in from a browser to download the template:",
-    mobileNoticeClose: "Close",
+    downloadingTemplate: "Downloading...",
+    downloadTemplateError: "Error downloading the template: ",
     importFile: "Import a CSV or Excel file",
     checkingDuplicates: "Checking for duplicates...",
     resumeFile: "File summary",
@@ -255,7 +253,7 @@ export default function ImportMembresCelluleCSV({ user }) {
   const [checking, setChecking]         = useState(false);
   const [success, setSuccess]           = useState(false);
   const [importCount, setImportCount]   = useState(0);
-  const [showMobileNotice, setShowMobileNotice] = useState(false);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
 
   const requiredFields = ["nom", "prenom", "sexe", "age", "date_venu", "venu", "priere_salut"];
 
@@ -294,13 +292,8 @@ export default function ImportMembresCelluleCSV({ user }) {
     return s;
   };
 
-  // ─── Genere et telecharge le template Excel avec menus deroulants ───
-  const handleDownloadTemplate = async () => {
-    if (Capacitor.isNativePlatform()) {
-      setShowMobileNotice(true);
-      return;
-    }
-
+  // ─── Construit le classeur Excel (buffer) avec menus deroulants ───
+  const buildTemplateWorkbook = async () => {
     const ExcelJS = (await import("exceljs")).default;
     const workbook = new ExcelJS.Workbook();
     const ws = workbook.addWorksheet(lang === "en" ? "Template" : "Modele");
@@ -371,16 +364,69 @@ export default function ImportMembresCelluleCSV({ user }) {
     applyList(FIELD_INDEX.statut + 1, "statut");
     BESOIN_SLOTS.forEach((slot) => applyList(FIELD_INDEX[slot] + 1, "besoin"));
 
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = lang === "en" ? "template_import_cell_members.xlsx" : "template_import_membres_cellule.xlsx";
-    link.click();
-    URL.revokeObjectURL(url);
+    return workbook;
+  };
+
+  // ─── Genere et telecharge le template Excel avec menus deroulants ───
+  // Sur le web : téléchargement classique via blob + <a download>.
+  // Sur mobile (app Capacitor) : la WebView n'a pas de mécanisme de
+  // téléchargement natif, donc on écrit le fichier via Filesystem puis
+  // on ouvre la feuille de partage native (Share) pour que l'utilisateur
+  // puisse l'enregistrer où il veut. Même logique que pour l'export RGPD.
+  const handleDownloadTemplate = async () => {
+    const filename = lang === "en" ? "template_import_cell_members.xlsx" : "template_import_membres_cellule.xlsx";
+
+    setDownloadingTemplate(true);
+    try {
+      const workbook = await buildTemplateWorkbook();
+
+      if (Capacitor.isNativePlatform()) {
+        const base64Data = await workbook.xlsx.writeBuffer({ base64: true });
+        // ExcelJS ne fournit pas nativement une sortie base64 propre pour
+        // toutes les versions : on repasse par un Buffer/Blob pour être sûr.
+        const arrayBuffer = await workbook.xlsx.writeBuffer();
+        const b64 = arrayBufferToBase64(arrayBuffer);
+
+        const written = await Filesystem.writeFile({
+          path: filename,
+          data: b64,
+          directory: Directory.Cache,
+        });
+
+        await Share.share({
+          title: filename,
+          url: written.uri,
+          dialogTitle: t.downloadTemplate,
+        });
+      } else {
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error("Erreur téléchargement template:", err);
+      alert(t.downloadTemplateError + (err.message || ""));
+    } finally {
+      setDownloadingTemplate(false);
+    }
+  };
+
+  // ─── Convertit un ArrayBuffer en chaîne base64 (sans dépendance externe) ───
+  const arrayBufferToBase64 = (buffer) => {
+    let binary = "";
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
   };
 
   // ─── Traite un tableau de lignes (objets {header: valeur}), quelle que soit
@@ -686,9 +732,10 @@ export default function ImportMembresCelluleCSV({ user }) {
         <p className="text-sm text-white/70 mb-3">{t.step3}</p>
         <button
           onClick={handleDownloadTemplate}
-          className="bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
+          disabled={downloadingTemplate}
+          className="bg-blue-500 hover:bg-blue-400 disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
         >
-          {t.downloadTemplate}
+          {downloadingTemplate ? t.downloadingTemplate : t.downloadTemplate}
         </button>
       </div>
 
@@ -805,43 +852,6 @@ export default function ImportMembresCelluleCSV({ user }) {
         <div className="bg-emerald-500/20 border border-emerald-400/40 rounded-xl p-4 text-center">
           <p className="text-emerald-300 font-bold text-lg">{t.successTitle}</p>
           <p className="text-white/70 text-sm mt-1">{importCount} {t.successMsg}</p>
-        </div>
-      )}
-
-      {/* Modale d'avertissement mobile */}
-      {showMobileNotice && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-6"
-          onClick={() => setShowMobileNotice(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl border border-white/20 p-6 text-center shadow-2xl"
-            style={{ backgroundColor: "#333699" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-blue-400/20 border border-blue-300/40 text-3xl">
-              🚧
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">{t.mobileNoticeTitle}</h3>
-            <p className="text-sm text-white/70 mb-1 leading-relaxed">{t.mobileNoticeMsg}</p>
-            <p className="text-sm text-white/70 mb-4 leading-relaxed">{t.mobileNoticeMsg2}</p>
-
-            <a
-              href="https://www.soultrack.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-semibold px-4 py-2.5 rounded-lg shadow transition mb-3"
-            >
-              www.soultrack.org
-            </a>
-
-            <button
-              onClick={() => setShowMobileNotice(false)}
-              className="text-white/50 hover:text-white/80 text-sm underline transition"
-            >
-              {t.mobileNoticeClose}
-            </button>
-          </div>
         </div>
       )}
     </div>

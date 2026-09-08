@@ -5,14 +5,19 @@ import Papa from "papaparse";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
 import { useFeature } from "../components/FeaturesContext";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 
 const translations = {
   fr: {
     beforeImport: "Avant d'importer",
     step1: "1. Télécharge le template et remplis-le avec tes données.",
     step2: "2. Efface toutes les lignes commençant par # avant d'importer.",
-    downloadTemplate: "Télécharger le template CSV",
-    importFile: "Importer un fichier CSV",
+    downloadTemplate: "Télécharger le template Excel",
+    downloadingTemplate: "Telechargement en cours...",
+    downloadTemplateError: "Erreur lors du téléchargement du template : ",
+    importFile: "Importer un fichier CSV ou Excel",
     checkingDuplicates: "Vérification en cours...",
     resumeFile: "Résumé du fichier",
     readyToImport: "prêt(s) à importer",
@@ -31,13 +36,16 @@ const translations = {
     warningDupEmail: (email) => `Email déjà utilisé : ${email}`,
     progressMsg: (i, total) => `Création ${i}/${total}...`,
     errSession: "Session expirée. Veuillez vous reconnecter.",
+    errorParseFile: "Impossible de lire ce fichier Excel : ",
   },
   en: {
     beforeImport: "Before importing",
     step1: "1. Download the template and fill it with your data.",
     step2: "2. Delete all lines starting with # before importing.",
-    downloadTemplate: "Download CSV template",
-    importFile: "Import a CSV file",
+    downloadTemplate: "Download Excel template",
+    downloadingTemplate: "Downloading...",
+    downloadTemplateError: "Error downloading the template: ",
+    importFile: "Import a CSV or Excel file",
     checkingDuplicates: "Checking...",
     resumeFile: "File summary",
     readyToImport: "ready to import",
@@ -56,6 +64,7 @@ const translations = {
     warningDupEmail: (email) => `Email already used: ${email}`,
     progressMsg: (i, total) => `Creating ${i}/${total}...`,
     errSession: "Session expired. Please log in again.",
+    errorParseFile: "Could not read this Excel file: ",
   },
 };
 
@@ -159,7 +168,7 @@ const normalizeValue = (value, enToFrMap, validFrValues) => {
 // ─── Config template par langue (fonction pour injecter les rôles filtrés) ───
 const getTemplateConfig = (lang, rolesValides) => ({
   fr: {
-    filename: "template_import_utilisateurs.csv",
+    filename: "template_import_utilisateurs.xlsx",
     headers: [
       "prenom *", "nom *", "sexe *", "age *", "date_venu *",
       "telephone", "is_whatsapp", "ville",
@@ -180,23 +189,24 @@ const getTemplateConfig = (lang, rolesValides) => ({
     notes: [
       "IMPORTANT: Effacez toutes les lignes commençant par # avant d'importer.",
       "Les colonnes avec * sont obligatoires.",
+      "Les colonnes sexe, age, is_whatsapp, statut, venu, priere_salut, type_conversion ont un menu deroulant : cliquez sur la cellule puis sur la petite fleche.",
       "sexe: Homme | Femme",
       "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
-      "Le préfixe téléphonique du pays doit être placé avant le numéro de téléphone",      
+      "Le préfixe téléphonique du pays doit être placé avant le numéro de téléphone",
       "date_venu: format YYYY-MM-DD ou JJ-MM-AAAA",
       "is_whatsapp: Oui | Non (ou vide = Non)",
       "statut: veut rejoindre l'église | a déjà son église | nouveau | visiteur",
       "venu: invité | réseaux | evangélisation | autre",
       "priere_salut: Oui | Non",
       "type_conversion: Nouveau converti | Réconciliation (requis si priere_salut = Oui)",
-      `roles: ${rolesValides.join(" | ")} — séparer plusieurs rôles par |`,
-      `ministeres: ${MINISTERES_VALIDES.join(" | ")} — séparer par | — OBLIGATOIRE`,
+      `roles: ${rolesValides.join(" | ")} — séparer plusieurs rôles par | (pas de menu déroulant sur cette colonne : valeurs multiples)`,
+      `ministeres: ${MINISTERES_VALIDES.join(" | ")} — séparer par | — OBLIGATOIRE (pas de menu déroulant sur cette colonne : valeurs multiples)`,
       ...(rolesValides.includes("ResponsableCellule") ? ["cellule_nom / cellule_zone: obligatoires si role = ResponsableCellule"] : []),
       "cellule_mere_id: UUID de la cellule mère (optionnel)",
     ],
   },
   en: {
-    filename: "template_import_users.csv",
+    filename: "template_import_users.xlsx",
     headers: [
       "first_name *", "last_name *", "gender *", "age *", "date_joined *",
       "phone", "is_whatsapp", "city",
@@ -217,6 +227,7 @@ const getTemplateConfig = (lang, rolesValides) => ({
     notes: [
       "IMPORTANT: Delete all lines starting with # before importing.",
       "Columns with * are required.",
+      "The gender, age, is_whatsapp, status, how_came, salvation_prayer, conversion_type columns have a dropdown: click the cell then the small arrow.",
       "gender: Male | Female",
       "age: 12-17 yrs | 18-25 yrs | 26-30 yrs | 31-40 yrs | 41-55 yrs | 56-69 yrs | 70 yrs and over",
       "The country phone prefix must be placed before the phone number",
@@ -226,8 +237,8 @@ const getTemplateConfig = (lang, rolesValides) => ({
       "how_came: invited | social media | evangelization | other",
       "salvation_prayer: Yes | No",
       "conversion_type: New convert | Reconciliation (required if salvation_prayer = Yes)",
-      `roles: ${rolesValides.join(" | ")} — separate multiple roles with |`,
-    `ministries: ${Object.values(MINISTERES_EN_TO_FR).map(fr => Object.keys(MINISTERES_EN_TO_FR).find(en => MINISTERES_EN_TO_FR[en] === fr)).join(" | ")} — separate with | — REQUIRED`,
+      `roles: ${rolesValides.join(" | ")} — separate multiple roles with | (no dropdown on this column: multiple values)`,
+      `ministries: ${Object.values(MINISTERES_EN_TO_FR).map(fr => Object.keys(MINISTERES_EN_TO_FR).find(en => MINISTERES_EN_TO_FR[en] === fr)).join(" | ")} — separate with | — REQUIRED (no dropdown on this column: multiple values)`,
       ...(rolesValides.includes("ResponsableCellule") ? ["cell_name / cell_area: required if role = ResponsableCellule"] : []),
       "cellule_mere_id: UUID of the parent cell group (optional)",
     ],
@@ -272,6 +283,28 @@ const parseDate = (value) => {
   return null;
 };
 
+// ─── Helper : numéro de colonne (1-based) → lettre Excel ───
+const colLetter = (n) => {
+  let s = "";
+  while (n > 0) {
+    const m = (n - 1) % 26;
+    s = String.fromCharCode(65 + m) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+};
+
+// ─── Helper : ArrayBuffer → base64 (sans dépendance externe) ───
+const arrayBufferToBase64 = (buffer) => {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+};
+
 export default function ImportUsersCSV() {
   const { lang } = useLang();
   const t = translations[lang];
@@ -291,33 +324,291 @@ export default function ImportUsersCSV() {
   const [data, setData]                 = useState([]);
   const [errors, setErrors]             = useState([]);
   const [loading, setLoading]           = useState(false);
+  const [checking, setChecking]         = useState(false);
   const [progress, setProgress]         = useState("");
   const [success, setSuccess]           = useState(false);
   const [importCount, setImportCount]   = useState(0);
   const [importErrors, setImportErrors] = useState([]);
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
 
-  // ── Téléchargement du template selon la langue ──
-  const handleDownloadTemplate = () => {
+  // ─── Construit le classeur Excel (buffer) avec menus déroulants ───
+  const buildTemplateWorkbook = async () => {
     const cfg = getTemplateConfig(lang, ROLES_VALIDES);
+    const isEn = lang === "en";
 
-    const csvContent = [
-      cfg.headers.join(","),
-      cfg.example.join(","),
-      "",
-      ...cfg.notes.map((n) => `# ${n}`),
-    ].join("\n");
+    const ExcelJS = (await import("exceljs")).default;
+    const workbook = new ExcelJS.Workbook();
+    const ws = workbook.addWorksheet(isEn ? "Template" : "Modele");
 
-    const BOM = "\uFEFF";
-    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = cfg.filename;
-    link.click();
-    URL.revokeObjectURL(url);
+    ws.addRow(cfg.headers);
+    ws.getRow(1).font = { bold: true };
+    ws.addRow(cfg.example);
+    cfg.notes.forEach((note) => ws.addRow([`# ${note}`]));
+
+    ws.columns.forEach((col) => { col.width = 24; });
+    ws.views = [{ state: "frozen", ySplit: 1 }];
+
+    // Index (0-based) d'une colonne dans cfg.headers, dérivé dynamiquement
+    const idx = (label) => cfg.headers.findIndex((h) => h.replace(" *", "") === label);
+
+    // ── Feuille cachée contenant les listes pour les menus déroulants ──
+    const wsListes = workbook.addWorksheet("Listes");
+    wsListes.state = "hidden";
+
+    const lists = {
+      sexe:   isEn ? ["Male", "Female"] : ["Homme", "Femme"],
+      age:    isEn ? AGE_OPTIONS_EN : AGE_OPTIONS_FR,
+      bool:   isEn ? ["Yes", "No"] : ["Oui", "Non"],
+      statut: isEn ? Object.keys(STATUT_EN_TO_FR) : ["veut rejoindre l'église", "a déjà son église", "nouveau", "visiteur"],
+      venu:   isEn ? Object.keys(VENU_EN_TO_FR) : ["invité", "réseaux", "evangélisation", "autre"],
+      conversion: isEn ? Object.keys(CONVERSION_EN_TO_FR) : ["Nouveau converti", "Réconciliation"],
+    };
+
+    const listKeys = Object.keys(lists);
+    listKeys.forEach((key, colIdx) => {
+      lists[key].forEach((val, rowIdx) => {
+        wsListes.getCell(rowIdx + 1, colIdx + 1).value = val;
+      });
+    });
+
+    const rangeFor = (key) => {
+      const colIdx = listKeys.indexOf(key) + 1;
+      const letter = colLetter(colIdx);
+      return `Listes!$${letter}$1:$${letter}$${lists[key].length}`;
+    };
+
+    const applyList = (headerLabel, listKey) => {
+      const colNumber = idx(headerLabel) + 1;
+      if (colNumber <= 0) return;
+      const formula = rangeFor(listKey);
+      for (let row = 2; row <= 200; row++) {
+        ws.getCell(row, colNumber).dataValidation = {
+          type: "list",
+          allowBlank: true,
+          formulae: [formula],
+          showErrorMessage: true,
+          errorStyle: "warning",
+          error: isEn ? "Please pick a value from the list." : "Merci de choisir une valeur dans la liste.",
+        };
+      }
+    };
+
+    applyList("sexe", "sexe");
+    applyList("age", "age");
+    applyList("is_whatsapp", "bool");
+    applyList("statut", "statut");
+    applyList("venu", "venu");
+    applyList("priere_salut", "bool");
+    applyList("type_conversion", "conversion");
+
+    return workbook;
   };
 
-  // ── Parse + validation (accepte FR et EN) ──
+  // ─── Téléchargement du template (web: blob classique, Android: Share natif) ───
+  const handleDownloadTemplate = async () => {
+    const cfg = getTemplateConfig(lang, ROLES_VALIDES);
+    const filename = cfg.filename;
+
+    setDownloadingTemplate(true);
+    try {
+      const workbook = await buildTemplateWorkbook();
+
+      if (Capacitor.isNativePlatform()) {
+        const arrayBuffer = await workbook.xlsx.writeBuffer();
+        const b64 = arrayBufferToBase64(arrayBuffer);
+
+        const written = await Filesystem.writeFile({
+          path: filename,
+          data: b64,
+          directory: Directory.Cache,
+        });
+
+        await Share.share({
+          title: filename,
+          url: written.uri,
+          dialogTitle: t.downloadTemplate,
+        });
+      } else {
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error("Erreur téléchargement template:", err);
+      alert(t.downloadTemplateError + (err.message || ""));
+    } finally {
+      setDownloadingTemplate(false);
+    }
+  };
+
+  // ─── Traite un tableau de lignes (objets {header: valeur}), quelle que soit
+  //     la source (CSV via PapaParse ou Excel via ExcelJS) ───
+  const processRows = (rows) => {
+    const validData = [];
+    const errorList = [];
+
+    rows.forEach((row, index) => {
+      const lineNum = index + 2;
+
+      // Skip lignes commentaires / vides
+      if (Object.values(row)[0]?.toString().trim().startsWith("#")) return;
+      const isEmptyRow = Object.values(row).every((v) => !v || !v.toString().trim());
+      if (isEmptyRow) return;
+
+      // ── Normaliser les clés ──
+      // 1) Enlever " *"
+      // 2) Mapper les headers EN → FR si nécessaire
+      const r = {};
+      Object.keys(row).forEach((key) => {
+        const cleanKey = key.replace(" *", "").trim();
+        const mappedKey = EN_HEADER_MAP[cleanKey] ?? cleanKey;
+        r[mappedKey] = row[key]?.toString().trim() || "";
+      });
+
+      const errs = [];
+
+      // ── Champs obligatoires ──
+      ["prenom", "nom", "sexe", "age", "date_venu", "email", "password", "roles"].forEach((f) => {
+        if (!r[f]) errs.push(`${f} missing`);
+      });
+
+      // ── Normaliser les valeurs EN → FR ──
+      const sexeNorm = normalizeValue(r.sexe, SEXE_EN_TO_FR, ["Homme", "Femme"]);
+      const ageNorm  = normalizeValue(r.age,  AGE_EN_TO_FR,  AGE_OPTIONS_FR);
+      const isWhatsappRaw = normalizeValue(r.is_whatsapp, BOOL_EN_TO_FR, ["Oui", "Non"]);
+      const priereSalutNorm = normalizeValue(r.priere_salut, BOOL_EN_TO_FR, ["Oui", "Non"]);
+      const statutNorm = normalizeValue(r.statut, STATUT_EN_TO_FR,
+        ["veut rejoindre l'église", "a déjà son église", "nouveau", "visiteur"]);
+      const venuNorm = normalizeValue(r.venu, VENU_EN_TO_FR,
+        ["invité", "réseaux", "evangélisation", "autre"]);
+      const conversionNorm = normalizeValue(r.type_conversion, CONVERSION_EN_TO_FR,
+        ["Nouveau converti", "Réconciliation"]);
+
+      // ── Validations ──
+      if (r.sexe && !["Homme", "Femme"].includes(sexeNorm))
+        errs.push(`gender invalid (${lang === "en" ? "Male or Female" : "Homme ou Femme"})`);
+
+      if (r.age && !AGE_OPTIONS_FR.includes(ageNorm))
+        errs.push("age invalid");
+
+      const dateVenu = parseDate(r.date_venu);
+      if (r.date_venu && !dateVenu)
+        errs.push("date invalid");
+
+      // Rôles (identiques FR/EN)
+      const roles = r.roles
+        ? r.roles.split("|").map((x) => x.trim()).filter(Boolean)
+        : [];
+      const invalidRoles = roles.filter((ro) => !ROLES_VALIDES.includes(ro));
+      if (invalidRoles.length > 0)
+        errs.push(`invalid role(s): ${invalidRoles.join(", ")}`);
+      if (roles.length === 0)
+        errs.push("at least one role is required");
+
+      // Cellule obligatoire si ResponsableCellule
+      if (roles.includes("ResponsableCellule")) {
+        if (!r.cellule_nom?.trim()) errs.push("cell name required for ResponsableCellule");
+        if (!r.cellule_zone?.trim()) errs.push("cell area required for ResponsableCellule");
+      }
+
+      // Ministères — normaliser EN → FR si besoin
+      const ministeresRaw = r.ministeres
+        ? r.ministeres.split("|").map((x) => x.trim()).filter(Boolean)
+        : [];
+      const ministeres = ministeresRaw.map((m) =>
+        MINISTERES_EN_TO_FR[m] ?? m  // traduit si EN, sinon conserve (sera validé après)
+      );
+      const invalidMin = ministeres.filter((m) => !MINISTERES_VALIDES.includes(m));
+      if (invalidMin.length > 0)
+        errs.push(`invalid ministr(ies): ${invalidMin.join(", ")}`);
+
+      if (ministeres.length === 0)
+        errs.push(lang === "en" ? "at least one ministry is required" : "au moins un ministère est requis");
+
+      if (r.priere_salut && !["Oui", "Non"].includes(priereSalutNorm))
+        errs.push(`salvation_prayer invalid (${lang === "en" ? "Yes or No" : "Oui ou Non"})`);
+
+      if (priereSalutNorm === "Oui" && !conversionNorm)
+        errs.push("conversion_type required when salvation_prayer = Yes");
+
+      if (errs.length > 0) {
+        errs.forEach((err) => errorList.push(t.errorRow(lineNum, err)));
+        return;
+      }
+
+      // ── Ligne valide — toutes les valeurs sont désormais en FR (DB) ──
+      validData.push({
+        prenom:          capitalize(r.prenom),
+        nom:             capitalize(r.nom),
+        sexe:            sexeNorm,
+        age:             ageNorm,
+        date_venu:       dateVenu,
+        telephone:       r.telephone || null,
+        is_whatsapp:     isWhatsappRaw === "Oui",
+        ville:           capitalize(r.ville) || null,
+        statut:          statutNorm || null,
+        venu:            venuNorm || null,
+        priere_salut:    priereSalutNorm || null,
+        type_conversion: conversionNorm || null,
+        email:           r.email.toLowerCase().trim(),
+        password:        r.password,
+        roles,
+        ministeresSelected: ministeres,
+        cellule_nom:     r.cellule_nom?.trim() || "",
+        cellule_zone:    r.cellule_zone?.trim() || "",
+      });
+    });
+
+    setErrors(errorList);
+    setData(validData);
+  };
+
+  // ─── Lit un fichier .xlsx / .xls et le convertit en tableau de lignes ───
+  const parseExcelFile = async (file) => {
+    try {
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      const buffer = await file.arrayBuffer();
+      await workbook.xlsx.load(buffer);
+
+      const ws = workbook.worksheets.find((s) => s.name !== "Listes") || workbook.worksheets[0];
+
+      const headerRow = (ws.getRow(1).values || []).slice(1).map((v) => (v ?? "").toString().trim());
+
+      const rows = [];
+      ws.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return;
+        const values = (row.values || []).slice(1);
+        const rowObj = {};
+        headerRow.forEach((header, i) => {
+          let cell = values[i];
+          if (cell instanceof Date) {
+            const yyyy = cell.getFullYear();
+            const mm = String(cell.getMonth() + 1).padStart(2, "0");
+            const dd = String(cell.getDate()).padStart(2, "0");
+            cell = `${yyyy}-${mm}-${dd}`;
+          }
+          rowObj[header] = cell === undefined || cell === null ? "" : cell.toString().trim();
+        });
+        rows.push(rowObj);
+      });
+
+      processRows(rows);
+    } catch (err) {
+      alert(t.errorParseFile + err.message);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  // ── Parse + validation (accepte CSV ou Excel, FR et EN) ──
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -328,131 +619,21 @@ export default function ImportUsersCSV() {
     setImportErrors([]);
     setProgress("");
 
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const rows = results.data;
-        const validData = [];
-        const errorList = [];
+    const ext = file.name.split(".").pop().toLowerCase();
 
-        rows.forEach((row, index) => {
-          const lineNum = index + 2;
-
-          // Skip lignes commentaires
-          if (Object.values(row)[0]?.toString().trim().startsWith("#")) return;
-
-          // ── Normaliser les clés ──
-          // 1) Enlever " *"
-          // 2) Mapper les headers EN → FR si nécessaire
-          const r = {};
-          Object.keys(row).forEach((key) => {
-            const cleanKey = key.replace(" *", "").trim();
-            const mappedKey = EN_HEADER_MAP[cleanKey] ?? cleanKey;
-            r[mappedKey] = row[key]?.toString().trim() || "";
-          });
-
-          const errs = [];
-
-          // ── Champs obligatoires ──
-          ["prenom", "nom", "sexe", "age", "date_venu", "email", "password", "roles"].forEach((f) => {
-            if (!r[f]) errs.push(`${f} missing`);
-          });
-
-          // ── Normaliser les valeurs EN → FR ──
-          const sexeNorm = normalizeValue(r.sexe, SEXE_EN_TO_FR, ["Homme", "Femme"]);
-          const ageNorm  = normalizeValue(r.age,  AGE_EN_TO_FR,  AGE_OPTIONS_FR);
-          const isWhatsappRaw = normalizeValue(r.is_whatsapp, BOOL_EN_TO_FR, ["Oui", "Non"]);
-          const priereSalutNorm = normalizeValue(r.priere_salut, BOOL_EN_TO_FR, ["Oui", "Non"]);
-          const statutNorm = normalizeValue(r.statut, STATUT_EN_TO_FR,
-            ["veut rejoindre l'église", "a déjà son église", "nouveau", "visiteur"]);
-          const venuNorm = normalizeValue(r.venu, VENU_EN_TO_FR,
-            ["invité", "réseaux", "evangélisation", "autre"]);
-          const conversionNorm = normalizeValue(r.type_conversion, CONVERSION_EN_TO_FR,
-            ["Nouveau converti", "Réconciliation"]);
-
-          // ── Validations ──
-          if (r.sexe && !["Homme", "Femme"].includes(sexeNorm))
-            errs.push(`gender invalid (${lang === "en" ? "Male or Female" : "Homme ou Femme"})`);
-
-          if (r.age && !AGE_OPTIONS_FR.includes(ageNorm))
-            errs.push("age invalid");
-
-          const dateVenu = parseDate(r.date_venu);
-          if (r.date_venu && !dateVenu)
-            errs.push("date invalid");
-
-          // Rôles (identiques FR/EN)
-          const roles = r.roles
-            ? r.roles.split("|").map((x) => x.trim()).filter(Boolean)
-            : [];
-          const invalidRoles = roles.filter((ro) => !ROLES_VALIDES.includes(ro));
-          if (invalidRoles.length > 0)
-            errs.push(`invalid role(s): ${invalidRoles.join(", ")}`);
-          if (roles.length === 0)
-            errs.push("at least one role is required");
-
-          // Cellule obligatoire si ResponsableCellule
-          if (roles.includes("ResponsableCellule")) {
-            if (!r.cellule_nom?.trim()) errs.push("cell name required for ResponsableCellule");
-            if (!r.cellule_zone?.trim()) errs.push("cell area required for ResponsableCellule");
-          }
-
-          // Ministères — normaliser EN → FR si besoin
-          const ministeresRaw = r.ministeres
-            ? r.ministeres.split("|").map((x) => x.trim()).filter(Boolean)
-            : [];
-          const ministeres = ministeresRaw.map((m) =>
-            MINISTERES_EN_TO_FR[m] ?? m  // traduit si EN, sinon conserve (sera validé après)
-          );
-          const invalidMin = ministeres.filter((m) => !MINISTERES_VALIDES.includes(m));
-          if (invalidMin.length > 0)
-            errs.push(`invalid ministr(ies): ${invalidMin.join(", ")}`);
-
-          if (ministeres.length === 0)
-          errs.push(lang === "en" ? "at least one ministry is required" : "au moins un ministère est requis");
-
-          if (r.priere_salut && !["Oui", "Non"].includes(priereSalutNorm))
-            errs.push(`salvation_prayer invalid (${lang === "en" ? "Yes or No" : "Oui ou Non"})`);
-
-          if (priereSalutNorm === "Oui" && !conversionNorm)
-            errs.push("conversion_type required when salvation_prayer = Yes");
-
-          if (errs.length > 0) {
-            errs.forEach((err) => errorList.push(t.errorRow(lineNum, err)));
-            return;
-          }
-
-          // ── Ligne valide — toutes les valeurs sont désormais en FR (DB) ──
-          validData.push({
-            prenom:          capitalize(r.prenom),
-            nom:             capitalize(r.nom),
-            sexe:            sexeNorm,
-            age:             ageNorm,
-            date_venu:       dateVenu,
-            telephone:       r.telephone || null,
-            is_whatsapp:     isWhatsappRaw === "Oui",
-            ville:           capitalize(r.ville) || null,
-            statut:          statutNorm || null,
-            venu:            venuNorm || null,
-            priere_salut:    priereSalutNorm || null,
-            type_conversion: conversionNorm || null,
-            email:           r.email.toLowerCase().trim(),
-            password:        r.password,
-            roles,
-            ministeresSelected: ministeres,
-            cellule_nom:     r.cellule_nom?.trim() || "",
-            cellule_zone:    r.cellule_zone?.trim() || "",
-          });
-        });
-
-        setErrors(errorList);
-        setData(validData);
-      },
-    });
+    if (ext === "xlsx" || ext === "xls") {
+      setChecking(true);
+      parseExcelFile(file);
+    } else {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => processRows(results.data),
+      });
+    }
   };
 
-  // ── Import ligne par ligne via /api/create-user ──
+  // ── Import ligne par ligne via /api/create-users-batch ──
   const handleImport = async () => {
     setLoading(true);
     setImportErrors([]);
@@ -472,23 +653,23 @@ export default function ImportUsersCSV() {
 
     setProgress(t.progressMsg(1, data.length));
 
-      const res = await fetch("/api/create-users-batch", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ users: data }),
-      });
-      
-      const result = await res.json();
-      
-      if (!res.ok) {
-        rowErrors.push(result?.error ?? "Unknown error");
-      } else {
-        successCount = result.success;
-        rowErrors.push(...(result.errors || []));
-      }
+    const res = await fetch("/api/create-users-batch", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ users: data }),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      rowErrors.push(result?.error ?? "Unknown error");
+    } else {
+      successCount = result.success;
+      rowErrors.push(...(result.errors || []));
+    }
 
     setLoading(false);
     setProgress("");
@@ -511,9 +692,10 @@ export default function ImportUsersCSV() {
         <p className="text-sm text-orange-400 font-semibold mb-3">{t.step2}</p>
         <button
           onClick={handleDownloadTemplate}
-          className="bg-blue-500 hover:bg-blue-400 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
+          disabled={downloadingTemplate}
+          className="bg-blue-500 hover:bg-blue-400 disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow transition"
         >
-          {t.downloadTemplate}
+          {downloadingTemplate ? t.downloadingTemplate : t.downloadTemplate}
         </button>
       </div>
 
@@ -522,10 +704,13 @@ export default function ImportUsersCSV() {
         <p className="font-semibold text-white mb-2">{t.importFile}</p>
         <input
           type="file"
-          accept=".csv"
+          accept=".csv,.xlsx,.xls"
           onChange={handleFileChange}
           className="text-white/80 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-white/20 file:text-white hover:file:bg-white/30"
         />
+        {checking && (
+          <p className="text-blue-300 text-sm mt-2 animate-pulse">{t.checkingDuplicates}</p>
+        )}
       </div>
 
       {/* Résumé */}

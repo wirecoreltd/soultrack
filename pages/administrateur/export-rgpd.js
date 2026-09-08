@@ -541,23 +541,12 @@ function ExportRGPDContent() {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-      if (isMobile && navigator.share && navigator.canShare) {
-        const file = new File([blob], filename, { type: blob.type });
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: filename });
-          showToast(t.successToast);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Fallback desktop / mobiles sans Web Share API
+            // Téléchargement direct via blob — fonctionne sur desktop ET Android Chrome
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
+      link.style.display = "none";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

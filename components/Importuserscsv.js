@@ -13,7 +13,7 @@ const translations = {
   fr: {
     beforeImport: "Avant d'importer",
     step1: "1. Télécharge le template et remplis-le avec tes données.",
-    step2: "2. Efface toutes les lignes commençant par # avant d'importer.",
+    step2: "2. Utilise les menus déroulants pour les champs à choix (sexe, age, statut, roles, ministeres...). Efface les lignes commençant par # avant d'importer.",
     downloadTemplate: "Télécharger le template Excel",
     downloadingTemplate: "Telechargement en cours...",
     downloadTemplateError: "Erreur lors du téléchargement du template : ",
@@ -41,7 +41,7 @@ const translations = {
   en: {
     beforeImport: "Before importing",
     step1: "1. Download the template and fill it with your data.",
-    step2: "2. Delete all lines starting with # before importing.",
+    step2: "2. Use the dropdown menus for choice fields (gender, age, status, roles, ministries...). Delete lines starting with # before importing.",
     downloadTemplate: "Download Excel template",
     downloadingTemplate: "Downloading...",
     downloadTemplateError: "Error downloading the template: ",
@@ -155,6 +155,10 @@ const MINISTERES_EN_TO_FR = {
   "Moderation":   "Modération",
 };
 
+// Colonnes multi-valeurs : nombre d'emplacements disponibles dans le template
+const ROLE_SLOTS      = ["role_1", "role_2", "role_3"];
+const MINISTERE_SLOTS = ["ministere_1", "ministere_2", "ministere_3", "ministere_4", "ministere_5"];
+
 // Normalise une valeur : accepte FR ou EN, retourne toujours la valeur FR (DB)
 const normalizeValue = (value, enToFrMap, validFrValues) => {
   if (!value) return "";
@@ -173,7 +177,9 @@ const getTemplateConfig = (lang, rolesValides) => ({
       "prenom *", "nom *", "sexe *", "age *", "date_venu *",
       "telephone", "is_whatsapp", "ville",
       "statut", "venu", "priere_salut", "type_conversion",
-      "email *", "password *", "roles *", "ministeres *",
+      "email *", "password *",
+      "role_1 *", "role_2", "role_3",
+      "ministere_1 *", "ministere_2", "ministere_3", "ministere_4", "ministere_5",
       "cellule_nom", "cellule_zone",
     ],
     example: [
@@ -181,15 +187,15 @@ const getTemplateConfig = (lang, rolesValides) => ({
       "+33698765412", "Oui", "Paris",
       "veut rejoindre l'église", "invité", "Oui", "Nouveau converti",
       "jean.dupont@email.com", "MotDePasse123",
-      rolesValides.includes("ResponsableCellule") ? "ResponsableCellule" : rolesValides[0] ?? "Administrateur",
-      "Louange|Intercession",
+      rolesValides.includes("ResponsableCellule") ? "ResponsableCellule" : rolesValides[0] ?? "Administrateur", "", "",
+      "Louange", "Intercession", "", "", "",
       rolesValides.includes("ResponsableCellule") ? "Ma Cellule" : "",
       rolesValides.includes("ResponsableCellule") ? "Rose-Hill" : "",
     ],
     notes: [
       "IMPORTANT: Effacez toutes les lignes commençant par # avant d'importer.",
       "Les colonnes avec * sont obligatoires.",
-      "Les colonnes sexe, age, is_whatsapp, statut, venu, priere_salut, type_conversion ont un menu deroulant : cliquez sur la cellule puis sur la petite fleche.",
+      "Les colonnes sexe, age, is_whatsapp, statut, venu, priere_salut, type_conversion, role et ministere ont un menu deroulant : cliquez sur la cellule puis sur la petite fleche.",
       "sexe: Homme | Femme",
       "age: 12-17 ans | 18-25 ans | 26-30 ans | 31-40 ans | 41-55 ans | 56-69 ans | 70 ans et plus",
       "Le préfixe téléphonique du pays doit être placé avant le numéro de téléphone",
@@ -199,10 +205,10 @@ const getTemplateConfig = (lang, rolesValides) => ({
       "venu: invité | réseaux | evangélisation | autre",
       "priere_salut: Oui | Non",
       "type_conversion: Nouveau converti | Réconciliation (requis si priere_salut = Oui)",
-      `roles: ${rolesValides.join(" | ")} — séparer plusieurs rôles par | (pas de menu déroulant sur cette colonne : valeurs multiples)`,
-      `ministeres: ${MINISTERES_VALIDES.join(" | ")} — séparer par | — OBLIGATOIRE (pas de menu déroulant sur cette colonne : valeurs multiples)`,
+      `role_1 a role_3: une valeur par colonne parmi ${rolesValides.join(" | ")} — OBLIGATOIRE (au moins un role).`,
+      `ministere_1 a ministere_5: une valeur par colonne parmi ${MINISTERES_VALIDES.join(" | ")} — OBLIGATOIRE (au moins un ministere).`,
       ...(rolesValides.includes("ResponsableCellule") ? ["cellule_nom / cellule_zone: obligatoires si role = ResponsableCellule"] : []),
-      "cellule_mere_id: UUID de la cellule mère (optionnel)",
+      "Pour ajouter plus de roles/ministeres que de colonnes disponibles, modifiez le profil de l'utilisateur dans l'application apres l'import.",
     ],
   },
   en: {
@@ -211,7 +217,9 @@ const getTemplateConfig = (lang, rolesValides) => ({
       "first_name *", "last_name *", "gender *", "age *", "date_joined *",
       "phone", "is_whatsapp", "city",
       "status", "how_came", "salvation_prayer", "conversion_type",
-      "email *", "password *", "roles *", "ministries *",
+      "email *", "password *",
+      "role_1 *", "role_2", "role_3",
+      "ministry_1 *", "ministry_2", "ministry_3", "ministry_4", "ministry_5",
       "cell_name", "cell_area",
     ],
     example: [
@@ -219,15 +227,15 @@ const getTemplateConfig = (lang, rolesValides) => ({
       "+12025550101", "Yes", "New York",
       "wants to join the church", "invited", "Yes", "New convert",
       "john.smith@email.com", "Password123",
-      rolesValides.includes("ResponsableCellule") ? "ResponsableCellule" : rolesValides[0] ?? "Administrateur",
-      "Praise|Intercession",
+      rolesValides.includes("ResponsableCellule") ? "ResponsableCellule" : rolesValides[0] ?? "Administrateur", "", "",
+      "Praise", "Intercession", "", "", "",
       rolesValides.includes("ResponsableCellule") ? "My Cell" : "",
       rolesValides.includes("ResponsableCellule") ? "Brooklyn" : "",
     ],
     notes: [
       "IMPORTANT: Delete all lines starting with # before importing.",
       "Columns with * are required.",
-      "The gender, age, is_whatsapp, status, how_came, salvation_prayer, conversion_type columns have a dropdown: click the cell then the small arrow.",
+      "The gender, age, is_whatsapp, status, how_came, salvation_prayer, conversion_type, role and ministry columns have a dropdown: click the cell then the small arrow.",
       "gender: Male | Female",
       "age: 12-17 yrs | 18-25 yrs | 26-30 yrs | 31-40 yrs | 41-55 yrs | 56-69 yrs | 70 yrs and over",
       "The country phone prefix must be placed before the phone number",
@@ -237,10 +245,10 @@ const getTemplateConfig = (lang, rolesValides) => ({
       "how_came: invited | social media | evangelization | other",
       "salvation_prayer: Yes | No",
       "conversion_type: New convert | Reconciliation (required if salvation_prayer = Yes)",
-      `roles: ${rolesValides.join(" | ")} — separate multiple roles with | (no dropdown on this column: multiple values)`,
-      `ministries: ${Object.values(MINISTERES_EN_TO_FR).map(fr => Object.keys(MINISTERES_EN_TO_FR).find(en => MINISTERES_EN_TO_FR[en] === fr)).join(" | ")} — separate with | — REQUIRED (no dropdown on this column: multiple values)`,
+      `role_1 to role_3: one value per column among ${rolesValides.join(" | ")} — REQUIRED (at least one role).`,
+      `ministry_1 to ministry_5: one value per column among ${Object.keys(MINISTERES_EN_TO_FR).join(" | ")} — REQUIRED (at least one ministry).`,
       ...(rolesValides.includes("ResponsableCellule") ? ["cell_name / cell_area: required if role = ResponsableCellule"] : []),
-      "cellule_mere_id: UUID of the parent cell group (optional)",
+      "To add more roles/ministries than available columns, edit the user's profile in the app after import.",
     ],
   },
 })[lang] ?? getTemplateConfig("fr", rolesValides);
@@ -257,9 +265,13 @@ const EN_HEADER_MAP = {
   "how_came":   "venu",
   "salvation_prayer": "priere_salut",
   "conversion_type":  "type_conversion",
-  "ministries": "ministeres",
   "cell_name":  "cellule_nom",
   "cell_area":  "cellule_zone",
+  "ministry_1": "ministere_1",
+  "ministry_2": "ministere_2",
+  "ministry_3": "ministere_3",
+  "ministry_4": "ministere_4",
+  "ministry_5": "ministere_5",
 };
 
 const capitalize = (str) =>
@@ -348,20 +360,27 @@ export default function ImportUsersCSV() {
     ws.columns.forEach((col) => { col.width = 24; });
     ws.views = [{ state: "frozen", ySplit: 1 }];
 
-    // Index (0-based) d'une colonne dans cfg.headers, dérivé dynamiquement
-    const idx = (label) => cfg.headers.findIndex((h) => h.replace(" *", "") === label);
+    // Trouve le numéro de colonne (1-based) d'un champ interne (FR), quelle
+    // que soit la langue du template, en passant par EN_HEADER_MAP.
+    const idxBySlot = (slotKey) => cfg.headers.findIndex((h) => {
+      const clean = h.replace(" *", "").trim();
+      const mapped = EN_HEADER_MAP[clean] ?? clean;
+      return mapped === slotKey;
+    });
 
     // ── Feuille cachée contenant les listes pour les menus déroulants ──
     const wsListes = workbook.addWorksheet("Listes");
     wsListes.state = "hidden";
 
     const lists = {
-      sexe:   isEn ? ["Male", "Female"] : ["Homme", "Femme"],
-      age:    isEn ? AGE_OPTIONS_EN : AGE_OPTIONS_FR,
-      bool:   isEn ? ["Yes", "No"] : ["Oui", "Non"],
-      statut: isEn ? Object.keys(STATUT_EN_TO_FR) : ["veut rejoindre l'église", "a déjà son église", "nouveau", "visiteur"],
-      venu:   isEn ? Object.keys(VENU_EN_TO_FR) : ["invité", "réseaux", "evangélisation", "autre"],
+      sexe:       isEn ? ["Male", "Female"] : ["Homme", "Femme"],
+      age:        isEn ? AGE_OPTIONS_EN : AGE_OPTIONS_FR,
+      bool:       isEn ? ["Yes", "No"] : ["Oui", "Non"],
+      statut:     isEn ? Object.keys(STATUT_EN_TO_FR) : ["veut rejoindre l'église", "a déjà son église", "nouveau", "visiteur"],
+      venu:       isEn ? Object.keys(VENU_EN_TO_FR) : ["invité", "réseaux", "evangélisation", "autre"],
       conversion: isEn ? Object.keys(CONVERSION_EN_TO_FR) : ["Nouveau converti", "Réconciliation"],
+      role:       ROLES_VALIDES,
+      ministere:  isEn ? Object.keys(MINISTERES_EN_TO_FR) : MINISTERES_VALIDES,
     };
 
     const listKeys = Object.keys(lists);
@@ -377,8 +396,8 @@ export default function ImportUsersCSV() {
       return `Listes!$${letter}$1:$${letter}$${lists[key].length}`;
     };
 
-    const applyList = (headerLabel, listKey) => {
-      const colNumber = idx(headerLabel) + 1;
+    const applyList = (slotKey, listKey) => {
+      const colNumber = idxBySlot(slotKey) + 1;
       if (colNumber <= 0) return;
       const formula = rangeFor(listKey);
       for (let row = 2; row <= 200; row++) {
@@ -400,6 +419,8 @@ export default function ImportUsersCSV() {
     applyList("venu", "venu");
     applyList("priere_salut", "bool");
     applyList("type_conversion", "conversion");
+    ROLE_SLOTS.forEach((slot) => applyList(slot, "role"));
+    MINISTERE_SLOTS.forEach((slot) => applyList(slot, "ministere"));
 
     return workbook;
   };
@@ -475,7 +496,7 @@ export default function ImportUsersCSV() {
       const errs = [];
 
       // ── Champs obligatoires ──
-      ["prenom", "nom", "sexe", "age", "date_venu", "email", "password", "roles"].forEach((f) => {
+      ["prenom", "nom", "sexe", "age", "date_venu", "email", "password"].forEach((f) => {
         if (!r[f]) errs.push(`${f} missing`);
       });
 
@@ -502,10 +523,10 @@ export default function ImportUsersCSV() {
       if (r.date_venu && !dateVenu)
         errs.push("date invalid");
 
-      // Rôles (identiques FR/EN)
-      const roles = r.roles
-        ? r.roles.split("|").map((x) => x.trim()).filter(Boolean)
-        : [];
+      // ── Roles : combine les colonnes role_1..role_3 (identiques FR/EN) ──
+      const roles = ROLE_SLOTS
+        .map((slot) => r[slot])
+        .filter(Boolean);
       const invalidRoles = roles.filter((ro) => !ROLES_VALIDES.includes(ro));
       if (invalidRoles.length > 0)
         errs.push(`invalid role(s): ${invalidRoles.join(", ")}`);
@@ -518,10 +539,10 @@ export default function ImportUsersCSV() {
         if (!r.cellule_zone?.trim()) errs.push("cell area required for ResponsableCellule");
       }
 
-      // Ministères — normaliser EN → FR si besoin
-      const ministeresRaw = r.ministeres
-        ? r.ministeres.split("|").map((x) => x.trim()).filter(Boolean)
-        : [];
+      // ── Ministères : combine les colonnes ministere_1..ministere_5 ──
+      const ministeresRaw = MINISTERE_SLOTS
+        .map((slot) => r[slot])
+        .filter(Boolean);
       const ministeres = ministeresRaw.map((m) =>
         MINISTERES_EN_TO_FR[m] ?? m  // traduit si EN, sinon conserve (sera validé après)
       );
@@ -689,7 +710,6 @@ export default function ImportUsersCSV() {
       <div className="bg-white/10 border border-blue-300/40 rounded-xl p-4">
         <p className="font-semibold text-white">{t.beforeImport}</p>
         <p className="text-sm text-white mb-1">{t.step1}</p>
-        <p className="text-sm text-orange-400 font-semibold mb-3">{t.step2}</p>
         <button
           onClick={handleDownloadTemplate}
           disabled={downloadingTemplate}

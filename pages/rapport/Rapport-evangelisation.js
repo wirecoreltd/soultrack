@@ -324,15 +324,6 @@ function getTotals(reports) {
   return { hommes, femmes, total: hommes + femmes, priere, nouveau, reconciliation, moissonneurs };
 }
 
-//─────────────────────
-function getStatutBadgeColor(statut) {
-  const s = (statut || "").trim();
-  if (s === "Intégré") return "green";
-  if (s === "En cours") return "amber";
-  if (s === "Refus") return "red";
-  if (s === "Envoyé") return "purple";
-  return "gray";
-}
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
 function BlocKpiGlobaux({ filteredEvangelises, filteredSuivis, rapports, onKpiClick, onCelluleClick, onConseillerClick, t }) {
   const totalEvangelises = filteredEvangelises.length;

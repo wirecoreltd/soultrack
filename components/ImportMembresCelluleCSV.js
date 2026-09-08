@@ -381,9 +381,6 @@ export default function ImportMembresCelluleCSV({ user }) {
       const workbook = await buildTemplateWorkbook();
 
       if (Capacitor.isNativePlatform()) {
-        const base64Data = await workbook.xlsx.writeBuffer({ base64: true });
-        // ExcelJS ne fournit pas nativement une sortie base64 propre pour
-        // toutes les versions : on repasse par un Buffer/Blob pour être sûr.
         const arrayBuffer = await workbook.xlsx.writeBuffer();
         const b64 = arrayBufferToBase64(arrayBuffer);
 

@@ -398,7 +398,12 @@ export default function HomePage() {
         <meta name="twitter:title" content={t.title} />
         <meta name="twitter:description" content={t.metaDescription} />
         <meta name="twitter:image" content="https://soultrack.org/logo.png" />
-      
+
+      //----------------------------
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:type" content="image/png" />
+        
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

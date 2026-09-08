@@ -32,6 +32,7 @@ const translations = {
       etatCellule:      "État Cellule",
       registrePresences:"Saisie des présences individuelles",
       rapportRegistres: "Statistiques des présences individuelles",
+      rapportevangelisation: "Rapport Evangélisation",
       notifications:    "Notifications",
     },
     sendLinkMembre:   "Envoyer formulaire Cellule – Nouveau membre",
@@ -59,6 +60,7 @@ const translations = {
       etatCellule:      "Cell group status",
       registrePresences:"Individual Attendance Entry",
       rapportRegistres: "Individual Attendance Statistics",
+      rapportevangelisation: "Evangelism report",
       notifications:    "Notifications",
     },
     sendLinkMembre:   "Send Cell form – New member",
@@ -184,6 +186,11 @@ function CellulesHubContent() {
         <Link href="/rapport/RapportPresence" className={CARD_CLASS} style={{ borderTop: "4px solid #2a8496" }}>
           <div className="text-5xl mb-2">✅</div>
           <div className="text-lg font-bold text-gray-800 text-center">{t.cards.rapportRegistres}</div>
+        </Link>
+
+        <Link href="/rapport/Rapport-evangelisation" className={CARD_CLASS} style={{ borderTop: "4px solid #697d7c" }}>
+          <div className="text-5xl mb-2">✝️</div>
+          <div className="text-lg font-bold text-gray-800 text-center">{t.cards.rapportevangelisation}</div>
         </Link>
 
         <Link href="/admin/notifications" className={CARD_CLASS} style={{ borderTop: "4px solid #ef4444" }}>

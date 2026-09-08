@@ -897,7 +897,20 @@ function EtatCellule() {
       const { data, error } = await query;
       if (error) throw error;
 
-      let filtered = data || [];
+      // ── Exclusion des évangélisés marqués "supprime" ──────────────
+      // La vue vue_flow_personnes ne porte pas la colonne evangelises.status_suivi,
+      // donc on récupère ici les ids à exclure pour rester cohérent avec
+      // RapportEvangelisation (qui filtre .neq("status_suivi", "supprime")).
+      const { data: supprimesData } = await supabase
+        .from("evangelises")
+        .select("id")
+        .eq("eglise_id", userProfile.eglise_id)
+        .eq("status_suivi", "supprime");
+      const supprimeIds = new Set((supprimesData || []).map(s => s.id));
+
+      let rawData = (data || []).filter(r => !r.evangelise_id || !supprimeIds.has(r.evangelise_id));
+
+      let filtered = rawData;
       if (isPerso) {
         if (filterDebut) filtered = filtered.filter(r => new Date(r.date_depart) >= new Date(filterDebut));
         if (filterFin)   filtered = filtered.filter(r => new Date(r.date_depart) <= new Date(filterFin));
@@ -957,11 +970,12 @@ const cMap = {};
       text?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") || "";
 
     setKpis({
-      totalEvangelises: filtered.filter(r =>
-        ["individuel","sortie de groupe","campagne d'evangelisation","evangelisation de rue","evangelisation maison","evangelisation stade","evangelisation"]
-          .some(t => normalize(r.type_evangelisation).includes(normalize(t)))
-      ).length,
-      totalVenus: filtered.filter(r => normalize(r.type_evangelisation).includes("integration")).length,
+      // ── "Évangélisés" : on se base sur la colonne "source" que la vue calcule
+      // elle-même (évangélisation vs intégration), plutôt que sur une liste de
+      // types en dur qui doit être maintenue à la main et peut désynchroniser
+      // ce KPI de celui de RapportEvangelisation dès qu'un nouveau type apparaît.
+      totalEvangelises: filtered.filter(r => r.source === "evangelisation").length,
+      totalVenus: filtered.filter(r => r.source === "integration").length,
       totalIntegration: filtered.filter(r => normalize(r.statut) === "integre").length,
       totalBapteme: filtered.filter(r => r.date_baptise).length,
       totalMinistere: filtered.filter(r => r.debut_ministere).length,

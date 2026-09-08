@@ -197,6 +197,12 @@ const translations = {
   },
 };
 
+const ogMeta = {
+  title: "SoulTrack — Church Management App That Helps You Never Lose Sight of a Soul",
+  description:
+    "SoulTrack is a church management app that helps shepherds, leaders, and disciples track, follow up with, and grow every person — from a home cell to a multi-site megachurch. A tool for evangelism, cell life, and the journey of every soul.",
+};
+
 export default function HomePage() {
   const router = useRouter();
   const [openMenu, setOpenMenu] = useState(false);
@@ -387,16 +393,16 @@ export default function HomePage() {
         <meta name="description" content={t.metaDescription} />
         <link rel="canonical" href="https://soultrack.org/" />
       
-        <meta property="og:title" content={t.title} />
-        <meta property="og:description" content={t.metaDescription} />
+        <meta property="og:title" content={ogMeta.title} />
+        <meta property="og:description" content={ogMeta.description} />
         <meta property="og:image" content="https://soultrack.org/logo.png" />
         <meta property="og:url" content="https://soultrack.org/" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="SoulTrack" />
       
         <meta name="twitter:card" content="summary" />
-        <meta name="twitter:title" content={t.title} />
-        <meta name="twitter:description" content={t.metaDescription} />
+        <meta name="twitter:title" content={ogMeta.title} />
+        <meta name="twitter:description" content={ogMeta.description} />
         <meta name="twitter:image" content="https://soultrack.org/logo.png" />
 
       //----------------------------

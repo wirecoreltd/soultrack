@@ -39,6 +39,9 @@
 
 import { useState } from "react";
 import * as XLSX from "xlsx";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 import supabase from "../../lib/supabaseClient"; // ⚠️ adapte le chemin relatif selon l'emplacement réel du fichier
 import ProtectedRoute from "../../components/ProtectedRoute";
 import HeaderPages from "../../components/HeaderPages";
@@ -505,7 +508,7 @@ function ExportRGPDContent() {
           buildFeuilleEvangelisation(egliseId),
         ]);
 
-            const workbook = XLSX.utils.book_new();
+      const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(
         workbook,
         XLSX.utils.json_to_sheet(feuilleEglise),
@@ -533,24 +536,32 @@ function ExportRGPDContent() {
       );
 
       const dateStr = new Date().toISOString().slice(0, 10);
-      const filename = `export-rgpd-${dateStr}.xlsx`;
+      const fileName = `export-rgpd-${dateStr}.xlsx`;
 
-      // Génère le fichier en mémoire (blob) au lieu d'appeler writeFile directement
-      const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-      const blob = new Blob([wbout], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
+      // ⚠️ Sur une app installée via Capacitor, la WebView n'a pas de
+      // mécanisme de téléchargement de fichier comme un vrai navigateur :
+      // XLSX.writeFile() (basé sur un clic simulé sur un <a download>) ne
+      // fait rien, sans erreur. On passe donc par Filesystem + Share pour
+      // écrire le fichier puis ouvrir la feuille de partage native, qui
+      // permet à l'utilisateur de l'enregistrer où il veut (Fichiers,
+      // Drive, etc.). Sur le web, on garde le téléchargement classique.
+      if (Capacitor.isNativePlatform()) {
+        const base64Data = XLSX.write(workbook, { bookType: "xlsx", type: "base64" });
 
-            // Téléchargement direct via blob — fonctionne sur desktop ET Android Chrome
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
+        const written = await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache, // pas de permission de stockage requise
+        });
+
+        await Share.share({
+          title: fileName,
+          url: written.uri,
+          dialogTitle: "Enregistrer ou partager l'export RGPD",
+        });
+      } else {
+        XLSX.writeFile(workbook, fileName);
+      }
 
       showToast(t.successToast);
     } catch (err) {

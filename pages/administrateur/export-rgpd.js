@@ -505,7 +505,7 @@ function ExportRGPDContent() {
           buildFeuilleEvangelisation(egliseId),
         ]);
 
-      const workbook = XLSX.utils.book_new();
+            const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(
         workbook,
         XLSX.utils.json_to_sheet(feuilleEglise),
@@ -533,7 +533,35 @@ function ExportRGPDContent() {
       );
 
       const dateStr = new Date().toISOString().slice(0, 10);
-      XLSX.writeFile(workbook, `export-rgpd-${dateStr}.xlsx`);
+      const filename = `export-rgpd-${dateStr}.xlsx`;
+
+      // Génère le fichier en mémoire (blob) au lieu d'appeler writeFile directement
+      const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([wbout], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (isMobile && navigator.share && navigator.canShare) {
+        const file = new File([blob], filename, { type: blob.type });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: filename });
+          showToast(t.successToast);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fallback desktop / mobiles sans Web Share API
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
 
       showToast(t.successToast);
     } catch (err) {

@@ -7,14 +7,25 @@
 // refus, moissonneurs, intégrés en cellule/à l'église), entonnoir
 // de conversion, tendance mensuelle (évangélisés vs convertis), et
 // résultats détaillés par type d'évangélisation (avec sessions/
-// rapports modifiables). Les données sont filtrables par période
-// rapide (7j/30j/90j/6 mois/1 an), tranche de dates personnalisée,
-// et type d'évangélisation. Un clic sur un KPI redirige vers la
-// page de suivi des âmes avec les filtres correspondants.
+// rapports modifiables et liste nominative dépliable). Les données
+// sont filtrables par période rapide (7j/30j/90j/6 mois/1 an),
+// tranche de dates personnalisée, et type d'évangélisation. Un clic
+// sur un KPI redirige vers la page de suivi des âmes avec les
+// filtres correspondants.
+//
+// Visibilité par rôle :
+// - ResponsableCellule : ne voit que les évangélisés dont le suivi
+//   (suivis_des_evangelises.cellule_id) appartient à une des
+//   cellules dont il est responsable (table cellules.responsable_id).
+// - Conseiller : ne voit que les évangélisés dont le suivi
+//   (suivis_des_evangelises.conseiller_id) lui est assigné.
+// - Tous les autres rôles (Administrateur, ResponsableEvangelisation,
+//   etc.) conservent la vue complète de l'église.
 //
 // Tables Supabase utilisées :
-// - profiles                (lecture)            → eglise_id de l'utilisateur connecté
-// - evangelises              (lecture)            → contacts évangélisés (filtrés par période/type)
+// - profiles                (lecture)            → eglise_id, role de l'utilisateur connecté
+// - cellules                (lecture)            → cellules dont l'utilisateur est responsable (si ResponsableCellule)
+// - evangelises              (lecture)            → contacts évangélisés (filtrés par période/type/rôle)
 // - rapport_evangelisation   (lecture + écriture) → sessions/rapports d'évangélisation détaillés
 // - suivis_des_evangelises   (lecture)            → statut de suivi (cellule, conseiller, intégration)
 //
@@ -111,6 +122,10 @@ const translations = {
     aucuneDonneePeriode: "Aucune donnée sur cette période",
     aucunRapport: "Aucun rapport sur cette période",
     rapportMaj: "✅ Rapport mis à jour !",
+
+    voirPersonnes: "Voir les personnes",
+    masquerPersonnes: "Masquer les personnes",
+    aucunePersonne: "Aucune personne",
 
     typesEvangelisation: [
       "Individuel",
@@ -209,6 +224,10 @@ const translations = {
     aucunRapport: "No reports for this period",
     rapportMaj: "✅ Report updated!",
 
+    voirPersonnes: "View people",
+    masquerPersonnes: "Hide people",
+    aucunePersonne: "No one",
+
     typesEvangelisation: [
       "Individuel",
       "Sortie de groupe",
@@ -242,6 +261,10 @@ function getMonthName(monthIndex, moisArray) {
 function getMapLabel(map, value) {
   if (!value) return "—";
   return map[value] || value;
+}
+function getNomComplet(e, fallback) {
+  const nomComplet = [e?.prenom, e?.nom].filter(Boolean).join(" ").trim();
+  return nomComplet || fallback;
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
@@ -361,14 +384,22 @@ function BlocEntonnoir({ filteredEvangelises, filteredSuivis, t }) {
   );
 }
 
-// ─── BLOC PAR TYPE D'ÉVANGÉLISATION ────────────────────────────
-function BlocParType({ filteredEvangelises, rapports, t }) {
+// ─── BLOC PAR TYPE D'ÉVANGÉLISATION (avec liste nominative) ────
+function BlocParType({ filteredEvangelises, t }) {
+  const [expandedTypes, setExpandedTypes] = useState({});
+
   const parType = {};
   filteredEvangelises.forEach(e => {
     const type = e.type_evangelisation || t.nonDefini;
-    if (!parType[type]) parType[type] = { nb: 0, convertis: 0 };
+    if (!parType[type]) parType[type] = { nb: 0, convertis: 0, personnes: [] };
     parType[type].nb++;
     if (e.priere_salut) parType[type].convertis++;
+    parType[type].personnes.push({
+      id: e.id,
+      nomComplet: getNomComplet(e, t.nonDefini),
+      convertis: !!e.priere_salut,
+      statutSuivi: e.status_suivi,
+    });
   });
   const max = Math.max(...Object.values(parType).map(v => v.nb), 1);
   const lignes = Object.entries(parType).sort((a, b) => b[1].nb - a[1].nb);
@@ -376,19 +407,46 @@ function BlocParType({ filteredEvangelises, rapports, t }) {
 
   return (
     <div className="flex flex-col gap-2">
-      {lignes.map(([type, { nb, convertis }]) => (
-        <div key={type} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <p className="text-sm text-white w-40 flex-shrink-0 truncate">{type === t.nonDefini ? type : getMapLabel(t.typeEvangOptions, type)}</p>
-            <BarreProgression pct={(nb / max) * 100} color="bg-blue-400" />
-            <span className="text-sm font-bold text-white w-8 text-right">{nb}</span>
+      {lignes.map(([type, { nb, convertis, personnes }]) => {
+        const isOpen = !!expandedTypes[type];
+        return (
+          <div key={type} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
+            <button
+              onClick={() => setExpandedTypes(p => ({ ...p, [type]: !p[type] }))}
+              className="w-full flex items-center gap-3 text-left"
+            >
+              <p className="text-sm text-white w-40 flex-shrink-0 truncate">{type === t.nonDefini ? type : getMapLabel(t.typeEvangOptions, type)}</p>
+              <BarreProgression pct={(nb / max) * 100} color="bg-blue-400" />
+              <span className="text-sm font-bold text-white w-8 text-right">{nb}</span>
+              <span className="text-white/30 text-xs flex-shrink-0">{isOpen ? "▲" : "▼"}</span>
+            </button>
+            <div className="flex gap-2 ml-40">
+              <Badge color="pink">{t.kpiConvertis}: {convertis}</Badge>
+              <Badge color="green">{nb > 0 ? Math.round((convertis / nb) * 100) : 0}%</Badge>
+            </div>
+
+            {isOpen && (
+              <div className="mt-2 pt-2 border-t border-white/10 flex flex-col gap-1">
+                {personnes.length === 0 ? (
+                  <p className="text-white/30 text-xs text-center py-2">{t.aucunePersonne}</p>
+                ) : (
+                  personnes
+                    .sort((a, b) => a.nomComplet.localeCompare(b.nomComplet, "fr"))
+                    .map(p => (
+                      <div key={p.id} className="flex items-center justify-between gap-2 bg-white/5 rounded-lg px-3 py-1.5">
+                        <span className="text-sm text-white truncate">{p.nomComplet}</span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {p.convertis && <Badge color="pink">🙏</Badge>}
+                          {p.statutSuivi && <Badge color="blue">{p.statutSuivi}</Badge>}
+                        </div>
+                      </div>
+                    ))
+                )}
+              </div>
+            )}
           </div>
-          <div className="flex gap-2 ml-40">
-            <Badge color="pink">{t.kpiConvertis}: {convertis}</Badge>
-            <Badge color="green">{nb > 0 ? Math.round((convertis / nb) * 100) : 0}%</Badge>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -485,7 +543,7 @@ function CarteSession({ r, onEdit, t }) {
   );
 }
 
-// ─── ONGLET PAR TYPE ──────────────────────────────────────────
+// ─── ONGLET PAR TYPE (sessions/rapports) ───────────────────────
 function OngletParType({ rapports, onEdit, t }) {
   const [expandedTypes, setExpandedTypes] = useState({});
 
@@ -564,6 +622,12 @@ export default function RapportEvangelisation() {
   const [egliseId, setEgliseId] = useState(null);
   const [onglet, setOnglet] = useState("kpi");
 
+  // ─── Identité / rôle de l'utilisateur connecté (pour restreindre la visibilité) ───
+  const [userId, setUserId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+  const [celluleIds, setCelluleIds] = useState([]); // cellules dont l'utilisateur est responsable
+  const [celluleIdsLoaded, setCelluleIdsLoaded] = useState(false);
+
   const [modePerso, setModePerso] = useState(false);
   const [filtrePeriode, setFiltrePeriode] = useState("30");
   const [dateDebut, setDateDebut] = useState("");
@@ -574,19 +638,48 @@ export default function RapportEvangelisation() {
   const [selectedRapport, setSelectedRapport] = useState(null);
   const [message, setMessage] = useState("");
 
+  // 1) Profil (église + rôle) de l'utilisateur connecté
   useEffect(() => {
     const fetchProfile = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData?.session?.user;
       if (!user) return;
-      const { data: profile } = await supabase.from("profiles").select("eglise_id").eq("id", user.id).single();
-      if (profile) setEgliseId(profile.eglise_id);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("eglise_id, role, roles")
+        .eq("id", user.id)
+        .single();
+      if (profile) {
+        setEgliseId(profile.eglise_id);
+        setUserRole(profile.role);
+        setUserId(user.id);
+      }
     };
     fetchProfile();
   }, []);
 
+  // 2) Si l'utilisateur est ResponsableCellule, on récupère les cellules dont il a la charge
+  useEffect(() => {
+    const fetchCellules = async () => {
+      if (!userId || !userRole) return;
+      if (userRole === "ResponsableCellule") {
+        const { data } = await supabase
+          .from("cellules")
+          .select("id")
+          .eq("responsable_id", userId);
+        setCelluleIds((data || []).map(c => c.id));
+      }
+      setCelluleIdsLoaded(true);
+    };
+    fetchCellules();
+  }, [userId, userRole]);
+
   const fetchRapports = async (overrideModePerso = null) => {
     if (!egliseId) return;
+    // On attend que la liste des cellules soit chargée pour un ResponsableCellule,
+    // sinon on risquerait d'afficher toutes les données un court instant.
+    if (userRole === "ResponsableCellule" && !celluleIdsLoaded) return;
+
     setLoading(true);
     const isPerso = overrideModePerso !== null ? overrideModePerso : modePerso;
 
@@ -603,37 +696,58 @@ export default function RapportEvangelisation() {
     try {
       const { data: evangelisesData } = await supabase
         .from("evangelises")
-        .select("id, eglise_id, date_evangelise, type_evangelisation, status_suivi, priere_salut")
+        .select("id, eglise_id, nom, prenom, date_evangelise, type_evangelisation, status_suivi, priere_salut")
         .eq("eglise_id", egliseId).neq("status_suivi", "supprime");
       setAllEvangelises(evangelisesData || []);
+
+      const { data: suivisDataAll } = await supabase
+        .from("suivis_des_evangelises")
+        .select("id, eglise_id, evangelise_id, date_suivi, type_evangelisation, status_suivis_evangelises, cellule_id, conseiller_id")
+        .eq("eglise_id", egliseId);
+
+      // ─── Restriction de visibilité selon le rôle ───
+      // null = pas de restriction (Administrateur, ResponsableEvangelisation, etc.)
+      let allowedIds = null;
+      if (userRole === "ResponsableCellule") {
+        allowedIds = new Set(
+          (suivisDataAll || [])
+            .filter(s => s.cellule_id && celluleIds.includes(s.cellule_id))
+            .map(s => s.evangelise_id)
+        );
+      } else if (userRole === "Conseiller") {
+        allowedIds = new Set(
+          (suivisDataAll || [])
+            .filter(s => s.conseiller_id === userId)
+            .map(s => s.evangelise_id)
+        );
+      }
 
       const filtered = (evangelisesData || []).filter(e => {
         const d = e.date_evangelise ? new Date(e.date_evangelise) : null;
         const afterStart = !startDate || (d && d >= startDate);
         const beforeEnd = !endDate || (d && d <= endDate);
         const typeOk = !filtreType || filtreType === "Tous" || e.type_evangelisation === filtreType;
-        return afterStart && beforeEnd && typeOk;
+        const visibleOk = !allowedIds || allowedIds.has(e.id);
+        return afterStart && beforeEnd && typeOk && visibleOk;
       });
       setFilteredEvangelises(filtered);
 
-     let query = supabase
-  .from("rapport_evangelisation")
-  .select(
-    "eglise_id, evangelise_member_id, date_evangelise, type_evangelisation, hommes, femmes, priere, nouveau_converti, reconciliation, moissonneurs"
-  )
-  .eq("eglise_id", egliseId)
-  .in("evangelise_member_id", filtered.map(e => e.id))
-  .order("date_evangelise", { ascending: false });
-// on retire les .gte()/.lte() ici : la période est déjà appliquée via `filtered`
-const { data: rapportsData } = await query;      
-      setRapports(rapportsData || []);
+      let rapportsData = [];
+      if (filtered.length > 0) {
+        const { data } = await supabase
+          .from("rapport_evangelisation")
+          .select(
+            "eglise_id, evangelise_member_id, date_evangelise, type_evangelisation, hommes, femmes, priere, nouveau_converti, reconciliation, moissonneurs"
+          )
+          .eq("eglise_id", egliseId)
+          .in("evangelise_member_id", filtered.map(e => e.id))
+          .order("date_evangelise", { ascending: false });
+        rapportsData = data || [];
+      }
+      setRapports(rapportsData);
 
-      const { data: suivisData } = await supabase
-        .from("suivis_des_evangelises")
-        .select("id, eglise_id, evangelise_id, date_suivi, type_evangelisation, status_suivis_evangelises, cellule_id, conseiller_id")
-        .eq("eglise_id", egliseId);
       const evangeliseIds = new Set(filtered.map(e => e.id));
-      const filteredSuivisFinal = (suivisData || []).filter(s => {
+      const filteredSuivisFinal = (suivisDataAll || []).filter(s => {
         const d = s.date_suivi ? new Date(s.date_suivi) : null;
         const afterStart = !startDate || (d && d >= startDate);
         const beforeEnd = !endDate || (d && d <= endDate);
@@ -648,7 +762,11 @@ const { data: rapportsData } = await query;
     setLoading(false);
   };
 
-  useEffect(() => { if (egliseId && !modePerso) fetchRapports(false); }, [egliseId, filtrePeriode, filtreType, modePerso]);
+  useEffect(() => {
+    if (egliseId && !modePerso && (userRole !== "ResponsableCellule" || celluleIdsLoaded)) {
+      fetchRapports(false);
+    }
+  }, [egliseId, filtrePeriode, filtreType, modePerso, userRole, celluleIdsLoaded, celluleIds.join(",")]);
 
   const handleSaveRapport = async (updated) => {
     await supabase.from("rapport_evangelisation").upsert(updated);
@@ -797,7 +915,7 @@ const { data: rapportsData } = await query;
 
             <div>
               <SectionTitle>{t.sectionParType}</SectionTitle>
-              <BlocParType filteredEvangelises={filteredEvangelises} rapports={rapports} t={t} />
+              <BlocParType filteredEvangelises={filteredEvangelises} t={t} />
             </div>
 
           </div>

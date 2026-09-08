@@ -69,12 +69,10 @@ const translations = {
 
     ongletKpi: "Vue d'ensemble",
     ongletType: "Par type",
-
     sectionVue: "Vue d'ensemble",
     sectionEntonnoir: "Entonnoir de conversion",
     sectionTendance: "Tendance mensuelle",
     sectionParType: "Résultats par type d'évangélisation",
-
     kpiEvangelises: "Évangélisés",
     kpiConvertis: "Convertis",
     kpiIntegres: "Intégrés",
@@ -92,18 +90,15 @@ const translations = {
     desEvangelises: "des évangélisés",
     desSuivis: "des suivis",
     impliques: "impliqués",
-
     entonnoirEvangelises: "Évangélisés",
     entonnoirEnvoyes: "Envoyés au suivi",
     entonnoirConvertis: "Convertis",
     entonnoirIntegres: "Intégrés",
     aucuneDonnee: "Aucune donnée",
     donneesInsuffisantes: "Données insuffisantes (≥ 2 mois)",
-
     vsMoisPrec: "vs mois préc.",
     legendeEvangelises: "Évangélisés",
     legendeConvertis: "Convertis",
-
     nonDefini: "Non défini",
     modifier: "✏️ Modifier",
     rapportPluriel: "rapport",
@@ -118,15 +113,15 @@ const translations = {
     prieres: "Prières",
     nvConv: "Nv. conv.",
     moiss: "Moiss.",
-
+    supprimerPersonne: "Supprimer",
+    confirmSuppressionPersonne: "Retirer cette personne de la session ?",
+    dejaEnvoyeSuivi: "Déjà transmise au suivi — suppression impossible ici",
     aucuneDonneePeriode: "Aucune donnée sur cette période",
     aucunRapport: "Aucun rapport sur cette période",
     rapportMaj: "✅ Rapport mis à jour !",
-
     voirPersonnes: "Voir les personnes",
     masquerPersonnes: "Masquer les personnes",
     aucunePersonne: "Aucune personne",
-
     typesEvangelisation: [
       "Individuel",
       "Sortie de groupe",
@@ -219,7 +214,9 @@ const translations = {
     prieres: "Prayers",
     nvConv: "New conv.",
     moiss: "Harv.",
-
+    supprimerPersonne: "Remove",
+    confirmSuppressionPersonne: "Remove this person from the session?",
+    dejaEnvoyeSuivi: "Already sent to follow-up — cannot delete here",
     aucuneDonneePeriode: "No data for this period",
     aucunRapport: "No reports for this period",
     rapportMaj: "✅ Report updated!",
@@ -327,6 +324,15 @@ function getTotals(reports) {
   return { hommes, femmes, total: hommes + femmes, priere, nouveau, reconciliation, moissonneurs };
 }
 
+//─────────────────────
+function getStatutBadgeColor(statut) {
+  const s = (statut || "").trim();
+  if (s === "Intégré") return "green";
+  if (s === "En cours") return "amber";
+  if (s === "Refus") return "red";
+  if (s === "Envoyé") return "purple";
+  return "gray";
+}
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
 function BlocKpiGlobaux({ filteredEvangelises, filteredSuivis, rapports, onKpiClick, onCelluleClick, onConseillerClick, t }) {
   const totalEvangelises = filteredEvangelises.length;
@@ -505,7 +511,7 @@ function BlocTendance({ filteredEvangelises, t }) {
 }
 
 // ─── CARTE SESSION ─────────────────────────────────────────────
-function CarteSession({ r, onEdit, t }) {
+function CarteSession({ r, personnes, onEdit, onDeletePersonne, onPersonneClick, t }) {
   const [open, setOpen] = useState(false);
   const total = (Number(r.hommes) || 0) + (Number(r.femmes) || 0);
   return (
@@ -540,6 +546,42 @@ function CarteSession({ r, onEdit, t }) {
               </div>
             ))}
           </div>
+
+          {/* ─── Liste nominative de cette session ─── */}
+          <div className="flex flex-col gap-1">
+            {(!personnes || personnes.length === 0) ? (
+              <p className="text-white/30 text-xs text-center py-2">{t.aucunePersonne}</p>
+            ) : (
+              personnes.map(p => {
+                const dejaEnvoye = p.statutSuivi != null; // présent dans suivis_des_evangelises = déjà envoyé
+                return (
+                  <div key={p.id} className="flex items-center justify-between gap-2 bg-white/5 rounded-lg px-3 py-1.5">
+                    <button
+                      onClick={() => onPersonneClick(p)}
+                      className="text-sm text-white truncate underline decoration-white/30 hover:decoration-white text-left"
+                    >
+                      {p.nomComplet}
+                    </button>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <Badge color={getStatutBadgeColor(p.statutDisplay)}>{p.statutDisplay}</Badge>
+                      {dejaEnvoye ? (
+                        <span title={t.dejaEnvoyeSuivi} className="text-white/20 text-xs px-1.5 cursor-not-allowed">🗑️</span>
+                      ) : (
+                        <button
+                          onClick={() => onDeletePersonne(p)}
+                          title={t.supprimerPersonne}
+                          className="text-red-400/70 hover:text-red-400 text-xs px-1.5"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
           <button onClick={() => onEdit(r)}
             className="w-full py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-white/80 text-sm font-semibold transition">
             {t.modifier}
@@ -551,17 +593,15 @@ function CarteSession({ r, onEdit, t }) {
 }
 
 // ─── ONGLET PAR TYPE (sessions/rapports) ───────────────────────
-function OngletParType({ rapports, filteredEvangelises, filteredSuivis, onEdit, t }) {
+function OngletParType({ rapports, filteredEvangelises, filteredSuivis, onEdit, onDeletePersonne, onPersonneClick, t }) {
   const [expandedTypes, setExpandedTypes] = useState({});
 
-  // Dernier statut de suivi connu par évangélisé (le plus récent, si plusieurs)
-  const statutParEvangelise = {};
+  // Statut de suivi (le plus récent) par évangélisé, si transmis
+  const suiviParEvangelise = {};
   (filteredSuivis || [])
     .slice()
     .sort((a, b) => new Date(a.date_suivi || 0) - new Date(b.date_suivi || 0))
-    .forEach(s => {
-      statutParEvangelise[s.evangelise_id] = s.status_suivis_evangelises;
-    });
+    .forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
 
   const grouped = {};
   rapports.forEach(r => {
@@ -570,26 +610,31 @@ function OngletParType({ rapports, filteredEvangelises, filteredSuivis, onEdit, 
     grouped[type].push(r);
   });
 
-  const personnesParType = {};
+  // Clé date (jour) pour matcher une personne à une session, indépendamment de l'heure
+  const dateKey = (d) => (d ? new Date(d).toISOString().split("T")[0] : null);
+
+  const personnesParTypeEtDate = {};
   (filteredEvangelises || []).forEach(e => {
     const type = e.type_evangelisation || t.nonDefini;
-    if (!personnesParType[type]) personnesParType[type] = [];
-    personnesParType[type].push({
+    const dk = dateKey(e.date_evangelise);
+    const key = `${type}|${dk}`;
+    if (!personnesParTypeEtDate[key]) personnesParTypeEtDate[key] = [];
+    const suivi = suiviParEvangelise[e.id];
+    personnesParTypeEtDate[key].push({
       id: e.id,
       nomComplet: getNomComplet(e, t.nonDefini),
-      statut: statutParEvangelise[e.id] || null,
+      statutSuivi: suivi ? suivi.status_suivis_evangelises : null,
+      statutDisplay: suivi ? (suivi.status_suivis_evangelises || t.nonDefini) : (e.status_suivi === "Envoyé" ? "Envoyé" : t.nonDefini),
+      status_suivi: e.status_suivi,
+      suiviId: suivi ? suivi.id : null,
     });
   });
 
-  const typesUnion = new Set([...Object.keys(grouped), ...Object.keys(personnesParType)]);
-
-  if (!typesUnion.size) return <p className="text-white/30 text-sm text-center py-8">{t.aucunRapport}</p>;
+  if (!Object.keys(grouped).length) return <p className="text-white/30 text-sm text-center py-8">{t.aucunRapport}</p>;
 
   return (
     <div className="flex flex-col gap-3">
-      {[...typesUnion].sort((a, b) => a.localeCompare(b, "fr")).map(type => {
-        const rows = grouped[type] || [];
-        const personnes = (personnesParType[type] || []).sort((a, b) => a.nomComplet.localeCompare(b.nomComplet, "fr"));
+      {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b, "fr")).map(([type, rows]) => {
         const isOpen = expandedTypes[type];
         const typeTotals = getTotals(rows);
         return (
@@ -627,28 +672,20 @@ function OngletParType({ rapports, filteredEvangelises, filteredSuivis, onEdit, 
                     </div>
                   ))}
                 </div>
-
-                {/* ─── Liste nominative des personnes de ce type ─── */}
-                <div className="flex flex-col gap-1 mb-2">
-                  {personnes.length === 0 ? (
-                    <p className="text-white/30 text-xs text-center py-2">{t.aucunePersonne}</p>
-                  ) : (
-                    personnes.map(p => (
-                      <div key={p.id} className="flex items-center justify-between gap-2 bg-white/5 rounded-lg px-3 py-1.5">
-                        <span className="text-sm text-white truncate">{p.nomComplet}</span>
-                        <Badge color={getStatutBadgeColor(p.statut)}>{p.statut || t.nonDefini}</Badge>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {rows.length > 0 && (
-                  <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
-                    {rows.sort((a, b) => new Date(b.date_evangelise) - new Date(a.date_evangelise)).map(r => (
-                      <CarteSession key={r.id} r={r} onEdit={onEdit} t={t} />
-                    ))}
-                  </div>
-                )}
+                {rows.sort((a, b) => new Date(b.date_evangelise) - new Date(a.date_evangelise)).map(r => {
+                  const key = `${type}|${dateKey(r.date_evangelise)}`;
+                  return (
+                    <CarteSession
+                      key={r.id}
+                      r={r}
+                      personnes={personnesParTypeEtDate[key] || []}
+                      onEdit={onEdit}
+                      onDeletePersonne={onDeletePersonne}
+                      onPersonneClick={onPersonneClick}
+                      t={t}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>
@@ -840,6 +877,29 @@ export default function RapportEvangelisation() {
 
   const handleEdit = (r) => { setSelectedRapport(r); setEditOpen(true); };
 
+  const handleDeletePersonne = async (p) => {
+  if (p.status_suivi === "Envoyé") return; // sécurité, ne devrait pas arriver (bouton désactivé)
+  if (!window.confirm(t.confirmSuppressionPersonne)) return;
+  try {
+    const { error } = await supabase
+      .from("evangelises")
+      .update({ status_suivi: "supprime" })
+      .eq("id", p.id);
+    if (error) throw error;
+    fetchRapports();
+  } catch (err) {
+    console.error("Erreur suppression personne:", err);
+  }
+};
+
+const handlePersonneClick = (p) => {
+  if (p.status_suivi === "Envoyé" && p.suiviId) {
+    router.push({ pathname: "/SuivisEvangelisation", query: { highlight: p.suiviId } });
+  } else {
+    router.push({ pathname: "/Evangelisation", query: { highlight: p.id } });
+  }
+};
+
   const handleKpiClick = (status) => {
     const ids = filteredEvangelises.map(e => e.id);
     router.push({ pathname: "/SuiviAmesPage", query: { status: status || "all", ids: ids.join(",") } });
@@ -985,12 +1045,14 @@ export default function RapportEvangelisation() {
 
         ) : (
           <OngletParType
-            rapports={rapports}
-            filteredEvangelises={filteredEvangelises}
-            filteredSuivis={filteredSuivis}
-            onEdit={handleEdit}
-            t={t}
-          />
+  rapports={rapports}
+  filteredEvangelises={filteredEvangelises}
+  filteredSuivis={filteredSuivis}
+  onEdit={handleEdit}
+  onDeletePersonne={handleDeletePersonne}
+  onPersonneClick={handlePersonneClick}
+  t={t}
+/>
         )}
 
         {message && <p className="text-center text-sm font-medium text-white/80 mt-2">{message}</p>}

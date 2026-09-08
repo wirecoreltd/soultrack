@@ -704,16 +704,29 @@ export default function RapportEvangelisation() {
         .from("suivis_des_evangelises")
         .select("id, eglise_id, evangelise_id, date_suivi, type_evangelisation, status_suivis_evangelises, cellule_id, conseiller_id")
         .eq("eglise_id", egliseId);
-
+      
       // ─── Restriction de visibilité selon le rôle ───
       // null = pas de restriction (Administrateur, ResponsableEvangelisation, etc.)
       let allowedIds = null;
       if (userRole === "ResponsableCellule") {
-        allowedIds = new Set(
-          (suivisDataAll || [])
-            .filter(s => s.cellule_id && celluleIds.includes(s.cellule_id))
-            .map(s => s.evangelise_id)
-        );
+        // Même règle que vue_flow_personnes :
+        // cellule_id = COALESCE(membres_complets.cellule_id, suivis_des_evangelises.cellule_id)
+        // → visible si la cellule apparaît dans l'UN OU L'AUTRE des deux, pas uniquement le suivi.
+        const { data: membresData } = await supabase
+          .from("membres_complets")
+          .select("evangelise_member_id, cellule_id")
+          .eq("eglise_id", egliseId)
+          .not("evangelise_member_id", "is", null);
+      
+        const idsViaSuivi = (suivisDataAll || [])
+          .filter(s => s.cellule_id && celluleIds.includes(s.cellule_id))
+          .map(s => s.evangelise_id);
+      
+        const idsViaMembre = (membresData || [])
+          .filter(m => m.cellule_id && celluleIds.includes(m.cellule_id))
+          .map(m => m.evangelise_member_id);
+      
+        allowedIds = new Set([...idsViaSuivi, ...idsViaMembre]);
       } else if (userRole === "Conseiller") {
         allowedIds = new Set(
           (suivisDataAll || [])

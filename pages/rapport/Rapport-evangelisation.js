@@ -266,6 +266,14 @@ function getNomComplet(e, fallback) {
   const nomComplet = [e?.prenom, e?.nom].filter(Boolean).join(" ").trim();
   return nomComplet || fallback;
 }
+function getStatutBadgeColor(statut) {
+  const s = (statut || "").trim();
+  if (s === "Intégré") return "green";
+  if (s === "En cours") return "amber";
+  if (s === "Refus") return "red";
+  if (s === "Envoyé") return "purple";
+  return "gray";
+}
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
@@ -505,8 +513,7 @@ function CarteSession({ r, onEdit, t }) {
       <button onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5">
-          <span className="font-semibold text-white text-sm">{getMapLabel(t.typeEvangOptions, r.type_evangelisation) || t.nonDefini}</span>
-          <span className="text-[11px] text-white/60">{formatDateFr(r.date_evangelise)}</span>
+          <span className="font-semibold text-white text-sm">{formatDateFr(r.date_evangelise)}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge color="blue">H {r.hommes ?? 0}</Badge>
@@ -544,8 +551,17 @@ function CarteSession({ r, onEdit, t }) {
 }
 
 // ─── ONGLET PAR TYPE (sessions/rapports) ───────────────────────
-function OngletParType({ rapports, onEdit, t }) {
+function OngletParType({ rapports, filteredEvangelises, filteredSuivis, onEdit, t }) {
   const [expandedTypes, setExpandedTypes] = useState({});
+
+  // Dernier statut de suivi connu par évangélisé (le plus récent, si plusieurs)
+  const statutParEvangelise = {};
+  (filteredSuivis || [])
+    .slice()
+    .sort((a, b) => new Date(a.date_suivi || 0) - new Date(b.date_suivi || 0))
+    .forEach(s => {
+      statutParEvangelise[s.evangelise_id] = s.status_suivis_evangelises;
+    });
 
   const grouped = {};
   rapports.forEach(r => {
@@ -554,11 +570,26 @@ function OngletParType({ rapports, onEdit, t }) {
     grouped[type].push(r);
   });
 
-  if (!Object.keys(grouped).length) return <p className="text-white/30 text-sm text-center py-8">{t.aucunRapport}</p>;
+  const personnesParType = {};
+  (filteredEvangelises || []).forEach(e => {
+    const type = e.type_evangelisation || t.nonDefini;
+    if (!personnesParType[type]) personnesParType[type] = [];
+    personnesParType[type].push({
+      id: e.id,
+      nomComplet: getNomComplet(e, t.nonDefini),
+      statut: statutParEvangelise[e.id] || null,
+    });
+  });
+
+  const typesUnion = new Set([...Object.keys(grouped), ...Object.keys(personnesParType)]);
+
+  if (!typesUnion.size) return <p className="text-white/30 text-sm text-center py-8">{t.aucunRapport}</p>;
 
   return (
     <div className="flex flex-col gap-3">
-      {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b, "fr")).map(([type, rows]) => {
+      {[...typesUnion].sort((a, b) => a.localeCompare(b, "fr")).map(type => {
+        const rows = grouped[type] || [];
+        const personnes = (personnesParType[type] || []).sort((a, b) => a.nomComplet.localeCompare(b.nomComplet, "fr"));
         const isOpen = expandedTypes[type];
         const typeTotals = getTotals(rows);
         return (
@@ -582,23 +613,42 @@ function OngletParType({ rapports, onEdit, t }) {
             {isOpen && (
               <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
-                  {[                   
-                      { label: t.hommes, value: typeTotals.hommes, color: "text-blue-300" },
-                      { label: t.femmes, value: typeTotals.femmes, color: "text-pink-300" },
-                      { label: t.total, value: typeTotals.total, color: "text-amber-300 font-bold" },
-                      { label: t.prieres, value: typeTotals.priere, color: "text-emerald-300" },
-                      { label: t.nvConv, value: typeTotals.nouveau, color: "text-white" },
-                      { label: t.moiss, value: typeTotals.moissonneurs, color: "text-teal-300" },
-                    ].map(({ label, value, color }) => (
-                      <div key={label} className="bg-white/5 rounded-xl px-2 py-2 text-center">
-                        <p className="text-sm text-white/80">{label}</p>
-                        <p className={`text-sm font-bold ${color}`}>{value}</p>
-                      </div>
-                    ))}
+                  {[
+                    { label: t.hommes, value: typeTotals.hommes, color: "text-blue-300" },
+                    { label: t.femmes, value: typeTotals.femmes, color: "text-pink-300" },
+                    { label: t.total, value: typeTotals.total, color: "text-amber-300 font-bold" },
+                    { label: t.prieres, value: typeTotals.priere, color: "text-emerald-300" },
+                    { label: t.nvConv, value: typeTotals.nouveau, color: "text-white" },
+                    { label: t.moiss, value: typeTotals.moissonneurs, color: "text-teal-300" },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} className="bg-white/5 rounded-xl px-2 py-2 text-center">
+                      <p className="text-sm text-white/80">{label}</p>
+                      <p className={`text-sm font-bold ${color}`}>{value}</p>
+                    </div>
+                  ))}
                 </div>
-                {rows.sort((a, b) => new Date(b.date_evangelise) - new Date(a.date_evangelise)).map(r => (
-                  <CarteSession key={r.id} r={r} onEdit={onEdit} t={t} />
-                ))}
+
+                {/* ─── Liste nominative des personnes de ce type ─── */}
+                <div className="flex flex-col gap-1 mb-2">
+                  {personnes.length === 0 ? (
+                    <p className="text-white/30 text-xs text-center py-2">{t.aucunePersonne}</p>
+                  ) : (
+                    personnes.map(p => (
+                      <div key={p.id} className="flex items-center justify-between gap-2 bg-white/5 rounded-lg px-3 py-1.5">
+                        <span className="text-sm text-white truncate">{p.nomComplet}</span>
+                        <Badge color={getStatutBadgeColor(p.statut)}>{p.statut || t.nonDefini}</Badge>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {rows.length > 0 && (
+                  <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
+                    {rows.sort((a, b) => new Date(b.date_evangelise) - new Date(a.date_evangelise)).map(r => (
+                      <CarteSession key={r.id} r={r} onEdit={onEdit} t={t} />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -934,7 +984,13 @@ export default function RapportEvangelisation() {
           </div>
 
         ) : (
-          <OngletParType rapports={rapports} onEdit={handleEdit} t={t} />
+          <OngletParType
+            rapports={rapports}
+            filteredEvangelises={filteredEvangelises}
+            filteredSuivis={filteredSuivis}
+            onEdit={handleEdit}
+            t={t}
+          />
         )}
 
         {message && <p className="text-center text-sm font-medium text-white/80 mt-2">{message}</p>}

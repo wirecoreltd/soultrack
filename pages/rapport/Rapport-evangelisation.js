@@ -295,6 +295,13 @@ function getConversionLabel(typeConversion, t) {
   if (norm.includes("nouveau")) return t.convNouveau;
   return typeConversion;
 }
+function getConversionAbbr(typeConversion) {
+  if (!typeConversion) return null;
+  const norm = typeConversion.toLowerCase();
+  if (norm.includes("reconc")) return "R";
+  if (norm.includes("nouveau") || norm.includes("new")) return "Nc";
+  return null;
+}
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
 function SectionTitle({ children }) {
@@ -506,17 +513,15 @@ function BlocTendance({ filteredEvangelises, t }) {
 // ─── LIGNE PERSONNE (dans une session par date) ────────────────
 function LignePersonne({ r, personne, onEdit, onDelete, t }) {
   const nomComplet = personne ? getNomComplet(personne, t.nonDefini) : t.nonDefini;
-  const sexeLabel = personne?.sexe === "Homme" ? t.sexeHomme : personne?.sexe === "Femme" ? t.sexeFemme : null;
-  const convLabel = getConversionLabel(personne?.type_conversion, t);
-  const statutLabel = personne?.status_suivi || null;
+  const sexeAbbr = personne?.sexe === "Homme" ? "H" : personne?.sexe === "Femme" ? "F" : null;
+  const convAbbr = getConversionAbbr(personne?.type_conversion);
 
   return (
     <div className="bg-white/5 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
       <span className="text-sm text-white truncate flex-1 min-w-0">{nomComplet}</span>
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        {sexeLabel && <Badge color={personne.sexe === "Homme" ? "blue" : "pink"}>{sexeLabel}</Badge>}
-        {convLabel && <Badge color="purple">{convLabel}</Badge>}
-        {statutLabel && <Badge color="amber">{statutLabel}</Badge>}
+        {sexeAbbr && <Badge color={sexeAbbr === "H" ? "blue" : "pink"}>{sexeAbbr}</Badge>}
+        {convAbbr && <Badge color={convAbbr === "Nc" ? "gray" : "purple"}>{convAbbr}</Badge>}
         <button onClick={() => onEdit(r)} title={t.modifier} className="text-white/50 hover:text-white transition px-1">✏️</button>
         <button onClick={() => onDelete(r)} title={t.confirmerSuppression} className="text-white/50 hover:text-red-300 transition px-1">🗑️</button>
       </div>
@@ -539,7 +544,8 @@ function GroupeDate({ dateKey, rows, evangeliseMap, onEdit, onDelete, onAjouter,
           <Badge color="pink">F {totals.femmes}</Badge>
           <Badge color="amber">{t.total} {totals.total}</Badge>
           <Badge color="green">🙏 {totals.priere}</Badge>
-          {totals.reconciliation > 0 && <Badge color="purple">🔄 {totals.reconciliation}</Badge>}
+          <Badge color="gray">Nc {totals.nouveau}</Badge>
+          {totals.reconciliation > 0 && <Badge color="purple">R {totals.reconciliation}</Badge>}
           <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
         </div>
       </button>
@@ -602,13 +608,15 @@ function OngletParType({ rapports, evangeliseMap, onEdit, onDelete, onAjouter, t
                   {rows.length} {rows.length > 1 ? t.rapportPlurielS : t.rapportPluriel}
                 </span>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Badge color="blue">H {typeTotals.hommes}</Badge>
-                <Badge color="pink">F {typeTotals.femmes}</Badge>
-                <Badge color="amber">{t.total} {typeTotals.total}</Badge>
-                <Badge color="green">🙏 {typeTotals.priere}</Badge>
-                <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
-              </div>
+              <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+              <Badge color="blue">H {typeTotals.hommes}</Badge>
+              <Badge color="pink">F {typeTotals.femmes}</Badge>
+              <Badge color="amber">{t.total} {typeTotals.total}</Badge>
+              <Badge color="green">🙏 {typeTotals.priere}</Badge>
+              <Badge color="gray">Nc {typeTotals.nouveau}</Badge>
+              {typeTotals.reconciliation > 0 && <Badge color="purple">R {typeTotals.reconciliation}</Badge>}
+              <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
+            </div>
             </button>
             {isOpen && (
               <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">

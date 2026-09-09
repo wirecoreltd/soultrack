@@ -89,20 +89,20 @@ const roleCards = {
     { path: "/evangelisation/evangelisation-hub", key: "evangelisation", emoji: "✝️", color: "#0D9488" },
   ],
   ResponsableCellule: [
-    { path: "/cellule/cellules-hub", key: "cellule",       emoji: "🏠", color: "#06B6D4" },
-    { path: "/admin/notifications",  key: "notifications", emoji: "🔔", color: "#ef4444" },
+    { path: "/cellule/cellules-hub", key: "cellule", emoji: "🏠", color: "#06B6D4" },
+    
   ],
   SuperviseurCellule: [
-    { path: "/cellule/cellules-hub", key: "cellule",       emoji: "🏠", color: "#06B6D4" },
-    { path: "/admin/notifications",  key: "notifications", emoji: "🔔", color: "#ef4444" },
+    { path: "/cellule/cellules-hub", key: "cellule", emoji: "🏠", color: "#06B6D4" },
+    
   ],
   Conseiller: [
-    { path: "/conseiller/conseiller-hub", key: "conseillerHub",  emoji: "🤝", color: "#F59E0B" },
-    { path: "/admin/notifications",       key: "notifications",  emoji: "🔔", color: "#ef4444" },
+    { path: "/conseiller/conseiller-hub", key: "conseillerHub", emoji: "🤝", color: "#F59E0B" },
+    
   ],
   ResponsableFamilles: [
-    { path: "/famille/familles-hub", key: "familles",      emoji: "👑", color: "#F59E0B" },
-    { path: "/admin/notifications",  key: "notifications", emoji: "🔔", color: "#ef4444" },
+    { path: "/famille/familles-hub", key: "familles", emoji: "👑", color: "#F59E0B" },
+    
   ],
   CheckInPresence: [
     { path: "/Presence", key: "presence", emoji: "✍🏻", color: "#3052cf" },

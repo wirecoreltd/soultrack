@@ -44,7 +44,6 @@
 
 import { useEffect, useState, useRef } from "react";
 import supabase from "../../lib/supabaseClient";
-import EditEvanRapportLine from "../../components/EditEvanRapportLine";
 import HeaderPages from "../../components/HeaderPages";
 import Footer from "../../components/Footer";
 import { useRouter } from "next/navigation";
@@ -368,10 +367,7 @@ function BlocKpiGlobaux({ filteredEvangelises, filteredSuivis, rapports, onKpiCl
   const totalCellule = filteredSuivis.filter(s => s.cellule_id != null).length;
   const totalEglise = filteredSuivis.filter(s => s.conseiller_id != null).length;
   const pct = (n) => totalEvangelises > 0 ? Math.round((n / totalEvangelises) * 100) : 0;
-
-  const suiviParEvangelise = {};
-  filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
-
+ 
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -675,8 +671,6 @@ export default function RapportEvangelisation() {
   const [dateFin, setDateFin] = useState("");
   const [filtreType, setFiltreType] = useState("");
 
-  const [editOpen, setEditOpen] = useState(false);
-  const [selectedRapport, setSelectedRapport] = useState(null);
   const [message, setMessage] = useState("");
 
   // 1) Profil (église + rôle) de l'utilisateur connecté
@@ -821,12 +815,8 @@ export default function RapportEvangelisation() {
     }
   }, [egliseId, filtrePeriode, filtreType, modePerso, userRole, celluleIdsLoaded, celluleIds.join(",")]);
 
-  const handleSaveRapport = async (updated) => {
-    await supabase.from("rapport_evangelisation").upsert(updated);
-    fetchRapports();
-    setMessage(t.rapportMaj);
-    setTimeout(() => setMessage(""), 3000);
-  };
+  const suiviParEvangelise = {};
+filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
 
   const handlePersonneClick = (personne) => {
   if (!personne) return;
@@ -1027,17 +1017,7 @@ export default function RapportEvangelisation() {
         )}
 
         {message && <p className="text-center text-sm font-medium text-white/80 mt-2">{message}</p>}
-
-      </div>
-
-      {selectedRapport && (
-        <EditEvanRapportLine
-          isOpen={editOpen}
-          onClose={() => setEditOpen(false)}
-          rapport={selectedRapport}
-          onSave={handleSaveRapport}
-        />
-      )}
+      </div>      
 
       <Footer />
     </div>

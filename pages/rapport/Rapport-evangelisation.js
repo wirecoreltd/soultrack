@@ -754,12 +754,22 @@ export default function RapportEvangelisation() {
       // ─── Restriction de visibilité selon le rôle ───
       let allowedIds = null;
       if (userRole === "ResponsableCellule") {
-        allowedIds = new Set(
-          (suivisDataAll || [])
-            .filter(s => s.cellule_id && celluleIds.includes(s.cellule_id))
-            .map(s => s.evangelise_id)
-        );
-      } else if (userRole === "Conseiller") {
+      const { data: membresData } = await supabase
+        .from("membres_complets")
+        .select("evangelise_member_id, cellule_id")
+        .eq("eglise_id", egliseId)
+        .not("evangelise_member_id", "is", null);
+    
+      const idsViaSuivi = (suivisDataAll || [])
+        .filter(s => s.cellule_id && celluleIds.includes(s.cellule_id))
+        .map(s => s.evangelise_id);
+    
+      const idsViaMembre = (membresData || [])
+        .filter(m => m.cellule_id && celluleIds.includes(m.cellule_id))
+        .map(m => m.evangelise_member_id);
+    
+      allowedIds = new Set([...idsViaSuivi, ...idsViaMembre]);
+    } else if (userRole === "Conseiller") {
         allowedIds = new Set(
           (suivisDataAll || [])
             .filter(s => s.conseiller_id === userId)

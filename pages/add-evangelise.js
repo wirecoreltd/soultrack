@@ -74,6 +74,9 @@ const translations = {
     saving: "Enregistrement...",
     add: "Ajouter",
     success: "✅ Personne évangélisée ajoutée avec succès !",
+    // ─── Champ cellule (usage interne uniquement, jamais sur un lien public) ───
+    celluleLabel: "Cellule",
+    aucuneCellule: "-- Aucune cellule (optionnel) --",
   },
   en: {
     loading: "Loading...",
@@ -141,6 +144,9 @@ const translations = {
     saving: "Saving...",
     add: "Add",
     success: "✅ Evangelized person added successfully!",
+    // ─── Cellule field (internal use only, never on a public link) ───
+    celluleLabel: "Cell",
+    aucuneCellule: "-- No cell (optional) --",
   },
 };
 
@@ -244,6 +250,17 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const urlFamilleId = router.query.famille_id || null;
   const isFromLink   = !!urlEgliseId;
 
+  // ─── Usage interne (bouton "+ Ajouter une personne" du Tableau de Bord) ───
+  // Ce flag n'est JAMAIS présent sur un lien public (QR code, lien partagé, etc.).
+  // Il permet d'afficher un champ "Cellule" que seuls les utilisateurs connectés
+  // (Administrateur / ResponsableEvangelisation / ResponsableCellule multi-cellules)
+  // voient — un visiteur externe qui remplit le formulaire ne le voit jamais et
+  // ne saurait de toute façon pas quelle cellule choisir.
+  const isInternal = router.query.internal === "1";
+  const urlCellulesChoix = router.query.cellules_choix
+    ? String(router.query.cellules_choix).split(",").filter(Boolean)
+    : null;
+
   const { lang: hookLang } = useLang();
   const urlLang = router.query.lang;
   const lang = (urlLang === "en" || urlLang === "fr") ? urlLang : hookLang;
@@ -288,6 +305,22 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [eglise, setEglise] = useState(null);
+
+  // ─── Champ "Cellule" (uniquement en usage interne, sans cellule déjà imposée par l'URL) ───
+  const [celluleOptions, setCelluleOptions] = useState([]);
+  const [selectedCelluleId, setSelectedCelluleId] = useState("");
+  const effectiveCelluleId = urlCelluleId || selectedCelluleId || null;
+
+  // Pré-remplissage type / date depuis l'URL (lien "+ Ajouter une personne")
+  useEffect(() => {
+    if (!router.isReady) return;
+    if (router.query.type_evangelisation) {
+      setFormData(prev => ({ ...prev, type_evangelisation: decodeURIComponent(router.query.type_evangelisation) }));
+    }
+    if (router.query.date_evangelise) {
+      setFormData(prev => ({ ...prev, date_evangelise: router.query.date_evangelise }));
+    }
+  }, [router.isReady, router.query.type_evangelisation, router.query.date_evangelise]);
 
   // Fetch église depuis l'URL
   useEffect(() => {
@@ -335,6 +368,25 @@ export default function AddEvangelise({ onNewEvangelise }) {
     fetchUserEglise();
   }, [isFromLink]);
 
+  // ─── Options du champ "Cellule" (usage interne uniquement) ───
+  useEffect(() => {
+    if (!isInternal || urlCelluleId) return; // pas besoin : cellule déjà imposée ou pas un usage interne
+    if (!formData.eglise_id) return;
+    const fetchCellules = async () => {
+      let query = supabase
+        .from("cellules")
+        .select("id, cellule_full")
+        .eq("eglise_id", formData.eglise_id);
+      if (urlCellulesChoix && urlCellulesChoix.length > 0) {
+        query = query.in("id", urlCellulesChoix);
+      }
+      const { data } = await query.order("cellule_full");
+      setCelluleOptions(data || []);
+    };
+    fetchCellules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInternal, urlCelluleId, formData.eglise_id]);
+
   const successRef = useRef(null);
   useEffect(() => {
     if (success && successRef.current) {
@@ -368,11 +420,12 @@ export default function AddEvangelise({ onNewEvangelise }) {
       infos_supplementaires: "",
       is_whatsapp: false,
       eglise_id: prev.eglise_id,
-      type_evangelisation: "",
-      date_evangelise: new Date().toISOString().split("T")[0],
+      type_evangelisation: router.query.type_evangelisation ? decodeURIComponent(router.query.type_evangelisation) : "",
+      date_evangelise: router.query.date_evangelise || new Date().toISOString().split("T")[0],
     }));
     setShowOtherField(false);
     setOtherBesoin("");
+    setSelectedCelluleId("");
   };
 
   const handleSubmit = async (e) => {
@@ -383,7 +436,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
 
     let statusSuivi = "Non envoyé";
-    if (urlCelluleId) statusSuivi = "evangelisation_cellule";
+    if (effectiveCelluleId) statusSuivi = "evangelisation_cellule";
     else if (urlFamilleId) statusSuivi = "evangelisation_famille";
 
     const finalData = {
@@ -414,7 +467,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       if (error) throw error;
       const evangelise = { ...finalData, id: generatedId };
 
-      if (urlCelluleId) {
+      if (effectiveCelluleId) {
         const suiviData = {
           prenom: evangelise.prenom, nom: evangelise.nom,
           telephone: evangelise.telephone, is_whatsapp: evangelise.is_whatsapp,
@@ -425,7 +478,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
           priere_salut: evangelise.priere_salut,
           status_suivis_evangelises: "Envoyé",
           evangelise_id: evangelise.id,
-          cellule_id: urlCelluleId, famille_id: null, conseiller_id: null,
+          cellule_id: effectiveCelluleId, famille_id: null, conseiller_id: null,
           date_evangelise: evangelise.date_evangelise,
           date_suivi: new Date().toISOString(),
           eglise_id: evangelise.eglise_id,
@@ -512,7 +565,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             </div>
           )}
 
-          {/* ✅ Nom cellule ou famille depuis l'URL */}
+          {/* ✅ Nom cellule ou famille depuis l'URL (lien public de cellule/famille) */}
           {celluleFullInfo && (
             <p className="text-2xl font-semibold text-[#333699] mt-1 text-center">
               🏠 {celluleFullInfo}
@@ -551,6 +604,18 @@ export default function AddEvangelise({ onNewEvangelise }) {
             <option value="">{t.typeEvang}</option>
             {t.typeEvangOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
+
+          {/* ─── Champ Cellule : uniquement en usage interne (bouton du Tableau de Bord), ─── */}
+          {/* jamais affiché sur un lien public — un visiteur externe ne saurait pas quelle cellule choisir. */}
+          {isInternal && !urlCelluleId && celluleOptions.length > 0 && (
+            <select className="input" value={selectedCelluleId}
+              onChange={e => setSelectedCelluleId(e.target.value)}>
+              <option value="">{t.aucuneCellule}</option>
+              {celluleOptions.map(c => (
+                <option key={c.id} value={c.id}>{c.cellule_full}</option>
+              ))}
+            </select>
+          )}
 
           <select className="input" value={formData.sexe}
             onChange={e => setFormData({ ...formData, sexe: e.target.value })} required>

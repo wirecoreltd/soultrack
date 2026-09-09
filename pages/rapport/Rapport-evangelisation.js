@@ -2,16 +2,14 @@
 // PAGE : Tableau de Bord Évangélisation (RapportEvangelisation)
 // ═══════════════════════════════════════════════════════════════
 // Description : Affiche un dashboard d'analyse des activités
-// d'évangélisation de l'église : KPIs globaux (évangélisés,
-// convertis, intégrés, en cours, envoyés/non envoyés au suivi,
-// refus, moissonneurs, intégrés en cellule/à l'église), entonnoir
-// de conversion, tendance mensuelle (évangélisés vs convertis), et
-// résultats détaillés par type d'évangélisation (avec sessions/
-// rapports modifiables et liste nominative dépliable). Les données
-// sont filtrables par période rapide (7j/30j/90j/6 mois/1 an),
-// tranche de dates personnalisée, et type d'évangélisation. Un clic
-// sur un KPI redirige vers la page de suivi des âmes avec les
-// filtres correspondants.
+// d'évangélisation de l'église : KPIs globaux, entonnoir de
+// conversion, tendance mensuelle, résultats détaillés par type
+// d'évangélisation (liste nominative dépliable) et onglet "Par
+// type" affichant les sessions de rapport groupées par date, avec
+// pour chaque personne son sexe, son type de conversion, son statut
+// de suivi, la possibilité de modifier/supprimer sa ligne de
+// rapport, et un bouton pour ajouter une nouvelle personne
+// (redirection vers AddEvangelise, pré-remplie selon le rôle).
 //
 // Visibilité par rôle :
 // - ResponsableCellule : ne voit que les évangélisés dont le suivi
@@ -22,11 +20,19 @@
 // - Tous les autres rôles (Administrateur, ResponsableEvangelisation,
 //   etc.) conservent la vue complète de l'église.
 //
+// Bouton "+ Ajouter une personne" (onglet Par type) :
+// - ResponsableCellule avec 1 seule cellule → cellule_id pré-rempli
+// - ResponsableCellule avec plusieurs cellules → internal=1 +
+//   cellules_choix=id1,id2,... (le formulaire limite le choix)
+// - Administrateur / ResponsableEvangelisation → internal=1 seul
+//   (le formulaire propose toutes les cellules de l'église)
+// - Autres rôles → lien standard, sans paramètre de cellule
+//
 // Tables Supabase utilisées :
 // - profiles                (lecture)            → eglise_id, role de l'utilisateur connecté
-// - cellules                (lecture)            → cellules dont l'utilisateur est responsable (si ResponsableCellule)
+// - cellules                (lecture)            → cellules dont l'utilisateur est responsable
 // - evangelises              (lecture)            → contacts évangélisés (filtrés par période/type/rôle)
-// - rapport_evangelisation   (lecture + écriture) → sessions/rapports d'évangélisation détaillés
+// - rapport_evangelisation   (lecture + écriture + suppression) → sessions/rapports d'évangélisation détaillés
 // - suivis_des_evangelises   (lecture)            → statut de suivi (cellule, conseiller, intégration)
 //
 // Realtime : aucun
@@ -69,10 +75,12 @@ const translations = {
 
     ongletKpi: "Vue d'ensemble",
     ongletType: "Par type",
+
     sectionVue: "Vue d'ensemble",
     sectionEntonnoir: "Entonnoir de conversion",
     sectionTendance: "Tendance mensuelle",
     sectionParType: "Résultats par type d'évangélisation",
+
     kpiEvangelises: "Évangélisés",
     kpiConvertis: "Convertis",
     kpiIntegres: "Intégrés",
@@ -90,15 +98,18 @@ const translations = {
     desEvangelises: "des évangélisés",
     desSuivis: "des suivis",
     impliques: "impliqués",
+
     entonnoirEvangelises: "Évangélisés",
     entonnoirEnvoyes: "Envoyés au suivi",
     entonnoirConvertis: "Convertis",
     entonnoirIntegres: "Intégrés",
     aucuneDonnee: "Aucune donnée",
     donneesInsuffisantes: "Données insuffisantes (≥ 2 mois)",
+
     vsMoisPrec: "vs mois préc.",
     legendeEvangelises: "Évangélisés",
     legendeConvertis: "Convertis",
+
     nonDefini: "Non défini",
     modifier: "✏️ Modifier",
     rapportPluriel: "rapport",
@@ -113,15 +124,23 @@ const translations = {
     prieres: "Prières",
     nvConv: "Nv. conv.",
     moiss: "Moiss.",
-    supprimerPersonne: "Supprimer",
-    confirmSuppressionPersonne: "Retirer cette personne de la session ?",
-    dejaEnvoyeSuivi: "Déjà transmise au suivi — suppression impossible ici",
+
     aucuneDonneePeriode: "Aucune donnée sur cette période",
     aucunRapport: "Aucun rapport sur cette période",
     rapportMaj: "✅ Rapport mis à jour !",
+    rapportSupprime: "✅ Rapport supprimé.",
+    confirmerSuppression: "Supprimer cette ligne de rapport ?",
+
     voirPersonnes: "Voir les personnes",
     masquerPersonnes: "Masquer les personnes",
     aucunePersonne: "Aucune personne",
+    ajouterPersonne: "+ Ajouter une personne",
+
+    sexeHomme: "Homme",
+    sexeFemme: "Femme",
+    convNouveau: "Nouveau",
+    convReconciliation: "Réconciliation",
+
     typesEvangelisation: [
       "Individuel",
       "Sortie de groupe",
@@ -214,16 +233,22 @@ const translations = {
     prieres: "Prayers",
     nvConv: "New conv.",
     moiss: "Harv.",
-    supprimerPersonne: "Remove",
-    confirmSuppressionPersonne: "Remove this person from the session?",
-    dejaEnvoyeSuivi: "Already sent to follow-up — cannot delete here",
+
     aucuneDonneePeriode: "No data for this period",
     aucunRapport: "No reports for this period",
     rapportMaj: "✅ Report updated!",
+    rapportSupprime: "✅ Report deleted.",
+    confirmerSuppression: "Delete this report line?",
 
     voirPersonnes: "View people",
     masquerPersonnes: "Hide people",
     aucunePersonne: "No one",
+    ajouterPersonne: "+ Add a person",
+
+    sexeHomme: "Man",
+    sexeFemme: "Woman",
+    convNouveau: "New",
+    convReconciliation: "Reconciliation",
 
     typesEvangelisation: [
       "Individuel",
@@ -263,13 +288,12 @@ function getNomComplet(e, fallback) {
   const nomComplet = [e?.prenom, e?.nom].filter(Boolean).join(" ").trim();
   return nomComplet || fallback;
 }
-function getStatutBadgeColor(statut) {
-  const s = (statut || "").trim();
-  if (s === "Intégré") return "green";
-  if (s === "En cours") return "amber";
-  if (s === "Refus") return "red";
-  if (s === "Envoyé") return "purple";
-  return "gray";
+function getConversionLabel(typeConversion, t) {
+  if (!typeConversion) return null;
+  const norm = typeConversion.toLowerCase();
+  if (norm.includes("reconc")) return t.convReconciliation;
+  if (norm.includes("nouveau")) return t.convNouveau;
+  return typeConversion;
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
@@ -297,9 +321,9 @@ function Badge({ children, color }) {
     amber: "bg-amber-900/60 text-amber-300", blue: "bg-blue-900/60 text-blue-300",
     purple: "bg-purple-900/60 text-purple-300", gray: "bg-white/10 text-white/50",
     pink: "bg-pink-900/60 text-pink-300", teal: "bg-teal-900/60 text-teal-300",
-    orange: "bg-orange-900/60 text-orange-300",
+    orange: "bg-orange-900/60 text-orange-300", indigo: "bg-indigo-900/60 text-indigo-300",
   };
-  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${m[color] || m.gray}`}>{children}</span>;
+  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${m[color] || m.gray}`}>{children}</span>;
 }
 function BarreProgression({ pct, color }) {
   const col = color || (pct >= 70 ? "bg-emerald-400" : pct >= 40 ? "bg-amber-400" : "bg-red-400");
@@ -501,81 +525,61 @@ function BlocTendance({ filteredEvangelises, t }) {
   );
 }
 
-// ─── CARTE SESSION ─────────────────────────────────────────────
-function CarteSession({ r, personnes, onEdit, onDeletePersonne, onPersonneClick, t }) {
-  const [open, setOpen] = useState(false);
-  const total = (Number(r.hommes) || 0) + (Number(r.femmes) || 0);
+// ─── LIGNE PERSONNE (dans une session par date) ────────────────
+function LignePersonne({ r, personne, onEdit, onDelete, t }) {
+  const nomComplet = personne ? getNomComplet(personne, t.nonDefini) : t.nonDefini;
+  const sexeLabel = personne?.sexe === "Homme" ? t.sexeHomme : personne?.sexe === "Femme" ? t.sexeFemme : null;
+  const convLabel = getConversionLabel(personne?.type_conversion, t);
+  const statutLabel = personne?.status_suivi || null;
+
   return (
-    <div className="rounded-2xl overflow-hidden">
+    <div className="bg-white/5 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+      <span className="text-sm text-white truncate flex-1 min-w-0">{nomComplet}</span>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {sexeLabel && <Badge color={personne.sexe === "Homme" ? "blue" : "pink"}>{sexeLabel}</Badge>}
+        {convLabel && <Badge color="purple">{convLabel}</Badge>}
+        {statutLabel && <Badge color="amber">{statutLabel}</Badge>}
+        <button onClick={() => onEdit(r)} title={t.modifier} className="text-white/50 hover:text-white transition px-1">✏️</button>
+        <button onClick={() => onDelete(r)} title={t.confirmerSuppression} className="text-white/50 hover:text-red-300 transition px-1">🗑️</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── GROUPE PAR DATE (à l'intérieur d'un type) ─────────────────
+function GroupeDate({ dateKey, rows, evangeliseMap, onEdit, onDelete, onAjouter, t }) {
+  const [open, setOpen] = useState(false);
+  const totals = getTotals(rows);
+
+  return (
+    <div className="rounded-2xl overflow-hidden bg-white/5">
       <button onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition text-left gap-3">
-        <div className="flex flex-col gap-0.5">
-          <span className="font-semibold text-white text-sm">{formatDateFr(r.date_evangelise)}</span>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <Badge color="blue">H {r.hommes ?? 0}</Badge>
-          <Badge color="pink">F {r.femmes ?? 0}</Badge>
-          <Badge color="amber">{t.total} {total}</Badge>
+        <span className="text-sm font-semibold text-white flex-shrink-0">{formatDateFr(dateKey)}</span>
+        <div className="flex items-center gap-1.5 flex-wrap justify-end">
+          <Badge color="blue">H {totals.hommes}</Badge>
+          <Badge color="pink">F {totals.femmes}</Badge>
+          <Badge color="amber">{t.total} {totals.total}</Badge>
+          <Badge color="green">🙏 {totals.priere}</Badge>
+          {totals.reconciliation > 0 && <Badge color="purple">🔄 {totals.reconciliation}</Badge>}
           <span className="text-white/30 text-xs">{open ? "▲" : "▼"}</span>
         </div>
       </button>
       {open && (
-        <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-3">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {[
-              { label: t.hommes, value: r.hommes },
-              { label: t.femmes, value: r.femmes },
-              { label: t.total, value: total },
-              { label: t.priereSalut, value: r.priere },
-              { label: t.nvConvertis, value: r.nouveau_converti },
-              { label: t.reconciliation, value: r.reconciliation },
-              { label: t.moissonneurs, value: r.moissonneurs },
-            ].map(({ label, value }) => (
-              <div key={label} className="bg-white/5 rounded-xl px-3 py-2 flex flex-col">
-                <p className="text-sm text-white/80">{label}</p>
-                <p className="text-sm font-bold text-white/80">{value ?? 0}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* ─── Liste nominative de cette session ─── */}
-          <div className="flex flex-col gap-1">
-            {(!personnes || personnes.length === 0) ? (
-              <p className="text-white/30 text-xs text-center py-2">{t.aucunePersonne}</p>
-            ) : (
-              personnes.map(p => {
-                const dejaEnvoye = p.statutSuivi != null; // présent dans suivis_des_evangelises = déjà envoyé
-                return (
-                  <div key={p.id} className="flex items-center justify-between gap-2 bg-white/5 rounded-lg px-3 py-1.5">
-                    <button
-                      onClick={() => onPersonneClick(p)}
-                      className="text-sm text-white truncate underline decoration-white/30 hover:decoration-white text-left"
-                    >
-                      {p.nomComplet}
-                    </button>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <Badge color={getStatutBadgeColor(p.statutDisplay)}>{p.statutDisplay}</Badge>
-                      {dejaEnvoye ? (
-                        <span title={t.dejaEnvoyeSuivi} className="text-white/20 text-xs px-1.5 cursor-not-allowed">🗑️</span>
-                      ) : (
-                        <button
-                          onClick={() => onDeletePersonne(p)}
-                          title={t.supprimerPersonne}
-                          className="text-red-400/70 hover:text-red-400 text-xs px-1.5"
-                        >
-                          🗑️
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          <button onClick={() => onEdit(r)}
-            className="w-full py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-white/80 text-sm font-semibold transition">
-            {t.modifier}
+        <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
+          {rows.map((r, i) => (
+            <LignePersonne
+              key={i}
+              r={r}
+              personne={evangeliseMap[r.evangelise_member_id]}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              t={t}
+            />
+          ))}
+          <button onClick={() => onAjouter(rows[0]?.type_evangelisation, dateKey)}
+            className="w-full py-2 rounded-xl border border-dashed border-white/30 bg-white/5 hover:bg-white/10 text-white/70 text-sm font-semibold transition mt-1">
+            {t.ajouterPersonne}
           </button>
         </div>
       )}
@@ -583,42 +587,15 @@ function CarteSession({ r, personnes, onEdit, onDeletePersonne, onPersonneClick,
   );
 }
 
-// ─── ONGLET PAR TYPE (sessions/rapports) ───────────────────────
-function OngletParType({ rapports, filteredEvangelises, filteredSuivis, onEdit, onDeletePersonne, onPersonneClick, t }) {
+// ─── ONGLET PAR TYPE (sessions groupées par date) ──────────────
+function OngletParType({ rapports, evangeliseMap, onEdit, onDelete, onAjouter, t }) {
   const [expandedTypes, setExpandedTypes] = useState({});
-
-  // Statut de suivi (le plus récent) par évangélisé, si transmis
-  const suiviParEvangelise = {};
-  (filteredSuivis || [])
-    .slice()
-    .sort((a, b) => new Date(a.date_suivi || 0) - new Date(b.date_suivi || 0))
-    .forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
 
   const grouped = {};
   rapports.forEach(r => {
     const type = r.type_evangelisation || t.nonDefini;
     if (!grouped[type]) grouped[type] = [];
     grouped[type].push(r);
-  });
-
-  // Clé date (jour) pour matcher une personne à une session, indépendamment de l'heure
-  const dateKey = (d) => (d ? new Date(d).toISOString().split("T")[0] : null);
-
-  const personnesParTypeEtDate = {};
-  (filteredEvangelises || []).forEach(e => {
-    const type = e.type_evangelisation || t.nonDefini;
-    const dk = dateKey(e.date_evangelise);
-    const key = `${type}|${dk}`;
-    if (!personnesParTypeEtDate[key]) personnesParTypeEtDate[key] = [];
-    const suivi = suiviParEvangelise[e.id];
-    personnesParTypeEtDate[key].push({
-      id: e.id,
-      nomComplet: getNomComplet(e, t.nonDefini),
-      statutSuivi: suivi ? suivi.status_suivis_evangelises : null,
-      statutDisplay: suivi ? (suivi.status_suivis_evangelises || t.nonDefini) : (e.status_suivi === "Envoyé" ? "Envoyé" : t.nonDefini),
-      status_suivi: e.status_suivi,
-      suiviId: suivi ? suivi.id : null,
-    });
   });
 
   if (!Object.keys(grouped).length) return <p className="text-white/30 text-sm text-center py-8">{t.aucunRapport}</p>;
@@ -628,6 +605,15 @@ function OngletParType({ rapports, filteredEvangelises, filteredSuivis, onEdit, 
       {Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b, "fr")).map(([type, rows]) => {
         const isOpen = expandedTypes[type];
         const typeTotals = getTotals(rows);
+
+        const parDate = {};
+        rows.forEach(r => {
+          const dk = r.date_evangelise;
+          if (!parDate[dk]) parDate[dk] = [];
+          parDate[dk].push(r);
+        });
+        const datesTriees = Object.entries(parDate).sort((a, b) => new Date(b[0]) - new Date(a[0]));
+
         return (
           <div key={type} className="bg-white/10 rounded-2xl overflow-hidden">
             <button onClick={() => setExpandedTypes(p => ({ ...p, [type]: !p[type] }))}
@@ -648,35 +634,18 @@ function OngletParType({ rapports, filteredEvangelises, filteredSuivis, onEdit, 
             </button>
             {isOpen && (
               <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
-                  {[
-                    { label: t.hommes, value: typeTotals.hommes, color: "text-blue-300" },
-                    { label: t.femmes, value: typeTotals.femmes, color: "text-pink-300" },
-                    { label: t.total, value: typeTotals.total, color: "text-amber-300 font-bold" },
-                    { label: t.prieres, value: typeTotals.priere, color: "text-emerald-300" },
-                    { label: t.nvConv, value: typeTotals.nouveau, color: "text-white" },
-                    { label: t.moiss, value: typeTotals.moissonneurs, color: "text-teal-300" },
-                  ].map(({ label, value, color }) => (
-                    <div key={label} className="bg-white/5 rounded-xl px-2 py-2 text-center">
-                      <p className="text-sm text-white/80">{label}</p>
-                      <p className={`text-sm font-bold ${color}`}>{value}</p>
-                    </div>
-                  ))}
-                </div>
-                {rows.sort((a, b) => new Date(b.date_evangelise) - new Date(a.date_evangelise)).map(r => {
-                  const key = `${type}|${dateKey(r.date_evangelise)}`;
-                  return (
-                    <CarteSession
-                      key={r.id}
-                      r={r}
-                      personnes={personnesParTypeEtDate[key] || []}
-                      onEdit={onEdit}
-                      onDeletePersonne={onDeletePersonne}
-                      onPersonneClick={onPersonneClick}
-                      t={t}
-                    />
-                  );
-                })}
+                {datesTriees.map(([dateKey, dateRows]) => (
+                  <GroupeDate
+                    key={dateKey}
+                    dateKey={dateKey}
+                    rows={dateRows}
+                    evangeliseMap={evangeliseMap}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onAjouter={onAjouter}
+                    t={t}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -696,11 +665,12 @@ export default function RapportEvangelisation() {
   const [allEvangelises, setAllEvangelises] = useState([]);
   const [filteredEvangelises, setFilteredEvangelises] = useState([]);
   const [filteredSuivis, setFilteredSuivis] = useState([]);
+  const [evangeliseMap, setEvangeliseMap] = useState({});
   const [loading, setLoading] = useState(false);
   const [egliseId, setEgliseId] = useState(null);
   const [onglet, setOnglet] = useState("kpi");
 
-  // ─── Identité / rôle de l'utilisateur connecté (pour restreindre la visibilité) ───
+  // ─── Identité / rôle de l'utilisateur connecté ───
   const [userId, setUserId] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [celluleIds, setCelluleIds] = useState([]); // cellules dont l'utilisateur est responsable
@@ -754,8 +724,6 @@ export default function RapportEvangelisation() {
 
   const fetchRapports = async (overrideModePerso = null) => {
     if (!egliseId) return;
-    // On attend que la liste des cellules soit chargée pour un ResponsableCellule,
-    // sinon on risquerait d'afficher toutes les données un court instant.
     if (userRole === "ResponsableCellule" && !celluleIdsLoaded) return;
 
     setLoading(true);
@@ -774,7 +742,7 @@ export default function RapportEvangelisation() {
     try {
       const { data: evangelisesData } = await supabase
         .from("evangelises")
-        .select("id, eglise_id, nom, prenom, date_evangelise, type_evangelisation, status_suivi, priere_salut")
+        .select("id, eglise_id, nom, prenom, sexe, type_conversion, date_evangelise, type_evangelisation, status_suivi, priere_salut")
         .eq("eglise_id", egliseId).neq("status_suivi", "supprime");
       setAllEvangelises(evangelisesData || []);
 
@@ -782,29 +750,15 @@ export default function RapportEvangelisation() {
         .from("suivis_des_evangelises")
         .select("id, eglise_id, evangelise_id, date_suivi, type_evangelisation, status_suivis_evangelises, cellule_id, conseiller_id")
         .eq("eglise_id", egliseId);
-      
+
       // ─── Restriction de visibilité selon le rôle ───
-      // null = pas de restriction (Administrateur, ResponsableEvangelisation, etc.)
       let allowedIds = null;
       if (userRole === "ResponsableCellule") {
-        // Même règle que vue_flow_personnes :
-        // cellule_id = COALESCE(membres_complets.cellule_id, suivis_des_evangelises.cellule_id)
-        // → visible si la cellule apparaît dans l'UN OU L'AUTRE des deux, pas uniquement le suivi.
-        const { data: membresData } = await supabase
-          .from("membres_complets")
-          .select("evangelise_member_id, cellule_id")
-          .eq("eglise_id", egliseId)
-          .not("evangelise_member_id", "is", null);
-      
-        const idsViaSuivi = (suivisDataAll || [])
-          .filter(s => s.cellule_id && celluleIds.includes(s.cellule_id))
-          .map(s => s.evangelise_id);
-      
-        const idsViaMembre = (membresData || [])
-          .filter(m => m.cellule_id && celluleIds.includes(m.cellule_id))
-          .map(m => m.evangelise_member_id);
-      
-        allowedIds = new Set([...idsViaSuivi, ...idsViaMembre]);
+        allowedIds = new Set(
+          (suivisDataAll || [])
+            .filter(s => s.cellule_id && celluleIds.includes(s.cellule_id))
+            .map(s => s.evangelise_id)
+        );
       } else if (userRole === "Conseiller") {
         allowedIds = new Set(
           (suivisDataAll || [])
@@ -822,6 +776,11 @@ export default function RapportEvangelisation() {
         return afterStart && beforeEnd && typeOk && visibleOk;
       });
       setFilteredEvangelises(filtered);
+
+      // Table de correspondance evangelise_member_id -> infos personne (pour l'onglet Par type)
+      const map = {};
+      filtered.forEach(e => { map[e.id] = e; });
+      setEvangeliseMap(map);
 
       let rapportsData = [];
       if (filtered.length > 0) {
@@ -868,28 +827,39 @@ export default function RapportEvangelisation() {
 
   const handleEdit = (r) => { setSelectedRapport(r); setEditOpen(true); };
 
-  const handleDeletePersonne = async (p) => {
-  if (p.status_suivi === "Envoyé") return; // sécurité, ne devrait pas arriver (bouton désactivé)
-  if (!window.confirm(t.confirmSuppressionPersonne)) return;
-  try {
-    const { error } = await supabase
-      .from("evangelises")
-      .update({ status_suivi: "supprime" })
-      .eq("id", p.id);
-    if (error) throw error;
+  const handleDeleteRapport = async (r) => {
+    if (!window.confirm(t.confirmerSuppression)) return;
+    await supabase
+      .from("rapport_evangelisation")
+      .delete()
+      .eq("eglise_id", r.eglise_id)
+      .eq("evangelise_member_id", r.evangelise_member_id)
+      .eq("date_evangelise", r.date_evangelise);
     fetchRapports();
-  } catch (err) {
-    console.error("Erreur suppression personne:", err);
-  }
-};
+    setMessage(t.rapportSupprime);
+    setTimeout(() => setMessage(""), 3000);
+  };
 
-const handlePersonneClick = (p) => {
-  if (p.status_suivi === "Envoyé" && p.suiviId) {
-    router.push({ pathname: "/SuivisEvangelisation", query: { highlight: p.suiviId } });
-  } else {
-    router.push({ pathname: "/Evangelisation", query: { highlight: p.id } });
-  }
-};
+  // ─── Bouton "+ Ajouter une personne" : redirection vers AddEvangelise selon le rôle ───
+  const handleAjouterPersonne = (type, dateKey) => {
+    const params = new URLSearchParams();
+    if (type) params.set("type_evangelisation", type);
+    if (dateKey) params.set("date_evangelise", dateKey);
+
+    if (userRole === "ResponsableCellule") {
+      if (celluleIds.length === 1) {
+        params.set("cellule_id", celluleIds[0]);
+      } else if (celluleIds.length > 1) {
+        params.set("internal", "1");
+        params.set("cellules_choix", celluleIds.join(","));
+      }
+    } else if (userRole === "Administrateur" || userRole === "ResponsableEvangelisation") {
+      params.set("internal", "1");
+    }
+    // Autres rôles (Conseiller, etc.) : lien standard, sans cellule.
+
+    router.push(`/AddEvangelise?${params.toString()}`);
+  };
 
   const handleKpiClick = (status) => {
     const ids = filteredEvangelises.map(e => e.id);
@@ -1036,14 +1006,13 @@ const handlePersonneClick = (p) => {
 
         ) : (
           <OngletParType
-  rapports={rapports}
-  filteredEvangelises={filteredEvangelises}
-  filteredSuivis={filteredSuivis}
-  onEdit={handleEdit}
-  onDeletePersonne={handleDeletePersonne}
-  onPersonneClick={handlePersonneClick}
-  t={t}
-/>
+            rapports={rapports}
+            evangeliseMap={evangeliseMap}
+            onEdit={handleEdit}
+            onDelete={handleDeleteRapport}
+            onAjouter={handleAjouterPersonne}
+            t={t}
+          />
         )}
 
         {message && <p className="text-center text-sm font-medium text-white/80 mt-2">{message}</p>}

@@ -413,66 +413,44 @@ function BlocEntonnoir({ filteredEvangelises, filteredSuivis, t }) {
   );
 }
 
-// ─── BLOC PAR TYPE D'ÉVANGÉLISATION (avec liste nominative) ────
-function BlocParType({ filteredEvangelises, t }) {
-  const [expandedTypes, setExpandedTypes] = useState({});
-
+// ─── BLOC PAR TYPE D'ÉVANGÉLISATION ────────────────────────────
+function BlocParType({ filteredEvangelises, rapports, t }) {
   const parType = {};
   filteredEvangelises.forEach(e => {
     const type = e.type_evangelisation || t.nonDefini;
-    if (!parType[type]) parType[type] = { nb: 0, convertis: 0, personnes: [] };
+    if (!parType[type]) parType[type] = { nb: 0, rows: [] };
     parType[type].nb++;
-    if (e.priere_salut) parType[type].convertis++;
-    parType[type].personnes.push({
-      id: e.id,
-      nomComplet: getNomComplet(e, t.nonDefini),
-      convertis: !!e.priere_salut,
-      statutSuivi: e.status_suivi,
-    });
   });
+
+  (rapports || []).forEach(r => {
+    const type = r.type_evangelisation || t.nonDefini;
+    if (!parType[type]) parType[type] = { nb: 0, rows: [] };
+    parType[type].rows.push(r);
+  });
+
   const max = Math.max(...Object.values(parType).map(v => v.nb), 1);
   const lignes = Object.entries(parType).sort((a, b) => b[1].nb - a[1].nb);
   if (!lignes.length) return <p className="text-white/30 text-sm text-center py-4">{t.aucuneDonnee}</p>;
 
   return (
     <div className="flex flex-col gap-2">
-      {lignes.map(([type, { nb, convertis, personnes }]) => {
-        const isOpen = !!expandedTypes[type];
+      {lignes.map(([type, { nb, rows }]) => {
+        const totals = getTotals(rows);
         return (
           <div key={type} className="bg-white/10 rounded-xl px-4 py-3 flex flex-col gap-2">
-            <button
-              onClick={() => setExpandedTypes(p => ({ ...p, [type]: !p[type] }))}
-              className="w-full flex items-center gap-3 text-left"
-            >
+            <div className="w-full flex items-center gap-3 text-left">
               <p className="text-sm text-white w-40 flex-shrink-0 truncate">{type === t.nonDefini ? type : getMapLabel(t.typeEvangOptions, type)}</p>
               <BarreProgression pct={(nb / max) * 100} color="bg-blue-400" />
               <span className="text-sm font-bold text-white w-8 text-right">{nb}</span>
-              <span className="text-white/30 text-xs flex-shrink-0">{isOpen ? "▲" : "▼"}</span>
-            </button>
-            <div className="flex gap-2 ml-40">
-              <Badge color="pink">{t.kpiConvertis}: {convertis}</Badge>
-              <Badge color="green">{nb > 0 ? Math.round((convertis / nb) * 100) : 0}%</Badge>
             </div>
-
-            {isOpen && (
-              <div className="mt-2 pt-2 border-t border-white/10 flex flex-col gap-1">
-                {personnes.length === 0 ? (
-                  <p className="text-white/30 text-xs text-center py-2">{t.aucunePersonne}</p>
-                ) : (
-                  personnes
-                    .sort((a, b) => a.nomComplet.localeCompare(b.nomComplet, "fr"))
-                    .map(p => (
-                      <div key={p.id} className="flex items-center justify-between gap-2 bg-white/5 rounded-lg px-3 py-1.5">
-                        <span className="text-sm text-white truncate">{p.nomComplet}</span>
-                        <div className="flex items-center gap-1 flex-shrink-0">
-                          {p.convertis && <Badge color="pink">🙏</Badge>}
-                          {p.statutSuivi && <Badge color="blue">{p.statutSuivi}</Badge>}
-                        </div>
-                      </div>
-                    ))
-                )}
-              </div>
-            )}
+            <div className="flex gap-1.5 flex-wrap ml-40">
+              <Badge color="blue">H {totals.hommes}</Badge>
+              <Badge color="pink">F {totals.femmes}</Badge>
+              <Badge color="amber">{t.total} {totals.total}</Badge>
+              <Badge color="green">🙏 {totals.priere}</Badge>
+              <Badge color="gray">Nc {totals.nouveau}</Badge>
+              {totals.reconciliation > 0 && <Badge color="purple">R {totals.reconciliation}</Badge>}
+            </div>
           </div>
         );
       })}
@@ -1009,7 +987,7 @@ export default function RapportEvangelisation() {
 
             <div>
               <SectionTitle>{t.sectionParType}</SectionTitle>
-              <BlocParType filteredEvangelises={filteredEvangelises} t={t} />
+              <BlocParType filteredEvangelises={filteredEvangelises} rapports={rapports} t={t} />
             </div>
 
           </div>

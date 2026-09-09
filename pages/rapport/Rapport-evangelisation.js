@@ -38,6 +38,15 @@
 // Realtime : aucun
 //
 // Edge Function : aucune
+//
+// ⚠️ CORRECTIF (routes de redirection) :
+// Les redirections utilisaient des chemins qui ne correspondent pas
+// aux vraies routes de fichiers dans pages/ :
+//   /AddEvangelise          →  /add-evangelise                     (confirmé : pages/add-evangelise.js)
+//   /SuivisEvangelisation   →  /evangelisation/suivis-evangelisation (confirmé via le hub Évangélisation)
+//   /Evangelisation         →  /evangelisation/evangelisation        (confirmé via le hub Évangélisation)
+//   /SuiviAmesPage          →  ⚠️ NON CONFIRMÉ — laissé tel quel, à vérifier / corriger
+//                              (indique-moi le chemin réel du fichier pour que je le corrige aussi)
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
@@ -818,15 +827,17 @@ export default function RapportEvangelisation() {
   const suiviParEvangelise = {};
 filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
 
+  // ✅ CORRIGÉ : les anciennes routes /SuivisEvangelisation et /Evangelisation
+  // n'existent pas — les vraies routes sont sous /evangelisation/... (voir hub)
   const handlePersonneClick = (personne) => {
-  if (!personne) return;
-  if (personne.status_suivi === "Envoyé") {
-    const suivi = suiviParEvangelise[personne.id];
-    router.push({ pathname: "/SuivisEvangelisation", query: { highlight: suivi?.id ?? personne.id } });
-  } else {
-    router.push({ pathname: "/Evangelisation", query: { highlight: personne.id } });
-  }
-};
+    if (!personne) return;
+    if (personne.status_suivi === "Envoyé") {
+      const suivi = suiviParEvangelise[personne.id];
+      router.push({ pathname: "/evangelisation/suivis-evangelisation", query: { highlight: suivi?.id ?? personne.id } });
+    } else {
+      router.push({ pathname: "/evangelisation/evangelisation", query: { highlight: personne.id } });
+    }
+  };
 
   const handleDeleteRapport = async (r) => {
     if (!window.confirm(t.confirmerSuppression)) return;
@@ -842,6 +853,7 @@ filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
   };
 
   // ─── Bouton "+ Ajouter une personne" : redirection vers AddEvangelise selon le rôle ───
+  // ✅ CORRIGÉ : /AddEvangelise n'existe pas — le fichier réel est pages/add-evangelise.js
   const handleAjouterPersonne = (type, dateKey) => {
     const params = new URLSearchParams();
     if (type) params.set("type_evangelisation", type);
@@ -859,9 +871,12 @@ filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
     }
     // Autres rôles (Conseiller, etc.) : lien standard, sans cellule.
 
-    router.push(`/AddEvangelise?${params.toString()}`);
+    router.push(`/add-evangelise?${params.toString()}`);
   };
 
+  // ⚠️ NON CONFIRMÉ : /SuiviAmesPage — vérifie l'emplacement réel de ce fichier
+  // dans pages/ et corrige ce chemin si nécessaire (ex: pages/rapport/suivi-ames.js
+  // donnerait la route /rapport/suivi-ames).
   const handleKpiClick = (status) => {
     const ids = filteredEvangelises.map(e => e.id);
     router.push({ pathname: "/SuiviAmesPage", query: { status: status || "all", ids: ids.join(",") } });

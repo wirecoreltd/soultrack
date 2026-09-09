@@ -369,6 +369,9 @@ function BlocKpiGlobaux({ filteredEvangelises, filteredSuivis, rapports, onKpiCl
   const totalEglise = filteredSuivis.filter(s => s.conseiller_id != null).length;
   const pct = (n) => totalEvangelises > 0 ? Math.round((n / totalEvangelises) * 100) : 0;
 
+  const suiviParEvangelise = {};
+  filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
+
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -511,18 +514,22 @@ function BlocTendance({ filteredEvangelises, t }) {
 }
 
 // ─── LIGNE PERSONNE (dans une session par date) ────────────────
-function LignePersonne({ r, personne, onEdit, onDelete, t }) {
+function LignePersonne({ r, personne, onPersonneClick, onDelete, t }) {
   const nomComplet = personne ? getNomComplet(personne, t.nonDefini) : t.nonDefini;
   const sexeAbbr = personne?.sexe === "Homme" ? "H" : personne?.sexe === "Femme" ? "F" : null;
   const convAbbr = getConversionAbbr(personne?.type_conversion);
 
   return (
     <div className="bg-white/5 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-      <span className="text-sm text-white truncate flex-1 min-w-0">{nomComplet}</span>
+      <button
+        onClick={() => onPersonneClick(personne)}
+        className="text-sm text-white truncate flex-1 min-w-0 text-left underline decoration-white/30 hover:decoration-white"
+      >
+        {nomComplet}
+      </button>
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {sexeAbbr && <Badge color={sexeAbbr === "H" ? "blue" : "pink"}>{sexeAbbr}</Badge>}
         {convAbbr && <Badge color={convAbbr === "Nc" ? "gray" : "purple"}>{convAbbr}</Badge>}
-        <button onClick={() => onEdit(r)} title={t.modifier} className="text-white/50 hover:text-white transition px-1">✏️</button>
         <button onClick={() => onDelete(r)} title={t.confirmerSuppression} className="text-white/50 hover:text-red-300 transition px-1">🗑️</button>
       </div>
     </div>
@@ -530,7 +537,7 @@ function LignePersonne({ r, personne, onEdit, onDelete, t }) {
 }
 
 // ─── GROUPE PAR DATE (à l'intérieur d'un type) ─────────────────
-function GroupeDate({ dateKey, rows, evangeliseMap, onEdit, onDelete, onAjouter, t }) {
+function GroupeDate({ dateKey, rows, evangeliseMap, onPersonneClick, onDelete, onAjouter, t }) {
   const [open, setOpen] = useState(false);
   const totals = getTotals(rows);
 
@@ -556,7 +563,7 @@ function GroupeDate({ dateKey, rows, evangeliseMap, onEdit, onDelete, onAjouter,
               key={i}
               r={r}
               personne={evangeliseMap[r.evangelise_member_id]}
-              onEdit={onEdit}
+              onPersonneClick={onPersonneClick}
               onDelete={onDelete}
               t={t}
             />
@@ -572,7 +579,7 @@ function GroupeDate({ dateKey, rows, evangeliseMap, onEdit, onDelete, onAjouter,
 }
 
 // ─── ONGLET PAR TYPE (sessions groupées par date) ──────────────
-function OngletParType({ rapports, evangeliseMap, onEdit, onDelete, onAjouter, t }) {
+function OngletParType({ rapports, evangeliseMap, onPersonneClick, onDelete, onAjouter, t }) {
   const [expandedTypes, setExpandedTypes] = useState({});
 
   const grouped = {};
@@ -626,7 +633,7 @@ function OngletParType({ rapports, evangeliseMap, onEdit, onDelete, onAjouter, t
                     dateKey={dateKey}
                     rows={dateRows}
                     evangeliseMap={evangeliseMap}
-                    onEdit={onEdit}
+                    onPersonneClick={onPersonneClick}
                     onDelete={onDelete}
                     onAjouter={onAjouter}
                     t={t}
@@ -821,7 +828,15 @@ export default function RapportEvangelisation() {
     setTimeout(() => setMessage(""), 3000);
   };
 
-  const handleEdit = (r) => { setSelectedRapport(r); setEditOpen(true); };
+  const handlePersonneClick = (personne) => {
+  if (!personne) return;
+  if (personne.status_suivi === "Envoyé") {
+    const suivi = suiviParEvangelise[personne.id];
+    router.push({ pathname: "/SuivisEvangelisation", query: { highlight: suivi?.id ?? personne.id } });
+  } else {
+    router.push({ pathname: "/Evangelisation", query: { highlight: personne.id } });
+  }
+};
 
   const handleDeleteRapport = async (r) => {
     if (!window.confirm(t.confirmerSuppression)) return;
@@ -1004,7 +1019,7 @@ export default function RapportEvangelisation() {
           <OngletParType
             rapports={rapports}
             evangeliseMap={evangeliseMap}
-            onEdit={handleEdit}
+            onPersonneClick={handlePersonneClick}
             onDelete={handleDeleteRapport}
             onAjouter={handleAjouterPersonne}
             t={t}

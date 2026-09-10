@@ -13,8 +13,14 @@ module.exports = {
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
-    SystemBars: {
-      insetsHandling: 'disable',
+    SafeArea: {
+      enabled: true,
+      customColorsForSystemBars: true,
+      statusBarColor: '#00000000',
+      statusBarContent: 'light',
+      navigationBarColor: '#00000000',
+      navigationBarContent: 'light',
+      offset: 0,
     },
   },
 };

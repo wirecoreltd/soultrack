@@ -1,9 +1,9 @@
 "use client";
+import "@capacitor-community/safe-area";
 
-import { useNavigationBarColor } from "../hooks/useNavigationBarColor";
-
-// Nav bar blanche partout, icônes foncées.Simple, fixe,fiable.
+// La couleur des barres système (haut/bas) est désormais entièrement
+// pilotée par capacitor.config.js (plugin SafeArea). Cet import suffit
+// à initialiser le pont natif du plugin.
 export default function NavigationBarSync() {
-  useNavigationBarColor("#FFFFFF", true);
   return null;
 }

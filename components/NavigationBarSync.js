@@ -1,18 +1,12 @@
 "use client";
 import { useEffect } from "react";
-import { SafeArea } from "@capacitor-community/safe-area";
+import { SystemBars, SystemBarsStyle } from "@capacitor/core";
 
 export default function NavigationBarSync() {
   useEffect(() => {
-    SafeArea.enable({
-      config: {
-        customColorsForSystemBars: true,
-        statusBarColor: "#333699",
-        statusBarContent: "light",
-        navigationBarColor: "#3E7DCF",
-        navigationBarContent: "light",
-      },
-    });
+    // Icônes claires : lisibles sur les deux fonds bleus configurés
+    // dans capacitor.config.js (plugins.EdgeToEdge).
+    SystemBars.setStyle({ style: SystemBarsStyle.Dark }); // "Dark" = fond sombre → icônes claires
   }, []);
 
   return null;

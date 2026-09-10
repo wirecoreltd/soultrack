@@ -825,13 +825,17 @@ export default function RapportEvangelisation() {
 
 // ← Ajoute ce nouveau useEffect juste ici
 useEffect(() => {
-  const handleFocus = () => {
+  const handleUpdate = () => {
     if (egliseId && (userRole !== "ResponsableCellule" || celluleIdsLoaded)) {
       fetchRapports(modePerso);
     }
   };
-  window.addEventListener("focus", handleFocus);
-  return () => window.removeEventListener("focus", handleFocus);
+  window.addEventListener("evangelises-updated", handleUpdate);
+  window.addEventListener("focus", handleUpdate); // garde aussi le focus pour le cross-onglet
+  return () => {
+    window.removeEventListener("evangelises-updated", handleUpdate);
+    window.removeEventListener("focus", handleUpdate);
+  };
 }, [egliseId, userRole, celluleIdsLoaded, modePerso]);
 
   

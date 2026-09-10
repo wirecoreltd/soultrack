@@ -212,13 +212,33 @@ jobs:
       - name: Inject GoogleService-Info.plist
         run: echo '${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}' > ios/App/App/GoogleService-Info.plist
 
-      - name: Set iOS deployment target
+            - name: Set iOS deployment target
         run: |
           PODFILE="ios/App/Podfile"
           PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
-          sed -i '' 's/assertDeploymentTarget(installer)//' "$PODFILE"
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" "$PODFILE"
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 16.0/g' "$PBXPROJ"
+
+          python3 - << 'PY'
+          path = "ios/App/Podfile"
+          with open(path) as f:
+              content = f.read()
+
+          addition = (
+              "\n  installer.pods_project.targets.each do |target|\n"
+              "    target.build_configurations.each do |config|\n"
+              "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'\n"
+              "    end\n"
+              "  end\n"
+          )
+          content = content.replace(
+              "assertDeploymentTarget(installer)",
+              "assertDeploymentTarget(installer)" + addition,
+          )
+
+          with open(path, "w") as f:
+              f.write(content)
+          PY
 
       - name: Install CocoaPods
         run: |

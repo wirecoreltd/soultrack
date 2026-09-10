@@ -16,10 +16,5 @@ module.exports = {
     SystemBars: {
       insetsHandling: 'disable',
     },
-    EdgeToEdge: {
-      backgroundColor: '#333699',
-      navigationBarColor: '#333699',
-      statusBarColor: '#333699',
-    },
   },
 };

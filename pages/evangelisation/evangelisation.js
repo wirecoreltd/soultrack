@@ -482,6 +482,7 @@ function EvangelisationContent() {
         .eq("id", id);
       if (error) { console.error("Erreur suppression :", error); alert(t.alertErreurSuppression); return; }
       setContacts((prev) => prev.filter((m) => m.id !== id));
+      window.dispatchEvent(new CustomEvent("evangelises-updated"));
     } catch (err) {
       console.error(err);
       alert(t.alertErreurSuppression);
@@ -520,6 +521,7 @@ function EvangelisationContent() {
       await supabase.from("evangelises").update({ status_suivi: "Intégré" }).eq("id", member.id);
       setContacts((prev) => prev.filter((c) => c.id !== member.id));
       alert(t.integreSucces);
+      window.dispatchEvent(new CustomEvent("evangelises-updated"));
     } catch (err) {
       console.error("Erreur intégration :", err.message);
       alert(t.integreError + err.message);

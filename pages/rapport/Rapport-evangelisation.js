@@ -384,7 +384,7 @@ function getTotals(reports) {
 }
 
 // ─── BLOC KPI GLOBAUX ──────────────────────────────────────────
-function BlocKpiGlobaux({ filteredEvangelises, filteredSuivis, rapports, onKpiClick, onCelluleClick, onConseillerClick, t }) {
+function BlocKpiGlobaux({ filteredEvangelises, filteredSuivis, rapports, t }) {
   const totalEvangelises = filteredEvangelises.length;
   const totalEnvoyes = filteredEvangelises.filter(e => e.status_suivi === "Envoyé").length;
   const totalNonEnvoyes = filteredEvangelises.filter(e => e.status_suivi !== "Envoyé").length;
@@ -400,19 +400,19 @@ function BlocKpiGlobaux({ filteredEvangelises, filteredSuivis, rapports, onKpiCl
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard label={t.kpiEvangelises} value={totalEvangelises} sub={t.surPeriode} accent="white" onClick={() => onKpiClick(null)} />
-        <KpiCard label={t.kpiConvertis} value={`${pct(totalConvertis)}%`} sub={`${totalConvertis} ${t.prieresLabel}`} accent="pink" onClick={() => onKpiClick("Converti")} />
-        <KpiCard label={t.kpiIntegres} value={`${pct(totalIntegres)}%`} sub={`${totalIntegres} ${t.personnes}`} accent="green" onClick={() => onKpiClick("Intégré")} />
-        <KpiCard label={t.kpiEnCours} value={totalEncours} sub={t.desSuivi} accent="amber" onClick={() => onKpiClick("En cours")} />
+        <KpiCard label={t.kpiEvangelises} value={totalEvangelises} sub={t.surPeriode} accent="white" />
+        <KpiCard label={t.kpiConvertis} value={`${pct(totalConvertis)}%`} sub={`${totalConvertis} ${t.prieresLabel}`} accent="pink" />
+        <KpiCard label={t.kpiIntegres} value={`${pct(totalIntegres)}%`} sub={`${totalIntegres} ${t.personnes}`} accent="green" />
+        <KpiCard label={t.kpiEnCours} value={totalEncours} sub={t.desSuivi} accent="amber" />
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <KpiCard label={t.kpiEnvoyes} value={totalEnvoyes} sub={`${pct(totalEnvoyes)}% ${t.desEvangelises}`} accent="purple" onClick={() => onKpiClick("Envoyé")} />
-        <KpiCard label={t.kpiNonEnvoyes} value={totalNonEnvoyes} sub={`${pct(totalNonEnvoyes)}%`} accent="gray" onClick={() => onKpiClick("NonEnvoye")} />
-        <KpiCard label={t.kpiRefus} value={totalRefus} sub={`${pct(totalRefus)}%`} accent="red" onClick={() => onKpiClick("Refus")} />
+        <KpiCard label={t.kpiEnvoyes} value={totalEnvoyes} sub={`${pct(totalEnvoyes)}% ${t.desEvangelises}`} accent="purple" />
+        <KpiCard label={t.kpiNonEnvoyes} value={totalNonEnvoyes} sub={`${pct(totalNonEnvoyes)}%`} accent="gray" />
+        <KpiCard label={t.kpiRefus} value={totalRefus} sub={`${pct(totalRefus)}%`} accent="red" />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <KpiCard label={t.kpiIntegreCellule} value={totalCellule} sub={filteredSuivis.length > 0 ? `${Math.round((totalCellule / filteredSuivis.length) * 100)}% ${t.desSuivis}` : "—"} accent="blue" onClick={onCelluleClick} />
-        <KpiCard label={t.kpiIntegreEglise} value={totalEglise} sub={filteredSuivis.length > 0 ? `${Math.round((totalEglise / filteredSuivis.length) * 100)}% ${t.desSuivis}` : "—"} accent="teal" onClick={onConseillerClick} />
+        <KpiCard label={t.kpiIntegreCellule} value={totalCellule} sub={filteredSuivis.length > 0 ? `${Math.round((totalCellule / filteredSuivis.length) * 100)}% ${t.desSuivis}` : "—"} accent="blue" />
+        <KpiCard label={t.kpiIntegreEglise} value={totalEglise} sub={filteredSuivis.length > 0 ? `${Math.round((totalEglise / filteredSuivis.length) * 100)}% ${t.desSuivis}` : "—"} accent="teal" />
       </div>
     </div>
   );
@@ -1049,13 +1049,10 @@ filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
 
             <div>
               <SectionTitle>{t.sectionVue}</SectionTitle>
-              <BlocKpiGlobaux
+               <BlocKpiGlobaux
                 filteredEvangelises={filteredEvangelises}
                 filteredSuivis={filteredSuivis}
                 rapports={rapports}
-                onKpiClick={handleKpiClick}
-                onCelluleClick={() => router.push("/SuiviAmesPage?cellule=true")}
-                onConseillerClick={() => router.push("/SuiviAmesPage?conseiller=true")}
                 t={t}
               />
             </div>

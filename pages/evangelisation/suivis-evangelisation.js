@@ -630,7 +630,7 @@ const getMapLabel = (map, value) => {
     }
   };
 
-  /* ================= UPDATE SUIVI ================= */
+    /* ================= UPDATE SUIVI ================= */
   const updateSuivi = async (id, m) => {
     const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
     const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
@@ -688,36 +688,29 @@ const getMapLabel = (map, value) => {
           }
         }
 
-       if (newStatus === "Intégré") {
-  // ... code d'intégration ...
-  setAllSuivis((prev) => prev.filter((s) => s.id !== id));
-  window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté
-  return;
-}
+        setAllSuivis((prev) => prev.filter((s) => s.id !== id));
+        window.dispatchEvent(new CustomEvent("evangelises-updated"));
+        return;
+      }
 
-setAllSuivis((prev) =>
-  prev.map((s) =>
-    s.id === id
-      ? {
-          ...s,
-          commentaire_evangelises: newComment,
-          status_suivis_evangelises: newStatus,
-        }
-      : s
-  )
-);
-window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté
+      setAllSuivis((prev) =>
+        prev.map((s) =>
+          s.id === id
+            ? {
+                ...s,
+                commentaire_evangelises: newComment,
+                status_suivis_evangelises: newStatus,
+              }
+            : s
+        )
+      );
+      window.dispatchEvent(new CustomEvent("evangelises-updated"));
 
-setCommentChanges((prev) => {
-  const copy = { ...prev };
-  delete copy[id];
-  return copy;
-});
-setStatusChanges((prev) => {
-  const copy = { ...prev };
-  delete copy[id];
-  return copy;
-});
+      setCommentChanges((prev) => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
       setStatusChanges((prev) => {
         const copy = { ...prev };
         delete copy[id];

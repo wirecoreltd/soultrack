@@ -55,13 +55,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr" className={greatVibes.variable}>
       <body
+        
         style={{
-          // Empêche le contenu d'être masqué par la status bar / nav bar
-          // transparentes maintenant que le WebView s'étend derrière elles
-          // (Android 15+ edge-to-edge, notch iOS).
-          paddingTop: "env(safe-area-inset-top)",
-          paddingBottom: "env(safe-area-inset-bottom)",
+          paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top))",
+          paddingBottom: "var(--safe-area-inset-bottom, env(safe-area-inset-bottom))",
         }}
+        
       >
         <NavigationBarSync />
         <LangProvider>

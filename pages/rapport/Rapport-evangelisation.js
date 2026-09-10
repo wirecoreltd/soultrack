@@ -1059,26 +1059,12 @@ filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
 
             <div>
               <SectionTitle>{t.sectionVue}</SectionTitle>
-               <BlocKpiGlobaux
+              <BlocKpiGlobaux
                 filteredEvangelises={filteredEvangelises}
                 filteredSuivis={filteredSuivis}
                 rapports={rapports}
                 t={t}
               />
-            </div>
-
-            <div>
-              <SectionTitle>{t.sectionEntonnoir}</SectionTitle>
-              <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocEntonnoir filteredEvangelises={filteredEvangelises} filteredSuivis={filteredSuivis} t={t} />
-              </div>
-            </div>
-
-            <div>
-              <SectionTitle>{t.sectionTendance}</SectionTitle>
-              <div className="bg-white/10 rounded-2xl px-4 py-4">
-                <BlocTendance filteredEvangelises={filteredEvangelises} t={t} />
-              </div>
             </div>
 
             <div>

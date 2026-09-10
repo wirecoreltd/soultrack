@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import HeaderPages from "../components/HeaderPages";
-import FooterHub from "../components/FooterHub";
+import Footer from "../components/Footer";
 import { FEATURE_ROUTES, buildFeaturesState, canAccessFeature } from "../lib/features";
 import { useLang } from "../hooks/useLang";
 

@@ -76,6 +76,10 @@ jobs:
           cat capacitor.config.js
           echo "=== capacitor.config.json généré côté Android ==="
           cat android/app/src/main/assets/capacitor.config.json || echo "FICHIER INTROUVABLE"
+          echo "=== Plugins natifs enregistrés (capacitor.plugins.json) ==="
+          cat android/app/src/main/assets/capacitor.plugins.json || echo "FICHIER INTROUVABLE"
+          echo "=== Version du plugin safe-area installée ==="
+          cat node_modules/@capacitor-community/safe-area/package.json | grep '"version"'
 
       - name: Fix Android navigation bar
         run: |

@@ -278,9 +278,30 @@ function SuivisEvangelisationContent() {
   const phoneMenuRef = useRef(null);
   const [familles, setFamilles] = useState([]);
   const [assignmentsMap, setAssignmentsMap] = useState({});
+const highlightDoneRef = useRef(false);
 
-  /* ================= INIT ================= */
-  useEffect(() => {
+/* ================= CLIC EN DEHORS DU MENU TÉLÉPHONE ================= */
+useEffect(() => {
+  const handleClickOutside = (e) => {
+    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+      setPhoneMenuId(null);
+    }
+  };
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
+
+/* ================= INIT ================= */
+useEffect(() => {
+  init();
+}, [cellulesActive, famillesActive, conseillerActive]);
+
+useEffect(() => {
+  if (user) fetchSuivis(user, cellules, familles);
+}, [showRefus]);
+
+/* ================= HIGHLIGHT (arrivée depuis le tableau de bord) ================= */
+useEffect(() => {
   if (!highlight || loading || highlightDoneRef.current) return;
   let attempts = 0;
   const tryHighlight = () => {
@@ -294,7 +315,6 @@ function SuivisEvangelisationContent() {
     const url = new URL(window.location.href);
     url.searchParams.delete("highlight");
     window.history.replaceState({}, "", url.toString());
-    setDetailsOpen((prev) => ({ ...prev, [highlight]: true })); // ← ouvre la carte
     setDetailsCarteId(highlight);
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
@@ -310,7 +330,7 @@ function SuivisEvangelisationContent() {
   return () => clearTimeout(timer);
 }, [loading, highlight]);
 
-  const init = async () => {      
+const init = async () => {      
     
   const userData = await fetchUser();
     

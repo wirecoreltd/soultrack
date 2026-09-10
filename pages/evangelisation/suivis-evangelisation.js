@@ -258,8 +258,8 @@ function SuivisEvangelisationContent() {
   const cellulesActive = useFeature("cellules");
   const conseillerActive = useFeature("conseiller");
 
-  const router = useRouter();
-  const { highlight } = router.query;
+    const router = useRouter();
+  const { highlight, refus } = router.query;
   const highlightRef = useRef({});
 
   const [allSuivis, setAllSuivis] = useState([]);
@@ -299,7 +299,13 @@ useEffect(() => {
 useEffect(() => {
   if (user) fetchSuivis(user, cellules, familles);
 }, [showRefus]);
-
+  
+/* ================= ACTIVER LE TOGGLE REFUS SI ARRIVÉE DEPUIS LE RAPPORT ================= */
+useEffect(() => {
+  if (refus === "1") {
+    setShowRefus(true);
+  }
+}, [refus]);
 /* ================= HIGHLIGHT (arrivée depuis le tableau de bord) ================= */
 useEffect(() => {
   if (!highlight || loading || highlightDoneRef.current) return;

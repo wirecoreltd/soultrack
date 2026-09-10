@@ -60,33 +60,6 @@ jobs:
         run: |
           sed -i 's|launchUrl = null|launchUrl = "https://www.soultrack.org/login"|g' android/app/src/main/java/org/soultrack/app/MainActivity.java 2>/dev/null || true
 
-      - name: Force dark nav bar icons (WindowInsetsController)
-        run: |
-          # L'attribut de thème android:windowLightNavigationBar n'est pas
-          # honoré par certains fabricants Android (Samsung, Xiaomi, etc.).
-          # On force donc l'apparence des icônes directement en code natif
-          # via l'API officielle WindowInsetsControllerCompat, qui fonctionne
-          # de façon fiable indépendamment du thème et du fabricant.
-          MAIN_ACTIVITY="android/app/src/main/java/org/soultrack/app/MainActivity.java"
-
-          if [ -f "$MAIN_ACTIVITY" ]; then
-            # Ajoute l'import nécessaire
-            sed -i '/import com.getcapacitor.BridgeActivity;/a import androidx.core.view.WindowInsetsControllerCompat;' "$MAIN_ACTIVITY"
-
-            # Force les icônes système (nav bar + status bar) en foncé,
-            # juste après l'initialisation de l'activité.
-            sed -i '/super.onCreate(savedInstanceState);/a \
-              WindowInsetsControllerCompat windowInsetsController =\
-                  new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());\
-              windowInsetsController.setAppearanceLightNavigationBars(true);\
-              windowInsetsController.setAppearanceLightStatusBars(true);' "$MAIN_ACTIVITY"
-
-            echo "=== MainActivity.java ==="
-            cat "$MAIN_ACTIVITY"
-          else
-            echo "MainActivity.java introuvable à $MAIN_ACTIVITY — vérifiez le nom de package."
-          fi
-
       - name: Inject google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
 
@@ -107,15 +80,24 @@ jobs:
           sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:statusBarColor">#333699</item>\n    <item name="android:windowLightNavigationBar">false</item>\n    <item name="android:windowLightStatusBar">false</item>\n</style>|' "$STYLES_FILE"
 
           # Fix edge-to-edge via MainActivity
+          #
+          # IMPORTANT : depuis Android 15+ (API 35+), le système FORCE
+          # l'edge-to-edge et ignore setDecorFitsSystemWindows(true).
+          # On assume donc explicitement l'edge-to-edge (false) et on
+          # applique nous-mêmes le padding des system bars directement
+          # sur la vue native de la WebView, car le WebView Android ne
+          # supporte pas env(safe-area-inset-*) en CSS (contrairement à
+          # WKWebView sur iOS).
           MAIN="android/app/src/main/java/org/soultrack/app/MainActivity.java"
           cat > "$MAIN" << 'JAVAEOF'
           package org.soultrack.app;
 
           import android.graphics.Color;
           import android.os.Bundle;
-          import android.view.View;
-          import android.view.Window;
+          import androidx.core.graphics.Insets;
+          import androidx.core.view.ViewCompat;
           import androidx.core.view.WindowCompat;
+          import androidx.core.view.WindowInsetsCompat;
           import androidx.core.view.WindowInsetsControllerCompat;
           import com.getcapacitor.BridgeActivity;
 
@@ -123,14 +105,24 @@ jobs:
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
-                  Window window = getWindow();
-                  WindowCompat.setDecorFitsSystemWindows(window, true);
-                  window.setNavigationBarColor(Color.parseColor("#333699"));
-                  window.setStatusBarColor(Color.parseColor("#333699"));
+
+                  WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+
+                  getWindow().setStatusBarColor(Color.parseColor("#333699"));
+                  getWindow().setNavigationBarColor(Color.parseColor("#333699"));
+
                   WindowInsetsControllerCompat controller =
-                      new WindowInsetsControllerCompat(window, window.getDecorView());
+                      new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
                   controller.setAppearanceLightNavigationBars(false);
                   controller.setAppearanceLightStatusBars(false);
+
+                  ViewCompat.setOnApplyWindowInsetsListener(getWindow().getDecorView(), (view, insets) -> {
+                      Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                      bridge.getWebView().setPadding(
+                          systemBars.left, systemBars.top, systemBars.right, systemBars.bottom
+                      );
+                      return insets;
+                  });
               }
           }
           JAVAEOF

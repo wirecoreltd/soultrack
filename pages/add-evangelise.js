@@ -436,8 +436,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
     if (showOtherField && otherBesoin.trim()) finalBesoins.push(otherBesoin.trim());
 
     let statusSuivi = "Non envoyé";
-    if (effectiveCelluleId) statusSuivi = "evangelisation_cellule";
-    else if (urlFamilleId) statusSuivi = "evangelisation_famille";
+    if (effectiveCelluleId || urlFamilleId) statusSuivi = "Envoyé";
 
     const finalData = {
       nom: formData.nom.trim(),

@@ -195,9 +195,16 @@ jobs:
       - name: Clean stale platform folder
         run: rm -rf ios
 
+      # ─── IMPORTANT : depuis Capacitor 8, iOS utilise Swift Package Manager
+      # (SPM) par défaut, plus CocoaPods. "cap add ios" sans option génère
+      # ios/App/CapApp-SPM/Package.swift au lieu d'un Podfile, ce qui casse
+      # tout le reste du job (pod install, .xcworkspace, edits du Podfile).
+      # On force explicitement CocoaPods pour rester compatible avec le
+      # reste du pipeline.
+      # ─────────────────────────────────────────────────────────────────
       - name: Add iOS platform
         run: |
-          npx cap add ios
+          npx cap add ios --packagemanager cocoapods
           echo "=== Contenu généré dans ios/ ==="
           find ios -maxdepth 3
           test -f ios/App/Podfile || (echo "❌ Podfile manquant après cap add ios" && exit 1)

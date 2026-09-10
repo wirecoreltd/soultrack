@@ -144,10 +144,14 @@ const translations = {
     aucunePersonne: "Aucune personne",
     ajouterPersonne: "+ Ajouter une personne",
 
-    sexeHomme: "Homme",
+        sexeHomme: "Homme",
     sexeFemme: "Femme",
     convNouveau: "Nouveau",
     convReconciliation: "Réconciliation",
+    statutEnCours: "En cours",
+    statutIntegre: "Intégré",
+    statutRefus: "Refus",
+    statutEnAttente: "En attente",
 
     typesEvangelisation: [
       "Individuel",
@@ -253,10 +257,14 @@ const translations = {
     aucunePersonne: "No one",
     ajouterPersonne: "+ Add a person",
 
-    sexeHomme: "Man",
+        sexeHomme: "Man",
     sexeFemme: "Woman",
     convNouveau: "New",
     convReconciliation: "Reconciliation",
+    statutEnCours: "In progress",
+    statutIntegre: "Integrated",
+    statutRefus: "Refused",
+    statutEnAttente: "Pending",
 
     typesEvangelisation: [
       "Individuel",
@@ -312,6 +320,12 @@ function getConversionAbbr(typeConversion) {
   if (norm.includes("reconc")) return "R";
   if (norm.includes("nouveau") || norm.includes("new")) return "Nc";
   return null;
+}
+function getStatutInfo(statut, t) {
+  if (statut === "En cours") return { label: t.statutEnCours, color: "amber" };
+  if (statut === "Intégré") return { label: t.statutIntegre, color: "green" };
+  if (statut === "Refus") return { label: t.statutRefus, color: "red" };
+  return { label: t.statutEnAttente, color: "gray" };
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────
@@ -522,26 +536,33 @@ function BlocTendance({ filteredEvangelises, t }) {
 }
 
 // ─── LIGNE PERSONNE (dans une session par date) ────────────────
-function LignePersonne({ r, personne, onPersonneClick, onDelete, t }) {
+function LignePersonne({ r, personne, statutSuivi, onPersonneClick, onDelete, t }) {
   const nomComplet = personne ? getNomComplet(personne, t.nonDefini) : t.nonDefini;
   const sexeAbbr = personne?.sexe === "Homme" ? "H" : personne?.sexe === "Femme" ? "F" : null;
   const convAbbr = getConversionAbbr(personne?.type_conversion);
+  const statutInfo = getStatutInfo(statutSuivi, t);
+  const isIntegre = statutSuivi === "Intégré";
 
   return (
-    <div className="bg-white/5 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-      <span className="text-sm text-white truncate flex-1 min-w-0">{nomComplet}</span>
-      <div className="flex items-center gap-1.5 flex-shrink-0">
+    <div className="bg-white/5 rounded-lg px-3 py-2 flex flex-col gap-1.5">
+      <span className="text-sm text-white truncate">{nomComplet}</span>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <Badge color={statutInfo.color}>{statutInfo.label}</Badge>
         {sexeAbbr && <Badge color={sexeAbbr === "H" ? "blue" : "pink"}>{sexeAbbr}</Badge>}
         {convAbbr && <Badge color={convAbbr === "Nc" ? "gray" : "purple"}>{convAbbr}</Badge>}
-        <button onClick={() => onPersonneClick(personne)} title={t.modifier} className="text-white/50 hover:text-white transition px-1">✏️</button>
-        <button onClick={() => onDelete(r)} title={t.confirmerSuppression} className="text-white/50 hover:text-red-300 transition px-1">🗑️</button>
+        {!isIntegre && (
+          <div className="flex items-center gap-1 ml-auto">
+            <button onClick={() => onPersonneClick(personne)} title={t.modifier} className="text-white/50 hover:text-white transition px-1">✏️</button>
+            <button onClick={() => onDelete(r)} title={t.confirmerSuppression} className="text-white/50 hover:text-red-300 transition px-1">🗑️</button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 // ─── GROUPE PAR DATE (à l'intérieur d'un type) ─────────────────
-function GroupeDate({ dateKey, rows, evangeliseMap, onPersonneClick, onDelete, onAjouter, t }) {
+function GroupeDate({ dateKey, rows, evangeliseMap, suiviParEvangelise, onPersonneClick, onDelete, onAjouter, t }) {
   const [open, setOpen] = useState(false);
   const totals = getTotals(rows);
 
@@ -562,16 +583,21 @@ function GroupeDate({ dateKey, rows, evangeliseMap, onPersonneClick, onDelete, o
       </button>
       {open && (
         <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
-          {rows.map((r, i) => (
-            <LignePersonne
-              key={i}
-              r={r}
-              personne={evangeliseMap[r.evangelise_member_id]}
-              onPersonneClick={onPersonneClick}
-              onDelete={onDelete}
-              t={t}
-            />
-          ))}
+                    {rows.map((r, i) => {
+            const personne = evangeliseMap[r.evangelise_member_id];
+            const suivi = personne ? suiviParEvangelise[personne.id] : null;
+            return (
+              <LignePersonne
+                key={i}
+                r={r}
+                personne={personne}
+                statutSuivi={suivi?.status_suivis_evangelises}
+                onPersonneClick={onPersonneClick}
+                onDelete={onDelete}
+                t={t}
+              />
+            );
+          })}
           <button onClick={() => onAjouter(rows[0]?.type_evangelisation, dateKey)}
             className="w-full py-2 rounded-xl border border-dashed border-white/30 bg-white/5 hover:bg-white/10 text-white/70 text-sm font-semibold transition mt-1">
             {t.ajouterPersonne}
@@ -583,7 +609,7 @@ function GroupeDate({ dateKey, rows, evangeliseMap, onPersonneClick, onDelete, o
 }
 
 // ─── ONGLET PAR TYPE (sessions groupées par date) ──────────────
-function OngletParType({ rapports, evangeliseMap, onPersonneClick, onDelete, onAjouter, t }) {
+function OngletParType({ rapports, evangeliseMap, suiviParEvangelise, onPersonneClick, onDelete, onAjouter, t }) {
   const [expandedTypes, setExpandedTypes] = useState({});
 
   const grouped = {};
@@ -632,11 +658,12 @@ function OngletParType({ rapports, evangeliseMap, onPersonneClick, onDelete, onA
             {isOpen && (
               <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">
                 {datesTriees.map(([dateKey, dateRows]) => (
-                  <GroupeDate
+                   <GroupeDate
                     key={dateKey}
                     dateKey={dateKey}
                     rows={dateRows}
                     evangeliseMap={evangeliseMap}
+                    suiviParEvangelise={suiviParEvangelise}
                     onPersonneClick={onPersonneClick}
                     onDelete={onDelete}
                     onAjouter={onAjouter}
@@ -1046,9 +1073,10 @@ filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
           </div>
 
         ) : (
-          <OngletParType
+                    <OngletParType
             rapports={rapports}
             evangeliseMap={evangeliseMap}
+            suiviParEvangelise={suiviParEvangelise}
             onPersonneClick={handlePersonneClick}
             onDelete={handleDeleteRapport}
             onAjouter={handleAjouterPersonne}

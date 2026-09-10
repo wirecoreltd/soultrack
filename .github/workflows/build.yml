@@ -70,6 +70,13 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Debug - Vérifier la config synchronisée
+        run: |
+          echo "=== capacitor.config.js source ==="
+          cat capacitor.config.js
+          echo "=== capacitor.config.json généré côté Android ==="
+          cat android/app/src/main/assets/capacitor.config.json || echo "FICHIER INTROUVABLE"
+
       - name: Fix Android navigation bar
         run: |
           # Upgrade targetSdk à 36 requis par Google Play depuis août 2026

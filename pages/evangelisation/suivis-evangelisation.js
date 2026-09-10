@@ -688,27 +688,36 @@ const getMapLabel = (map, value) => {
           }
         }
 
-        setAllSuivis((prev) => prev.filter((s) => s.id !== id));
-        return;
-      }
+       if (newStatus === "Intégré") {
+  // ... code d'intégration ...
+  setAllSuivis((prev) => prev.filter((s) => s.id !== id));
+  window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté
+  return;
+}
 
-      setAllSuivis((prev) =>
-        prev.map((s) =>
-          s.id === id
-            ? {
-                ...s,
-                commentaire_evangelises: newComment,
-                status_suivis_evangelises: newStatus,
-              }
-            : s
-        )
-      );
+setAllSuivis((prev) =>
+  prev.map((s) =>
+    s.id === id
+      ? {
+          ...s,
+          commentaire_evangelises: newComment,
+          status_suivis_evangelises: newStatus,
+        }
+      : s
+  )
+);
+window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté
 
-      setCommentChanges((prev) => {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      });
+setCommentChanges((prev) => {
+  const copy = { ...prev };
+  delete copy[id];
+  return copy;
+});
+setStatusChanges((prev) => {
+  const copy = { ...prev };
+  delete copy[id];
+  return copy;
+});
       setStatusChanges((prev) => {
         const copy = { ...prev };
         delete copy[id];
@@ -728,15 +737,16 @@ const getMapLabel = (map, value) => {
     try {
       setUpdating((p) => ({ ...p, [m.id]: true }));
       const { error } = await supabase
-        .from("suivis_des_evangelises")
-        .update({ status_suivis_evangelises: "En cours" })
-        .eq("id", m.id);
-      if (error) throw error;
-      setAllSuivis((prev) =>
-        prev.map((s) =>
-          s.id === m.id ? { ...s, status_suivis_evangelises: "En cours" } : s
-        )
-      );
+  .from("suivis_des_evangelises")
+  .update({ status_suivis_evangelises: "En cours" })
+  .eq("id", m.id);
+    if (error) throw error;
+    setAllSuivis((prev) =>
+      prev.map((s) =>
+        s.id === m.id ? { ...s, status_suivis_evangelises: "En cours" } : s
+      )
+    );
+    window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté
     } catch (err) {
       console.error("Erreur réactivation :", err.message);
       alert(t.reactivateError);
@@ -1053,10 +1063,11 @@ const getMapLabel = (map, value) => {
           onClose={() => setEditingContact(null)}
           closeDetails={() => {}}
           onUpdateMember={(updates) => {
-            updateSuiviLocal(editingContact.id, updates);
-            setEditingContact(null);
-            fetchSuivis(user, cellules, familles);
-          }}
+  updateSuiviLocal(editingContact.id, updates);
+  setEditingContact(null);
+  fetchSuivis(user, cellules, familles);
+  window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté
+}}
         />
       )}
 
@@ -1066,8 +1077,9 @@ const getMapLabel = (map, value) => {
           user={user}
           onClose={() => setSuiviEvanMember(null)}
           onMemberUpdated={(memberId, updatedFields) => {
-            updateSuiviLocal(memberId, updatedFields);
-          }}
+  updateSuiviLocal(memberId, updatedFields);
+  window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté
+}}
         />
       )}
 

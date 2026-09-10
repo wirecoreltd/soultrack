@@ -818,10 +818,23 @@ export default function RapportEvangelisation() {
   };
 
   useEffect(() => {
-    if (egliseId && !modePerso && (userRole !== "ResponsableCellule" || celluleIdsLoaded)) {
-      fetchRapports(false);
+  if (egliseId && !modePerso && (userRole !== "ResponsableCellule" || celluleIdsLoaded)) {
+    fetchRapports(false);
+  }
+}, [egliseId, filtrePeriode, filtreType, modePerso, userRole, celluleIdsLoaded, celluleIds.join(",")]);
+
+// ← Ajoute ce nouveau useEffect juste ici
+useEffect(() => {
+  const handleFocus = () => {
+    if (egliseId && (userRole !== "ResponsableCellule" || celluleIdsLoaded)) {
+      fetchRapports(modePerso);
     }
-  }, [egliseId, filtrePeriode, filtreType, modePerso, userRole, celluleIdsLoaded, celluleIds.join(",")]);
+  };
+  window.addEventListener("focus", handleFocus);
+  return () => window.removeEventListener("focus", handleFocus);
+}, [egliseId, userRole, celluleIdsLoaded, modePerso]);
+
+  
 
   const suiviParEvangelise = {};
 filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });

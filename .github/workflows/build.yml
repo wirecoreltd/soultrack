@@ -17,21 +17,20 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install dependencies
         run: npm install
 
       - name: Install Capacitor
         run: |
-          npm install @capacitor/core@7 @capacitor/cli@7
-          npm install @capacitor/android@7
-          npm install @capacitor/push-notifications@7
-          npm install @capacitor/splash-screen@7
-          npm install @capgo/capacitor-navigation-bar@7
-          npm install @capacitor/filesystem@7
-          npm install @capacitor/share@7
-          npm install @capacitor-community/safe-area@^7.0.0
+          npm install @capacitor/core@8 @capacitor/cli@8
+          npm install @capacitor/android@8
+          npm install @capacitor/push-notifications@8
+          npm install @capacitor/splash-screen@8
+          npm install @capacitor/filesystem@8
+          npm install @capacitor/share@8
+          npm install @capawesome/capacitor-android-edge-to-edge-support@8
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -70,41 +69,20 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Debug - Vérifier la config synchronisée
-        run: |
-          echo "=== capacitor.config.js source ==="
-          cat capacitor.config.js
-          echo "=== capacitor.config.json généré côté Android ==="
-          cat android/app/src/main/assets/capacitor.config.json || echo "FICHIER INTROUVABLE"
-          echo "=== Plugins natifs enregistrés (capacitor.plugins.json) ==="
-          cat android/app/src/main/assets/capacitor.plugins.json || echo "FICHIER INTROUVABLE"
-          echo "=== Version du plugin safe-area installée ==="
-          cat node_modules/@capacitor-community/safe-area/package.json | grep '"version"'
-
       - name: Fix Android navigation bar
         run: |
           # Upgrade targetSdk à 36 requis par Google Play depuis août 2026
           sed -i 's/targetSdkVersion = 35/targetSdkVersion = 36/' android/variables.gradle
           sed -i 's/compileSdkVersion = 35/compileSdkVersion = 36/' android/variables.gradle
 
-          # IMPORTANT : depuis Android 15+ (API 35+), Window.setStatusBarColor()
-          # et Window.setNavigationBarColor() sont des no-op silencieux. La
-          # transparence dynamique (fond de page visible derrière les icônes)
-          # est gérée par @capacitor-community/safe-area, configuré dans
-          # capacitor.config.js. MAIS sur les WebView Android avec un Chromium
-          # système < 140 (bug connu), ce plugin bascule automatiquement en
-          # mode "padding" : la zone des barres devient une zone native vide
-          # qui affiche le android:windowBackground du thème par défaut (gris
-          # si non défini). On fixe donc ici une couleur de secours cohérente
-          # avec la charte pour ces appareils plus anciens — c'est le seul
-          # attribut de thème encore honoré par Android pour ce cas de figure.
-          STYLES_FILE="android/app/src/main/res/values/styles.xml"
-          sed -i 's|</style>|    <item name="android:windowBackground">#3E7DCF</item>\n</style>|' "$STYLES_FILE"
+          # Sur Capacitor 8.3.2+, @capawesome/capacitor-android-edge-to-edge-support
+          # (v8) + le plugin natif SystemBars gèrent correctement l'edge-to-edge,
+          # les insets ET les couleurs indépendantes des deux barres — configuré
+          # entièrement via capacitor.config.js (plugins.SystemBars + plugins.EdgeToEdge).
+          # Rien à modifier ici côté styles.xml/MainActivity.java.
 
           echo "=== variables.gradle ==="
           cat android/variables.gradle
-          echo "=== styles.xml ==="
-          cat "$STYLES_FILE"
 
       - name: Set version code
         run: |
@@ -165,18 +143,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install dependencies
         run: npm install
 
       - name: Install Capacitor
         run: |
-          npm install @capacitor/core@7 @capacitor/cli@7
-          npm install @capacitor/ios@7
-          npm install @capacitor/push-notifications@7
-          npm install @capacitor/filesystem@7
-          npm install @capacitor/share@7
+          npm install @capacitor/core@8 @capacitor/cli@8
+          npm install @capacitor/ios@8
+          npm install @capacitor/push-notifications@8
+          npm install @capacitor/filesystem@8
+          npm install @capacitor/share@8
 
       - name: Add iOS platform
         run: npx cap add ios

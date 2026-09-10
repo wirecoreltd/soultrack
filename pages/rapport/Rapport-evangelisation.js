@@ -305,7 +305,10 @@ function getConversionLabel(typeConversion, t) {
 }
 function getConversionAbbr(typeConversion) {
   if (!typeConversion) return null;
-  const norm = typeConversion.toLowerCase();
+  const norm = typeConversion
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, ""); // retire les accents
   if (norm.includes("reconc")) return "R";
   if (norm.includes("nouveau") || norm.includes("new")) return "Nc";
   return null;
@@ -526,15 +529,11 @@ function LignePersonne({ r, personne, onPersonneClick, onDelete, t }) {
 
   return (
     <div className="bg-white/5 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-      <button
-        onClick={() => onPersonneClick(personne)}
-        className="text-sm text-white truncate flex-1 min-w-0 text-left underline decoration-white/30 hover:decoration-white"
-      >
-        {nomComplet}
-      </button>
+      <span className="text-sm text-white truncate flex-1 min-w-0">{nomComplet}</span>
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {sexeAbbr && <Badge color={sexeAbbr === "H" ? "blue" : "pink"}>{sexeAbbr}</Badge>}
         {convAbbr && <Badge color={convAbbr === "Nc" ? "gray" : "purple"}>{convAbbr}</Badge>}
+        <button onClick={() => onPersonneClick(personne)} title={t.modifier} className="text-white/50 hover:text-white transition px-1">✏️</button>
         <button onClick={() => onDelete(r)} title={t.confirmerSuppression} className="text-white/50 hover:text-red-300 transition px-1">🗑️</button>
       </div>
     </div>

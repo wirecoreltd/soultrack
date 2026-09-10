@@ -307,9 +307,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [eglise, setEglise] = useState(null);
 
   // ─── Champ "Cellule" (uniquement en usage interne, sans cellule déjà imposée par l'URL) ───
-  const [celluleOptions, setCelluleOptions] = useState([]);
-  const [selectedCelluleId, setSelectedCelluleId] = useState("");
-  const effectiveCelluleId = urlCelluleId || selectedCelluleId || null;
+  const effectiveCelluleId = urlCelluleId || autoCelluleId || null;
 
   // Pré-remplissage type / date depuis l'URL (lien "+ Ajouter une personne")
   useEffect(() => {
@@ -366,26 +364,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
       }
     };
     fetchUserEglise();
-  }, [isFromLink]);
-
-  // ─── Options du champ "Cellule" (usage interne uniquement) ───
-  useEffect(() => {
-    if (!isInternal || urlCelluleId) return; // pas besoin : cellule déjà imposée ou pas un usage interne
-    if (!formData.eglise_id) return;
-    const fetchCellules = async () => {
-      let query = supabase
-        .from("cellules")
-        .select("id, cellule_full")
-        .eq("eglise_id", formData.eglise_id);
-      if (urlCellulesChoix && urlCellulesChoix.length > 0) {
-        query = query.in("id", urlCellulesChoix);
-      }
-      const { data } = await query.order("cellule_full");
-      setCelluleOptions(data || []);
-    };
-    fetchCellules();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isInternal, urlCelluleId, formData.eglise_id]);
+  }, [isFromLink]);  
 
   const successRef = useRef(null);
   useEffect(() => {
@@ -425,8 +404,36 @@ export default function AddEvangelise({ onNewEvangelise }) {
     }));
     setShowOtherField(false);
     setOtherBesoin("");
-    setSelectedCelluleId("");
   };
+
+  const [autoCelluleId, setAutoCelluleId] = useState(null);
+
+// Détecte automatiquement la cellule du ResponsableCellule connecté
+// (jamais les cellules filles/enfants — uniquement celle dont il est responsable_id)
+useEffect(() => {
+  if (urlCelluleId) return; // déjà fixé par l'URL, pas besoin
+  if (!formData.eglise_id) return;
+  const fetchOwnCellule = async () => {
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session?.user) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", session.session.user.id)
+      .single();
+    if (profile?.role !== "ResponsableCellule") return;
+    const { data: cellule } = await supabase
+      .from("cellules")
+      .select("id")
+      .eq("responsable_id", session.session.user.id)
+      .eq("eglise_id", formData.eglise_id)
+      .limit(1)
+      .maybeSingle();
+    if (cellule?.id) setAutoCelluleId(cellule.id);
+  };
+  fetchOwnCellule();
+}, [urlCelluleId, formData.eglise_id]);
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -602,19 +609,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
             onChange={e => setFormData({ ...formData, type_evangelisation: e.target.value })} required>
             <option value="">{t.typeEvang}</option>
             {t.typeEvangOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-
-          {/* ─── Champ Cellule : uniquement en usage interne (bouton du Tableau de Bord), ─── */}
-          {/* jamais affiché sur un lien public — un visiteur externe ne saurait pas quelle cellule choisir. */}
-          {isInternal && !urlCelluleId && celluleOptions.length > 0 && (
-            <select className="input" value={selectedCelluleId}
-              onChange={e => setSelectedCelluleId(e.target.value)}>
-              <option value="">{t.aucuneCellule}</option>
-              {celluleOptions.map(c => (
-                <option key={c.id} value={c.id}>{c.cellule_full}</option>
-              ))}
-            </select>
-          )}
+          </select>          
 
           <select className="input" value={formData.sexe}
             onChange={e => setFormData({ ...formData, sexe: e.target.value })} required>

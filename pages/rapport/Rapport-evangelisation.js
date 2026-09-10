@@ -884,11 +884,15 @@ filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
 
   // ✅ CORRIGÉ : les anciennes routes /SuivisEvangelisation et /Evangelisation
   // n'existent pas — les vraies routes sont sous /evangelisation/... (voir hub)
-  const handlePersonneClick = (personne) => {
+    const handlePersonneClick = (personne) => {
     if (!personne) return;
     if (personne.status_suivi === "Envoyé") {
       const suivi = suiviParEvangelise[personne.id];
-      router.push({ pathname: "/evangelisation/suivis-evangelisation", query: { highlight: suivi?.id ?? personne.id } });
+      const query = { highlight: suivi?.id ?? personne.id };
+      if (suivi?.status_suivis_evangelises === "Refus") {
+        query.refus = "1";
+      }
+      router.push({ pathname: "/evangelisation/suivis-evangelisation", query });
     } else {
       router.push({ pathname: "/evangelisation/evangelisation", query: { highlight: personne.id } });
     }

@@ -304,10 +304,7 @@ export default function AddEvangelise({ onNewEvangelise }) {
   const [otherBesoin, setOtherBesoin] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [eglise, setEglise] = useState(null);
-
-  // ─── Champ "Cellule" (uniquement en usage interne, sans cellule déjà imposée par l'URL) ───
-  const effectiveCelluleId = urlCelluleId || autoCelluleId || null;
+  const [eglise, setEglise] = useState(null);  
 
   // Pré-remplissage type / date depuis l'URL (lien "+ Ajouter une personne")
   useEffect(() => {
@@ -406,12 +403,12 @@ export default function AddEvangelise({ onNewEvangelise }) {
     setOtherBesoin("");
   };
 
-  const [autoCelluleId, setAutoCelluleId] = useState(null);
+  // 1. D'ABORD déclarer le nouveau state
+const [autoCelluleId, setAutoCelluleId] = useState(null);
 
-// Détecte automatiquement la cellule du ResponsableCellule connecté
-// (jamais les cellules filles/enfants — uniquement celle dont il est responsable_id)
+// 2. Le useEffect peut être ici ou après, peu importe (les hooks n'ont pas ce problème d'ordre entre eux)
 useEffect(() => {
-  if (urlCelluleId) return; // déjà fixé par l'URL, pas besoin
+  if (urlCelluleId) return;
   if (!formData.eglise_id) return;
   const fetchOwnCellule = async () => {
     const { data: session } = await supabase.auth.getSession();
@@ -433,6 +430,9 @@ useEffect(() => {
   };
   fetchOwnCellule();
 }, [urlCelluleId, formData.eglise_id]);
+
+// 3. ENSUITE seulement la ligne qui utilise autoCelluleId
+const effectiveCelluleId = urlCelluleId || autoCelluleId || null;
   
 
   const handleSubmit = async (e) => {

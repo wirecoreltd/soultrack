@@ -545,6 +545,8 @@ function LignePersonne({ r, personne, statutSuivi, onPersonneClick, onDelete, t 
   const convAbbr = getConversionAbbr(personne?.type_conversion);
   const statutInfo = getStatutInfo(personne?.status_suivi, statutSuivi, t);
   const isIntegre = statutSuivi === "Intégré" || personne?.status_suivi === "Intégré";
+  const isRefus = statutSuivi === "Refus";
+  const hideActions = isIntegre || isRefus;
 
   return (
     <div className="bg-white/5 rounded-lg px-3 py-2 flex flex-col gap-1.5">
@@ -553,7 +555,7 @@ function LignePersonne({ r, personne, statutSuivi, onPersonneClick, onDelete, t 
         <Badge color={statutInfo.color}>{statutInfo.label}</Badge>
         {sexeAbbr && <Badge color={sexeAbbr === "H" ? "blue" : "pink"}>{sexeAbbr}</Badge>}
         {convAbbr && <Badge color={convAbbr === "Nc" ? "gray" : "purple"}>{convAbbr}</Badge>}
-        {!isIntegre && (
+        {!hideActions && (
           <div className="flex items-center gap-1 ml-auto">
             <button onClick={() => onPersonneClick(personne)} title={t.modifier} className="text-white/50 hover:text-white transition px-1">✏️</button>
             <button onClick={() => onDelete(r)} title={t.confirmerSuppression} className="text-white/50 hover:text-red-300 transition px-1">🗑️</button>

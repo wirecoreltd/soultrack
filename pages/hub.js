@@ -203,7 +203,7 @@ export default function IndexPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
-      style={{ background: "linear-gradient(to bottom, #333699 0%, #3942A0 30%, #4B5BB5 60%, #6F8BD0 100%)" }}
+      style={{ background: "linear-gradient(to bottom, #333699 0%, #333699 10%, #4B5BB5 50%, #333699 90%, #333699 100%)" }}
     >
       <HeaderPages />
 

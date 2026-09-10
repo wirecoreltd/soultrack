@@ -93,6 +93,7 @@ jobs:
           package org.soultrack.app;
 
           import android.graphics.Color;
+          import android.graphics.drawable.ColorDrawable;
           import android.os.Bundle;
           import androidx.core.graphics.Insets;
           import androidx.core.view.ViewCompat;
@@ -108,8 +109,10 @@ jobs:
 
                   WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
-                  getWindow().setStatusBarColor(Color.parseColor("#333699"));
-                  getWindow().setNavigationBarColor(Color.parseColor("#333699"));
+                  // Android 15+ (targetSdk 35+) force des barres système transparentes :
+                  // setStatusBarColor/setNavigationBarColor sont ignorés. On peint donc
+                  // la fenêtre elle-même en bleu, qui apparaît à travers les barres.
+                  getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#333699")));
 
                   WindowInsetsControllerCompat controller =
                       new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());

@@ -325,8 +325,8 @@ function getConversionAbbr(typeConversion) {
 }
 function getStatutInfo(personneStatusSuivi, suiviStatut, t) {
   if (personneStatusSuivi === "Non envoyé") return { label: t.statutNonEnvoye, color: "gray" };
+  if (personneStatusSuivi === "Intégré" || suiviStatut === "Intégré") return { label: t.statutIntegre, color: "green" };
   if (suiviStatut === "En cours") return { label: t.statutEnCours, color: "amber" };
-  if (suiviStatut === "Intégré") return { label: t.statutIntegre, color: "green" };
   if (suiviStatut === "Refus") return { label: t.statutRefus, color: "red" };
   return { label: t.statutEnAttente, color: "gray" };
 }
@@ -544,7 +544,7 @@ function LignePersonne({ r, personne, statutSuivi, onPersonneClick, onDelete, t 
   const sexeAbbr = personne?.sexe === "Homme" ? "H" : personne?.sexe === "Femme" ? "F" : null;
   const convAbbr = getConversionAbbr(personne?.type_conversion);
   const statutInfo = getStatutInfo(personne?.status_suivi, statutSuivi, t);
-  const isIntegre = statutSuivi === "Intégré";
+  const isIntegre = statutSuivi === "Intégré" || personne?.status_suivi === "Intégré";
 
   return (
     <div className="bg-white/5 rounded-lg px-3 py-2 flex flex-col gap-1.5">

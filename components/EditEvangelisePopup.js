@@ -243,7 +243,7 @@ export default function EditEvangelisePopup({
       date_evangelise: formData.date_evangelise,
     };
 
-    const { data, error } = await supabase
+        const { data, error } = await supabase
       .from("evangelises")
       .update(cleanData)
       .eq("id", member.id)
@@ -253,8 +253,30 @@ export default function EditEvangelisePopup({
     if (error) {
       setMessage(t.errorPrefix + error.message);
     } else {
+      // Propage les infos identité vers suivis_des_evangelises si ce contact
+      // a déjà été envoyé au suivi (copie figée sinon désynchronisée)
+      const { error: suiviSyncError } = await supabase
+        .from("suivis_des_evangelises")
+        .update({
+          prenom: cleanData.prenom,
+          nom: cleanData.nom,
+          sexe: cleanData.sexe,
+          telephone: cleanData.telephone,
+          ville: cleanData.ville,
+          is_whatsapp: cleanData.is_whatsapp,
+          priere_salut: cleanData.priere_salut,
+          type_conversion: cleanData.type_conversion,
+          besoin: cleanData.besoin,
+          infos_supplementaires: cleanData.infos_supplementaires,
+        })
+        .eq("evangelise_id", member.id);
+
+      if (suiviSyncError) {
+        console.error("Erreur sync suivis_des_evangelises :", suiviSyncError);
+      }
+
       if (onUpdateMember) onUpdateMember(data);
-      window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajoute cette ligne
+      window.dispatchEvent(new CustomEvent("evangelises-updated"));
       setMessage(t.success);
       setTimeout(() => {
         setMessage("");

@@ -31,6 +31,7 @@ jobs:
           npm install @capgo/capacitor-navigation-bar@7
           npm install @capacitor/filesystem@7
           npm install @capacitor/share@7
+          npm install @capawesome/capacitor-android-edge-to-edge-support
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -75,67 +76,18 @@ jobs:
           sed -i 's/targetSdkVersion = 35/targetSdkVersion = 36/' android/variables.gradle
           sed -i 's/compileSdkVersion = 35/compileSdkVersion = 36/' android/variables.gradle
 
-          # Fix edge-to-edge Android 16 — injecter le bon thème
-          STYLES_FILE="android/app/src/main/res/values/styles.xml"
-          sed -i 's|</style>|    <item name="android:navigationBarColor">#333699</item>\n    <item name="android:statusBarColor">#333699</item>\n    <item name="android:windowLightNavigationBar">false</item>\n    <item name="android:windowLightStatusBar">false</item>\n</style>|' "$STYLES_FILE"
-
-          # Fix edge-to-edge via MainActivity
-          #
-          # IMPORTANT : depuis Android 15+ (API 35+), le système FORCE
-          # l'edge-to-edge et ignore setDecorFitsSystemWindows(true).
-          # On assume donc explicitement l'edge-to-edge (false) et on
-          # applique nous-mêmes le padding des system bars directement
-          # sur la vue native de la WebView, car le WebView Android ne
-          # supporte pas env(safe-area-inset-*) en CSS (contrairement à
-          # WKWebView sur iOS).
-          MAIN="android/app/src/main/java/org/soultrack/app/MainActivity.java"
-          cat > "$MAIN" << 'JAVAEOF'
-          package org.soultrack.app;
-
-          import android.graphics.Color;
-          import android.graphics.drawable.ColorDrawable;
-          import android.os.Bundle;
-          import androidx.core.graphics.Insets;
-          import androidx.core.view.ViewCompat;
-          import androidx.core.view.WindowCompat;
-          import androidx.core.view.WindowInsetsCompat;
-          import androidx.core.view.WindowInsetsControllerCompat;
-          import com.getcapacitor.BridgeActivity;
-
-          public class MainActivity extends BridgeActivity {
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-
-                  WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-
-                  // Android 15+ (targetSdk 35+) force des barres système transparentes :
-                  // setStatusBarColor/setNavigationBarColor sont ignorés. On peint donc
-                  // la fenêtre elle-même en bleu, qui apparaît à travers les barres.
-                  getWindow().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#333699")));
-
-                  WindowInsetsControllerCompat controller =
-                      new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
-                  controller.setAppearanceLightNavigationBars(false);
-                  controller.setAppearanceLightStatusBars(false);
-
-                  ViewCompat.setOnApplyWindowInsetsListener(getWindow().getDecorView(), (view, insets) -> {
-                      Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-                      bridge.getWebView().setPadding(
-                          systemBars.left, systemBars.top, systemBars.right, systemBars.bottom
-                      );
-                      return insets;
-                  });
-              }
-          }
-          JAVAEOF
+          # IMPORTANT : depuis Android 15+ (API 35+), Window.setStatusBarColor()
+          # et Window.setNavigationBarColor() sont des no-op silencieux — le
+          # système force les barres système transparentes et ignore ces appels,
+          # que ce soit en Java natif ou via @capacitor/status-bar. La couleur et
+          # les insets sont désormais gérés par le plugin
+          # @capawesome/capacitor-android-edge-to-edge-support (installé plus haut),
+          # configuré dans capacitor.config.json via la section "plugins.EdgeToEdge"
+          # et "plugins.SystemBars.insetsHandling: disable". Rien à réécrire dans
+          # MainActivity.java ni styles.xml : cap sync ci-dessous applique tout.
 
           echo "=== variables.gradle ==="
           cat android/variables.gradle
-          echo "=== styles.xml ==="
-          cat "$STYLES_FILE"
-          echo "=== MainActivity.java ==="
-          cat "$MAIN"
 
       - name: Set version code
         run: |

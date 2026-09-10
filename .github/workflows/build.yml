@@ -31,7 +31,7 @@ jobs:
           npm install @capgo/capacitor-navigation-bar@7
           npm install @capacitor/filesystem@7
           npm install @capacitor/share@7
-          npm install @capacitor-community/safe-area
+          npm install @capacitor-community/safe-area@^7.0.0
 
       - name: Setup Java
         uses: actions/setup-java@v4

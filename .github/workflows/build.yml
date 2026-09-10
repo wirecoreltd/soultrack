@@ -77,17 +77,23 @@ jobs:
           sed -i 's/compileSdkVersion = 35/compileSdkVersion = 36/' android/variables.gradle
 
           # IMPORTANT : depuis Android 15+ (API 35+), Window.setStatusBarColor()
-          # et Window.setNavigationBarColor() sont des no-op silencieux — le
-          # système force les barres système transparentes et ignore ces appels,
-          # que ce soit en Java natif ou via @capacitor/status-bar. La couleur et
-          # les insets sont désormais gérés par le plugin
-          # @capawesome/capacitor-android-edge-to-edge-support (installé plus haut),
-          # configuré dans capacitor.config.json via la section "plugins.EdgeToEdge"
-          # et "plugins.SystemBars.insetsHandling: disable". Rien à réécrire dans
-          # MainActivity.java ni styles.xml : cap sync ci-dessous applique tout.
+          # et Window.setNavigationBarColor() sont des no-op silencieux. La
+          # transparence dynamique (fond de page visible derrière les icônes)
+          # est gérée par @capacitor-community/safe-area, configuré dans
+          # capacitor.config.js. MAIS sur les WebView Android avec un Chromium
+          # système < 140 (bug connu), ce plugin bascule automatiquement en
+          # mode "padding" : la zone des barres devient une zone native vide
+          # qui affiche le android:windowBackground du thème par défaut (gris
+          # si non défini). On fixe donc ici une couleur de secours cohérente
+          # avec la charte pour ces appareils plus anciens — c'est le seul
+          # attribut de thème encore honoré par Android pour ce cas de figure.
+          STYLES_FILE="android/app/src/main/res/values/styles.xml"
+          sed -i 's|</style>|    <item name="android:windowBackground">#333699</item>\n</style>|' "$STYLES_FILE"
 
           echo "=== variables.gradle ==="
           cat android/variables.gradle
+          echo "=== styles.xml ==="
+          cat "$STYLES_FILE"
 
       - name: Set version code
         run: |

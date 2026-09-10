@@ -31,7 +31,7 @@ jobs:
           npm install @capgo/capacitor-navigation-bar@7
           npm install @capacitor/filesystem@7
           npm install @capacitor/share@7
-          npm install @capawesome/capacitor-android-edge-to-edge-support@7.2.3
+          npm install @capacitor-community/safe-area
 
       - name: Setup Java
         uses: actions/setup-java@v4

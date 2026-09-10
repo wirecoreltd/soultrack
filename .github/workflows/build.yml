@@ -38,6 +38,14 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      # ─── AJOUT : on force un dossier android/ propre ───────────────────
+      # Si android/ est resté versionné (ou traîne d'un run précédent en
+      # cache), "cap add android" peut ne pas régénérer certains fichiers
+      # et laisser une config obsolète. On repart toujours de zéro.
+      # ─────────────────────────────────────────────────────────────────
+      - name: Clean stale platform folder
+        run: rm -rf android
+
       - name: Add Android platform
         run: npx cap add android
 
@@ -68,6 +76,21 @@ jobs:
 
       - name: Sync Capacitor
         run: npx cap sync android
+
+      # ─── AJOUT : vérification de la couleur de la navbar ───────────────
+      # Confirme que le plugin EdgeToEdge a bien injecté #3E7DCF dans les
+      # fichiers de thème natifs après le sync. Si la couleur n'apparaît
+      # pas ici, le problème vient de la config/installation du plugin
+      # et pas du rendu à l'exécution.
+      # ─────────────────────────────────────────────────────────────────
+      - name: Debug theme colors
+        run: |
+          echo "=== Version du plugin EdgeToEdge installée ==="
+          npm ls @capawesome/capacitor-android-edge-to-edge-support
+          echo "=== styles.xml ==="
+          cat android/app/src/main/res/values/styles.xml || echo "styles.xml introuvable"
+          echo "=== colors.xml ==="
+          cat android/app/src/main/res/values/colors.xml || echo "colors.xml introuvable"
 
       - name: Fix Android navigation bar
         run: |
@@ -162,8 +185,22 @@ jobs:
           npm install @capacitor/filesystem@8
           npm install @capacitor/share@8
 
+      # ─── AJOUT : on force un dossier ios/ propre ───────────────────────
+      # Même logique que pour Android : évite qu'un dossier ios/ obsolète
+      # (versionné par erreur, ou resté d'un run précédent) fasse croire
+      # à "cap add ios" que la plateforme existe déjà, auquel cas il ne
+      # régénère pas le Podfile et les étapes suivantes échouent avec
+      # "No such file or directory".
+      # ─────────────────────────────────────────────────────────────────
+      - name: Clean stale platform folder
+        run: rm -rf ios
+
       - name: Add iOS platform
-        run: npx cap add ios
+        run: |
+          npx cap add ios
+          echo "=== Contenu généré dans ios/ ==="
+          find ios -maxdepth 3
+          test -f ios/App/Podfile || (echo "❌ Podfile manquant après cap add ios" && exit 1)
 
       - name: Inject GoogleService-Info.plist
         run: echo '${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}' > ios/App/App/GoogleService-Info.plist

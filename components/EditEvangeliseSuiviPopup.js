@@ -293,8 +293,10 @@ const isPrivileged = rolesArray.some((r) =>
 
       // Propage les infos identité vers evangelises pour rester synchronisé
       // avec le dashboard (qui lit la table evangelises)
+            // Propage les infos identité vers evangelises pour rester synchronisé
+      // avec le dashboard (qui lit la table evangelises)
       if (formData.evangelise_id) {
-        const { error: evangeliseSyncError } = await supabase
+        const { data: syncData, error: evangeliseSyncError } = await supabase
           .from("evangelises")
           .update({
             prenom: cleanData.prenom,
@@ -308,7 +310,10 @@ const isPrivileged = rolesArray.some((r) =>
             besoin: cleanData.besoin,
             infos_supplementaires: cleanData.infos_supplementaires,
           })
-          .eq("id", formData.evangelise_id);
+          .eq("id", formData.evangelise_id)
+          .select();
+
+        console.log("Sync evangelises — lignes modifiées :", syncData);
 
         if (evangeliseSyncError) {
           console.error("Erreur sync evangelises :", evangeliseSyncError);

@@ -642,23 +642,23 @@ function OngletParType({ rapports, evangeliseMap, suiviParEvangelise, onPersonne
 
         return (
           <div key={type} className="bg-white/10 rounded-2xl overflow-hidden">
-            <button onClick={() => setExpandedTypes(p => ({ ...p, [type]: !p[type] }))}
-              className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
-              <div className="flex flex-col gap-0.5">
+                        <button onClick={() => setExpandedTypes(p => ({ ...p, [type]: !p[type] }))}
+              className="w-full flex flex-col gap-1.5 px-4 py-4 hover:bg-white/5 transition text-left">
+              <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-white text-sm">{type === t.nonDefini ? type : getMapLabel(t.typeEvangOptions, type)}</span>
-                <span className="text-[11px] text-white/60">
-                  {rows.length} {rows.length > 1 ? t.rapportPlurielS : t.rapportPluriel}
-                </span>
+                <span className="text-white/30 text-xs flex-shrink-0">{isOpen ? "▲" : "▼"}</span>
               </div>
-              <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-              <Badge color="blue">H {typeTotals.hommes}</Badge>
-              <Badge color="pink">F {typeTotals.femmes}</Badge>
-              <Badge color="amber">{t.total} {typeTotals.total}</Badge>
-              <Badge color="green">🙏 {typeTotals.priere}</Badge>
-              <Badge color="gray">Nc {typeTotals.nouveau}</Badge>
-              {typeTotals.reconciliation > 0 && <Badge color="purple">R {typeTotals.reconciliation}</Badge>}
-              <span className="text-white/30 text-xs">{isOpen ? "▲" : "▼"}</span>
-            </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Badge color="blue">H {typeTotals.hommes}</Badge>
+                <Badge color="pink">F {typeTotals.femmes}</Badge>
+                <Badge color="amber">{t.total} {typeTotals.total}</Badge>
+                <Badge color="green">🙏 {typeTotals.priere}</Badge>
+                <Badge color="gray">Nc {typeTotals.nouveau}</Badge>
+                {typeTotals.reconciliation > 0 && <Badge color="purple">R {typeTotals.reconciliation}</Badge>}
+              </div>
+              <span className="text-[11px] text-white/60">
+                {rows.length} {rows.length > 1 ? t.rapportPlurielS : t.rapportPluriel}
+              </span>
             </button>
             {isOpen && (
               <div className="border-t border-white/10 px-4 pb-4 pt-3 flex flex-col gap-2">

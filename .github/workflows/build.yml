@@ -99,7 +99,7 @@ jobs:
           # avec la charte pour ces appareils plus anciens — c'est le seul
           # attribut de thème encore honoré par Android pour ce cas de figure.
           STYLES_FILE="android/app/src/main/res/values/styles.xml"
-          sed -i 's|</style>|    <item name="android:windowBackground">#FFFFFF</item>\n</style>|' "$STYLES_FILE"
+          sed -i 's|</style>|    <item name="android:windowBackground">#333699</item>\n</style>|' "$STYLES_FILE"
 
           echo "=== variables.gradle ==="
           cat android/variables.gradle

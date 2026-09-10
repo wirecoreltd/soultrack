@@ -152,6 +152,7 @@ const translations = {
     statutIntegre: "Intégré",
     statutRefus: "Refus",
     statutEnAttente: "En attente",
+    statutNonEnvoye: "Non envoyé",
 
     typesEvangelisation: [
       "Individuel",
@@ -265,6 +266,7 @@ const translations = {
     statutIntegre: "Integrated",
     statutRefus: "Refused",
     statutEnAttente: "Pending",
+    statutNonEnvoye: "Not sent",
 
     typesEvangelisation: [
       "Individuel",
@@ -321,10 +323,11 @@ function getConversionAbbr(typeConversion) {
   if (norm.includes("nouveau") || norm.includes("new")) return "Nc";
   return null;
 }
-function getStatutInfo(statut, t) {
-  if (statut === "En cours") return { label: t.statutEnCours, color: "amber" };
-  if (statut === "Intégré") return { label: t.statutIntegre, color: "green" };
-  if (statut === "Refus") return { label: t.statutRefus, color: "red" };
+function getStatutInfo(personneStatusSuivi, suiviStatut, t) {
+  if (personneStatusSuivi === "Non envoyé") return { label: t.statutNonEnvoye, color: "gray" };
+  if (suiviStatut === "En cours") return { label: t.statutEnCours, color: "amber" };
+  if (suiviStatut === "Intégré") return { label: t.statutIntegre, color: "green" };
+  if (suiviStatut === "Refus") return { label: t.statutRefus, color: "red" };
   return { label: t.statutEnAttente, color: "gray" };
 }
 
@@ -540,7 +543,7 @@ function LignePersonne({ r, personne, statutSuivi, onPersonneClick, onDelete, t 
   const nomComplet = personne ? getNomComplet(personne, t.nonDefini) : t.nonDefini;
   const sexeAbbr = personne?.sexe === "Homme" ? "H" : personne?.sexe === "Femme" ? "F" : null;
   const convAbbr = getConversionAbbr(personne?.type_conversion);
-  const statutInfo = getStatutInfo(statutSuivi, t);
+  const statutInfo = getStatutInfo(personne?.status_suivi, statutSuivi, t);
   const isIntegre = statutSuivi === "Intégré";
 
   return (

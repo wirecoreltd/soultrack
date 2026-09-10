@@ -254,12 +254,14 @@ export default function EditEvangelisePopup({
       setMessage(t.errorPrefix + error.message);
     } else {
       if (onUpdateMember) onUpdateMember(data);
+      window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajoute cette ligne
       setMessage(t.success);
       setTimeout(() => {
         setMessage("");
         onClose();
       }, 1200);
     }
+        
     setLoading(false);
   };
 

@@ -830,11 +830,20 @@ useEffect(() => {
       fetchRapports(modePerso);
     }
   };
+  const handlePageShow = (event) => {
+    // event.persisted = true quand la page est restaurée depuis le bfcache
+    // (typiquement après un retour navigateur / router.back())
+    if (event.persisted) {
+      handleUpdate();
+    }
+  };
   window.addEventListener("evangelises-updated", handleUpdate);
   window.addEventListener("focus", handleUpdate); // garde aussi le focus pour le cross-onglet
+  window.addEventListener("pageshow", handlePageShow); // ← ajouté : couvre le retour navigateur
   return () => {
     window.removeEventListener("evangelises-updated", handleUpdate);
     window.removeEventListener("focus", handleUpdate);
+    window.removeEventListener("pageshow", handlePageShow);
   };
 }, [egliseId, userRole, celluleIdsLoaded, modePerso]);
 

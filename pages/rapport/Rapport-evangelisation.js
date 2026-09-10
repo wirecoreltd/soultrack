@@ -390,7 +390,17 @@ function BlocKpiGlobaux({ filteredEvangelises, filteredSuivis, rapports, t }) {
   const totalNonEnvoyes = filteredEvangelises.filter(e => e.status_suivi !== "Envoyé").length;
   const totalConvertis = filteredEvangelises.filter(e => e.priere_salut === true).length;
   const normalize = (str) => (str ? str.trim() : "");
-  const totalIntegres = filteredSuivis.filter(s => normalize(s.status_suivis_evangelises) === "Intégré").length;
+  // Un contact peut être intégré soit via le circuit normal (suivis_des_evangelises),
+  // soit directement depuis le bouton "Intégrer" sur la carte Evangelisation
+  // (qui écrit uniquement evangelises.status_suivi = "Intégré" sans créer de suivi).
+  // On combine les deux sources en dédoublonnant par evangelise_id.
+  const integresViaSuivi = filteredSuivis
+    .filter(s => normalize(s.status_suivis_evangelises) === "Intégré")
+    .map(s => s.evangelise_id);
+  const integresDirect = filteredEvangelises
+    .filter(e => e.status_suivi === "Intégré")
+    .map(e => e.id);
+  const totalIntegres = new Set([...integresViaSuivi, ...integresDirect]).size;
   const totalEncours = filteredSuivis.filter(s => normalize(s.status_suivis_evangelises) === "En cours").length;
   const totalRefus = filteredSuivis.filter(s => normalize(s.status_suivis_evangelises) === "Refus").length;
   const totalCellule = filteredSuivis.filter(s => s.cellule_id != null).length;

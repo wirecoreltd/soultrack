@@ -609,6 +609,7 @@ function EvangelisationContent() {
       if (updateError) throw updateError;
       setContacts((prev) => prev.filter((c) => !ids.includes(c.id)));
       setCheckedContacts({});
+      window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté
       const cibleName = getCibleName(targetType, cible);
       let message = `${t.msgBonjour} ${cibleName},\n\n`;
       message += contactsToSend.length > 1 ? t.msgIntroPlural : t.msgIntroSingular;

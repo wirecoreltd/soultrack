@@ -262,7 +262,7 @@ const isPrivileged = rolesArray.some((r) =>
         evangelise_id: formData.evangelise_id || null,
       };
 
-      const { data, error } = await supabase
+            const { data, error } = await supabase
         .from("suivis_des_evangelises")
         .update(cleanData)
         .eq("id", member.id)
@@ -291,7 +291,32 @@ const isPrivileged = rolesArray.some((r) =>
         }
       }
 
+      // Propage les infos identité vers evangelises pour rester synchronisé
+      // avec le dashboard (qui lit la table evangelises)
+      if (formData.evangelise_id) {
+        const { error: evangeliseSyncError } = await supabase
+          .from("evangelises")
+          .update({
+            prenom: cleanData.prenom,
+            nom: cleanData.nom,
+            sexe: cleanData.sexe,
+            telephone: cleanData.telephone,
+            ville: cleanData.ville,
+            is_whatsapp: cleanData.is_whatsapp,
+            priere_salut: cleanData.priere_salut,
+            type_conversion: cleanData.type_conversion,
+            besoin: cleanData.besoin,
+            infos_supplementaires: cleanData.infos_supplementaires,
+          })
+          .eq("id", formData.evangelise_id);
+
+        if (evangeliseSyncError) {
+          console.error("Erreur sync evangelises :", evangeliseSyncError);
+        }
+      }
+
       if (onUpdateMember) onUpdateMember(data);
+      window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté, manquait totalement
       setMessage(t.succes);
       setTimeout(() => {
         setMessage("");

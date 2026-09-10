@@ -203,7 +203,7 @@ export default function IndexPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
-      style={{ background: "linear-gradient(to bottom, #333699 0%, #333699 10%, #4B5BB5 50%, #333699 90%, #333699 100%)" }}
+      style={{ background: "linear-gradient(to bottom, #333699 0%, #3A45A0 10%, #4B5BB5 50%, #3A45A0 90%, #333699 100%)" }}
     >
       <HeaderPages />
 
@@ -238,7 +238,7 @@ export default function IndexPage() {
         <p className="italic text-base text-white/90">{t.footer}</p>
       </div>
 
-      <FooterHub />
+      <Footer />
     </div>
   );
 }

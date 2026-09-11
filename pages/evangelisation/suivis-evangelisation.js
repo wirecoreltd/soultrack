@@ -47,7 +47,7 @@ const translations = {
   fr: {
     loading: "Chargement...",
     notConnected: "Non connecté",
-    search: "🔍Recherche...",
+    search: "🔍 Recherche (nom, prénom, téléphone)...",
     pageTitle1: "Suivis des",
     pageTitle2: "Evangélisés",
     intro: "Suivez facilement tous vos",
@@ -141,7 +141,7 @@ const translations = {
   en: {
     loading: "Loading...",
     notConnected: "Not connected",
-    search: "🔍Search...",
+    search: "🔍 Search (name, phone)...",
     pageTitle1: "Follow-ups of",
     pageTitle2: "Evangelised",
     intro: "Easily track all your",

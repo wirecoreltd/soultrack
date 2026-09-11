@@ -1042,7 +1042,7 @@ function Attendance() {
         {/* Boutons actions */}
         <div className="flex gap-2 mt-3">
           <button onClick={handleAjouter}
-            className="flex-1 py-2 rounded-xl bg-emerald-600/40 hover:bg-emerald-600/60 text-white text-sm font-semibold transition active:scale-95">
+            className="flex-1 py-2 rounded-xl bg-amber-500/70 hover:bg-amber-500 text-white text-sm font-semibold transition active:scale-95">
             {t.ajouterRapport}
           </button>
           <button onClick={handleModifier}

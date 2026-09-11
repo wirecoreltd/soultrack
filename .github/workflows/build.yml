@@ -99,6 +99,15 @@ jobs:
           sed -i 's/targetSdkVersion = 35/targetSdkVersion = 36/' android/variables.gradle
           sed -i 's/compileSdkVersion = 35/compileSdkVersion = 36/' android/variables.gradle
 
+          # ⚠️ Forcé à 21 pour garder la compatibilité avec les anciens appareils
+          # (Capacitor 8.5.1 fixe minSdkVersion=24 par défaut, ce qui exclut ~1000
+          # appareils sur Play Console). Risque : les dépendances AndroidX incluses
+          # (androidx.core 1.17.0, androidx.webkit 1.14.0, etc.) sont conçues pour
+          # API 24+ et peuvent échouer à la compilation ou planter au runtime sur
+          # les appareils API <24. À tester impérativement sur un appareil réel
+          # ou un émulateur bas de gamme avant de publier.
+          sed -i 's/minSdkVersion = 24/minSdkVersion = 21/' android/variables.gradle
+
           # Sur Capacitor 8.4.0+, @capawesome/capacitor-android-edge-to-edge-support
           # (v8) + le plugin natif SystemBars gèrent correctement l'edge-to-edge,
           # les insets ET les couleurs indépendantes des deux barres — configuré

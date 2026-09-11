@@ -69,6 +69,15 @@ jobs:
         run: |
           sed -i 's|launchUrl = null|launchUrl = "https://www.soultrack.org/login"|g' android/app/src/main/java/org/soultrack/app/MainActivity.java 2>/dev/null || true
 
+      - name: Fix keyboard hiding password field
+        run: |
+          sed -i '/android:name=".MainActivity"/a\            android:windowSoftInputMode="adjustResize"' android/app/src/main/AndroidManifest.xml
+          echo "=== Vérification de l'ajout ==="
+          grep -A2 -B2 "windowSoftInputMode" android/app/src/main/AndroidManifest.xml || echo "⚠️ windowSoftInputMode introuvable, vérifier le manifest généré"
+
+      - name: Inject google-services.json
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+        
       - name: Inject google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
 

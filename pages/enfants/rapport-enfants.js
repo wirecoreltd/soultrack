@@ -798,7 +798,7 @@ function RapportPresenceEnfants() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}>
       <HeaderPages />
 
       <div className="w-full max-w-2xl mt-6 flex flex-col gap-5 mb-10">

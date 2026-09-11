@@ -26,7 +26,7 @@ const translations = {
     introAccent2: "pour accompagner, encadrer et développer une communauté solide et fraternelle",
 
     // Champs / filtres
-    chercher: "Chercher...",
+    chercher: "🔍 Recherche (nom, prénom, téléphone)...",
     tousRoles: "Tous les rôles",
     total: "Total :",
     ajouter: "➕ Ajouter",
@@ -78,7 +78,7 @@ const translations = {
     introAccent2: "to accompany, guide and build a strong, brotherly community",
 
     // Champs / filtres
-    chercher: "Search...",
+    chercher: "🔍 Search (name, phone)...",
     tousRoles: "All roles",
     total: "Total:",
     ajouter: "➕ Add",
@@ -264,8 +264,10 @@ function ListUsersContent() {
     .filter((u) => (role ? u.roles?.includes(role) : true))
     .filter(
       (u) =>
+        !search ||
         u.prenom?.toLowerCase().includes(search.toLowerCase()) ||
-        u.nom?.toLowerCase().includes(search.toLowerCase())
+        u.nom?.toLowerCase().includes(search.toLowerCase()) ||
+        u.telephone?.includes(search)
     );
 
   if (loading)

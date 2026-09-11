@@ -1510,7 +1510,7 @@ useEffect(() => {
                     <button
                       onClick={() => setOpenEvalLeaderMemberId(m.id)}
                       className="mt-2 text-sm px-3 py-1 rounded text-white font-semibold"
-                      style={{ background: "linear-gradient(135deg, #2E3192 0%, #6366f1 100%)" }}
+                      style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}
                     >
                       {t.btnEvalLeader}
                     </button>

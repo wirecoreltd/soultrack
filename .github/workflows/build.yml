@@ -51,7 +51,7 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      # ─── ÉTAPE SUPPRIMÉE : "Add App Links intent-filter" ───────────────
+      # ─── ÉTAPE SUPPRIMÉE : "Add App Links intent-filter" ────────────
       # Cette étape ajoutait un <intent-filter android:autoVerify="true">
       # qui faisait qu'Android ouvrait automatiquement l'app à chaque clic
       # sur un lien https://www.soultrack.org/... (dans Gmail, SMS, Chrome,

@@ -307,7 +307,13 @@ function CreateCelluleContent() {
 
   // ─── UI ───────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-6">
+    <div
+      className="min-h-screen flex items-center justify-center p-6"
+      style={{
+        background:
+          "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)",
+      }}
+    >
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-lg relative">
 
         <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700">

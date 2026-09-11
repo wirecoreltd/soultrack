@@ -707,16 +707,7 @@ function SuivisMembresContent() {
           className="w-full sm:w-2/3 px-3 py-1 rounded-md border text-black"
         />
       </div>
-
-      <div className="mb-4 flex justify-end w-full max-w-6xl">
-        <button
-          onClick={() => setShowRefus(prev => !prev)}
-          className="text-orange-400 text-sm underline hover:text-orange-500"
-        >
-          {showRefus ? t.voirTous : t.voirRefus}
-        </button>
-      </div>
-
+      
       <div className="mb-4 flex justify-end w-full max-w-6xl">
         <button
           onClick={() => setShowRefus(prev => !prev)}

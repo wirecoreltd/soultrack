@@ -674,8 +674,9 @@ function SuivisMembresContent() {
     const status = m.statut_suivis ?? 0;
     const statusOk = showRefus ? status === 4 : (status === 1 || status === 2);
     if (!statusOk) return false;
+    if (!search) return true;
     const fullName = `${m.prenom || ""} ${m.nom || ""}`.toLowerCase();
-    return fullName.includes(search.toLowerCase());
+    return fullName.includes(search.toLowerCase()) || (m.telephone && m.telephone.includes(search));
   });
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(i => [i.id, i])).values());

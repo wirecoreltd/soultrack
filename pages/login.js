@@ -5,6 +5,8 @@ import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
 import { initPushNotifications } from "../lib/pushNotifications";
 import { Great_Vibes } from "next/font/google";
+import { Capacitor } from "@capacitor/core";
+import { Keyboard } from "@capacitor/keyboard";
 
 const greatVibes = Great_Vibes({
   subsets: ["latin"],
@@ -54,26 +56,25 @@ export default function LoginPage() {
 
   const [checkingSession, setCheckingSession] = useState(true);
 
-  // ── DEBUG TEMPORAIRE : hooks déplacés ICI (avant tout return conditionnel) ──
-  const [debugInfo, setDebugInfo] = useState("init");
+  // ── Gestion manuelle du clavier (edge-to-edge empêche le resize automatique) ──
+  const [keyboardPadding, setKeyboardPadding] = useState(0);
 
   useEffect(() => {
-    const updateDebug = () => {
-      const vh = window.visualViewport?.height ?? "N/A";
-      const wh = window.innerHeight;
-      const hasCapacitor = typeof window.Capacitor !== "undefined";
-      const hasKeyboardPlugin = hasCapacitor && !!window.Capacitor.Plugins?.Keyboard;
-      setDebugInfo(`vvH:${vh} wH:${wh} cap:${hasCapacitor} kb:${hasKeyboardPlugin}`);
-    };
-    updateDebug();
-    window.visualViewport?.addEventListener("resize", updateDebug);
-    window.addEventListener("resize", updateDebug);
+    if (!Capacitor.isNativePlatform()) return;
+
+    const showListener = Keyboard.addListener("keyboardWillShow", (info) => {
+      setKeyboardPadding(info.keyboardHeight);
+    });
+    const hideListener = Keyboard.addListener("keyboardWillHide", () => {
+      setKeyboardPadding(0);
+    });
+
     return () => {
-      window.visualViewport?.removeEventListener("resize", updateDebug);
-      window.removeEventListener("resize", updateDebug);
+      showListener.then((l) => l.remove());
+      hideListener.then((l) => l.remove());
     };
   }, []);
-  // ── FIN DEBUG TEMPORAIRE ──
+  // ── FIN gestion clavier ──
 
   useEffect(() => {
     const checkSession = async () => {
@@ -187,13 +188,11 @@ export default function LoginPage() {
       className="flex flex-col items-center justify-center p-6 text-center space-y-6 overflow-y-auto"
       style={{
         minHeight: "100dvh",
-        background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)"
+        paddingBottom: keyboardPadding > 0 ? `${keyboardPadding + 24}px` : undefined,
+        background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)",
+        transition: "padding-bottom 0.2s ease-out",
       }}
     >
-      <div style={{ position: "fixed", top: 0, left: 0, right: 0, background: "black", color: "lime", fontSize: "10px", padding: "4px", zIndex: 9999 }}>
-        {debugInfo}
-      </div>
-
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
 
         <h1 className="text-5xl text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">

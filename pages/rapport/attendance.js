@@ -355,7 +355,7 @@ function KpiCard({ label, value, sub, accent }) {
     <div className="bg-white/10 rounded-2xl px-4 py-4 flex flex-col gap-1">
       <p className="text-sm text-white">{label}</p>
       <p className={`text-2xl font-bold leading-none ${c[accent] || "text-white"}`}>{value}</p>
-      {sub && <p className="text-xs text-white/60 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-white mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -569,7 +569,7 @@ function CarteSession({ r, onEdit, onDelete, t }) {
         className="w-full flex items-center justify-between px-4 py-4 hover:bg-white/5 transition text-left gap-3">
         <div className="flex flex-col gap-0.5">
           <span className="font-semibold text-white text-sm">{label}</span>
-          <span className="text-[11px] text-white/60">{formatDateFr(r.date)}</span>
+          <span className="text-[11px] text-white/80">{formatDateFr(r.date)}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Badge color="blue">H {r.hommes}</Badge>
@@ -725,7 +725,7 @@ function FormulaireSaisie({ egliseId, tempsOptions, setTempsOptions, onSaved, ed
 
         {/* Type de temps */}
         <div className="flex flex-col gap-1" ref={selectRef}>
-          <label className="text-sm text-white/60">{t.typeTempsLabel}</label>
+          <label className="text-sm text-white/80">{t.typeTempsLabel}</label>
           <div onClick={() => setDropdownOpen(v => !v)}
             className="bg-white/10 border border-white/20 rounded-xl px-3 py-2.5 text-white text-sm flex justify-between items-center cursor-pointer hover:bg-white/15 transition">
             <span className={formData.typeTemps ? "text-white" : "text-white/30"}>
@@ -1042,11 +1042,11 @@ function Attendance() {
         {/* Boutons actions */}
         <div className="flex gap-2 mt-3">
           <button onClick={handleAjouter}
-            className="flex-1 py-2 rounded-xl bg-emerald-600/40 hover:bg-emerald-600/60 text-white/80 text-sm font-semibold transition active:scale-95">
+            className="flex-1 py-2 rounded-xl bg-emerald-600/40 hover:bg-emerald-600/60 text-white text-sm font-semibold transition active:scale-95">
             {t.ajouterRapport}
           </button>
           <button onClick={handleModifier}
-            className="flex-1 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-white/80 text-sm font-semibold transition active:scale-95">
+            className="flex-1 py-2 rounded-xl bg-blue-600/40 hover:bg-blue-600/60 text-white text-sm font-semibold transition active:scale-95">
             {t.modifierRapport}
           </button>
         </div>

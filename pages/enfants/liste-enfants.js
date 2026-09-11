@@ -104,7 +104,7 @@ const translations = {
     introMid: ", filtrez par tranche d'âge,",
     introAccent2: "accédez aux détails complets",
     introEnd: "et mettez à jour les informations.",
-    search: "🔍 Rechercher...",
+    search: "🔍 Recherche (nom, prénom, téléphone parent)...",
     allAges: "-- Toutes les tranches --",
     addChild: "➕ Ajouter un enfant",
     loading: "Chargement...",
@@ -160,7 +160,7 @@ const translations = {
     introMid: ", filter by age group,",
     introAccent2: "access full details",
     introEnd: "and update information.",
-    search: "🔍 Search...",
+    search: "🔍 Search (name, parent phone)...",
     allAges: "-- All age groups --",
     addChild: "➕ Add a child",
     loading: "Loading...",
@@ -592,7 +592,9 @@ function ListeEnfantsContent() {
     const tranche = getTranche(e.date_naissance).label;
     const matchAge = !filterAge || tranche === filterAge;
     const matchSearch = !search ||
-      `${e.prenom} ${e.nom}`.toLowerCase().includes(search.toLowerCase());
+      `${e.prenom} ${e.nom}`.toLowerCase().includes(search.toLowerCase()) ||
+      (e.parent1_telephone && e.parent1_telephone.includes(search)) ||
+      (e.parent2_telephone && e.parent2_telephone.includes(search));
     return matchAge && matchSearch;
   });
 

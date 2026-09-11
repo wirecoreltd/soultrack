@@ -15,24 +15,34 @@
 // s'exécute dans le navigateur : l'utilisateur pourrait techniquement
 // modifier la requête. La vraie barrière de sécurité doit venir des
 // policies RLS (Row Level Security) Supabase sur CHAQUE table
-// concernée (membres_complets, cellules, familles, suivis,
+// concernée (membres_complets, familles, suivis,
 // suivis_evangelises, eglises, profiles), qui doivent interdire tout
 // accès à des lignes dont eglise_id != eglise_id de l'utilisateur
 // authentifié, quelle que soit la requête envoyée. Vérifie que ces
 // policies existent avant de considérer cet export comme conforme.
 //
-// ── Corrections apportées suite à l'erreur "column cellules.responsable_nom
-// does not exist" et à la vérification du schéma réel (information_schema) ──
-// 1. cellules : la colonne s'appelle "responsable" (texte libre), pas
-//    "responsable_nom". Il n'existe pas de table "branches" (seulement
-//    "zz_branches", non confirmée) : la résolution de branche a donc été
-//    retirée pour éviter une nouvelle erreur ; branche_id est affiché tel
-//    quel en attendant confirmation du schéma de zz_branches.
-// 2. suivis / suivis_evangelises : la colonne auteur est "created_by",
-//    pas "auteur_id".
-// 3. suivis / suivis_evangelises : les colonnes qualitatives réelles sont
-//    maintenant confirmées et intégrées (vie_spirituelle, combats_luttes,
-//    blocages, etc. / relation_avec_dieu, ouverture_spirituelle, luttes, etc.)
+// ── Changements dans cette révision ──
+// 1. Feuille "Infos Eglise" : passée d'une unique ligne à N colonnes
+//    (peu lisible) à un format vertical "Champ / Valeur" (une ligne
+//    par info), avec largeurs de colonnes ajustées pour un rendu
+//    plus propre à l'ouverture.
+// 2. Onglet "Cellules" retiré (feuille + requêtes associées
+//    supprimées, plus de résolution de cellule_mere / superviseur).
+//    ⚠️ Le mapping Cellule sur la feuille "Membres" reste en place
+//    (celluleMap), car il ne dépend pas de l'onglet Cellules et sert
+//    juste à afficher le nom de la cellule d'un membre.
+// 3. Fix "ça commence à une ligne random sur mobile (ex: ligne 157)" :
+//    ce n'est pas un souci de contenu du fichier généré, mais très
+//    probablement un cache de position de scroll de l'app mobile
+//    (WPS / Google Sheets / Excel mobile...) associé au *nom de
+//    fichier*. Comme le nom était basé uniquement sur la date
+//    (ex: export-rgpd-2026-09-11.xlsx), rouvrir un export généré
+//    plusieurs fois le même jour rouvre à la dernière position
+//    scrollée du fichier précédent portant le même nom.
+//    → Le nom de fichier inclut maintenant l'heure/minute/seconde
+//    (et un suffixe aléatoire) pour être unique à chaque export.
+//    → Sur mobile (Capacitor), on supprime aussi explicitement tout
+//    fichier existant au même chemin avant d'écrire, par sécurité.
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
@@ -160,6 +170,10 @@ function ExportRGPDContent() {
   };
 
   // ─── Feuille 1 : Infos Église ───────────────────────────────────
+  // Format "Champ / Valeur" (une ligne par info) plutôt qu'une seule
+  // ligne étalée sur N colonnes : bien plus lisible à l'ouverture,
+  // surtout sur mobile où les colonnes larges obligent à scroller
+  // horizontalement.
   const buildFeuilleEglise = async (egliseId) => {
     const { data: eglise, error } = await supabase
       .from("eglises")
@@ -196,14 +210,12 @@ function ExportRGPDContent() {
     }
 
     return [
-      {
-        Nom: eglise.nom || "—",
-        Ville: eglise.ville || "—",
-        Pays: eglise.pays || "—",
-        Dénomination: eglise.denomination || "—",
-        Branche: eglise.branche || "—",
-        "Église superviseure": egliseSuperviseureNom,
-      },
+      { Champ: "Nom", Valeur: eglise.nom || "—" },
+      { Champ: "Ville", Valeur: eglise.ville || "—" },
+      { Champ: "Pays", Valeur: eglise.pays || "—" },
+      { Champ: "Dénomination", Valeur: eglise.denomination || "—" },
+      { Champ: "Branche", Valeur: eglise.branche || "—" },
+      { Champ: "Église superviseure", Valeur: egliseSuperviseureNom },
     ];
   };
 
@@ -225,6 +237,9 @@ function ExportRGPDContent() {
     if (error) throw error;
     if (!membres || membres.length === 0) return [];
 
+    // On garde la résolution des noms de cellule pour la colonne
+    // "Cellule" de la feuille Membres, même si l'onglet Cellules
+    // dédié a été retiré (deux besoins indépendants).
     const [{ data: cellules }, { data: familles }, { data: assignments }] =
       await Promise.all([
         supabase.from("cellules").select("id, cellule_full").eq("eglise_id", egliseId),
@@ -294,56 +309,7 @@ function ExportRGPDContent() {
     }));
   };
 
-  // ─── Feuille 3 : Cellules ───────────────────────────────────────
-  const buildFeuilleCellules = async (egliseId) => {
-    // Colonnes confirmées via information_schema : la colonne du responsable
-    // est "responsable" (texte libre), il n'y a pas de "responsable_nom".
-    // branche_id référence une table non confirmée ("zz_branches" existe
-    // mais son schéma n'est pas vérifié) : affiché brut en attendant.
-    const { data: cellules, error } = await supabase
-      .from("cellules")
-      .select(
-        "id, ville, cellule_full, responsable, telephone_responsable, superviseur_id, cellule_mere_id, branche_id, created_at"
-      )
-      .eq("eglise_id", egliseId);
-
-    if (error) throw error;
-    if (!cellules || cellules.length === 0) return [];
-
-    const superviseurIds = [...new Set(cellules.map((c) => c.superviseur_id).filter(Boolean))];
-    const celluleMereIds = [...new Set(cellules.map((c) => c.cellule_mere_id).filter(Boolean))];
-
-    const [{ data: superviseurs }, { data: cellulesMeres }] = await Promise.all([
-      superviseurIds.length
-        ? supabase.from("profiles").select("id, prenom, nom").in("id", superviseurIds)
-        : Promise.resolve({ data: [] }),
-      celluleMereIds.length
-        ? supabase.from("cellules").select("id, cellule_full").in("id", celluleMereIds)
-        : Promise.resolve({ data: [] }),
-    ]);
-
-    const superviseurMap = Object.fromEntries(
-      (superviseurs || []).map((p) => [p.id, `${p.prenom || ""} ${p.nom || ""}`.trim()])
-    );
-    const celluleMereMap = Object.fromEntries(
-      (cellulesMeres || []).map((c) => [c.id, c.cellule_full])
-    );
-
-    return cellules.map((c) => ({
-      Ville: c.ville || "—",
-      Nom: c.cellule_full || "—",
-      Responsable: c.responsable || "—",
-      "Téléphone responsable": c.telephone_responsable || "—",
-      Superviseur: superviseurMap[c.superviseur_id] || "—",
-      "Cellule mère": celluleMereMap[c.cellule_mere_id] || "—",
-      // ⚠️ Branche non résolue : pas de table "branches" confirmée dans le
-      // schéma (seulement "zz_branches", non vérifiée). ID brut affiché.
-      "Branche (ID)": c.branche_id || "—",
-      "Créée le": toDateStr(c.created_at),
-    }));
-  };
-
-  // ─── Feuille 4 : Suivis pastoraux ───────────────────────────────
+  // ─── Feuille 3 : Suivis pastoraux ───────────────────────────────
   const buildFeuilleSuivis = async (egliseId) => {
     // ⚠️ La table "suivis" n'a pas de colonne eglise_id directe :
     // on filtre donc via les membres de l'église.
@@ -403,7 +369,7 @@ function ExportRGPDContent() {
     }));
   };
 
-  // ─── Feuille 5 : Suivis évangélisation ──────────────────────────
+  // ─── Feuille 4 : Suivis évangélisation ──────────────────────────
   const buildFeuilleEvangelisation = async (egliseId) => {
     // ⚠️ même remarque que pour "suivis" : filtrage via les évangélisés
     // de l'église (pas de colonne eglise_id directe sur suivis_evangelises).
@@ -499,30 +465,27 @@ function ExportRGPDContent() {
 
       const egliseId = profile.eglise_id;
 
-      const [feuilleEglise, feuilleMembres, feuilleCellules, feuilleSuivis, feuilleEvang] =
+      const [feuilleEglise, feuilleMembres, feuilleSuivis, feuilleEvang] =
         await Promise.all([
           buildFeuilleEglise(egliseId),
           buildFeuilleMembres(egliseId),
-          buildFeuilleCellules(egliseId),
           buildFeuilleSuivis(egliseId),
           buildFeuilleEvangelisation(egliseId),
         ]);
 
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(
-        workbook,
-        XLSX.utils.json_to_sheet(feuilleEglise),
-        "Infos Eglise"
-      );
+
+      // Infos Eglise : format Champ/Valeur, avec largeurs de colonnes
+      // ajustées pour un rendu plus propre (label court à gauche,
+      // valeur potentiellement longue à droite).
+      const wsEglise = XLSX.utils.json_to_sheet(feuilleEglise);
+      wsEglise["!cols"] = [{ wch: 22 }, { wch: 45 }];
+      XLSX.utils.book_append_sheet(workbook, wsEglise, "Infos Eglise");
+
       XLSX.utils.book_append_sheet(
         workbook,
         XLSX.utils.json_to_sheet(feuilleMembres.length ? feuilleMembres : [{ "—": "Aucune donnée" }]),
         "Membres"
-      );
-      XLSX.utils.book_append_sheet(
-        workbook,
-        XLSX.utils.json_to_sheet(feuilleCellules.length ? feuilleCellules : [{ "—": "Aucune donnée" }]),
-        "Cellules"
       );
       XLSX.utils.book_append_sheet(
         workbook,
@@ -535,8 +498,16 @@ function ExportRGPDContent() {
         "Suivis evangelisation"
       );
 
-      const dateStr = new Date().toISOString().slice(0, 10);
-      const fileName = `export-rgpd-${dateStr}.xlsx`;
+      // Nom de fichier unique à chaque génération (date + heure:min:sec +
+      // suffixe aléatoire court). Évite qu'une app mobile de lecture de
+      // fichiers (WPS, Google Sheets, Excel mobile...) réouvre un export
+      // du jour à la position de scroll d'un export précédent portant
+      // le même nom (c'est ce qui causait l'ouverture "à la ligne 157").
+      const now = new Date();
+      const datePart = now.toISOString().slice(0, 10);
+      const timePart = now.toTimeString().slice(0, 8).replace(/:/g, "-"); // HH-MM-SS
+      const randomPart = Math.random().toString(36).slice(2, 6);
+      const fileName = `export-rgpd-${datePart}_${timePart}-${randomPart}.xlsx`;
 
       // ⚠️ Sur une app installée via Capacitor, la WebView n'a pas de
       // mécanisme de téléchargement de fichier comme un vrai navigateur :
@@ -547,6 +518,15 @@ function ExportRGPDContent() {
       // Drive, etc.). Sur le web, on garde le téléchargement classique.
       if (Capacitor.isNativePlatform()) {
         const base64Data = XLSX.write(workbook, { bookType: "xlsx", type: "base64" });
+
+        // Sécurité supplémentaire : si un fichier existait déjà à ce
+        // chemin (peu probable vu le nom unique, mais gratuit), on le
+        // supprime avant d'écrire pour éviter tout état résiduel.
+        try {
+          await Filesystem.deleteFile({ path: fileName, directory: Directory.Cache });
+        } catch {
+          // Le fichier n'existe pas encore : rien à faire.
+        }
 
         const written = await Filesystem.writeFile({
           path: fileName,

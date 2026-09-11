@@ -36,7 +36,7 @@ const translations = {
   fr: {
     titre1: "Gestion des contacts",
     titre2: " Evangélisés",
-    search: "🔍Recherche...",
+    search: "🔍 Recherche (nom, prénom, téléphone)...",
     description: "Cette page",
     descAccent1: " centralise ",
     descMid1: "tous les contacts évangélisés et facilite la",
@@ -153,7 +153,7 @@ const translations = {
   en: {
     titre1: "Evangelism Contact",
     titre2: " Management",
-    search: "🔍Search...",
+    search: "🔍 Search (name, phone)...",
     description: "This page",
     descAccent1: " centralises ",
     descMid1: "all evangelised contacts and simplifies",

@@ -36,6 +36,7 @@ const translations = {
   fr: {
     titre1: "Gestion des contacts",
     titre2: " Evangélisés",
+    search: "🔍Recherche...",
     description: "Cette page",
     descAccent1: " centralise ",
     descMid1: "tous les contacts évangélisés et facilite la",
@@ -152,6 +153,7 @@ const translations = {
   en: {
     titre1: "Evangelism Contact",
     titre2: " Management",
+    search: "🔍Search...",
     description: "This page",
     descAccent1: " centralises ",
     descMid1: "all evangelised contacts and simplifies",
@@ -319,6 +321,7 @@ function EvangelisationContent() {
   const selectedTargetTypeRef = useRef("");
   const selectedTargetRef = useRef("");
   const { triggerRefresh } = useNotificationsContext();
+  const [search, setSearch] = useState("");
 
   const highlightDoneRef = useRef(false);
 
@@ -666,6 +669,15 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
         </p>
       </div>
 
+          <div className="max-w-3xl w-full mb-6 text-center">
+        <p className="italic text-base text-white/90">
+          {t.description}<span className="text-blue-300 font-semibold">{t.descAccent1}</span>{t.descMid1}
+          <span className="text-blue-300 font-semibold">{t.descAccent2}</span>
+          {t.descMid2}{" "}
+          <span className="text-blue-300 font-semibold">{t.descAccent3}</span>{t.descEnd}
+        </p>
+      </div>  
+
       <div className="w-full max-w-md mb-6">
         <select
           value={selectedTargetType}
@@ -706,9 +718,9 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
 
       {/* ===== CONTACTS ===== */}
       <div className="w-full max-w-6xl flex flex-col items-center">
-        {contacts && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
-            {contacts.map((member) => (
+        {filteredContacts && (
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full max-w-5xl">
+    {filteredContacts.map((member) => (
               <div
                 key={member.id}
                 ref={(el) => (highlightRef.current[member.id] = el)}

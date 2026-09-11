@@ -45,7 +45,7 @@ const translations = {
     description7:
       " ses informations de contact et voir ",
     description8: "le nombre de membres qu'il accompagne",
-    searchPlaceholder: "Recherche...",
+    searchPlaceholder: "🔍 Recherche (nom, prénom, téléphone)...",
     addConseiller: "➕ Ajouter un Conseiller",
     loading: "Chargement...",
     noConseiller:
@@ -72,7 +72,7 @@ const translations = {
     description7:
       " their contact information and see ",
     description8: "the number of members they follow",
-    searchPlaceholder: "Search...",
+    searchPlaceholder: "🔍 Search (name, phone)...",
     addConseiller: "➕ Add a Counselor",
     loading: "Loading...",
     noConseiller:
@@ -230,12 +230,10 @@ function ListConseillers() {
 
   const filteredConseillers = conseillers.filter(
     (c) =>
-      c.prenom
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
-      c.nom
-        .toLowerCase()
-        .includes(search.toLowerCase())
+      !search ||
+      c.prenom?.toLowerCase().includes(search.toLowerCase()) ||
+      c.nom?.toLowerCase().includes(search.toLowerCase()) ||
+      (c.telephone && c.telephone.includes(search))
   );
 
   return (

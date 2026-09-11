@@ -1016,10 +1016,11 @@ useEffect(() => {
           )
         : besoinFiltered;
 
-      const searchAndNameFiltered = searchFiltered.filter((m) =>
-        `${m.prenom || ""} ${m.nom || ""}`
-          .toLowerCase()
-          .includes(search.toLowerCase())
+      const searchAndNameFiltered = searchFiltered.filter(
+        (m) =>
+          !search ||
+          `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase()) ||
+          (m.telephone && m.telephone.includes(search))
       );
 
       return {

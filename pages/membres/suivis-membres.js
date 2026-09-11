@@ -37,7 +37,7 @@ const translations = {
   fr: {
     titre1: "Suivis des",
     titre2: "Membres",
-    search: "🔍Recherche...", 
+    search: "🔍 Recherche (nom, prénom, téléphone)...",
     description: "Ici, vous pouvez voir,",
     descriptionAccent1: " suivre et accompagner ",
     descriptionMid: "chaque membre de votre Assemblée.",
@@ -138,7 +138,7 @@ const translations = {
   en: {
     titre1: "Member",
     titre2: "Follow-ups",
-    search: "🔍Search...",
+    search: "🔍 Search (name, phone)...",
     description: "Here you can view,",
     descriptionAccent1: " track and support ",
     descriptionMid: "every member of your Assembly.",

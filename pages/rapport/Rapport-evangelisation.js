@@ -979,7 +979,7 @@ filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
         <div className="bg-white/10 rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
             <button onClick={() => setModePerso(false)}
-              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
+              className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${!modePerso ? "bg-white text-[#333699]" : "text-white/90 hover:text-white"}`}>
               {t.periodeRapide}
             </button>
             <button onClick={() => setModePerso(true)}
@@ -990,11 +990,11 @@ filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
 
           {!modePerso && (
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-white/60 flex-shrink-0">{t.periode}</span>
+              <span className="text-sm text-white flex-shrink-0">{t.periode}</span>
               <div className="flex gap-1 bg-white/10 rounded-xl p-1 flex-wrap">
                 {t.periodes.map(p => (
                   <button key={p.val} onClick={() => setFiltrePeriode(p.val)}
-                    className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "text-white/60 hover:text-white/80"}`}>
+                    className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${filtrePeriode === p.val ? "bg-white text-[#333699]" : "text-white/90 hover:text-white"}`}>
                     {p.label}
                   </button>
                 ))}
@@ -1008,12 +1008,12 @@ filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-white/80">{t.dateDebut}</label>
                   <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                    className="bg-white/10 border border-white/80 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-xs text-white/80">{t.dateFin}</label>
                   <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)}
-                    className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
+                    className="bg-white/10 border border-white/80 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-white/40" />
                 </div>
               </div>
               <button onClick={() => fetchRapports(true)}
@@ -1024,7 +1024,7 @@ filteredSuivis.forEach(s => { suiviParEvangelise[s.evangelise_id] = s; });
           )}
 
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-white/80 flex-shrink-0">{t.typeEvangelisation}</span>
+            <span className="text-sm text-white flex-shrink-0">{t.typeEvangelisation}</span>
             <select value={filtreType} onChange={e => setFiltreType(e.target.value)}
               className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-white text-sm focus:outline-none focus:border-white/40 appearance-none cursor-pointer">
               <option value="" className="bg-[#2a2d80]">{t.tousTypes}</option>

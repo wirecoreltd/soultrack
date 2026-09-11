@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
-import FooterHub from "../../components/FooterHub";
+import Footer from "../../components/Footer";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useLang } from "../../hooks/useLang";
 
@@ -119,8 +119,9 @@ export default function Administrateur() {
 
   return (
     <ProtectedRoute allowedRoles={["Administrateur"]}>
-      <div className="min-h-screen flex flex-col items-center p-6 text-center space-y-6 bg-gradient-to-br from-[#2E3192] to-[#92EFFD]">
-
+      <div className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
+      style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}
+>
         <HeaderPages />
 
         <h1 className="text-3xl font-extrabold mt-4 mb-6 text-white drop-shadow-lg">{t.title}</h1>
@@ -183,7 +184,7 @@ export default function Administrateur() {
 
         </div>
 
-        <FooterHub />
+        <Footer />
       </div>
     </ProtectedRoute>
   );

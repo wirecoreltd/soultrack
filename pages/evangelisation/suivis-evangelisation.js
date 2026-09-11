@@ -47,6 +47,7 @@ const translations = {
   fr: {
     loading: "Chargement...",
     notConnected: "Non connecté",
+    search: "🔍Recherche...",
     pageTitle1: "Suivis des",
     pageTitle2: "Evangélisés",
     intro: "Suivez facilement tous vos",
@@ -140,6 +141,7 @@ const translations = {
   en: {
     loading: "Loading...",
     notConnected: "Not connected",
+    search: "🔍Search...",
     pageTitle1: "Follow-ups of",
     pageTitle2: "Evangelised",
     intro: "Easily track all your",
@@ -257,8 +259,9 @@ function SuivisEvangelisationContent() {
   const famillesActive = useFeature("familles");
   const cellulesActive = useFeature("cellules");
   const conseillerActive = useFeature("conseiller");
+  const [search, setSearch] = useState("");
 
-    const router = useRouter();
+  const router = useRouter();
   const { highlight, refus } = router.query;
   const highlightRef = useRef({});
 
@@ -579,12 +582,14 @@ const getMapLabel = (map, value) => {
     return "—";
   };
 
-  const suivisAffiches = allSuivis.filter((m) => {
-    if (showRefus) return m.status_suivis_evangelises === "Refus";
-    return (
-      m.status_suivis_evangelises === "En cours" ||
-      m.status_suivis_evangelises === "Envoyé"
-    );
+    const suivisAffiches = allSuivis.filter((m) => {
+    const statusOk = showRefus
+      ? m.status_suivis_evangelises === "Refus"
+      : (m.status_suivis_evangelises === "En cours" ||
+         m.status_suivis_evangelises === "Envoyé");
+    if (!statusOk) return false;
+    const fullName = `${m.prenom || ""} ${m.nom || ""}`.toLowerCase();
+    return fullName.includes(search.toLowerCase());
   });
 
   const handleCommentChange = (id, value) =>
@@ -794,6 +799,34 @@ const getMapLabel = (map, value) => {
           </span>
           .
         </p>
+      </div>
+
+<div className="max-w-3xl w-full mb-6 text-center">
+        <p className="italic text-base text-white/90">
+          {t.intro}{" "}
+          <span className="text-blue-300 font-semibold">
+            {t.introHighlight1}
+          </span>
+          {t.introMid}{" "}
+          <span className="text-blue-300 font-semibold">
+            {t.introHighlight2}
+          </span>
+          {t.introEnd}{" "}
+          <span className="text-blue-300 font-semibold">
+            {t.introHighlight3}
+          </span>
+          .
+        </p>
+      </div>
+
+      <div className="mt-3 w-full max-w-4xl flex justify-center mb-2">
+        <input
+          type="text"
+          placeholder={t.search}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full sm:w-2/3 px-3 py-1 rounded-md border text-black"
+        />
       </div>
 
       {/* Toggle Refus */}

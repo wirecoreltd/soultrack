@@ -57,7 +57,7 @@ const translations = {
   },
 };
 
-const HUB_BACKGROUND = "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)";
+const HUB_BACKGROUND = "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)";
 
 export default function MembresHub() {
   return (

@@ -653,6 +653,10 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
     }
   };
 
+  const filteredContacts = contacts.filter((m) =>
+    `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen flex flex-col items-center p-6" 
     style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}>
@@ -660,7 +664,7 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
       <h1 className="text-2xl font-bold mt-4 mb-6 text-blue-300 text-center text-white">
         {t.titre1}<span className="text-emerald-300">{t.titre2}</span>
       </h1>
-      <div className="max-w-3xl w-full mb-6 text-center">
+            <div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
           {t.description}<span className="text-blue-300 font-semibold">{t.descAccent1}</span>{t.descMid1}
           <span className="text-blue-300 font-semibold">{t.descAccent2}</span>
@@ -669,14 +673,15 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
         </p>
       </div>
 
-          <div className="max-w-3xl w-full mb-6 text-center">
-        <p className="italic text-base text-white/90">
-          {t.description}<span className="text-blue-300 font-semibold">{t.descAccent1}</span>{t.descMid1}
-          <span className="text-blue-300 font-semibold">{t.descAccent2}</span>
-          {t.descMid2}{" "}
-          <span className="text-blue-300 font-semibold">{t.descAccent3}</span>{t.descEnd}
-        </p>
-      </div>  
+      <div className="mt-3 w-full max-w-4xl flex justify-center mb-2">
+        <input
+          type="text"
+          placeholder={t.search}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full sm:w-2/3 px-3 py-1 rounded-md border text-black"
+        />
+      </div>
 
       <div className="w-full max-w-md mb-6">
         <select

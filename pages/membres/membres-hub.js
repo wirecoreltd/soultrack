@@ -5,7 +5,7 @@ import SendLinkPopup from "../../components/SendLinkPopup";
 import { useEffect, useState } from "react";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import FooterHub from "../../components/FooterHub";
+import Footer from "../../components/Footer";
 import supabase from "../../lib/supabaseClient";
 import { useLang } from "../../hooks/useLang";
 
@@ -173,7 +173,7 @@ function MembresHubContent() {
         {t.verseRef}
       </div>
 
-      <FooterHub />
+      <Footer />
     </div>
   );
 }

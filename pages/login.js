@@ -4,6 +4,13 @@ import { useRouter } from "next/navigation";
 import supabase from "../lib/supabaseClient";
 import { useLang } from "../hooks/useLang";
 import { initPushNotifications } from "../lib/pushNotifications";
+import { Great_Vibes } from "next/font/google";
+
+const greatVibes = Great_Vibes({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+});
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
 const translations = {
@@ -153,14 +160,14 @@ export default function LoginPage() {
 
   return (
     <div
-  className="min-h-screen flex flex-col items-center p-6 text-center space-y-6"
-  style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}
->
+      className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-6"
+      style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}
+    >
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
 
-        <h1 className="text-5xl font-handwriting text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <h1 className="text-5xl text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">
           <img src="/logo.png" alt="Logo SoulTrack" className="w-12 h-12 object-contain" />
-          SoulTrack
+          <span className={greatVibes.className}>SoulTrack</span>
         </h1>
 
         <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "12px" }}>

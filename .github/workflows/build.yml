@@ -87,10 +87,10 @@ jobs:
         run: |
           echo "=== Version du plugin EdgeToEdge installée ==="
           npm ls @capawesome/capacitor-android-edge-to-edge-support
-          echo "=== styles.xml ==="
-          cat android/app/src/main/res/values/styles.xml || echo "styles.xml introuvable"
-          echo "=== colors.xml ==="
-          cat android/app/src/main/res/values/colors.xml || echo "colors.xml introuvable"
+          echo "=== capacitor.config.json embarqué (lu au runtime par le plugin) ==="
+          cat android/app/src/main/assets/capacitor.config.json || echo "capacitor.config.json introuvable dans assets/"
+          echo "=== Recherche de la couleur dans tout android/ (sanity check) ==="
+          grep -r "3E7DCF" android/ || echo "Couleur #3E7DCF introuvable nulle part dans android/"
 
       - name: Fix Android navigation bar
         run: |
@@ -216,9 +216,29 @@ jobs:
         run: |
           PODFILE="ios/App/Podfile"
           PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
-          sed -i '' 's/assertDeploymentTarget(installer)//' "$PODFILE"
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" "$PODFILE"
           sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*/IPHONEOS_DEPLOYMENT_TARGET = 16.0/g' "$PBXPROJ"
+
+          python3 - << 'PY'
+          path = "ios/App/Podfile"
+          with open(path) as f:
+              content = f.read()
+
+          addition = (
+              "\n  installer.pods_project.targets.each do |target|\n"
+              "    target.build_configurations.each do |config|\n"
+              "      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'\n"
+              "    end\n"
+              "  end\n"
+          )
+          content = content.replace(
+              "assertDeploymentTarget(installer)",
+              "assertDeploymentTarget(installer)" + addition,
+          )
+
+          with open(path, "w") as f:
+              f.write(content)
+          PY
 
       - name: Install CocoaPods
         run: |

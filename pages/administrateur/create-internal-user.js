@@ -641,7 +641,12 @@ function CreateInternalUserContent() {
   const showFamilleFields = !!famillesActive && formData.roles.includes("ResponsableFamilles"); // ← NOUVEAU
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-200 p-6">
+    <div className="min-h-screen flex flex-col items-center justify-start p-6"
+    style={{
+    background:
+      "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)",
+  }}
+>
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md relative">
 
         <button onClick={() => router.back()} className="absolute top-4 left-4 text-gray-700 hover:text-gray-900">

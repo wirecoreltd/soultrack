@@ -608,7 +608,9 @@ const user = session.user;
   };
 
   return (
-    <div className="min-h-screen bg-[#333699] text-white p-4 flex flex-col items-center">
+    <div className="min-h-screen text-white p-4 flex flex-col items-center"
+    style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}
+>
       <HeaderPages />
 
       {/* INTRO */}

@@ -30,6 +30,7 @@ jobs:
           npm install @capacitor/splash-screen@8
           npm install @capacitor/filesystem@8
           npm install @capacitor/share@8
+          npm install @capacitor/keyboard@8
           npm install @capawesome/capacitor-android-edge-to-edge-support@8
           npm install @capawesome/capacitor-navigation-bar@8
 

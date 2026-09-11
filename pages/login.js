@@ -7,6 +7,7 @@ import { initPushNotifications } from "../lib/pushNotifications";
 import { Great_Vibes } from "next/font/google";
 import { Capacitor } from "@capacitor/core";
 import { Keyboard } from "@capacitor/keyboard";
+import { Eye, EyeOff } from "lucide-react";
 
 const greatVibes = Great_Vibes({
   subsets: ["latin"],
@@ -51,6 +52,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errorKey, setErrorKey] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -219,11 +221,37 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)} required
             className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
           />
-          <input
-            type="password" placeholder={t.placeholderPassword} value={password}
-            onChange={(e) => setPassword(e.target.value)} required
-            className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
-          />
+          <div style={{ position: "relative", width: "100%" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder={t.placeholderPassword}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="border border-gray-300 p-3 rounded-lg w-full text-center shadow-sm"
+              style={{ paddingRight: "44px" }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              style={{
+                position: "absolute",
+                right: "12px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+                color: "#6b7280",
+              }}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
 
           {errorKey && <p className="text-red-500 text-center">{t[errorKey]}</p>}
 

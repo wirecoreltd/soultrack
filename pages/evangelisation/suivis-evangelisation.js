@@ -588,8 +588,9 @@ const getMapLabel = (map, value) => {
       : (m.status_suivis_evangelises === "En cours" ||
          m.status_suivis_evangelises === "Envoyé");
     if (!statusOk) return false;
+    if (!search) return true;
     const fullName = `${m.prenom || ""} ${m.nom || ""}`.toLowerCase();
-    return fullName.includes(search.toLowerCase());
+    return fullName.includes(search.toLowerCase()) || (m.telephone && m.telephone.includes(search));
   });
 
   const handleCommentChange = (id, value) =>

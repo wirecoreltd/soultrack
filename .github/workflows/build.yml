@@ -106,7 +106,7 @@ jobs:
           # API 24+ et peuvent échouer à la compilation ou planter au runtime sur
           # les appareils API <24. À tester impérativement sur un appareil réel
           # ou un émulateur bas de gamme avant de publier.
-          sed -i 's/minSdkVersion = 24/minSdkVersion = 21/' android/variables.gradle
+          
 
           # Sur Capacitor 8.4.0+, @capawesome/capacitor-android-edge-to-edge-support
           # (v8) + le plugin natif SystemBars gèrent correctement l'edge-to-edge,

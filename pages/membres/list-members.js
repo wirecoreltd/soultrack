@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// PAGE : Liste des Membres (ListMembers)
+// PAGE : Liste des Membres (ListMembers) 
 // ═══════════════════════════════════════════════════════════════
 // Description : Affiche la liste des membres de l'église (nouveaux,
 // existants, inactifs). Permet de filtrer/rechercher, consulter les

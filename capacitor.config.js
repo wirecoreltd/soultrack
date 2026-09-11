@@ -9,21 +9,21 @@ module.exports = {
   android: {
     allowMixedContent: true,
   },
- plugins: {
-  PushNotifications: {
-    presentationOptions: ['badge', 'sound', 'alert'],
+  plugins: {
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+    SystemBars: {
+      insetsHandling: 'disable',
+    },
+    EdgeToEdge: {
+      backgroundColor: '#3A48A0',
+      statusBarColor: '#3A48A0',
+      navigationBarColor: '#3A48A0',
+    },
+    NavigationBar: {
+      color: '#3A48A0',
+      style: 'LIGHT', // icônes claires sur fond bleu foncé
+    },
   },
-  SystemBars: {
-    insetsHandling: 'disable',
-  },
-  EdgeToEdge: {
-    backgroundColor: '#3E7DCF',
-    statusBarColor: '#333699',
-    navigationBarColor: '#3E7DCF', // gardé en fallback, inoffensif
-  },
-  NavigationBar: {
-    color: '#3E7DCF',
-    style: 'LIGHT', // icônes claires sur fond bleu foncé
-  },
-},
 };

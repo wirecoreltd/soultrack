@@ -13,6 +13,10 @@ module.exports = {
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
+    Keyboard: {
+      resize: 'body',
+      resizeOnFullScreen: true,
+    },
     SystemBars: {
       insetsHandling: 'disable',
     },

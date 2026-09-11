@@ -370,7 +370,9 @@ function EditEgliseContent() {
     return <p className="text-center mt-10 text-white">{t.loading}</p>;
 
   return (
-    <div className="min-h-screen p-6 bg-[#333699]">
+    <div className="min-h-screen p-6"
+    style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}
+>
       <HeaderPages />
 
       <h1 className="text-2xl font-bold mt-8 mb-2 text-center text-white">

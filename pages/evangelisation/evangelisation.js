@@ -653,9 +653,12 @@ ${t.msgInfos} ${m.infos_supplementaires || "—"}
     }
   };
 
-  const filteredContacts = contacts.filter((m) =>
-    `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredContacts = contacts.filter(
+  (m) =>
+    !search ||
+    `${m.prenom || ""} ${m.nom || ""}`.toLowerCase().includes(search.toLowerCase()) ||
+    (m.telephone && m.telephone.includes(search))
+);
 
   return (
     <div className="min-h-screen flex flex-col items-center p-6" 

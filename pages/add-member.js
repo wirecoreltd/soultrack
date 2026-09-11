@@ -445,7 +445,13 @@ export default function AddMember() {
   if (errorMsg && !formData.eglise_id) return <p className="text-center mt-10 text-red-600">{errorMsg}</p>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-200 via-pink-100 to-yellow-100 p-4 sm:p-6">
+    <div
+  className="min-h-screen flex items-center justify-center p-4 sm:p-6"
+  style={{
+    background:
+      "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)",
+  }}
+>
       <div className="w-full max-w-md bg-white p-6 sm:p-8 rounded-3xl shadow-lg relative">
 
         <button

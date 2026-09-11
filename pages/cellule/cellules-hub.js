@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import FooterHub from "../../components/FooterHub";
+import Footer from "../../components/Footer";
 import { useLang } from "../../hooks/useLang";
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
@@ -225,7 +225,7 @@ function CellulesHubContent() {
         </p>
       </div>
 
-      <FooterHub />
+      <Footer />
     </div>
   );
 }

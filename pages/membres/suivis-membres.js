@@ -37,6 +37,7 @@ const translations = {
   fr: {
     titre1: "Suivis des",
     titre2: "Membres",
+    search: "🔍Recherche...", 
     description: "Ici, vous pouvez voir,",
     descriptionAccent1: " suivre et accompagner ",
     descriptionMid: "chaque membre de votre Assemblée.",
@@ -137,6 +138,7 @@ const translations = {
   en: {
     titre1: "Member",
     titre2: "Follow-ups",
+    search: "🔍Search...",
     description: "Here you can view,",
     descriptionAccent1: " track and support ",
     descriptionMid: "every member of your Assembly.",
@@ -369,6 +371,7 @@ function SuivisMembresContent() {
   const router = useRouter();
   const { lang } = useLang();
   const t = translations[lang];
+  const [search, setSearch] = useState("");
 
   const { profile, loading: scopeLoading, error: scopeError, scopedQuery } = useChurchScope();
   const { members, setAllMembers, updateMember } = useMembers();
@@ -666,11 +669,13 @@ function SuivisMembresContent() {
     }
   };
 
-  const filteredMembers = members.filter(m => {
+    const filteredMembers = members.filter(m => {
     if (m.etat_contact === "supprime") return false;
     const status = m.statut_suivis ?? 0;
-    if (showRefus) return status === 4;
-    return status === 1 || status === 2;
+    const statusOk = showRefus ? status === 4 : (status === 1 || status === 2);
+    if (!statusOk) return false;
+    const fullName = `${m.prenom || ""} ${m.nom || ""}`.toLowerCase();
+    return fullName.includes(search.toLowerCase());
   });
 
   const uniqueMembers = Array.from(new Map(filteredMembers.map(i => [i.id, i])).values());
@@ -691,6 +696,25 @@ function SuivisMembresContent() {
             <span className="text-blue-300 font-semibold">{t.descriptionAccent4}</span>{t.descriptionEnd}
           </p>
         </div>
+      </div>
+
+        <div className="mt-3 w-full max-w-4xl flex justify-center mb-2">
+        <input
+          type="text"
+          placeholder={t.search}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full sm:w-2/3 px-3 py-1 rounded-md border text-black"
+        />
+      </div>
+
+      <div className="mb-4 flex justify-end w-full max-w-6xl">
+        <button
+          onClick={() => setShowRefus(prev => !prev)}
+          className="text-orange-400 text-sm underline hover:text-orange-500"
+        >
+          {showRefus ? t.voirTous : t.voirRefus}
+        </button>
       </div>
 
       <div className="mb-4 flex justify-end w-full max-w-6xl">

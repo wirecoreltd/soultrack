@@ -889,7 +889,7 @@ function PresenceEnfants() {
   // ━━━ VÉRIFICATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   if (etape === "check") {
     return (
-      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}>
+      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
         <HeaderPages />
         <div className="w-full max-w-lg mt-10 flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
@@ -907,7 +907,7 @@ function PresenceEnfants() {
     const oldSessions   = sessionsRecentes.filter(s => s.date !== todayStr);
 
     return (
-      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "#333699" }}>
+      <div className="min-h-screen flex flex-col items-center p-4 sm:p-6" style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}>
         <HeaderPages />
         <h1 className="text-2xl font-bold text-white text-center mt-6 mb-1">{t.title}</h1>
         <p className="text-white/60 text-sm text-center mb-2">

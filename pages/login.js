@@ -151,18 +151,24 @@ export default function LoginPage() {
   };
 
   if (checkingSession) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100">
+  return (
+    <div
+      className="flex items-center justify-center bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100"
+      style={{ minHeight: "100dvh" }}
+    >
         <img src="/logo.png" alt="Logo SoulTrack" className="w-14 h-14 object-contain animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-6 text-center space-y-6"
-      style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}
-    >
+  <div
+    className="flex flex-col items-center justify-center p-6 text-center space-y-6 overflow-y-auto"
+    style={{
+      minHeight: "100dvh",
+      background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)"
+    }}
+  >
       <div className="bg-white p-10 rounded-3xl shadow-lg w-full max-w-md flex flex-col items-center">
 
         <h1 className="text-5xl text-black-800 mb-3 flex flex-col sm:flex-row items-center justify-center gap-3">

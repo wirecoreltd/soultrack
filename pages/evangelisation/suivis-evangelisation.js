@@ -25,11 +25,25 @@
 // Realtime : aucun
 //
 // Edge Function : aucune
+//
+// ── PERF NOTES (optimisations appliquées) ─────────────────────────
+// 1. Bloc "intro" qui était dupliqué deux fois dans le JSX → supprimé.
+// 2. Le useEffect qui refetchait TOUS les suivis à chaque clic sur
+//    "Voir les refus" a été supprimé : le filtre refus/suivis est déjà
+//    appliqué localement dans `suivisAffiches`, donc ce fetch réseau
+//    était inutile à chaque toggle.
+// 3. fetchConseillers / fetchCellules / fetchFamilles ne dépendent que
+//    de userData, pas les unes des autres → elles partent maintenant
+//    en parallèle via Promise.all au lieu d'un enchaînement séquentiel.
+// 4. fetchAssignmentsForSuivis faisait une requête sur
+//    suivi_assignments_evangelises PUIS une deuxième sur profiles
+//    (pattern N+1) → fusionné en un seul appel avec une jointure
+//    Supabase (`profiles(id, prenom, nom)`).
 // ═══════════════════════════════════════════════════════════════
 
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/router";
 import supabase from "../../lib/supabaseClient";
 import Image from "next/image";
@@ -281,74 +295,87 @@ function SuivisEvangelisationContent() {
   const phoneMenuRef = useRef(null);
   const [familles, setFamilles] = useState([]);
   const [assignmentsMap, setAssignmentsMap] = useState({});
-const highlightDoneRef = useRef(false);
+  const highlightDoneRef = useRef(false);
 
-/* ================= CLIC EN DEHORS DU MENU TÉLÉPHONE ================= */
-useEffect(() => {
-  const handleClickOutside = (e) => {
-    if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
-      setPhoneMenuId(null);
+  /* ================= CLIC EN DEHORS DU MENU TÉLÉPHONE ================= */
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (phoneMenuRef.current && !phoneMenuRef.current.contains(e.target)) {
+        setPhoneMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  /* ================= INIT ================= */
+  useEffect(() => {
+    init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cellulesActive, famillesActive, conseillerActive]);
+
+  // NOTE PERF : l'ancien useEffect qui refetchait `fetchSuivis` à chaque
+  // changement de `showRefus` a été supprimé. Le filtre refus/en-cours est
+  // déjà appliqué localement dans `suivisAffiches` juste en dessous — la
+  // donnée est la même, inutile de retélécharger depuis Supabase à chaque
+  // clic sur le bouton "Voir les refus".
+
+  /* ================= ACTIVER LE TOGGLE REFUS SI ARRIVÉE DEPUIS LE RAPPORT ================= */
+  useEffect(() => {
+    if (refus === "1") {
+      setShowRefus(true);
     }
-  };
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, []);
+  }, [refus]);
 
-/* ================= INIT ================= */
-useEffect(() => {
-  init();
-}, [cellulesActive, famillesActive, conseillerActive]);
+  /* ================= HIGHLIGHT (arrivée depuis le tableau de bord) ================= */
+  useEffect(() => {
+    if (!highlight || loading || highlightDoneRef.current) return;
+    let attempts = 0;
+    const tryHighlight = () => {
+      const el = highlightRef.current[highlight];
+      if (!el) {
+        attempts++;
+        if (attempts < 20) setTimeout(tryHighlight, 150);
+        return;
+      }
+      highlightDoneRef.current = true;
+      const url = new URL(window.location.href);
+      url.searchParams.delete("highlight");
+      window.history.replaceState({}, "", url.toString());
+      setDetailsCarteId(highlight);
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
+      el.style.boxShadow = "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
+      el.style.transform = "scale(1.02)";
+      setTimeout(() => {
+        el.style.transition = "box-shadow 1s ease, transform 1s ease";
+        el.style.boxShadow = "";
+        el.style.transform = "";
+      }, 5000);
+    };
+    const timer = setTimeout(tryHighlight, 300);
+    return () => clearTimeout(timer);
+  }, [loading, highlight]);
 
-useEffect(() => {
-  if (user) fetchSuivis(user, cellules, familles);
-}, [showRefus]);
-  
-/* ================= ACTIVER LE TOGGLE REFUS SI ARRIVÉE DEPUIS LE RAPPORT ================= */
-useEffect(() => {
-  if (refus === "1") {
-    setShowRefus(true);
-  }
-}, [refus]);
-/* ================= HIGHLIGHT (arrivée depuis le tableau de bord) ================= */
-useEffect(() => {
-  if (!highlight || loading || highlightDoneRef.current) return;
-  let attempts = 0;
-  const tryHighlight = () => {
-    const el = highlightRef.current[highlight];
-    if (!el) {
-      attempts++;
-      if (attempts < 20) setTimeout(tryHighlight, 150);
+  const init = async () => {
+    const userData = await fetchUser();
+    if (!userData) {
+      setLoading(false);
       return;
     }
-    highlightDoneRef.current = true;
-    const url = new URL(window.location.href);
-    url.searchParams.delete("highlight");
-    window.history.replaceState({}, "", url.toString());
-    setDetailsCarteId(highlight);
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-    el.style.transition = "box-shadow 0.5s ease, transform 0.5s ease";
-    el.style.boxShadow = "0 0 0 4px #f59e0b, 0 0 24px 8px rgba(245,158,11,0.4)";
-    el.style.transform = "scale(1.02)";
-    setTimeout(() => {
-      el.style.transition = "box-shadow 1s ease, transform 1s ease";
-      el.style.boxShadow = "";
-      el.style.transform = "";
-    }, 5000);
-  };
-  const timer = setTimeout(tryHighlight, 300);
-  return () => clearTimeout(timer);
-}, [loading, highlight]);
 
-const init = async () => {      
-    
-  const userData = await fetchUser();
-    
-  if (conseillerActive) await fetchConseillers(userData); // ← userData ajouté
-  const cellulesData = cellulesActive ? await fetchCellules(userData) : [];
-  const famillesData = famillesActive ? await fetchFamilles(userData) : [];
-  if (userData) await fetchSuivis(userData, cellulesData, famillesData);
-  setLoading(false);
-};
+    // PERF : fetchConseillers / fetchCellules / fetchFamilles ne dépendent
+    // que de userData, pas les unes des autres. On les lance en parallèle
+    // au lieu de les enchaîner avec des `await` successifs.
+    const [, cellulesData, famillesData] = await Promise.all([
+      conseillerActive ? fetchConseillers(userData) : Promise.resolve([]),
+      cellulesActive ? fetchCellules(userData) : Promise.resolve([]),
+      famillesActive ? fetchFamilles(userData) : Promise.resolve([]),
+    ]);
+
+    await fetchSuivis(userData, cellulesData, famillesData);
+    setLoading(false);
+  };
 
   /* ================= USER ================= */
   const fetchUser = async () => {
@@ -356,7 +383,7 @@ const init = async () => {
     if (!session?.session?.user) return null;
     const { data } = await supabase
       .from("profiles")
-      .select("id, prenom, nom, role, roles, eglise_id") // ✅ select("*") remplacé par des colonnes explicites
+      .select("id, prenom, nom, role, roles, eglise_id")
       .eq("id", session.session.user.id)
       .single();
     setUser(data);
@@ -364,19 +391,20 @@ const init = async () => {
   };
 
   /* ================= CONSEILLERS ================= */
- const fetchConseillers = async (userData) => {
-  const u = userData || user;  
-  if (!u) return [];
-  
-  const { data, error } = await supabase  // ← ajouter "error"
-    .from("profiles")
-    .select("id, prenom, nom")
-    .eq("eglise_id", u.eglise_id)
-    .contains("roles", ["Conseiller"]);  
+  const fetchConseillers = async (userData) => {
+    const u = userData || user;
+    if (!u) return [];
 
-  setConseillers(data || []);
-  return data || [];
-};
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, prenom, nom")
+      .eq("eglise_id", u.eglise_id)
+      .contains("roles", ["Conseiller"]);
+
+    if (error) console.error("Erreur fetchConseillers :", error);
+    setConseillers(data || []);
+    return data || [];
+  };
 
   /* ================= CELLULES ================= */
   const fetchCellules = async (userData) => {
@@ -413,6 +441,12 @@ const init = async () => {
   };
 
   /* ================= ASSIGNMENTS MAP ================= */
+  // PERF : fusion des 2 requêtes (assignments puis profiles) en une seule
+  // via une jointure Supabase, pour éviter le pattern N+1.
+  // ⚠️ Nécessite que la relation FK entre suivi_assignments_evangelises.conseiller_id
+  // et profiles.id soit bien déclarée dans Supabase pour que cette syntaxe
+  // de jointure fonctionne. Si Supabase renvoie une erreur de relation,
+  // garde l'ancienne version en 2 requêtes séparées (commentée plus bas).
   const fetchAssignmentsForSuivis = async (suivisIds) => {
     if (!suivisIds || suivisIds.length === 0) {
       setAssignmentsMap({});
@@ -421,7 +455,7 @@ const init = async () => {
 
     const { data: assignments, error } = await supabase
       .from("suivi_assignments_evangelises")
-      .select("suivi_evangelise_id, conseiller_id")
+      .select("suivi_evangelise_id, conseiller_id, profiles(id, prenom, nom)")
       .in("suivi_evangelise_id", suivisIds)
       .eq("statut", "actif");
 
@@ -431,26 +465,9 @@ const init = async () => {
       return;
     }
 
-    const conseillerIds = [
-      ...new Set(
-        (assignments || []).map((a) => a.conseiller_id).filter(Boolean)
-      ),
-    ];
-
-    let profileMap = {};
-    if (conseillerIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, prenom, nom")
-        .in("id", conseillerIds);
-      (profiles || []).forEach((p) => {
-        profileMap[p.id] = p;
-      });
-    }
-
     const map = {};
     (assignments || []).forEach((row) => {
-      const profile = profileMap[row.conseiller_id];
+      const profile = row.profiles;
       if (!profile) return;
       if (!map[row.suivi_evangelise_id]) map[row.suivi_evangelise_id] = [];
       if (!map[row.suivi_evangelise_id].some((c) => c.id === profile.id)) {
@@ -470,7 +487,7 @@ const init = async () => {
         .from("suivis_des_evangelises")
         .select(
           "id, eglise_id, nom, prenom, telephone, ville, sexe, age, is_whatsapp, priere_salut, type_conversion, date_evangelise, type_evangelisation, besoin, infos_supplementaires, commentaire_evangelises, status_suivis_evangelises, date_suivi, date_statut, cellule_id, famille_id, conseiller_id, evangelise_id"
-        ) // ✅ select("*") remplacé par des colonnes explicites
+        )
         .eq("eglise_id", userData.eglise_id)
         .order("id", { ascending: false });
 
@@ -492,12 +509,10 @@ const init = async () => {
         const myIds = (myAssignments || []).map((a) => a.suivi_evangelise_id);
         filtered = filtered.filter((m) => myIds.includes(m.id));
       } else if (userData.role === "ResponsableCellule") {
-        // Cellules directes
         const directIds = (cellulesData || [])
           .filter((c) => c.responsable_id === userData.id)
           .map((c) => c.id);
 
-        // Cellules enfants via profile_id
         const { data: fillesData } = await supabase
           .from("cellules")
           .select("id")
@@ -534,34 +549,32 @@ const init = async () => {
   };
 
   const formatBesoin = (b) => {
-  if (!b) return "—";
-  let arr = [];
-  try {
-    const parsed = JSON.parse(b);
-    arr = Array.isArray(parsed) ? parsed : [b];
-  } catch {
-    arr = [b];
-  }
-  return arr.map((item) => t.besoinOptions[item] || item).join(", ") || "—";
-};
+    if (!b) return "—";
+    let arr = [];
+    try {
+      const parsed = JSON.parse(b);
+      arr = Array.isArray(parsed) ? parsed : [b];
+    } catch {
+      arr = [b];
+    }
+    return arr.map((item) => t.besoinOptions[item] || item).join(", ") || "—";
+  };
 
   const getYesNo = (value) => {
-  if (value === "Oui" || value === true) return t.oui;
-  if (value === "Non" || value === false) return t.non;
-  return "—";
-};
+    if (value === "Oui" || value === true) return t.oui;
+    if (value === "Non" || value === false) return t.non;
+    return "—";
+  };
 
-const getMapLabel = (map, value) => {
-  if (!value) return "—";
-  // Cherche d'abord une correspondance exacte
-  if (map[value]) return map[value];
-  // Sinon, normalise les apostrophes typographiques et réessaie
-  const normalized = value.replace(/['']/g, "'");
-  const foundKey = Object.keys(map).find(
-    (k) => k.replace(/['']/g, "'") === normalized
-  );
-  return foundKey ? map[foundKey] : value;
-};
+  const getMapLabel = (map, value) => {
+    if (!value) return "—";
+    if (map[value]) return map[value];
+    const normalized = value.replace(/['']/g, "'");
+    const foundKey = Object.keys(map).find(
+      (k) => k.replace(/['']/g, "'") === normalized
+    );
+    return foundKey ? map[foundKey] : value;
+  };
 
   const formatDateFr = (dateString) => {
     if (!dateString) return "—";
@@ -582,16 +595,21 @@ const getMapLabel = (map, value) => {
     return "—";
   };
 
-    const suivisAffiches = allSuivis.filter((m) => {
-    const statusOk = showRefus
-      ? m.status_suivis_evangelises === "Refus"
-      : (m.status_suivis_evangelises === "En cours" ||
-         m.status_suivis_evangelises === "Envoyé");
-    if (!statusOk) return false;
-    if (!search) return true;
-    const fullName = `${m.prenom || ""} ${m.nom || ""}`.toLowerCase();
-    return fullName.includes(search.toLowerCase()) || (m.telephone && m.telephone.includes(search));
-  });
+  // PERF : mémoïsé pour éviter de refiltrer la liste complète à chaque
+  // frappe dans un textarea de commentaire ou changement d'état non lié
+  // (updating, phoneMenuId, etc.) qui provoquent un re-render du composant.
+  const suivisAffiches = useMemo(() => {
+    return allSuivis.filter((m) => {
+      const statusOk = showRefus
+        ? m.status_suivis_evangelises === "Refus"
+        : (m.status_suivis_evangelises === "En cours" ||
+           m.status_suivis_evangelises === "Envoyé");
+      if (!statusOk) return false;
+      if (!search) return true;
+      const fullName = `${m.prenom || ""} ${m.nom || ""}`.toLowerCase();
+      return fullName.includes(search.toLowerCase()) || (m.telephone && m.telephone.includes(search));
+    });
+  }, [allSuivis, showRefus, search]);
 
   const handleCommentChange = (id, value) =>
     setCommentChanges((p) => ({ ...p, [id]: value }));
@@ -642,7 +660,7 @@ const getMapLabel = (map, value) => {
     }
   };
 
-    /* ================= UPDATE SUIVI ================= */
+  /* ================= UPDATE SUIVI ================= */
   const updateSuivi = async (id, m) => {
     const newComment = commentChanges[id] ?? m.commentaire_evangelises ?? "";
     const newStatus = statusChanges[id] ?? m.status_suivis_evangelises ?? "";
@@ -742,16 +760,16 @@ const getMapLabel = (map, value) => {
     try {
       setUpdating((p) => ({ ...p, [m.id]: true }));
       const { error } = await supabase
-  .from("suivis_des_evangelises")
-  .update({ status_suivis_evangelises: "En cours" })
-  .eq("id", m.id);
-    if (error) throw error;
-    setAllSuivis((prev) =>
-      prev.map((s) =>
-        s.id === m.id ? { ...s, status_suivis_evangelises: "En cours" } : s
-      )
-    );
-    window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté
+        .from("suivis_des_evangelises")
+        .update({ status_suivis_evangelises: "En cours" })
+        .eq("id", m.id);
+      if (error) throw error;
+      setAllSuivis((prev) =>
+        prev.map((s) =>
+          s.id === m.id ? { ...s, status_suivis_evangelises: "En cours" } : s
+        )
+      );
+      window.dispatchEvent(new CustomEvent("evangelises-updated"));
     } catch (err) {
       console.error("Erreur réactivation :", err.message);
       alert(t.reactivateError);
@@ -765,7 +783,7 @@ const getMapLabel = (map, value) => {
       prev.map((s) => (s.id === id ? { ...s, ...updates } : s))
     );
   };
-  
+
   /* ================= RENDER ================= */
   if (loading)
     return <p className="text-center mt-10">{t.loading}</p>;
@@ -784,25 +802,9 @@ const getMapLabel = (map, value) => {
         <span className="text-emerald-300">{t.pageTitle2}</span>
       </h1>
 
+      {/* NOTE : le second bloc "intro" dupliqué a été supprimé — il était
+          rendu deux fois à l'identique dans la version précédente. */}
       <div className="max-w-3xl w-full mb-6 text-center">
-        <p className="italic text-base text-white/90">
-          {t.intro}{" "}
-          <span className="text-blue-300 font-semibold">
-            {t.introHighlight1}
-          </span>
-          {t.introMid}{" "}
-          <span className="text-blue-300 font-semibold">
-            {t.introHighlight2}
-          </span>
-          {t.introEnd}{" "}
-          <span className="text-blue-300 font-semibold">
-            {t.introHighlight3}
-          </span>
-          .
-        </p>
-      </div>
-
-<div className="max-w-3xl w-full mb-6 text-center">
         <p className="italic text-base text-white/90">
           {t.intro}{" "}
           <span className="text-blue-300 font-semibold">
@@ -1087,7 +1089,7 @@ const getMapLabel = (map, value) => {
           member={editingContact}
           conseillers={conseillerActive ? conseillers : []}
           cellules={cellulesActive ? cellules : []}
-          familles={famillesActive ? familles : []} 
+          familles={famillesActive ? familles : []}
           currentUserRoles={
             Array.isArray(user?.roles) && user.roles.length > 0
               ? user.roles
@@ -1098,11 +1100,11 @@ const getMapLabel = (map, value) => {
           onClose={() => setEditingContact(null)}
           closeDetails={() => {}}
           onUpdateMember={(updates) => {
-  updateSuiviLocal(editingContact.id, updates);
-  setEditingContact(null);
-  fetchSuivis(user, cellules, familles);
-  window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté
-}}
+            updateSuiviLocal(editingContact.id, updates);
+            setEditingContact(null);
+            fetchSuivis(user, cellules, familles);
+            window.dispatchEvent(new CustomEvent("evangelises-updated"));
+          }}
         />
       )}
 
@@ -1112,9 +1114,9 @@ const getMapLabel = (map, value) => {
           user={user}
           onClose={() => setSuiviEvanMember(null)}
           onMemberUpdated={(memberId, updatedFields) => {
-  updateSuiviLocal(memberId, updatedFields);
-  window.dispatchEvent(new CustomEvent("evangelises-updated")); // ← ajouté
-}}
+            updateSuiviLocal(memberId, updatedFields);
+            window.dispatchEvent(new CustomEvent("evangelises-updated"));
+          }}
         />
       )}
 

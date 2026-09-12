@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "../../lib/supabaseClient";
 import EditCelluleModal from "../../components/EditCelluleModal";
@@ -246,82 +246,107 @@ function ListCellulesContent() {
   const fetchCellules = async () => {
     setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return; // finally ci-dessous coupe le loading dans tous les cas
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, role, roles, eglise_id")
-      .eq("id", user.id)
-      .single();
-    if (!profile) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, role, roles, eglise_id")
+        .eq("id", user.id)
+        .single();
+      if (!profile) return;
 
-    setUserRole(profile.role);
-  
-    // Map profile_id → nom complet du responsable
-const { data: tousLesProfiles } = await supabase
-  .from("profiles")
-  .select("id, prenom, nom")
-  .eq("eglise_id", profile.eglise_id);
+      setUserRole(profile.role);
 
-const profileMap = Object.fromEntries(
-  (tousLesProfiles || []).map((p) => [p.id, `${p.prenom} ${p.nom}`])
-);
+      // PERF : tousLesProfiles (pour la map responsable/parent) et la
+      // requête de base des cellules ne dépendent que de profile.eglise_id,
+      // pas l'une de l'autre → parties en parallèle.
+      const [{ data: tousLesProfiles }, cellulesBase] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, prenom, nom")
+          .eq("eglise_id", profile.eglise_id),
+        (async () => {
+          let query = supabase
+            .from("cellules")
+            .select("*")
+            .eq("eglise_id", profile.eglise_id)
+            .order("cellule_full");
 
-    let query = supabase
-      .from("cellules")
-      .select("*")
-      .eq("eglise_id", profile.eglise_id)
-      .order("cellule_full");
+          if (profile.role === "ResponsableCellule") {
+            // PERF : les cellules directes et les cellules filles sont deux
+            // requêtes indépendantes → parallélisées avec Promise.all au
+            // lieu d'un enchaînement séquentiel.
+            const [{ data: directes }, { data: filles }] = await Promise.all([
+              supabase
+                .from("cellules")
+                .select("id")
+                .eq("responsable_id", profile.id)
+                .eq("eglise_id", profile.eglise_id),
+              supabase
+                .from("cellules")
+                .select("id")
+                .eq("cellule_mere_id", profile.id)
+                .eq("eglise_id", profile.eglise_id),
+            ]);
 
-    if (profile.role === "ResponsableCellule") {
-      // 1. Cellules dont il est directement responsable
-      const { data: directes } = await supabase
-        .from("cellules")
-        .select("id")
-        .eq("responsable_id", profile.id)
-        .eq("eglise_id", profile.eglise_id);
-      const directIds = (directes || []).map((c) => c.id);
+            const directIds = (directes || []).map((c) => c.id);
+            const fillesIds = (filles || []).map((c) => c.id);
+            const allIds = [...new Set([...directIds, ...fillesIds])];
 
-      // 2. Cellules enfants (cellule_mere_id pointe vers une de ses cellules)
-      // 2. Cellules enfants — cellule_mere_id = mon profile_id
-const { data: filles } = await supabase
-  .from("cellules")
-  .select("id")
-  .eq("cellule_mere_id", profile.id)
-  .eq("eglise_id", profile.eglise_id);
-const fillesIds = (filles || []).map((c) => c.id);
+            query = query.in(
+              "id",
+              allIds.length ? allIds : ["00000000-0000-0000-0000-000000000000"]
+            );
+          }
 
-const allIds = [...new Set([...directIds, ...fillesIds])];
-      query = query.in(
-        "id",
-        allIds.length ? allIds : ["00000000-0000-0000-0000-000000000000"]
+          return query;
+        })(),
+      ]);
+
+      const cellsData = cellulesBase?.data;
+
+      const profileMap = Object.fromEntries(
+        (tousLesProfiles || []).map((p) => [p.id, `${p.prenom} ${p.nom}`])
       );
-    }
 
-    const { data: cellsData } = await query;
+      // PERF : le plus gros correctif. Avant, une requête `count` séparée
+      // était lancée par cellule (N+1) — avec 50 cellules, ça faisait 50
+      // requêtes réseau. On récupère maintenant TOUS les membres concernés
+      // en un seul appel, puis on compte localement en JS par cellule_id.
+      const celluleIds = (cellsData || []).map((c) => c.id);
+      let countMap = {};
 
-    const withCount = await Promise.all(
-      (cellsData || []).map(async (c) => {
-        const { count } = await supabase
+      if (celluleIds.length > 0) {
+        const { data: membresData, error: countError } = await supabase
           .from("membres_complets")
-          .select("id", { count: "exact", head: true })
-          .eq("cellule_id", c.id)
+          .select("cellule_id")
+          .in("cellule_id", celluleIds)
           .eq("statut_suivis", 3)
           .neq("etat_contact", "supprime");
-        return {
-          ...c,
-          membre_count: count || 0,
-          // Résolution du nom de la cellule mère via la map locale
-          cellule_mere_nom: c.cellule_mere_id
-  ? profileMap[c.cellule_mere_id] || "—"
-  : "—",
-        };
-      })
-    );
 
-    setCellules(withCount);
-    setLoading(false);
+        if (countError) {
+          console.error("Erreur comptage membres :", countError);
+        } else {
+          (membresData || []).forEach((m) => {
+            countMap[m.cellule_id] = (countMap[m.cellule_id] || 0) + 1;
+          });
+        }
+      }
+
+      const withCount = (cellsData || []).map((c) => ({
+        ...c,
+        membre_count: countMap[c.id] || 0,
+        cellule_mere_nom: c.cellule_mere_id
+          ? profileMap[c.cellule_mere_id] || "—"
+          : "—",
+      }));
+
+      setCellules(withCount);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEdit = useCallback((cellule) => {
@@ -361,11 +386,15 @@ const allIds = [...new Set([...directIds, ...fillesIds])];
 
   const canEdit = ["Administrateur", "SuperviseurCellule"].includes(userRole);
 
-  const cellulesFiltrees = cellules.filter((c) => {
-    const matchSearch = c.cellule_full?.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filterCellule ? c.cellule_full === filterCellule : true;
-    return matchSearch && matchFilter;
-  });
+  // PERF : mémoïsé pour éviter de refiltrer toute la liste à chaque
+  // re-render déclenché par des états sans rapport (menu téléphone, modal...)
+  const cellulesFiltrees = useMemo(() => {
+    return cellules.filter((c) => {
+      const matchSearch = c.cellule_full?.toLowerCase().includes(search.toLowerCase());
+      const matchFilter = filterCellule ? c.cellule_full === filterCellule : true;
+      return matchSearch && matchFilter;
+    });
+  }, [cellules, search, filterCellule]);
 
   if (loading) {
     return <p className="text-center mt-10 text-white">{t.chargement}</p>;

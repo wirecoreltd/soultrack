@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import supabase from "../../lib/supabaseClient";
 import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import FooterHub from "../../components/FooterHub";
+import Footer from "../../components/Footer";
 import { useLang } from "../../hooks/useLang";
 
 // ─── TRADUCTIONS ──────────────────────────────────────────────────────────────
@@ -80,7 +80,7 @@ function ConseillerHubContent() {
   return (
     <div
       className="min-h-screen flex flex-col items-center p-6 text-center"
-      style={{ background: "linear-gradient(135deg, #2E3192 0%, #92EFFD 100%)" }}
+      style={{ background: "linear-gradient(to bottom, #3A48A0 0%, #3A48A0 10%, #405BAF 30%, #3E7DCF 55%, #405BAF 80%, #3A48A0 100%)" }}
     >
       <HeaderPages />
 
@@ -141,7 +141,7 @@ function ConseillerHubContent() {
         <p className="italic text-base text-white/90">{t.footer}</p>
       </div>
 
-      <FooterHub />
+      <Footer />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import HeaderPages from "../../components/HeaderPages";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import FooterHub from "../../components/FooterHub";
+import Footer from "../../components/Footer";
 import { useLang } from "../../hooks/useLang";
 import { useFeature } from "../../components/FeaturesContext";
 import supabase from "../../lib/supabaseClient";
@@ -310,7 +310,7 @@ function RapportHubContent() {
         </p>
       </div>
 
-      <FooterHub />
+      <Footer />
     </div>
   );
 }
